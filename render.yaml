@@ -22,7 +22,7 @@ services:
       - key: MYSQL_PASSWORD
         sync: 1234
       - key: MYSQL_DATABASE
-        sync: customer_database
+        sync: customer_database(defaultdb)
       - key: MYSQL_SSL
         value: "true"
       - key: MYSQL_AUTO_CREATE
