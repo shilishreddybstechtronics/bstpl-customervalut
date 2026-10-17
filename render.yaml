@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: customervault
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py --host 0.0.0.0 --port $PORT --trust-proxy
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        sync: false
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_DATABASE
+        sync: false
+      - key: MYSQL_SSL
+        value: "true"

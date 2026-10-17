@@ -236,6 +236,9 @@ def connect(with_db=True, autocommit=False):
               autocommit=autocommit, connect_timeout=10, read_timeout=60, write_timeout=60)
     if with_db:
         kw["database"] = CFG["database"]
+    if os.environ.get("MYSQL_SSL", "").lower() in ("1", "true", "yes"):   # cloud MySQL (Aiven, TiDB, ...) requires TLS
+        kw["ssl"] = {"ca": None}
+        kw["ssl_verify_cert"] = False
     if with_db:
         raw = _pool_get()
         if raw is not None:
