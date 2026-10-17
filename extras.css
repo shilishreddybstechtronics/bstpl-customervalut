@@ -1,0 +1,245 @@
+/* extras.css - add-on styles. Uses the theme variables already defined in style.css. */
+.xnav{display:flex;gap:8px;padding:8px;margin:0 0 14px;flex-wrap:wrap}
+.xtab{border:0;background:transparent;color:inherit;font:inherit;font-weight:600;padding:9px 16px;border-radius:12px;cursor:pointer;opacity:.8}
+.xtab:hover{opacity:1;background:color-mix(in srgb,var(--a) 12%,transparent)}
+.xtab.active{opacity:1;color:#fff;background:linear-gradient(135deg,var(--a2),var(--a))}
+.xkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.xkpi{padding:14px 16px;border-radius:14px;border:1px solid var(--line);text-align:center}
+.xkpi b{display:block;font-size:1.7rem}.xkpi span{font-size:.85rem;opacity:.75}
+.xkpi.bad b{color:var(--err)}.xkpi.warn b{color:var(--warn)}.xkpi.good b{color:var(--ok)}
+.xgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.xcard{border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.xcard h3{margin:0 0 10px;font-size:1rem}
+.xbar{display:grid;grid-template-columns:minmax(80px,38%) 1fr 44px;gap:8px;align-items:center;margin:6px 0;font-size:.88rem}
+.xbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.xbar b{text-align:right}
+.xtrack{height:10px;border-radius:6px;background:color-mix(in srgb,var(--a) 10%,transparent);overflow:hidden}
+.xtrack i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--a2),var(--a))}
+.xtrack i.bad{background:var(--err)}.xtrack i.warn{background:var(--warn)}.xtrack i.good{background:var(--ok)}
+.xtools{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:10px 0;flex-wrap:wrap}
+.xqs input{width:100%;padding:14px 16px;font:inherit;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit}
+.xqres{max-height:55vh;overflow:auto;margin-top:10px}
+.xhit{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer}
+.xhit:hover,.xhit.sel{background:color-mix(in srgb,var(--a) 12%,transparent)}
+.xhit small{opacity:.7}
+.xkbd{opacity:.65;font-size:.78rem}
+
+/* sortable headings, printing */
+th{cursor:pointer;user-select:none}
+th[data-xs=asc]::after{content:" \25B2";font-size:.7em}th[data-xs=desc]::after{content:" \25BC";font-size:.7em}
+@media print{body *{visibility:hidden}#xInventory,#xInventory *{visibility:visible}#xInventory{position:absolute;left:0;top:0;width:100%}#xInventory .xtools button,#xInventory .xsubnav{display:none}}
+
+.xqrow{display:flex;gap:8px;flex-wrap:wrap}.xqrow select{padding:12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit}.xqrow input{flex:1;min-width:180px}
+
+/* ---- Customer Inventory tab + sub-tabs ---- */
+.xinvtab{flex:1 0 auto;scroll-snap-align:start;background:none;border:0;color:var(--mut);padding:11px 14px;min-height:44px;font:inherit;font-size:14px;font-weight:600;border-radius:16px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.xinvtab:hover{background:var(--soft);color:var(--tx)}.xinvtab.active{background:var(--grad);color:#fff}
+.xsubnav{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+.xsub{padding:9px 18px;min-height:40px;border-radius:26px;border:1px solid var(--line);background:var(--card);color:var(--mut);cursor:pointer;font:inherit;font-size:14px;font-weight:600;transition:.2s}
+.xsub:hover{border-color:var(--a);color:var(--tx)}.xsub.on{background:var(--grad);color:#fff;border-color:transparent}
+
+/* ---- duplicates inside Quick Search ---- */
+.xtag{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:20px;font-size:.72rem;font-weight:700;background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
+.xdups{margin-top:14px;padding-top:10px;border-top:1px dashed var(--line)}.xdups h3{margin:0 0 10px;font-size:1rem;color:var(--warn)}
+.xdup{border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.xduph{font-weight:700;font-size:.88rem;margin-bottom:6px;word-break:break-all}
+.xdupr{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;font-size:.85rem;border-top:1px solid var(--line)}
+.xdupb{display:flex;gap:6px}
+
+/* ---- Customer Files: card design (only CSS - script.js is untouched) ---- */
+.cfsearch{display:flex;align-items:center;gap:12px;margin:0 0 16px;flex-wrap:wrap}
+.cfsearch input{flex:1;min-width:200px;padding:12px 16px;border-radius:26px;border:1px solid var(--line);background:var(--card);color:inherit;font:inherit}
+.cfsum{font-size:13px;font-weight:600;color:var(--mut)}
+#customers .cficon{background:var(--grad);color:#fff;box-shadow:0 8px 18px color-mix(in srgb,var(--a) 35%,transparent)}
+#customers .tablewrap{border:0;overflow:visible;background:none}
+#custTable,#custTable tbody{display:block;width:100%}
+#custTable thead{display:none}
+#custTable tbody{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+#custTable tr{display:grid;grid-template-columns:46px 1fr;grid-template-areas:"n nm" "ac ac";gap:14px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--card);box-shadow:0 8px 22px rgba(0,0,0,.06);transition:transform .2s,border-color .2s,box-shadow .2s}
+#custTable tr:hover{transform:translateY(-3px);border-color:var(--a);box-shadow:0 14px 28px color-mix(in srgb,var(--a) 22%,transparent)}
+#custTable td{display:block;border:0;padding:0;background:none}
+#custTable td.cfnum{grid-area:n;width:46px;height:46px;display:grid;place-items:center;border-radius:15px;background:var(--grad);color:#fff;font-weight:800}
+#custTable td:nth-child(2){grid-area:nm;min-width:0}#custTable td:nth-child(3){grid-area:ac}
+#custTable .cfname{max-width:none;min-width:0}
+.cfcount{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--soft);color:var(--mut)}
+#custTable .cfact{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#custTable .btn.cfg{min-width:0;width:100%;padding:10px 12px;border-radius:14px;font-size:13px;box-shadow:none;gap:8px}
+#custTable .btn.cfg.green{background:rgba(22,163,74,.12);color:#16a34a;border:1px solid rgba(22,163,74,.4)}
+#custTable .btn.cfg.blue{background:rgba(37,99,235,.12);color:#2563eb;border:1px solid rgba(37,99,235,.4)}
+#custTable .btn.cfg.green:hover{background:#16a34a;color:#fff}#custTable .btn.cfg.blue:hover{background:#2563eb;color:#fff}
+#custTable .btn.cfg .xl{width:18px;height:18px}
+.cfbar{border:1px dashed var(--line);background:linear-gradient(135deg,var(--a-soft),var(--soft));padding:22px;border-radius:22px}
+.cfbar .btn.cfg{min-width:260px;padding:15px 28px;border-radius:999px;font-size:15px;font-weight:700;color:#fff;border:0;box-shadow:0 10px 22px rgba(0,0,0,.18)}
+.cfbar .btn.cfg.green{background:linear-gradient(135deg,#22c55e,#15803d)}
+.cfbar .btn.cfg.blue{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.cfbar .btn.cfg:hover{transform:translateY(-2px);filter:brightness(1.08)}
+@media(max-width:560px){#custTable tbody{grid-template-columns:1fr}}
+
+/* ---- Bulk Upload: E-SIM & Plastic SIM ---- */
+.sb-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sb-types{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin:18px 0}
+.sb-type{display:flex;flex-direction:column;align-items:center;gap:8px;padding:28px 18px;border:1px solid var(--line);border-radius:20px;background:var(--card);color:inherit;font:inherit;cursor:pointer;text-align:center;transition:transform .2s,border-color .2s,box-shadow .2s}
+.sb-type b{font-size:38px}.sb-type span{font-weight:700;font-size:17px}.sb-type small{color:var(--mut);font-size:12.5px;line-height:1.5}
+.sb-type:hover{transform:translateY(-3px);border-color:var(--a);box-shadow:0 14px 28px color-mix(in srgb,var(--a) 22%,transparent)}
+.sb-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;align-items:end}
+.sb-cols{padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
+.sb-chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.sb-chip{padding:4px 12px;border-radius:20px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--mut)}
+.sb-chip.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}.sb-chip.bad{background:var(--err-soft);color:var(--err);border-color:transparent}
+.sb-cols .hint{display:block;margin:4px 0 10px}
+.sb-prov{position:relative}
+.sb-provbtn,.sb-grph{display:flex;justify-content:space-between;align-items:center;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;cursor:pointer;text-align:left}
+.sb-provbtn .ph{color:var(--mut)}.sb-provbtn i,.sb-grph i{font-style:normal;transition:transform .2s}
+.sb-provbtn.open,.sb-provbtn:hover{border-color:var(--a)}.sb-provbtn.open i,.sb-grph.open i{transform:rotate(180deg)}
+.sb-provpanel{margin-top:6px;border:1px solid var(--line);border-radius:14px;background:var(--card);max-height:300px;overflow:auto;padding:6px}
+.sb-grph{border:0;font-weight:700;border-radius:10px}.sb-grph:hover,.sb-grph.open{background:var(--a-soft)}
+.sb-opts{padding:2px 0 6px 14px}
+.sb-opt{display:block;width:100%;padding:9px 12px;border:0;border-radius:10px;background:none;color:inherit;font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.sb-opt:hover{background:var(--soft)}.sb-opt.on{background:var(--grad);color:#fff}
+.sb-msg{font-size:16px;font-weight:600;margin:8px 0 4px}
+
+/* ---- Customer Files: Delete button + Hide/Show Customers ---- */
+#custTable .btn.cfg.red{grid-column:1/-1;background:var(--err-soft);color:var(--err);border:1px solid color-mix(in srgb,var(--err) 45%,transparent)}
+#custTable .btn.cfg.red:hover{background:var(--err);color:#fff}
+.cftoggle{white-space:nowrap}
+#customers.cf-hidden .tablewrap,#customers.cf-hidden #custEmpty,#customers.cf-hidden #custBar,#customers.cf-hidden #dbInfo,#customers.cf-hidden #dbProblems,#customers.cf-hidden .cfsearch input,#customers.cf-hidden .cfsum{display:none}
+#customers.cf-hidden .cfsearch::after{content:"Customer details are hidden \2014 click Show Customers to see them again.";color:var(--mut);font-size:13px;font-weight:600}
+.cfdelname{display:inline-block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.sb-check{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;background:var(--a-soft);font-size:14px;font-weight:600;cursor:pointer}
+.sb-check input{width:18px;height:18px;margin-top:2px;accent-color:var(--a);flex:none}
+.sb-sens{display:grid;gap:10px;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
+.sb-sync{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.sb-ow{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--mut);cursor:pointer}.sb-ow input{width:16px;height:16px;accent-color:var(--a)}
+
+/* ---- Login Inventory ---- */
+.xlif{align-items:end}.xlif .lbl{display:grid;gap:4px;font-size:13px;font-weight:600;color:var(--mut)}
+.xlif select,.xlif input{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit;min-width:140px;flex:none}
+#mbox td,#mbox th{white-space:nowrap}
+
+/* ---- Bulk Upload: sheet list (every sheet ticked by default) ---- */
+.sb-sheets{display:grid;gap:8px}
+.sb-shbtns{display:flex;gap:8px}
+.sb-shlist{display:grid;gap:6px;max-height:220px;overflow:auto}
+.sb-sh{display:flex;gap:10px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer;font-size:14px;font-weight:600}
+.sb-sh input{width:16px;height:16px;accent-color:var(--a);flex:none}
+.sb-sh small{margin-left:auto;color:var(--mut);font-weight:500}
+.sb-sh.off{opacity:.5;cursor:not-allowed}
+
+/* ---- SIM Data Upload ---- */
+#xSimData h3{margin:18px 0 6px}
+#xSimData .sb-row select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit}
+#xSimData .xtools .btn[disabled]{opacity:.6;cursor:not-allowed}
+
+/* ---- Cart ---- */
+.xcartn{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:14px;background:var(--a);color:#fff;font-size:12px;line-height:20px;text-align:center}
+.xinvtab.active .xcartn{background:#fff;color:var(--a)}
+#xCart th{cursor:default}
+#xCart .cfsearch select{padding:11px 14px;border-radius:26px;border:1px solid var(--line);background:var(--card);color:inherit;font:inherit}
+#xCart .xcartname{font-weight:700;word-break:break-all}
+#xCart .xcartact{display:flex;gap:6px;flex-wrap:wrap;white-space:nowrap}
+#xCart .xcartact .btn{margin-right:0}
+#xCart .btn.xrestore{background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;border:0}
+#xCart .xcartd>td{background:var(--soft);padding:12px 14px}
+#xCart .xcartd .sub{margin:0 0 8px}
+#xCart .xcartdata{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+#xCart .xcartdata td,#xCart .xcartdata th{white-space:nowrap}
+
+/* ---- access levels: body[data-role] is admin | staff | limited (the server enforces it too) ---- */
+body:not([data-role=admin]) #usersBtn{display:none!important}
+body[data-role=standard] #loginInv,body[data-role=standard] #cartTab,body[data-role=standard] .cfdel,body[data-role=standard] #custTable .btn.cfg.red{display:none!important}
+body[data-role=limited] .xinvtab,body[data-role=limited] #loginInv,body[data-role=limited] #renAll,body[data-role=limited] .cfdel,
+body[data-role=limited] .dng,body[data-role=limited] #custTable .btn.cfg.red{display:none!important}
+.xusers td,.xusers th{white-space:nowrap}.xusers .me{opacity:.6}
+
+/* ---- SIM Data Upload: the Push button stays visible while scrolling long results ---- */
+#xSimData .xpush{position:sticky;bottom:0;z-index:5;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 -6px 18px rgba(0,0,0,.08)}
+#xSimData .xpush .btn:not(.ghost){padding:12px 24px;font-weight:700}
+
+/* ---- Bulk Upload: live upload status ---- */
+.up h2{margin:0 0 6px}
+.up-barwrap{display:flex;align-items:center;gap:12px;margin:10px 0}
+.up-bar{flex:1;height:14px;border-radius:10px;background:color-mix(in srgb,var(--a) 12%,transparent);overflow:hidden}
+.up-bar i{display:block;height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,var(--a2),var(--a));transition:width .25s}
+.up-pct{min-width:44px;text-align:right;font-weight:800}
+.up-log{max-height:240px;overflow:auto;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:var(--soft);font-size:13px;display:grid;gap:4px}
+.up-l.ok{color:var(--ok)}.up-l.bad{color:var(--err);font-weight:700}
+
+/* ---- Fetch Data: SIM type chooser (All / E-SIM / Plastic SIM) ---- */
+#fSim{margin-top:8px}
+
+/* ---- Bulk Upload: customer / model / dispatched date / flash / firmware / SIM provider ---- */
+.bu-opts .sb-row{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.bu-opts .lbl{display:grid;gap:6px;font-size:13px;font-weight:600;color:var(--mut)}
+.bu-opts select,.bu-opts input{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit;font:inherit}
+.bu-opts input[hidden]{display:none}
+#xSimData .sb-row .lbl select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:inherit}
+
+/* CustomerVault UX refresh — presentation-only overrides; preserves existing features and theme tokens. */
+:root { --ux-radius: 18px; --ux-focus: 0 0 0 3px var(--a-soft); }
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: -.01em; }
+::selection { background: var(--a-soft); color: var(--tx); }
+:focus-visible { outline: 3px solid var(--a); outline-offset: 3px; }
+button, input, select, textarea { transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease, transform .18s ease; }
+button { -webkit-tap-highlight-color: transparent; }
+.view { width: min(1500px, calc(100% - 36px)); margin-inline: auto; }
+.top { position: relative; gap: 16px; padding: 16px 20px; border: 1px solid var(--line); border-top: 3px solid var(--a); border-radius: 20px; box-shadow: var(--shadow); backdrop-filter: blur(14px); }
+.brand { font-size: clamp(1.15rem, 2vw, 1.45rem); letter-spacing: -.045em; }
+.who { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+.who #hello { color:var(--mut); font-size:.9rem; padding-inline:4px; }
+.stats { gap:14px; margin-block:18px; }
+.stat { border:1px solid var(--line); border-left:4px solid var(--a); border-radius:18px; box-shadow:var(--shadow); transition:transform .2s ease, border-color .2s ease; }
+.stat:hover { transform:translateY(-2px); border-color:var(--a); }
+.stat b { font-variant-numeric:tabular-nums; letter-spacing:-.04em; }
+.tabs { top:8px; gap:6px; padding:7px; border:1px solid var(--line); border-radius:18px; box-shadow:0 8px 24px rgba(20,28,60,.08); backdrop-filter:blur(16px); background:color-mix(in srgb,var(--card) 92%,transparent); }
+.tabs .tab { flex:0 0 auto; min-height:44px; padding:10px 15px; border-radius:13px; white-space:nowrap; }
+.panel { margin-top:16px; padding:clamp(18px,2.2vw,30px); border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); }
+.panel h2 { letter-spacing:-.035em; line-height:1.2; }
+.panel h3 { letter-spacing:-.02em; }
+.sub, .hint, .tiphint { line-height:1.65; }
+input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea { min-height:44px; border-radius:12px; }
+input::placeholder, textarea::placeholder { color:var(--mut); opacity:.8; }
+.btn { border-radius:12px; font-weight:650; letter-spacing:-.01em; }
+.btn:focus-visible, .tab:focus-visible, .xsub:focus-visible { outline-offset:3px; }
+.tablewrap { border:1px solid var(--line); border-radius:15px; background:var(--card); scrollbar-width:thin; scrollbar-color:var(--line) transparent; }
+.tablewrap table { border-collapse:separate; border-spacing:0; }
+.tablewrap th { position:sticky; top:0; z-index:2; background:var(--soft); color:var(--tx); font-size:.78rem; font-weight:750; letter-spacing:.035em; text-transform:uppercase; }
+.tablewrap td, .tablewrap th { padding:11px 13px; }
+.tablewrap tr:last-child td { border-bottom:0; }
+.tablewrap tbody tr:hover td { background:color-mix(in srgb,var(--a) 5%,var(--card)); }
+.empty { padding:26px 18px; border:1px dashed var(--line); border-radius:14px; text-align:center; color:var(--mut); }
+.resulthead { gap:12px; align-items:center; }
+.searchbar { gap:10px; }
+#toast { z-index:10000; }
+#themeBtn, .totop { box-shadow:var(--shadow); backdrop-filter:blur(12px); }
+#custTable tr { box-shadow:0 5px 18px rgba(20,28,60,.045); }
+#custTable tr:hover { transform:translateY(-2px); }
+.xcard, .xkpi, .bfstep, .aopt { border-radius:16px; }
+.drop { border-radius:16px; transition:border-color .2s ease, background .2s ease; }
+.drop:hover { border-color:var(--a); background:var(--a-soft); }
+/* Less motion is more comfortable for motion-sensitive users. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}
+@media (max-width:900px) {
+  .view { width:calc(100% - 24px); }
+  .top { align-items:flex-start; }
+  .who { justify-content:flex-start; }
+  .tabs { margin-inline:-2px; }
+}
+@media (max-width:700px) {
+  .view { width:calc(100% - 16px); }
+  .top { padding:14px; border-radius:16px; }
+  .who { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+  .who #hello { grid-column:1/-1; }
+  .who .btn { width:100%; min-width:0; }
+  .tabs { top:4px; border-radius:14px; }
+  .tabs .tab { padding:10px 12px; font-size:13px; }
+  .panel { padding:16px; border-radius:17px; }
+  .tablewrap { max-width:100%; }
+  .tablewrap table { min-width:620px; }
+  #custTable, #custTable tbody { min-width:0; }
+  #custTable tbody { grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr)); }
+  .resulthead { align-items:stretch; }
+  .searchbar { display:grid; grid-template-columns:1fr; }
+  .searchbar > * { width:100%; min-width:0; }
+}
