@@ -178,6 +178,16 @@ for _key, _env in (("host", "MYSQL_HOST"), ("port", "MYSQL_PORT"), ("user", "MYS
                    ("password", "MYSQL_PASSWORD"), ("database", "MYSQL_DATABASE")):
     if os.environ.get(_env, "").strip():
         MYSQL[_key] = os.environ[_env].strip()
+# One-line alternative: set MYSQL_URL (or DATABASE_URL) = mysql://user:password@host:port/database
+# Most cloud MySQL providers show exactly this "connection string" - paste it as one Render variable.
+_url = (os.environ.get("MYSQL_URL") or os.environ.get("DATABASE_URL") or "").strip()
+if _url.startswith(("mysql://", "mysql+pymysql://", "mariadb://")):
+    from urllib.parse import unquote, urlparse
+    _u = urlparse(_url)
+    for _k, _v in (("host", _u.hostname), ("port", _u.port), ("user", unquote(_u.username or "")),
+                   ("password", unquote(_u.password or "")), ("database", (_u.path or "").lstrip("/"))):
+        if _v:
+            MYSQL[_k] = _v
 MYSQL["port"] = int(MYSQL["port"])
 
 # On Render, set MYSQL_AUTO_CREATE=true to create the database if it does not exist yet.

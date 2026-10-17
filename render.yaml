@@ -9,6 +9,8 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
+      - key: MYSQL_URL          # easiest: paste mysql://user:password@host:port/database
+        sync: false
       - key: MYSQL_HOST
         sync: false
       - key: MYSQL_PORT
