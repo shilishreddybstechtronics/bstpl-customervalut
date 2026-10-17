@@ -12,17 +12,17 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: mysql://root:1234@localhost:4000/customer_database
-        sync: false
+        sync: true
       - key: MYSQL_HOST
-        sync: false
+        sync: localhost
       - key: MYSQL_PORT
-        sync: false
+        sync: 3306
       - key: MYSQL_USER
-        sync: false
+        sync: root
       - key: MYSQL_PASSWORD
-        sync: false
+        sync: 1234
       - key: MYSQL_DATABASE
-        sync: false
+        sync: customer_database
       - key: MYSQL_SSL
         value: "true"
       - key: MYSQL_AUTO_CREATE
