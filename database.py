@@ -331,6 +331,8 @@ def explain_connect_error(e):
     elif code in (2002, 2003, 2013) or "refused" in str(e).lower():
         msg += ("\nMySQL is not reachable. Check that the MySQL service is running and that host / port in "
                 "config_local.py are right (MySQL Workbench shows the port; the default is 3306).")
+    elif code in (2003, 2006, 2026) or "ssl" in str(e).lower() or "insecure transport" in str(e).lower():
+        msg += "\nSSL problem: set MYSQL_SSL=true in the Render environment (your MySQL provider requires an encrypted connection)."
     elif code == 1045:
         msg += ("\nWrong user name or password. Put the real ones in config_local.py "
                 "(or set MYSQL_USER / MYSQL_PASSWORD) - the same login you use in MySQL Workbench.")

@@ -176,6 +176,10 @@ except ImportError:
 
 for _key, _env in (("host", "MYSQL_HOST"), ("port", "MYSQL_PORT"), ("user", "MYSQL_USER"),
                    ("password", "MYSQL_PASSWORD"), ("database", "MYSQL_DATABASE")):
-    if os.environ.get(_env):
-        MYSQL[_key] = os.environ[_env]
+    if os.environ.get(_env, "").strip():
+        MYSQL[_key] = os.environ[_env].strip()
 MYSQL["port"] = int(MYSQL["port"])
+
+# On Render, set MYSQL_AUTO_CREATE=true to create the database if it does not exist yet.
+if os.environ.get("MYSQL_AUTO_CREATE", "").lower() in ("1", "true", "yes"):
+    AUTO_CREATE_DATABASE = True

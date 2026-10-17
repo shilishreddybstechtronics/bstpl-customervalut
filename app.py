@@ -413,16 +413,20 @@ class Server(ThreadingHTTPServer):
 
 def main():
     ap = argparse.ArgumentParser(description="CustomerVault server")
-    ap.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to let other computers on your network connect")
-    ap.add_argument("--port", type=int, default=8000)
-    ap.add_argument("--trust-proxy", action="store_true", help="read the client address from X-Forwarded-For (only behind your own reverse proxy)")
+    ap.add_argument("--host", default=os.environ.get("HOST") or ("0.0.0.0" if os.environ.get("PORT") else "127.0.0.1"), help="use 0.0.0.0 to let other computers on your network connect")
+    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
+    ap.add_argument("--trust-proxy", action="store_true", default=bool(os.environ.get("RENDER")), help="read the client address from X-Forwarded-For (only behind your own reverse proxy)")
     a = ap.parse_args()
     global TRUST_PROXY
     TRUST_PROXY = a.trust_proxy
     try:
         db.init_db()   # creates the system tables; every customer is its own table (see database.py)
     except Exception as e:
-        sys.exit(db.explain_connect_error(e) + "\nCheck config.py and that MySQL is running.")
+        hint = ""
+        if os.environ.get("RENDER") and db.CFG["host"] in ("127.0.0.1", "localhost"):
+            hint = ("\n>>> RENDER: MYSQL_HOST is not set, so the app is trying localhost. In Render open Environment and add "
+                    "MYSQL_HOST / MYSQL_PORT / MYSQL_USER / MYSQL_PASSWORD / MYSQL_DATABASE (your CLOUD MySQL values), then redeploy.")
+        sys.exit(db.explain_connect_error(e) + hint + "\nCheck the MYSQL_* environment variables (Render) or config_local.py (your PC).")
     def watch_config():   # a customer table added / renamed / dropped directly in MySQL reaches the website within ~3 seconds
         last_err = ""
         while True:
