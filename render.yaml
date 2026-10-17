@@ -14,7 +14,7 @@ services:
       - key: MYSQL_HOST
         sync: localhost
       - key: MYSQL_PORT
-        sync: 3306
+        sync: 127.0.0.1:3306
       - key: MYSQL_USER
         sync: root
       - key: MYSQL_PASSWORD
