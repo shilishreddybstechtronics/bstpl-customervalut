@@ -412,6 +412,11 @@ class Server(ThreadingHTTPServer):
 
 
 def main():
+    print("CustomerVault starting...", flush=True)
+    print("  python:", sys.version.split()[0], "| files here:", ", ".join(sorted(os.listdir(BASE))[:12]), flush=True)
+    print("  MYSQL variables set:", {k: bool(os.environ.get(k, "").strip()) for k in
+          ("MYSQL_URL", "DATABASE_URL", "MYSQL_HOST", "MYSQL_PORT", "MYSQL_USER", "MYSQL_PASSWORD", "MYSQL_DATABASE", "MYSQL_SSL")}, flush=True)
+    print("  trying database:", db.DB_LABEL, flush=True)
     ap = argparse.ArgumentParser(description="CustomerVault server")
     ap.add_argument("--host", default=os.environ.get("HOST") or ("0.0.0.0" if os.environ.get("PORT") else "127.0.0.1"), help="use 0.0.0.0 to let other computers on your network connect")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
@@ -451,4 +456,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        if e.code not in (None, 0):
+            sys.stderr.write(f"\nSTOPPED: {e.code}\n"); sys.stderr.flush()
+        raise
+    except BaseException:
+        traceback.print_exc(); sys.stderr.flush()
+        sys.exit(1)
