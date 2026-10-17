@@ -11,7 +11,7 @@ services:
         value: 3.12.7
       - key: PYTHONUNBUFFERED
         value: "1"
-      - key: mysql://root:1234@localhost:3306/customer_database
+      - key: mysql://root:1234@localhost:4000/customer_database
         sync: false
       - key: MYSQL_HOST
         sync: false
