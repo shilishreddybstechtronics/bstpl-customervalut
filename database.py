@@ -234,11 +234,11 @@ def connect(with_db=True, autocommit=False):
     kw = dict(host=CFG["host"], port=int(CFG["port"]), user=CFG["user"], password=CFG["password"],
               charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor,
               autocommit=autocommit, connect_timeout=10, read_timeout=60, write_timeout=60)
-    if with_db:
-        kw["database"] = CFG["database"]
-    if os.environ.get("MYSQL_SSL", "").lower() in ("1", "true", "yes"):   # cloud MySQL (Aiven, TiDB, ...) requires TLS
+    if CFG.get("ssl"):                      # Aiven / cloud MySQL requires an encrypted connection
         kw["ssl"] = {"ca": None}
         kw["ssl_verify_cert"] = False
+    if with_db:
+        kw["database"] = CFG["database"]
     if with_db:
         raw = _pool_get()
         if raw is not None:
@@ -331,8 +331,6 @@ def explain_connect_error(e):
     elif code in (2002, 2003, 2013) or "refused" in str(e).lower():
         msg += ("\nMySQL is not reachable. Check that the MySQL service is running and that host / port in "
                 "config_local.py are right (MySQL Workbench shows the port; the default is 3306).")
-    elif code in (2003, 2006, 2026) or "ssl" in str(e).lower() or "insecure transport" in str(e).lower():
-        msg += "\nSSL problem: set MYSQL_SSL=true in the Render environment (your MySQL provider requires an encrypted connection)."
     elif code == 1045:
         msg += ("\nWrong user name or password. Put the real ones in config_local.py "
                 "(or set MYSQL_USER / MYSQL_PASSWORD) - the same login you use in MySQL Workbench.")

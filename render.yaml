@@ -9,19 +9,15 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
-      - key: PYTHONUNBUFFERED
-        value: "1"
       - key: MYSQL_HOST
-        sync: localhost
+        value: mysql-28f91b17-shilish-0a63.g.aivencloud.com
       - key: MYSQL_PORT
-        sync: 127.0.0.1:3306
+        value: "24605"
       - key: MYSQL_USER
-        sync: root
+        value: avnadmin
       - key: MYSQL_PASSWORD
-        sync: 1234
+        sync: false
       - key: MYSQL_DATABASE
-        sync: customer_database
+        value: customer_database
       - key: MYSQL_SSL
-        value: "true"
-      - key: MYSQL_AUTO_CREATE
         value: "true"

@@ -12,10 +12,11 @@ MYSQL = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "",
+    "password": "1234",
     # The database YOU created. Must match the name in MySQL exactly
     # (if it really contains a space, write "customer database").
     "database": "customer_database",
+    "ssl": False,   # True for cloud MySQL such as Aiven (set MYSQL_SSL=true on Render)
 }
 
 # False = use the existing database only (a wrong name gives an error that lists the real names,
@@ -176,20 +177,9 @@ except ImportError:
 
 for _key, _env in (("host", "MYSQL_HOST"), ("port", "MYSQL_PORT"), ("user", "MYSQL_USER"),
                    ("password", "MYSQL_PASSWORD"), ("database", "MYSQL_DATABASE")):
-    if os.environ.get(_env, "").strip():
-        MYSQL[_key] = os.environ[_env].strip()
-# One-line alternative: set MYSQL_URL (or DATABASE_URL) = mysql://user:password@host:port/database
-# Most cloud MySQL providers show exactly this "connection string" - paste it as one Render variable.
-_url = (os.environ.get("MYSQL_URL") or os.environ.get("DATABASE_URL") or "").strip()
-if _url.startswith(("mysql://", "mysql+pymysql://", "mariadb://")):
-    from urllib.parse import unquote, urlparse
-    _u = urlparse(_url)
-    for _k, _v in (("host", _u.hostname), ("port", _u.port), ("user", unquote(_u.username or "")),
-                   ("password", unquote(_u.password or "")), ("database", (_u.path or "").lstrip("/"))):
-        if _v:
-            MYSQL[_k] = _v
+    if os.environ.get(_env):
+        MYSQL[_key] = os.environ[_env]
 MYSQL["port"] = int(MYSQL["port"])
 
-# On Render, set MYSQL_AUTO_CREATE=true to create the database if it does not exist yet.
-if os.environ.get("MYSQL_AUTO_CREATE", "").lower() in ("1", "true", "yes"):
-    AUTO_CREATE_DATABASE = True
+if os.environ.get("MYSQL_SSL"):
+    MYSQL["ssl"] = os.environ["MYSQL_SSL"].strip().lower() in ("1", "true", "yes", "on")
