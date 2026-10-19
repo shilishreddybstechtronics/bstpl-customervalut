@@ -1,0 +1,18 @@
+# EDIT BEFORE USE: create a file named .env next to this one containing
+#   MYSQL_HOST=...  MYSQL_PORT=...  MYSQL_USER=...  MYSQL_PASSWORD=...  MYSQL_DATABASE=...  MYSQL_SSL=true
+# (do not commit .env). See the checklist at the top of the Dockerfile.
+
+services:
+  customervault:
+    build: 
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: "8000"
+      MYSQL_HOST: ${MYSQL_HOST:localhost}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:?set root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set 1234}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-customer_database}
+      MYSQL_SSL: ${MYSQL_SSL:-true}
+    restart: unless-stopped
