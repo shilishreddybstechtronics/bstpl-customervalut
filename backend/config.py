@@ -34,7 +34,7 @@ AUTO_CREATE_DATABASE = False
 #     deleted on the website does not come back.
 #   * Set CREATE_MISSING_CUSTOMER_TABLES = False to stop tables being created from this list
 #     (needed if you drop a table directly in MySQL while the app is stopped and want it to stay gone).
-CREATE_MISSING_CUSTOMER_TABLES = True
+CREATE_MISSING_CUSTOMER_TABLES = True   # can also be set from .env / environment: CREATE_MISSING_CUSTOMER_TABLES=false
 
 DEFAULT_CUSTOMERS = [
     "simple track",
@@ -181,6 +181,7 @@ def _load_dotenv(path):   # tiny .env reader (KEY=value per line, # comments) - 
 
 
 _load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+CREATE_MISSING_CUSTOMER_TABLES = os.environ.get("CREATE_MISSING_CUSTOMER_TABLES", str(CREATE_MISSING_CUSTOMER_TABLES)).strip().lower() in ("1", "true", "yes", "on")
 
 for _key, _env in (("host", "MYSQL_HOST"), ("port", "MYSQL_PORT"), ("user", "MYSQL_USER"),
                    ("password", "MYSQL_PASSWORD"), ("database", "MYSQL_DATABASE")):

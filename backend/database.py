@@ -20,6 +20,7 @@ import json
 import os
 import re
 import secrets
+import ssl
 import threading
 import time
 from contextlib import contextmanager
@@ -236,6 +237,13 @@ def connect(with_db=True, autocommit=False):
               autocommit=autocommit, connect_timeout=10, read_timeout=60, write_timeout=60)
     if with_db:
         kw["database"] = CFG["database"]
+    if os.environ.get("MYSQL_SSL", "").strip().lower() in ("1", "true", "yes", "on"):   # hosted MySQL (Aiven etc.) requires TLS
+        ca = os.environ.get("MYSQL_SSL_CA", "").strip()
+        ctx = ssl.create_default_context(cafile=ca) if ca else ssl.create_default_context()
+        if not ca:   # no CA file given: connection is encrypted, certificate is not verified
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        kw["ssl"] = ctx
     if with_db:
         raw = _pool_get()
         if raw is not None:

@@ -45,9 +45,9 @@ function api(path, o = {}) { busy(1); return _api(path, o).finally(() => busy(-1
 async function _api(path, o = {}) {
   let res;
   try {
-    res = await fetch('/api' + path, { method: o.method || 'GET', body: o.body ? JSON.stringify(o.body) : undefined,
+    res = await fetch((window.API_BASE || '') + '/api' + path, { method: o.method || 'GET', body: o.body ? JSON.stringify(o.body) : undefined,
       headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) } });
-  } catch { throw new Error('Cannot reach the server - start it with:  python app.py'); }
+  } catch { throw new Error('Cannot reach the server - start it with:  python backend/main.py'); }
   let data = {}; try { data = await res.json(); } catch {}
   if (res.status === 401 && token && !o.quiet && !['/login', '/register'].includes(path)) expire();
   if (!res.ok) { const e = new Error(data.error || 'Server error'); e.data = data; throw e; }
@@ -442,7 +442,7 @@ async function renameAllCustomers() {   // saves every edited name together (cus
 $('#renAll').onclick = renameAllCustomers;
 async function saveExcel(data, fname) {   // real .xlsx built by the server - works even without internet
   try {
-    const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+    const res = await fetch((window.API_BASE || '') + '/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
       body: JSON.stringify({ headers: data[0], rows: data.slice(1), filename: fname }) });
     if (!res.ok) return false;
     const url = URL.createObjectURL(await res.blob()), a = document.createElement('a');

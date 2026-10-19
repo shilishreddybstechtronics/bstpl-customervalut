@@ -1,2 +1,4 @@
+fastapi>=0.110
+uvicorn>=0.29
 PyMySQL>=1.1
 cryptography

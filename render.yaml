@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: customervault-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python backend/main.py --host 0.0.0.0 --port $PORT --trust-proxy
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: MYSQL_HOST
+        sync: false
+      - key: MYSQL_PORT
+        sync: false
+      - key: MYSQL_USER
+        sync: false
+      - key: MYSQL_PASSWORD
+        sync: false
+      - key: MYSQL_DATABASE
+        sync: false
+      - key: MYSQL_SSL
+        value: "true"
+      - key: CORS_ORIGINS
+        sync: false           # your Vercel address, e.g. https://my-site.vercel.app
+      - key: CREATE_MISSING_CUSTOMER_TABLES
+        value: "true"         # set to false after the first successful start
