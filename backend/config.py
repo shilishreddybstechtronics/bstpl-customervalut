@@ -12,7 +12,7 @@ MYSQL = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "",
+    "password": "1234",
     # The database YOU created. Must match the name in MySQL exactly
     # (if it really contains a space, write "customer database").
     "database": "customer_database",
