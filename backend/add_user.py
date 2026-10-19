@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """add_user.py - create a login directly in MySQL (use this for the admin IDs 0001, 0002, 0003, 1234).
-Run:  python add_user.py            -> asks for name, ID, password; the access level comes from config.py (ROLES / DEFAULT_ROLE)
-      python add_user.py --admin    -> forces admin access"""
+Run:  python backend/add_user.py            -> asks for name, ID, password; the access level comes from config.py (ROLES / DEFAULT_ROLE)
+      python backend/add_user.py --admin    -> forces admin access"""
 import getpass
 import sys
 

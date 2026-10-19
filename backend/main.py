@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""app.py - CustomerVault server.  Run:  python app.py   then open http://localhost:8000
+"""main.py - CustomerVault server.  Run:  python backend/main.py   then open http://localhost:8000
 
 Web server uses only the Python standard library; the database is MySQL (via PyMySQL).
-Setup:  pip install -r requirements.txt   then edit config.py (MySQL host/user/password).
+Setup:  pip install -r backend/requirements.txt   then copy backend/.env.example to backend/.env and enter your MySQL login.
 The database tables/columns are created automatically on start.
 """
 import argparse
@@ -21,10 +21,12 @@ from urllib.parse import parse_qs, unquote, urlparse
 import database as db
 from xlsxout import make_xlsx
 
-BASE = os.path.dirname(os.path.abspath(__file__))
+BASE = os.path.dirname(os.path.abspath(__file__))              # backend/
+FRONTEND = os.path.join(os.path.dirname(BASE), "frontend")     # the website files are served from ../frontend
 STATIC = {"/": "index.html", "/index.html": "index.html", "/style.css": "style.css", "/script.js": "script.js",
-          "/logo-full.svg": "logo-full.svg", "/extras.css": "extras.css", "/extras.js": "extras.js",
-          "/xlsx.full.min.js": "xlsx.full.min.js"}   # optional local copy of the Excel reader (used when the CDN is unreachable)
+          "/assets/logo-full.svg": "assets/logo-full.svg", "/assets/extras.css": "assets/extras.css",
+          "/assets/extras.js": "assets/extras.js",
+          "/assets/xlsx.full.min.js": "assets/xlsx.full.min.js"}   # optional local copy of the Excel reader (used when the CDN is unreachable)
 MAX_BODY = 100 * 1024 * 1024   # large Excel imports are sent as JSON
 LOGIN_MAX_FAILS, LOGIN_WINDOW = 8, 300   # more than 8 wrong passwords from one address in 5 minutes -> wait
 _FAILS = defaultdict(deque)               # ip -> times of recent failed logins
@@ -216,9 +218,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def static(self, name):
         try:
-            with open(os.path.join(BASE, name), "rb") as f:
+            with open(os.path.join(FRONTEND, name), "rb") as f:
                 data = f.read()
-        except FileNotFoundError:   # e.g. favicon.svg / logo.svg were never copied next to app.py
+        except FileNotFoundError:   # e.g. favicon.svg / logo.svg are missing from the frontend folder
             raise ApiError(404, "Not found")
         self.send_response(200)
         self.send_header("Content-Type", (mimetypes.guess_type(name)[0] or "text/plain") + "; charset=utf-8")
@@ -412,26 +414,17 @@ class Server(ThreadingHTTPServer):
 
 
 def main():
-    print("CustomerVault starting...", flush=True)
-    print("  python:", sys.version.split()[0], "| files here:", ", ".join(sorted(os.listdir(BASE))[:12]), flush=True)
-    print("  MYSQL variables set:", {k: bool(os.environ.get(k, "").strip()) for k in
-          ("MYSQL_URL", "DATABASE_URL", "MYSQL_HOST", "MYSQL_PORT", "MYSQL_USER", "MYSQL_PASSWORD", "MYSQL_DATABASE", "MYSQL_SSL")}, flush=True)
-    print("  trying database:", db.DB_LABEL, flush=True)
     ap = argparse.ArgumentParser(description="CustomerVault server")
-    ap.add_argument("--host", default=os.environ.get("HOST") or ("0.0.0.0" if os.environ.get("PORT") else "127.0.0.1"), help="use 0.0.0.0 to let other computers on your network connect")
-    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
-    ap.add_argument("--trust-proxy", action="store_true", default=bool(os.environ.get("RENDER")), help="read the client address from X-Forwarded-For (only behind your own reverse proxy)")
+    ap.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to let other computers on your network connect")
+    ap.add_argument("--port", type=int, default=8000)
+    ap.add_argument("--trust-proxy", action="store_true", help="read the client address from X-Forwarded-For (only behind your own reverse proxy)")
     a = ap.parse_args()
     global TRUST_PROXY
     TRUST_PROXY = a.trust_proxy
     try:
         db.init_db()   # creates the system tables; every customer is its own table (see database.py)
     except Exception as e:
-        hint = ""
-        if os.environ.get("RENDER") and db.CFG["host"] in ("127.0.0.1", "localhost"):
-            hint = ("\n>>> RENDER: MYSQL_HOST is not set, so the app is trying localhost. In Render open Environment and add "
-                    "MYSQL_HOST / MYSQL_PORT / MYSQL_USER / MYSQL_PASSWORD / MYSQL_DATABASE (your CLOUD MySQL values), then redeploy.")
-        sys.exit(db.explain_connect_error(e) + hint + "\nCheck the MYSQL_* environment variables (Render) or config_local.py (your PC).")
+        sys.exit(db.explain_connect_error(e) + "\nCheck config.py and that MySQL is running.")
     def watch_config():   # a customer table added / renamed / dropped directly in MySQL reaches the website within ~3 seconds
         last_err = ""
         while True:
@@ -446,7 +439,7 @@ def main():
     try:
         srv = Server((a.host, a.port), Handler)
     except OSError as e:
-        sys.exit(f"Cannot start on port {a.port}: {e}. Try:  python app.py --port 8080")
+        sys.exit(f"Cannot start on port {a.port}: {e}. Try:  python backend/main.py --port 8080")
     print(f"CustomerVault is running ->  http://{'localhost' if a.host in ('127.0.0.1', '0.0.0.0') else a.host}:{a.port}")
     print(f"Database                 ->  {db.DB_LABEL}\nPress Ctrl+C to stop.")
     try:
@@ -456,12 +449,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except SystemExit as e:
-        if e.code not in (None, 0):
-            sys.stderr.write(f"\nSTOPPED: {e.code}\n"); sys.stderr.flush()
-        raise
-    except BaseException:
-        traceback.print_exc(); sys.stderr.flush()
-        sys.exit(1)
+    main()

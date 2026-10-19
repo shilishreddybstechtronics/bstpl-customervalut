@@ -234,9 +234,6 @@ def connect(with_db=True, autocommit=False):
     kw = dict(host=CFG["host"], port=int(CFG["port"]), user=CFG["user"], password=CFG["password"],
               charset="utf8mb4", cursorclass=pymysql.cursors.DictCursor,
               autocommit=autocommit, connect_timeout=10, read_timeout=60, write_timeout=60)
-    if CFG.get("ssl"):                      # Aiven / cloud MySQL requires an encrypted connection
-        kw["ssl"] = {"ca": None}
-        kw["ssl_verify_cert"] = False
     if with_db:
         kw["database"] = CFG["database"]
     if with_db:
@@ -330,9 +327,9 @@ def explain_connect_error(e):
                 "stop any other copies of this app that are still running, then start it again.")
     elif code in (2002, 2003, 2013) or "refused" in str(e).lower():
         msg += ("\nMySQL is not reachable. Check that the MySQL service is running and that host / port in "
-                "config_local.py are right (MySQL Workbench shows the port; the default is 3306).")
+                "backend/.env are right (MySQL Workbench shows the port; the default is 3306).")
     elif code == 1045:
-        msg += ("\nWrong user name or password. Put the real ones in config_local.py "
+        msg += ("\nWrong user name or password. Put the real ones in backend/.env "
                 "(or set MYSQL_USER / MYSQL_PASSWORD) - the same login you use in MySQL Workbench.")
     elif code == 1044:
         msg += f"\nThis MySQL user has no permission on the database. In MySQL run:  GRANT ALL ON `{CFG['database']}`.* TO '{CFG['user']}'@'%';"
@@ -344,7 +341,7 @@ def explain_connect_error(e):
             names = [next(iter(r.values())) for r in conn.execute("SHOW DATABASES").fetchall()]
             conn.close()
             msg += ("\nDatabases on this server: " + ", ".join(names) +
-                    "\nPut the exact name in config_local.py (MYSQL -> database).")
+                    "\nPut the exact name in backend/.env (MYSQL -> database).")
         except Exception:
             pass
     return msg

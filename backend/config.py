@@ -2,21 +2,20 @@
 
 The MySQL password does NOT belong in this file. Put it in ONE of these places:
   1. environment variables  MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE
-  2. a file named config_local.py next to this one (never share or commit it)
-Values in config_local.py override the defaults below; environment variables override both.
+  2. a file named .env next to this one (copy .env.example to .env; it is git-ignored - never share or commit it)
+Values in .env override the defaults below; real environment variables override both.
 """
 import os
 
-# Safe defaults only - NO password here. Your real login goes in config_local.py (see above).
+# Safe defaults only - NO password here. Your real login goes in .env (see above).
 MYSQL = {
     "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
-    "password": "1234",
+    "password": "",
     # The database YOU created. Must match the name in MySQL exactly
     # (if it really contains a space, write "customer database").
     "database": "customer_database",
-    "ssl": False,   # True for cloud MySQL such as Aiven (set MYSQL_SSL=true on Render)
 }
 
 # False = use the existing database only (a wrong name gives an error that lists the real names,
@@ -154,7 +153,7 @@ DEFAULT_CUSTOMERS = [
 #                No renaming, no deleting, no Cart, no Login Inventory, no new columns, no SIM Data Upload.
 # A member ADDED BY AN ADMIN (Manage Users > Add Member) is always an admin - that is stored in MySQL and wins over this list.
 # Every other ID (people who register themselves later) gets DEFAULT_ROLE = "limited".
-# Admin IDs can NOT be self-registered on the website (anyone could grab them) - create them with:  python add_user.py
+# Admin IDs can NOT be self-registered on the website (anyone could grab them) - create them with:  python backend/add_user.py
 ROLES = {
     "0001": "admin", "0002": "admin", "0003": "admin", "1234": "admin",
     "0004": "standard", "0005": "standard", "0006": "standard",
@@ -168,18 +167,23 @@ DEFAULT_ROLE = "limited"
 PRUNE_EMPTY_COLUMNS = "once"
 
 
-# ---------------------------------------------------------------- local overrides + environment (keep at the bottom)
-try:
-    import config_local
-    MYSQL.update(getattr(config_local, "MYSQL", {}))
-except ImportError:
-    pass
+# ---------------------------------------------------------------- .env + environment (keep at the bottom)
+def _load_dotenv(path):   # tiny .env reader (KEY=value per line, # comments) - no extra package needed
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+    except OSError:
+        pass
+
+
+_load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 for _key, _env in (("host", "MYSQL_HOST"), ("port", "MYSQL_PORT"), ("user", "MYSQL_USER"),
                    ("password", "MYSQL_PASSWORD"), ("database", "MYSQL_DATABASE")):
     if os.environ.get(_env):
         MYSQL[_key] = os.environ[_env]
 MYSQL["port"] = int(MYSQL["port"])
-
-if os.environ.get("MYSQL_SSL"):
-    MYSQL["ssl"] = os.environ["MYSQL_SSL"].strip().lower() in ("1", "true", "yes", "on")

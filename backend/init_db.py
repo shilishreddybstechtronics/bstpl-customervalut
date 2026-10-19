@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""init_db.py - check the CustomerVault database and show what the app sees.   Run:  python init_db.py
+"""init_db.py - check the CustomerVault database and show what the app sees.   Run:  python backend/init_db.py
 If the website shows a server error, run this and read the output."""
 import sys
 import traceback
