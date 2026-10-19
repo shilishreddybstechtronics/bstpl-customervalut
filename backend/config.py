@@ -3,6 +3,7 @@
 The MySQL password does NOT belong in this file. Put it in ONE of these places:
   1. environment variables  MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE
   2. a file named .env next to this one (copy .env.example to .env; it is git-ignored - never share or commit it)
+On Render (TiDB Cloud) use option 1: set the variables in the service's Environment tab and also MYSQL_SSL=true.
 Values in .env override the defaults below; real environment variables override both.
 """
 import os

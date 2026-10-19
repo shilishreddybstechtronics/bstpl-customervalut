@@ -1,3 +1,7 @@
+# ============================================================
+# Render blueprint - CustomerVault backend (FastAPI)
+# Database: TiDB Cloud (MySQL compatible, port 4000, TLS required)
+# ============================================================
 services:
   - type: web
     name: customervault-api
@@ -9,19 +13,25 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.7
-      - key: MYSQL_HOST
+
+      # ---------- TiDB Cloud connection (cluster -> Connect -> connection type "Public") ----------
+      - key: MYSQL_HOST          # e.g. gateway01.<region>.prod.aws.tidbcloud.com
         sync: false
-      - key: MYSQL_PORT
-        sync: false
-      - key: MYSQL_USER
+      - key: MYSQL_PORT          # TiDB Cloud uses 4000
+        value: "4000"
+      - key: MYSQL_USER          # the FULL name with prefix, e.g. 2abc1234.root
         sync: false
       - key: MYSQL_PASSWORD
         sync: false
-      - key: MYSQL_DATABASE
-        sync: false
-      - key: MYSQL_SSL
+      - key: MYSQL_DATABASE      # "test" exists by default; or create your own, e.g. cs
+        value: test
+      - key: MYSQL_SSL           # TiDB Cloud requires a secure connection
         value: "true"
-      - key: CORS_ORIGINS
-        sync: false           # your Vercel address, e.g. https://my-site.vercel.app
+
+      # ---------- Frontend address (fill in after the Vercel deploy) ----------
+      - key: CORS_ORIGINS        # e.g. https://my-site.vercel.app  (no trailing slash)
+        sync: false
+
+      # ---------- App behaviour ----------
       - key: CREATE_MISSING_CUSTOMER_TABLES
-        value: "true"         # set to false after the first successful start
+        value: "true"            # set to false after the first successful start

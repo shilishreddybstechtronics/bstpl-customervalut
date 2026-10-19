@@ -1,46 +1,49 @@
-# Making CustomerVault live: Backend on Render, Frontend on Vercel, MySQL on Aiven
+# Making CustomerVault live: Backend on Render, Frontend on Vercel, MySQL on TiDB Cloud
 
 ```
 Browser -> Vercel  (frontend/: HTML, CSS, JS)
               |  calls  https://<your-backend>.onrender.com/api/...
               v
-          Render   (backend/: FastAPI)  -> MySQL (Aiven, over TLS)
+          Render   (backend/: FastAPI)  -> TiDB Cloud (MySQL compatible, over TLS)
 ```
-Render has no MySQL, so the database goes on Aiven (or any hosted MySQL: PlanetScale, Railway, a VPS...).
+Render has no MySQL, so the database goes on TiDB Cloud (MySQL compatible). It cannot reach the MySQL on your own computer.
 Do the steps in this order: **1 Database -> 2 Backend -> 3 Frontend -> 4 Connect them.**
 
 ## 0. Put the code on GitHub
 Create a **private** repo and push the whole `my-website` folder (`.gitignore` already keeps `backend/.env` out - never push passwords).
 
-## 1. Database (Aiven for MySQL)
-1. Aiven console -> create a **MySQL** service, wait for *Running*.
-2. Copy from the Overview page: Host, **Port** (the normal MySQL port, not "X Protocol"), User, Password, Database (default `defaultdb`).
-3. Use `defaultdb` as the database name, or create your own: `CREATE DATABASE customer_database;` (the app does not create a database itself).
-4. Allowed IPs: leave "open to all" (Render's IP changes), or add Render's outbound IPs.
-5. **Copy your existing local database to Aiven** (your local data is only read, never changed). On your computer, in the project folder:
+## 1. Database (TiDB Cloud)
+1. TiDB Cloud console -> open your cluster -> **Networking**: click **Enable** for the Public Endpoint, then **Add IP Address** and allow `0.0.0.0/0` (Render's IP changes).
+2. Click **Connect** (top right), choose connection type **Public**, and copy: Host, **Port** (`4000`), **User** (the full name with prefix, e.g. `2abc1234.root`), Password (generate or reset it there), Database (`test` by default).
+3. Use `test` as the database name, or create your own in the SQL Editor: `CREATE DATABASE cs;` (the app does not create a database itself).
+4. TiDB Cloud requires a secure connection, so `MYSQL_SSL=true` is always needed. No CA file is required.
+5. **Copy your existing local database to TiDB** (your local data is only read, never changed). On your computer, in the project folder:
 
        pip install -r backend/requirements.txt
-       python backend/migrate_to_aiven.py --check     (tests both connections)
-       python backend/migrate_to_aiven.py             (copies every table and its rows)
+       python backend/init_db.py                      (local check - fix any PROBLEM line first)
+       python backend/migrate_to_tidb.py --check      (tests both connections)
+       python backend/migrate_to_tidb.py              (copies every table and its rows)
 
-   - The **source** is the login in `backend/.env` (your local MySQL, `customer_database`).
-   - The **destination** is Aiven: the script asks for host, port, user, password and database (from Aiven -> Overview -> Connection information). Nothing is saved.
-   - At the end it prints local rows vs Aiven rows for every table. Anything marked `CHECK` / `FAILED` must be fixed before going live (re-run with `--replace` to redo a table).
-   - Use the same database name (`defaultdb`, or the one you created) as `MYSQL_DATABASE` on Render.
-   - Alternative without the script: `mysqldump -u root -p --single-transaction --no-tablespaces customer_database > backup.sql`, then
-     `mysql -h <HOST> -P <PORT> -u <USER> -p --ssl-mode=REQUIRED <DATABASE> < backup.sql`.
+   - The **source** is the login in `backend/.env`: your LOCAL MySQL (host 127.0.0.1, port 3306, your local database). Do this step before putting TiDB values in `.env`.
+   - The **destination** is TiDB: the script asks for host, port, user, password and database. Nothing is saved.
+   - At the end it prints local rows vs TiDB rows for every table. Anything marked `CHECK` / `FAILED` must be fixed before going live (re-run with `--replace` to redo a table).
+   - Use the same database name as `MYSQL_DATABASE` on Render.
+   - Alternative without the script: `mysqldump -u root -p --single-transaction --no-tablespaces cs > backup.sql`, then
+     `mysql -h <HOST> -P 4000 -u <PREFIX.root> -p --ssl-mode=REQUIRED <DATABASE> < backup.sql`.
 
 ## 2. Backend on Render
 1. render.com -> **New -> Blueprint** -> pick your repo (it reads `render.yaml`).
-   *(Or New -> Web Service with: Runtime **Python 3**, Build `pip install -r backend/requirements.txt`, Start `python backend/main.py --host 0.0.0.0 --port $PORT --trust-proxy`.)*
+   *(Or New -> Web Service with: Runtime **Python 3**, Root Directory **empty**, Build `pip install -r backend/requirements.txt`, Start `python backend/main.py --host 0.0.0.0 --port $PORT --trust-proxy`.
+   If you set Root Directory = `backend` instead, use Build `pip install -r requirements.txt` and Start `python main.py --host 0.0.0.0 --port $PORT --trust-proxy`. Always end with `$PORT`, never a number.)*
 2. Fill in the environment variables Render asks for:
 
-       MYSQL_HOST      = <aiven host>
-       MYSQL_PORT      = <aiven port>
-       MYSQL_USER      = <user>
+       MYSQL_HOST      = <tidb host>         (Connect dialog -> Host)
+       MYSQL_PORT      = 4000
+       MYSQL_USER      = <prefix>.root       (the full name)
        MYSQL_PASSWORD  = <password>
-       MYSQL_DATABASE  = <database>
+       MYSQL_DATABASE  = test              (or the database you created)
        MYSQL_SSL       = true                (already set)
+       PYTHON_VERSION  = 3.12.7              (already set)
        CORS_ORIGINS    = https://<your-site>.vercel.app    (fill in after step 3; no trailing slash)
 
 3. Deploy. Open `https://<name>.onrender.com/` - you should see the login page. **Copy this URL.**
@@ -79,14 +82,17 @@ Create a **private** repo and push the whole `my-website` folder (`.gitignore` a
 - Keep the repo private. Never commit `.env`.
 
 ## 7. Updating later
-Change code -> `git push` -> Render and Vercel redeploy by themselves. Data stays in MySQL. Back up with `mysqldump` now and then.
+Change code -> `git push` -> Render and Vercel redeploy by themselves. Data stays in MySQL. Back up with `mysqldump` now and then (TiDB Cloud also has its own backups).
 
 ## Troubleshooting
 | Symptom | Cause / fix |
 |---|---|
 | "Cannot reach the server" on Vercel | Wrong `API_BASE`, or Render still waking up (wait 1 min) |
 | Browser console: CORS error | `CORS_ORIGINS` on Render missing / has a trailing slash / wrong address |
-| Render log: access denied / unknown database | Wrong `MYSQL_*` values; the database must already exist |
-| Render log: connection refused / timed out | Wrong port (use the normal MySQL port) or Aiven IP allow-list |
-| Render log: SSL / TLS error | Set `MYSQL_SSL=true` |
+| Render log: `root@127.0.0.1:3306/customer_database` | The `MYSQL_*` variables are not set on this Render service - add them in Environment, then **Save, rebuild and deploy** |
+| Render log: access denied | Wrong password, or the user name lacks its prefix (use the full `<prefix>.root`) |
+| Render log: unknown database | `MYSQL_DATABASE` must exist on TiDB (`test`, or run `CREATE DATABASE cs;`) |
+| Render log: connection refused / timed out | Wrong port (use `4000`), Public Endpoint not enabled, or your IP is not in the TiDB IP access list |
+| Render log: SSL / TLS error or "requires secure connection" | Set `MYSQL_SSL=true` |
+| `Exited with status 127` / `status 2` | Wrong Build/Start command or Root Directory (see step 2.1) |
 | Deleted customers come back | Set `CREATE_MISSING_CUSTOMER_TABLES=false` |

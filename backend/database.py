@@ -237,7 +237,7 @@ def connect(with_db=True, autocommit=False):
               autocommit=autocommit, connect_timeout=10, read_timeout=60, write_timeout=60)
     if with_db:
         kw["database"] = CFG["database"]
-    if os.environ.get("MYSQL_SSL", "").strip().lower() in ("1", "true", "yes", "on"):   # hosted MySQL (Aiven etc.) requires TLS
+    if os.environ.get("MYSQL_SSL", "").strip().lower() in ("1", "true", "yes", "on"):   # hosted MySQL / TiDB Cloud require TLS
         ca = os.environ.get("MYSQL_SSL_CA", "").strip()
         ctx = ssl.create_default_context(cafile=ca) if ca else ssl.create_default_context()
         if not ca:   # no CA file given: connection is encrypted, certificate is not verified
@@ -334,11 +334,14 @@ def explain_connect_error(e):
         msg += ("\nWindows has run out of free local ports (too many recent connections). Wait 2-4 minutes or restart the PC, "
                 "stop any other copies of this app that are still running, then start it again.")
     elif code in (2002, 2003, 2013) or "refused" in str(e).lower():
-        msg += ("\nMySQL is not reachable. Check that the MySQL service is running and that host / port in "
-                "backend/.env are right (MySQL Workbench shows the port; the default is 3306).")
+        msg += ("\nMySQL is not reachable. Local MySQL: check that the service is running and that host / port in backend/.env "
+                "are right (default 3306). TiDB Cloud: the port is 4000, the cluster's Public Endpoint must be enabled and the "
+                "IP access list must allow your address (0.0.0.0/0 for Render). If these variables are missing on Render, the app "
+                "falls back to 127.0.0.1:3306 - set MYSQL_* in the Render Environment tab.")
     elif code == 1045:
         msg += ("\nWrong user name or password. Put the real ones in backend/.env "
-                "(or set MYSQL_USER / MYSQL_PASSWORD) - the same login you use in MySQL Workbench.")
+                "(or set MYSQL_USER / MYSQL_PASSWORD). TiDB Cloud user names carry a prefix, e.g. 2abc1234.root - "
+                "copy the whole name from the cluster's Connect dialog.")
     elif code == 1044:
         msg += f"\nThis MySQL user has no permission on the database. In MySQL run:  GRANT ALL ON `{CFG['database']}`.* TO '{CFG['user']}'@'%';"
     elif "cryptography" in str(e).lower():

@@ -11,3 +11,8 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+# database dumps and certificates (never commit)
+*.sql
+backup*.sql
+ca.pem
+*.pem
