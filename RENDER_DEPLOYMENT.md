@@ -9,7 +9,7 @@ Your project folders and files have been prepared and configured for **Render** 
 1. **`render.yaml` (Blueprint)**: 1-click deployment configuration for Render.
 2. **`Procfile`** (both root and `backend/`): Standard web process specification (`web: uvicorn main:app --host 0.0.0.0 --port $PORT`).
 3. **`requirements.txt`** (both root and `backend/`): Dependencies pinned with production ASGI server (`uvicorn[standard]` & `gunicorn`).
-4. **`.python-version`**: Pinned to Python `3.11.9`.
+4. **`.python-version`**: Pinned to Python `3.12` (supported by both Vercel and Render).
 5. **`.gitignore`**: Protects your secret keys and local `.env` files from being pushed to public repositories.
 6. **Dynamic Host & Port Binding**: Both `backend/main.py` and root `main.py` read `$PORT` and bind to `0.0.0.0`.
 7. **Production CORS Support**: Seamless communication between backend on Render and any frontend domain.
