@@ -26,7 +26,9 @@ app = backend_module.app
 if __name__ == "__main__":
     import os
     import uvicorn
+    is_cloud = bool(os.environ.get("PORT") or os.environ.get("RENDER"))
     port = int(os.environ.get("PORT", 8000))
-    host = os.environ.get("HOST", "0.0.0.0")
-    print(f"Starting CustomerVault on http://{host}:{port} ...")
+    host = os.environ.get("HOST", "0.0.0.0" if is_cloud else "127.0.0.1")
+    browser_host = "localhost" if host == "0.0.0.0" else host
+    print(f"Starting CustomerVault on http://{browser_host}:{port} ...")
     uvicorn.run("main:app", host=host, port=port, reload=False)

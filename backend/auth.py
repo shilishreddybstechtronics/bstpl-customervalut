@@ -18,13 +18,13 @@ if env_file.exists():
 else:
     load_dotenv(override=False)
 
-# No fallback on purpose: a key that lives in the source code is a key everybody knows.
-SECRET_KEY = os.getenv("SECRET_KEY", "")
+SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
 if len(SECRET_KEY) < 32:
-    raise RuntimeError(
-        "SECRET_KEY is missing or too short. Add a line like SECRET_KEY=<64 random characters> to your .env file.\n"
-        "Make one with:  python -c \"import secrets; print(secrets.token_hex(32))\""
-    )
+    import secrets
+    print("WARNING: SECRET_KEY is not set or shorter than 32 characters!")
+    print("Using an automatically generated ephemeral SECRET_KEY for this session.")
+    print("To keep user sessions active across restarts, add SECRET_KEY to your Render Environment tab.")
+    SECRET_KEY = secrets.token_hex(32)
 
 bearer = HTTPBearer()
 ROLES = ("admin", "standard", "limited")
@@ -96,21 +96,95 @@ def normalize_id(user_id: str) -> str:
     return clean.zfill(4) if clean.isdigit() else clean
 
 
-MASTER_ID = "0001"  # the master account: created once, can never be deleted or demoted
+MASTER_SUPER_ADMIN_ID = "0001"
+MASTER_ADMIN_IDS = {"0001", "0002", "0003", "0004"}
+ADMIN_USER_IDS = {"0005", "0006", "0007", "0008", "0009", "0010"}
+MASTER_ID = MASTER_SUPER_ADMIN_ID  # backwards compatibility
 
 
 def role_for_id(user_id: str) -> str:
     """Role mapping strictly decided by the ID number:
-    - 0001 (master), 0002, 0003: Admin (full access to everything)
-    - 0004 to 0010: Standard (full access except customer deletion)
-    - Other IDs: Limited (fetch data, edit data, add data, customer icons/photos, alerts)
+    - 0001 (Super Admin), 0002, 0003, 0004 (Master Admins): Admin
+    - 0005 through 0010 (Admin Users): Admin
+    - Other IDs (created after 0010): Limited (Regular Users)
     """
     norm = normalize_id(user_id)
-    if norm in ("0001", "0002", "0003"):
+    if norm in MASTER_ADMIN_IDS or norm in ADMIN_USER_IDS:
         return "admin"
-    if norm in ("0004", "0005", "0006", "0007", "0008", "0009", "0010"):
-        return "standard"
     return "limited"
+
+
+def get_user_category(user_id: str) -> dict:
+    """Classifies user ID into their role tier and security category."""
+    norm = normalize_id(user_id)
+    if norm == MASTER_SUPER_ADMIN_ID:
+        return {
+            "category": "super_admin",
+            "category_label": "Master Admin 0001 — Super Administrator",
+            "badge": "👑 Super Admin",
+            "is_master": True,
+        }
+    if norm in MASTER_ADMIN_IDS:
+        return {
+            "category": "master_admin",
+            "category_label": f"Master Admin ({norm})",
+            "badge": "⭐ Master Admin",
+            "is_master": True,
+        }
+    if norm in ADMIN_USER_IDS:
+        return {
+            "category": "admin_user",
+            "category_label": f"Admin User ({norm})",
+            "badge": "🛡️ Admin User",
+            "is_master": False,
+        }
+    return {
+        "category": "regular_user",
+        "category_label": f"Regular User ({norm})",
+        "badge": "👤 Regular User",
+        "is_master": False,
+    }
+
+
+def can_delete_user(actor: models.User, target: models.User) -> tuple[bool, str]:
+    """Evaluates whether actor is permitted to delete target user account.
+    RBAC Rules:
+    1. Actor cannot delete their own account.
+    2. Master Admin 0001 is protected and can NEVER be deleted by anyone.
+    3. Master Admin 0001 (Super Administrator) has full deletion authority over 0002, 0003, 0004,
+       0005-0010, and all regular users.
+    4. Master Admins 0002, 0003, and 0004 can delete Admin Users 0005-0010 and regular users,
+       but MUST NOT be allowed to delete Master Admin 0001 or one another (accounts 0001-0004).
+    5. Admin Users 0005 through 0010 must not have permission to delete any user account.
+    6. Regular users created after 0010 must not have permission to delete any user account.
+    """
+    actor_norm = normalize_id(actor.user_id)
+    target_norm = normalize_id(target.user_id)
+
+    # Rule 1: Cannot delete self
+    if actor.id == target.id or actor_norm == target_norm:
+        return False, "You cannot delete your own account."
+
+    # Rule 2: Master Admin 0001 is permanently protected against deletion
+    if target_norm == MASTER_SUPER_ADMIN_ID:
+        return False, "Master Admin 0001 (Super Administrator) is protected and can never be deleted by anyone."
+
+    # Rule 3: Master Admin 0001 has full deletion privileges
+    if actor_norm == MASTER_SUPER_ADMIN_ID:
+        return True, ""
+
+    # Rule 4: Master Admins 0002, 0003, and 0004
+    if actor_norm in MASTER_ADMIN_IDS:
+        if target_norm in MASTER_ADMIN_IDS:
+            return False, "Master Admins 0002, 0003, and 0004 cannot delete one another or Master Admin 0001."
+        return True, ""
+
+    # Rule 5: Admin Users 0005 through 0010
+    if actor_norm in ADMIN_USER_IDS:
+        return False, "Admin users (0005 through 0010) do not have permission to delete any user account."
+
+    # Rule 6: Regular Users (> 0010)
+    return False, "Regular users do not have administrative deletion privileges."
 
 
 def set_role(user: models.User, role: str):

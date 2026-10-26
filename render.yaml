@@ -8,18 +8,18 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: DB_HOST
-        sync: false
+        value: gateway01.ap-northeast-1.prod.aws.tidbcloud.com
       - key: DB_PORT
         value: "4000"
       - key: DB_USER
-        sync: false
+        value: 2qvzCb4ckY28YTR.root
       - key: DB_PASSWORD
-        sync: false
+        value: TkUlyIt79g9JLww0
       - key: DB_NAME
         value: customer_database
       - key: DB_SSL
         value: "true"
       - key: SECRET_KEY
-        generateValue: true
+        value: 60bab0872e7d08bd77521ed0576eb3be17e16a33b4e1865cb27e3cd86b1be43c
       - key: TRUST_PROXY
         value: "true"

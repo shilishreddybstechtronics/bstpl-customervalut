@@ -86,6 +86,11 @@ class UserOut(BaseModel):
     user_id: str
     is_admin: bool = False
     role: str = "limited"
+    category: Optional[str] = None
+    category_label: Optional[str] = None
+    badge: Optional[str] = None
+    is_master: Optional[bool] = False
+    can_delete: Optional[bool] = False
 
     class Config:
         from_attributes = True
@@ -166,7 +171,10 @@ class BulkIn(BaseModel):
 
 class SimDataRow(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
+    imei: Optional[str] = Field(None, max_length=100)
     iccid: str = Field("", max_length=100)
+    msisdn1: Optional[str] = Field(None, max_length=100)
+    msisdn2: Optional[str] = Field(None, max_length=100)
     sim_provider: Optional[str] = Field(None, max_length=150)
     model: Optional[str] = Field(None, max_length=150)
     activation_plan: Optional[str] = Field(None, max_length=150)
@@ -176,7 +184,7 @@ class SimDataRow(BaseModel):
     act_date: Optional[date] = None
     expiry_date: Optional[date] = None
 
-    @field_validator("iccid", "sim_provider", "model", "activation_plan", "firmware", "flash", "sim_type", mode="before")
+    @field_validator("imei", "iccid", "msisdn1", "msisdn2", "sim_provider", "model", "activation_plan", "firmware", "flash", "sim_type", mode="before")
     @classmethod
     def _clean_str(cls, v):
         return _clean_str_val(v) or ""
@@ -187,13 +195,33 @@ class SimDataRow(BaseModel):
         return _to_date(v)
 
 
+class SimDataCheckIn(BaseModel):
+    rows: list[SimDataRow] = Field(max_length=50000)
+    match_by: Optional[Literal["imei", "iccid"]] = "imei"
+    overwrite: bool = True
+    sim_provider: Optional[str] = None
+
+
 class SimDataApplyIn(BaseModel):
-    rows: list[SimDataRow] = Field(max_length=20000)
+    rows: list[SimDataRow] = Field(max_length=50000)
+    match_by: Optional[Literal["imei", "iccid"]] = "imei"
+    overwrite: bool = True
+    sim_provider: Optional[str] = None
 
 
 class BulkFetchIn(BaseModel):
-    queries: list[str] = Field(max_length=500)
+    queries: list[str] = Field(max_length=100000)
     field: Optional[str] = "all"
+    customer_id: Optional[int] = None
+    sim_type: Optional[str] = "all"
+
+
+class AddColumnIn(BaseModel):
+    column_name: str = Field(min_length=1, max_length=100)
+    target: Literal["all", "customer", "specified"] = "all"
+    customer_id: Optional[int] = None
+    imeis: Optional[list[str]] = None
+    value: Optional[str] = None
 
 
 class DeleteColumnIn(BaseModel):

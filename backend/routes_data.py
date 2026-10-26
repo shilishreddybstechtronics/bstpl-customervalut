@@ -10,7 +10,7 @@ from openpyxl.utils import get_column_letter
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import String, case, cast, func, insert, or_, desc, asc
+from sqlalchemy import String, case, cast, func, insert, or_, and_, desc, asc, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, joinedload
 
@@ -18,7 +18,7 @@ import customer_tables
 import models, schemas
 from activity import log_activity
 from auth import get_current_user, require_admin, require_staff
-from database import get_db
+from database import get_db, SessionLocal
 
 # Every route here needs a signed-in user.
 router = APIRouter(prefix="/api", dependencies=[Depends(get_current_user)])
@@ -32,16 +32,50 @@ TEXT_FIELDS = ["device_sr_no", "iccid", "msisdn1", "msisdn2", "model", "sim_prov
                "firmware", "flash"]
 
 
+def clean_str(val) -> Optional[str]:
+    if val is None:
+        return None
+    s = str(val).strip()
+    return s if s != "" else None
+
+
+def clean_iccid(val: Optional[str]) -> str:
+    if not val:
+        return ""
+    s = str(val).strip()
+    if s.endswith(".0"):
+        s = s[:-2]
+    return re.sub(r"[\s\-_]+", "", s)
+
+
+def normalize_date_input(val):
+    if not val:
+        return None
+    if isinstance(val, date):
+        return val
+    s = str(val).strip()
+    m = re.match(r"^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$", s)
+    if m:
+        try:
+            return date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+        except Exception:
+            pass
+    m2 = re.match(r"^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$", s)
+    if m2:
+        try:
+            return date(int(m2.group(1)), int(m2.group(2)), int(m2.group(3)))
+        except Exception:
+            pass
+    return None
+
+
 def escape_like(s: str) -> str:
     """So a search for 50% or a_b means those exact characters, not wildcards."""
     return s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
 def classify_sim_type(iccid: Optional[str]) -> str:
-    if not iccid:
-        return "Plastic SIM"
-    s = str(iccid).strip()
-    if s.startswith(('8901', '8988', '8986', '8991')) or len(s) == 20:
+    if iccid and str(iccid).strip():
         return "E-SIM"
     return "Plastic SIM"
 
@@ -79,6 +113,8 @@ def merge_extra(old, new):
 
 
 def out(d: Device) -> dict:
+    saved_stype = (d.sim_type or "").strip()
+    stype = saved_stype if saved_stype else ("E-SIM" if d.iccid and str(d.iccid).strip() else "Plastic SIM")
     return {
         "id": d.id, "customer_id": d.customer_id,
         "customer_name": d.customer.name if d.customer else None,
@@ -86,7 +122,7 @@ def out(d: Device) -> dict:
         "msisdn1": d.msisdn1, "msisdn2": d.msisdn2,
         "act_date": d.act_date, "expiry_date": d.expiry_date, "dispatched_date": d.dispatched_date,
         "model": d.model, "sim_provider": d.sim_provider, "activation_plan": d.activation_plan,
-        "firmware": d.firmware, "flash": d.flash, "sim_type": d.sim_type,
+        "firmware": d.firmware, "flash": d.flash, "sim_type": stype,
         "extra": d.extra or {},
         "days_left": (d.expiry_date - date.today()).days if d.expiry_date else None,
         "added_by": d.added_by, "deleted_at": d.deleted_at,
@@ -234,14 +270,29 @@ def add_customer(data: schemas.CustomerIn, db: Session = Depends(get_db),
 
 
 # ---------- devices ----------
-def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir):
+def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, sim_type="all"):
     """Search + sort shared by the table and the Excel export, so both always agree."""
     query = db.query(Device).join(Customer).options(joinedload(Device.customer)).filter(ACTIVE)
     if customer_id:
         query = query.filter(Device.customer_id == customer_id)
-    q = q.strip()
+
+    if sim_type == "esim":
+        query = query.filter(or_(
+            func.upper(Device.sim_type) == 'E-SIM',
+            and_(or_(Device.sim_type.is_(None), Device.sim_type == ''), Device.iccid.isnot(None), Device.iccid != '')
+        ))
+    elif sim_type == "plastic":
+        query = query.filter(or_(
+            func.upper(Device.sim_type).in_(['PLASTIC SIM', 'PLASTIC']),
+            and_(or_(Device.sim_type.is_(None), Device.sim_type == ''), or_(Device.iccid.is_(None), Device.iccid == ''))
+        ))
+
+    q = (q or "").strip()
     if q:
-        like = f"%{escape_like(q)}%"
+        raw_parts = [p.strip() for p in re.split(r"[,;\r\n]+", q) if p.strip()]
+        if not raw_parts:
+            raw_parts = [q]
+
         col_map = {
             "imei": Device.imei,
             "iccid": Device.iccid,
@@ -256,16 +307,39 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir):
             "flash": Device.flash,
             "sim_type": Device.sim_type,
         }
-        if column and column in col_map:
-            query = query.filter(col_map[column].like(like))
-        else:
-            cols = [Device.device_sr_no, Device.imei, Device.iccid, Device.msisdn1, Device.msisdn2, Customer.name,
-                    Device.model, Device.sim_provider, Device.activation_plan, Device.firmware, Device.flash, Device.sim_type]
-            query = query.filter(or_(*[c.like(like) for c in cols],
-                                     cast(Device.act_date, String).like(like),
-                                     cast(Device.dispatched_date, String).like(like),
-                                     cast(Device.expiry_date, String).like(like),
-                                     cast(Device.extra, String).like(like)))
+
+        term_filters = []
+        for part in raw_parts:
+            like = f"%{escape_like(part)}%"
+            norm_dt = normalize_date_input(part)
+            dt_like = f"%{norm_dt.isoformat()}%" if norm_dt else None
+
+            if column and column in col_map:
+                f_expr = col_map[column].like(like)
+                if dt_like and column in ("act_date", "expiry_date", "dispatched_date"):
+                    f_expr = or_(f_expr, col_map[column].like(dt_like))
+                term_filters.append(f_expr)
+            else:
+                cols = [Device.device_sr_no, Device.imei, Device.iccid, Device.msisdn1, Device.msisdn2, Customer.name,
+                        Device.model, Device.sim_provider, Device.activation_plan, Device.firmware, Device.flash, Device.sim_type]
+                sub_or = [c.like(like) for c in cols] + [
+                    cast(Device.act_date, String).like(like),
+                    cast(Device.dispatched_date, String).like(like),
+                    cast(Device.expiry_date, String).like(like),
+                    cast(Device.extra, String).like(like)
+                ]
+                if dt_like:
+                    sub_or.extend([
+                        cast(Device.act_date, String).like(dt_like),
+                        cast(Device.dispatched_date, String).like(dt_like),
+                        cast(Device.expiry_date, String).like(dt_like)
+                    ])
+                term_filters.append(or_(*sub_or))
+
+        if len(term_filters) == 1:
+            query = query.filter(term_filters[0])
+        elif len(term_filters) > 1:
+            query = query.filter(or_(*term_filters))
 
     sort_fields = {
         "id": Device.id,
@@ -284,10 +358,11 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir):
 
 @router.get("/devices")
 def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optional[str] = "all",
+                 sim_type: Optional[str] = "all",
                  sort_by: Optional[str] = "id", sort_dir: Optional[str] = "asc",
                  page: int = Query(1, ge=1), page_size: int = Query(100, ge=1, le=5000),
                  db: Session = Depends(get_db)):
-    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir)
+    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type)
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
     return {"total": total, "page": page, "page_size": page_size,
@@ -296,11 +371,12 @@ def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optiona
 
 @router.get("/devices/export")
 def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optional[str] = "all",
+                   sim_type: Optional[str] = "all",
                    sort_by: Optional[str] = "id", sort_dir: Optional[str] = "asc",
                    title: str = "Customer_Inventory_Export",
                    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     """EVERY record that matches the current filters (not just one page) as an Excel file."""
-    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir)
+    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type)
     extra_cols = [n for (n,) in db.query(models.ColumnRegistry.name).order_by(models.ColumnRegistry.name)]
     headers = ["ID"] + [label for _, label in EXPORT_COLS] + extra_cols
     rows, offset, batch = [], 0, 2000
@@ -327,47 +403,152 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
 @router.post("/devices/bulk/validate")
 def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
     imeis = [r.imei.strip() for r in data.rows if r.imei]
-    existing = set()  # only ACTIVE records count: a device sitting in the recycle bin can be uploaded again
+    sr_nos = [r.device_sr_no.strip() for r in data.rows if r.device_sr_no]
+    iccids = [r.iccid.strip() for r in data.rows if r.iccid]
+
+    existing_imeis = set()
     for i in range(0, len(imeis), 2000):
         for (v,) in db.query(Device.imei).filter(Device.imei.in_(imeis[i:i + 2000]), ACTIVE):
-            existing.add(v)
+            existing_imeis.add(v)
 
-    seen = set()
+    existing_sr_nos = set()
+    for i in range(0, len(sr_nos), 2000):
+        for (v,) in db.query(Device.device_sr_no).filter(Device.device_sr_no.in_(sr_nos[i:i + 2000]), ACTIVE):
+            existing_sr_nos.add(v)
+
+    existing_iccids = set()
+    for i in range(0, len(iccids), 2000):
+        for (v,) in db.query(Device.iccid).filter(Device.iccid.in_(iccids[i:i + 2000]), ACTIVE):
+            existing_iccids.add(v)
+
+    known_custs = {c.name.lower() for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
+    known_cols = {n.lower() for (n,) in db.query(models.ColumnRegistry.name)}
+    known_cols.update(c.lower() for c in BASE_COLUMNS)
+
+    seen_imeis, seen_sr_nos, seen_iccids = set(), set(), set()
     valid, duplicates, invalids = [], [], []
+    new_customers = set()
+    new_columns = set()
+    missing_columns = set()
+    esim_count = 0
+    plastic_count = 0
+
+    has_imei_any = any(bool(r.imei) for r in data.rows)
+    has_sr_any = any(bool(r.device_sr_no) for r in data.rows)
+    if not has_imei_any:
+        missing_columns.add("IMEI")
+    if not has_sr_any:
+        missing_columns.add("Device Sr No")
 
     for idx, r in enumerate(data.rows, start=1):
         errs = []
+        cname = str(r.customer_name or "").strip()
+        if not cname:
+            errs.append("Missing or bad Customer Name")
+        elif len(cname) > 100 or re.search(r"[;\`\'\"]", cname):
+            errs.append("Customer name contains invalid characters or exceeds 100 characters")
+        elif cname.lower() not in known_custs:
+            new_customers.add(cname)
+
         if not r.imei:
             errs.append("Missing IMEI")
-        if not r.customer_name:
-            errs.append("Missing Customer Name")
+        elif len(r.imei) > 255:
+            errs.append("IMEI exceeds 255 characters")
+
+        for fld, name in [
+            (r.device_sr_no, "Device Sr No"),
+            (r.iccid, "ICCID"),
+            (r.msisdn1, "MSISDN1"),
+            (r.msisdn2, "MSISDN2"),
+            (r.model, "Model"),
+            (r.sim_provider, "SIM Provider"),
+            (r.activation_plan, "Activation Plan"),
+            (r.firmware, "Firmware"),
+            (r.flash, "Flash"),
+        ]:
+            if fld and len(str(fld)) > 255:
+                errs.append(f"{name} exceeds 255 characters")
+
         if r.act_date and r.expiry_date and r.expiry_date < r.act_date:
-            errs.append("Expiry date is before Activation date")
-        if r.imei and (len(r.imei) != 15 or not r.imei.isdigit()):
-            errs.append("IMEI should be 15 digits")
+            errs.append("Bad date sequence: Expiry date is before Activation date")
+
+        # Check column names in extra
+        if r.extra and isinstance(r.extra, dict):
+            for k, v in r.extra.items():
+                k_clean = str(k).strip()
+                if not re.match(r"^[a-zA-Z0-9_\s-]+$", k_clean) or len(k_clean) > 64:
+                    errs.append(f"Invalid column name '{k_clean}'")
+                elif k_clean.lower() not in known_cols:
+                    new_columns.add(k_clean)
+                if v and len(str(v)) > 255:
+                    errs.append(f"Value for '{k_clean}' exceeds 255 characters")
+
+        stype = r.sim_type or ("E-SIM" if r.iccid else "Plastic SIM")
+        if stype == "E-SIM":
+            esim_count += 1
+        else:
+            plastic_count += 1
 
         row_dict = r.model_dump()
-        row_dict["sim_type"] = r.sim_type or classify_sim_type(r.iccid)
+        row_dict["sim_type"] = stype
         row_dict["row_num"] = idx
 
         if errs:
-            row_dict["errors"] = errs
+            row_dict["status"] = "Invalid"
+            row_dict["reason"] = "; ".join(errs)
             invalids.append(row_dict)
-        elif r.imei in seen or r.imei in existing:
-            row_dict["reason"] = "Already in database" if r.imei in existing else "Duplicate in this file"
+        elif r.imei and r.imei in seen_imeis:
+            row_dict["status"] = "Duplicate"
+            row_dict["reason"] = "Duplicate IMEI repeats earlier in this file"
             duplicates.append(row_dict)
-            seen.add(r.imei)
+        elif r.imei and r.imei in existing_imeis:
+            row_dict["status"] = "Duplicate"
+            row_dict["reason"] = "IMEI already exists under a customer in database"
+            duplicates.append(row_dict)
+        elif r.device_sr_no and r.device_sr_no in seen_sr_nos:
+            row_dict["status"] = "Duplicate"
+            row_dict["reason"] = "Duplicate Device Sr No repeats earlier in this file"
+            duplicates.append(row_dict)
+        elif r.device_sr_no and r.device_sr_no in existing_sr_nos:
+            row_dict["status"] = "Duplicate"
+            row_dict["reason"] = "Device Sr No already exists under a customer in database"
+            duplicates.append(row_dict)
+        elif r.iccid and r.iccid in seen_iccids:
+            row_dict["status"] = "Duplicate"
+            row_dict["reason"] = "Duplicate ICCID repeats earlier in this file"
+            duplicates.append(row_dict)
+        elif r.iccid and r.iccid in existing_iccids:
+            row_dict["status"] = "Duplicate"
+            row_dict["reason"] = "ICCID already exists under a customer in database"
+            duplicates.append(row_dict)
         else:
-            seen.add(r.imei)
+            row_dict["status"] = "Valid"
+            row_dict["reason"] = "Ready to upload"
             valid.append(row_dict)
+
+        if r.imei:
+            seen_imeis.add(r.imei)
+        if r.device_sr_no:
+            seen_sr_nos.add(r.device_sr_no)
+        if r.iccid:
+            seen_iccids.add(r.iccid)
+
+    all_rows = valid + duplicates + invalids
+    all_rows.sort(key=lambda x: x.get("row_num", 0))
 
     return {
         "valid_count": len(valid),
         "duplicate_count": len(duplicates),
         "invalid_count": len(invalids),
-        "valid_sample": valid[:50],
-        "duplicates": duplicates[:20000],
-        "invalids": invalids[:20000]
+        "esim_count": esim_count,
+        "plastic_count": plastic_count,
+        "new_customers": sorted(list(new_customers)),
+        "new_columns": sorted(list(new_columns)),
+        "missing_columns_warning": list(missing_columns),
+        "valid_sample": valid[:200],
+        "duplicates": duplicates[:200],
+        "invalids": invalids[:200],
+        "all_sample": all_rows[:200]
     }
 
 
@@ -463,7 +644,8 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                         if val is not None and val != "":
                             setattr(d, f, str(val)[:150])
                     if extra:
-                        merged = {**(d.extra or {}), **extra}
+                        non_blank = {k: v for k, v in extra.items() if v is not None and str(v).strip() != ""}
+                        merged = {**(d.extra or {}), **non_blank}
                         d.extra = merged or None
                     if d.deleted_at:
                         d.deleted_at = d.deleted_by = d.delete_reason = None
@@ -537,85 +719,544 @@ def add_device(data: schemas.DeviceIn, db: Session = Depends(get_db),
     return res
 
 
+def clean_imei(val) -> str:
+    if not val:
+        return ""
+    s = str(val).strip()
+    if re.search(r"e\+", s, re.I):
+        try:
+            return str(int(float(s)))
+        except Exception:
+            pass
+    s = re.sub(r"[^0-9A-Za-z]", "", s)
+    return s.strip()
+
+
+@router.post("/simdata/check")
+def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
+                    user: models.User = Depends(get_current_user)):
+    rows = data.rows
+    overwrite = data.overwrite
+    chosen_provider = (data.sim_provider or "").strip()
+    match_by = (data.match_by or "imei").lower()
+    if match_by not in ("imei", "iccid"):
+        match_by = "imei"
+
+    # Verify that either a provider or at least one data column is provided
+    has_any_data = any(
+        (r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.model or r.firmware or r.flash or r.activation_plan or r.sim_type or r.sim_provider or (r.iccid if match_by == "imei" else r.imei))
+        for r in rows
+    )
+    if not chosen_provider and not has_any_data:
+        raise HTTPException(400, "Refused: The file contains no MSISDN, date, or SIM data columns and no SIM Provider was selected.")
+
+    total_file_rows = len(rows)
+    skipped_rows = 0
+    file_sims = {}
+    repeated_count = 0
+    unreadable_dates = 0
+
+    for r in rows:
+        if match_by == "imei":
+            key_val = clean_imei(r.imei)
+            raw_key = key_val
+            if not key_val or len(key_val) < 5:
+                skipped_rows += 1
+                continue
+            match_key = key_val
+        else:
+            raw_iccid = clean_iccid(r.iccid)
+            if not raw_iccid or len(raw_iccid) < 5:
+                skipped_rows += 1
+                continue
+            raw_key = raw_iccid
+            match_key = raw_iccid[:19] if len(raw_iccid) >= 19 else raw_iccid
+
+        row_dict = {
+            "raw_key": raw_key,
+            "raw_imei": clean_imei(r.imei),
+            "raw_iccid": clean_iccid(r.iccid),
+            "msisdn1": clean_str(r.msisdn1),
+            "msisdn2": clean_str(r.msisdn2),
+            "act_date": r.act_date,
+            "expiry_date": r.expiry_date,
+            "sim_provider": chosen_provider or clean_str(r.sim_provider)
+        }
+
+        if match_key in file_sims:
+            repeated_count += 1
+            existing = file_sims[match_key]
+            for f in ("msisdn1", "msisdn2", "act_date", "expiry_date", "sim_provider", "raw_iccid", "raw_imei"):
+                if not existing.get(f) and row_dict.get(f):
+                    existing[f] = row_dict[f]
+        else:
+            file_sims[match_key] = row_dict
+
+    all_keys = list(file_sims.keys())
+    matched_devices = []
+    chunk_size = 1000
+    for i in range(0, len(all_keys), chunk_size):
+        sub_keys = all_keys[i:i + chunk_size]
+        if match_by == "imei":
+            found = db.query(Device).options(joinedload(Device.customer)).filter(
+                ACTIVE,
+                Device.imei.in_(sub_keys)
+            ).all()
+        else:
+            found = db.query(Device).options(joinedload(Device.customer)).filter(
+                ACTIVE,
+                or_(
+                    Device.iccid.in_(sub_keys),
+                    func.left(Device.iccid, 19).in_(sub_keys)
+                )
+            ).all()
+        matched_devices.extend(found)
+
+    devs_by_key = {}
+    for d in matched_devices:
+        if match_by == "imei":
+            if not d.imei:
+                continue
+            k = clean_imei(d.imei)
+            devs_by_key.setdefault(k, []).append(d)
+        else:
+            if not d.iccid:
+                continue
+            c_iccid = clean_iccid(d.iccid)
+            d_key = c_iccid[:19] if len(c_iccid) >= 19 else c_iccid
+            devs_by_key.setdefault(d_key, []).append(d)
+
+    keys_found_set = set()
+    records_matched = 0
+    records_to_update = 0
+    records_already_same = 0
+    sample_changes = []
+    detailed_comparison = []
+    cust_stats = {}
+
+    for key, frow in file_sims.items():
+        dev_list = devs_by_key.get(key, [])
+        if not dev_list:
+            continue
+
+        keys_found_set.add(frow["raw_key"])
+        records_matched += len(dev_list)
+
+        for d in dev_list:
+            cid = d.customer_id
+            cname = d.customer.name if d.customer else "Unknown"
+            if cid not in cust_stats:
+                cust_stats[cid] = {
+                    "customer_id": cid,
+                    "customer_name": cname,
+                    "matched_count": 0,
+                    "to_update_count": 0,
+                    "already_same_count": 0,
+                    "msisdn1_changes": 0,
+                    "msisdn2_changes": 0,
+                    "act_date_changes": 0,
+                    "expiry_date_changes": 0,
+                    "sim_provider_changes": 0,
+                    "iccid_changes": 0
+                }
+            cs = cust_stats[cid]
+            cs["matched_count"] += 1
+
+            has_change = False
+            changed_fields_list = []
+            changed_labels_list = []
+
+            # Compare activation date, expiry date, msisdn1, msisdn2, sim_provider
+            fields_to_check = [
+                ("act_date", "ACT DATE"),
+                ("expiry_date", "EXP DATE"),
+                ("msisdn1", "MSISDN1"),
+                ("msisdn2", "MSISDN2"),
+            ]
+            if chosen_provider or frow.get("sim_provider"):
+                fields_to_check.append(("sim_provider", "SIM PROVIDER"))
+            if match_by == "imei" and frow.get("raw_iccid"):
+                fields_to_check.append(("iccid", "ICCID"))
+
+            field_diff_details = {}
+
+            for field_name, label in fields_to_check:
+                if field_name == "iccid":
+                    file_val = frow.get("raw_iccid")
+                else:
+                    file_val = frow.get(field_name)
+
+                curr_val = getattr(d, field_name, None)
+                curr_str = curr_val.isoformat() if isinstance(curr_val, date) else str(curr_val or "").strip()
+                new_str = file_val.isoformat() if isinstance(file_val, date) else str(file_val or "").strip()
+
+                if file_val is None or file_val == "":
+                    # Empty in file -> keep existing unchanged
+                    field_diff_details[field_name] = {
+                        "old": curr_str or "—",
+                        "new": curr_str or "—",
+                        "changed": False
+                    }
+                    continue
+
+                is_changed = False
+                if overwrite:
+                    if curr_str != new_str:
+                        is_changed = True
+                else:
+                    if not curr_str and new_str:
+                        is_changed = True
+
+                field_diff_details[field_name] = {
+                    "old": curr_str or "—",
+                    "new": new_str or "—",
+                    "changed": is_changed
+                }
+
+                if is_changed:
+                    has_change = True
+                    changed_fields_list.append(field_name)
+                    changed_labels_list.append(label)
+                    stat_key = f"{field_name}_changes"
+                    if stat_key in cs:
+                        cs[stat_key] += 1
+                    if len(sample_changes) < 300:
+                        sample_changes.append({
+                            "customer_name": cname,
+                            "imei": d.imei,
+                            "iccid": d.iccid,
+                            "field": label,
+                            "old_val": curr_str or "—",
+                            "new_val": new_str
+                        })
+
+            if has_change:
+                records_to_update += 1
+                cs["to_update_count"] += 1
+            else:
+                records_already_same += 1
+                cs["already_same_count"] += 1
+
+            if len(detailed_comparison) < 500:
+                detailed_comparison.append({
+                    "imei": d.imei or "—",
+                    "iccid": d.iccid or "—",
+                    "customer_name": cname,
+                    "status": "different" if has_change else "same",
+                    "changed_fields": changed_fields_list,
+                    "changed_labels": changed_labels_list,
+                    "act_date": field_diff_details.get("act_date", {"old": "—", "new": "—", "changed": False}),
+                    "expiry_date": field_diff_details.get("expiry_date", {"old": "—", "new": "—", "changed": False}),
+                    "msisdn1": field_diff_details.get("msisdn1", {"old": "—", "new": "—", "changed": False}),
+                    "msisdn2": field_diff_details.get("msisdn2", {"old": "—", "new": "—", "changed": False}),
+                    "sim_provider": field_diff_details.get("sim_provider", {"old": d.sim_provider or "—", "new": frow.get("sim_provider") or d.sim_provider or "—", "changed": field_diff_details.get("sim_provider", {}).get("changed", False)})
+                })
+
+    not_found_keys = [frow["raw_key"] for key, frow in file_sims.items() if frow["raw_key"] not in keys_found_set]
+    columns_to_create = ["MSISDN1", "MSISDN2", "ACT DATE", "EXP DATE", "SIM PROVIDER"]
+
+    return {
+        "file_rows_count": total_file_rows,
+        "match_by": match_by,
+        "keys_found_count": len(keys_found_set),
+        "iccids_found": len(keys_found_set),
+        "records_matched": records_matched,
+        "records_to_update": records_to_update,
+        "records_already_same": records_already_same,
+        "not_found_keys_count": len(not_found_keys),
+        "iccids_not_found_count": len(not_found_keys),
+        "not_found_keys": not_found_keys,
+        "iccids_not_found": not_found_keys,
+        "skipped_rows": skipped_rows,
+        "repeated_keys_count": repeated_count,
+        "repeated_iccids_count": repeated_count,
+        "unreadable_dates_count": unreadable_dates,
+        "columns_to_create": columns_to_create,
+        "customer_breakdown": sorted(list(cust_stats.values()), key=lambda x: x["customer_name"]),
+        "sample_changes": sample_changes,
+        "detailed_comparison": detailed_comparison
+    }
+
+
 @router.post("/simdata/apply")
 def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                    user: models.User = Depends(get_current_user)):
-    iccids = [r.iccid.strip() for r in data.rows if r.iccid and len(r.iccid.strip()) >= 5]
-    devices = []
-    for i in range(0, len(iccids), 2000):
-        devices += db.query(Device).filter(ACTIVE, Device.iccid.in_(iccids[i:i + 2000])).all()
-    dev_by_iccid = {d.iccid: d for d in devices}
+    rows = data.rows
+    overwrite = data.overwrite
+    chosen_provider = (data.sim_provider or "").strip()
+    match_by = (data.match_by or "imei").lower()
+    if match_by not in ("imei", "iccid"):
+        match_by = "imei"
 
-    updated, unmatched = 0, []
-    for r in data.rows:
-        try:
-            if not r.iccid or len(r.iccid.strip()) < 5:
+    has_any_data = any(
+        (r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.sim_provider or (r.iccid if match_by == "imei" else r.imei))
+        for r in rows
+    )
+    if not chosen_provider and not has_any_data:
+        raise HTTPException(400, "Refused: No data columns and no SIM Provider specified.")
+
+    file_sims = {}
+    for r in rows:
+        if match_by == "imei":
+            key_val = clean_imei(r.imei)
+            raw_key = key_val
+            if not key_val or len(key_val) < 5:
                 continue
-            iccid = r.iccid.strip()
-            if iccid in dev_by_iccid:
-                d = dev_by_iccid[iccid]
-                if r.sim_provider: d.sim_provider = str(r.sim_provider)[:150]
-                if r.model: d.model = str(r.model)[:150]
-                if r.activation_plan: d.activation_plan = str(r.activation_plan)[:150]
-                if r.firmware: d.firmware = str(r.firmware)[:150]
-                if r.flash: d.flash = str(r.flash)[:150]
-                if r.sim_type: d.sim_type = str(r.sim_type)[:100]
-                elif not d.sim_type: d.sim_type = classify_sim_type(iccid)
-                if r.act_date: d.act_date = r.act_date
-                if r.expiry_date: d.expiry_date = r.expiry_date
-                updated += 1
-            else:
-                unmatched.append(iccid)
-        except Exception as e:
-            print(f"Skipping invalid SIM row: {e}")
+            match_key = key_val
+        else:
+            raw_iccid = clean_iccid(r.iccid)
+            if not raw_iccid or len(raw_iccid) < 5:
+                continue
+            raw_key = raw_iccid
+            match_key = raw_iccid[:19] if len(raw_iccid) >= 19 else raw_iccid
+
+        row_dict = {
+            "raw_key": raw_key,
+            "raw_imei": clean_imei(r.imei),
+            "raw_iccid": clean_iccid(r.iccid),
+            "msisdn1": clean_str(r.msisdn1),
+            "msisdn2": clean_str(r.msisdn2),
+            "act_date": r.act_date,
+            "expiry_date": r.expiry_date,
+            "sim_provider": chosen_provider or clean_str(r.sim_provider)
+        }
+        if match_key in file_sims:
+            existing = file_sims[match_key]
+            for f in ("msisdn1", "msisdn2", "act_date", "expiry_date", "sim_provider", "raw_iccid", "raw_imei"):
+                if not existing.get(f) and row_dict.get(f):
+                    existing[f] = row_dict[f]
+        else:
+            file_sims[match_key] = row_dict
+
+    all_keys = list(file_sims.keys())
+    matched_devices = []
+    chunk_size = 1000
+    for i in range(0, len(all_keys), chunk_size):
+        sub_keys = all_keys[i:i + chunk_size]
+        if match_by == "imei":
+            found = db.query(Device).options(joinedload(Device.customer)).filter(
+                ACTIVE,
+                Device.imei.in_(sub_keys)
+            ).all()
+        else:
+            found = db.query(Device).options(joinedload(Device.customer)).filter(
+                ACTIVE,
+                or_(
+                    Device.iccid.in_(sub_keys),
+                    func.left(Device.iccid, 19).in_(sub_keys)
+                )
+            ).all()
+        matched_devices.extend(found)
+
+    devs_by_key = {}
+    for d in matched_devices:
+        if match_by == "imei":
+            if not d.imei:
+                continue
+            k = clean_imei(d.imei)
+            devs_by_key.setdefault(k, []).append(d)
+        else:
+            if not d.iccid:
+                continue
+            c_iccid = clean_iccid(d.iccid)
+            d_key = c_iccid[:19] if len(c_iccid) >= 19 else c_iccid
+            devs_by_key.setdefault(d_key, []).append(d)
+
+    updated_count = 0
+    matched_keys = set()
+    mirror_items = []
+
+    for key, frow in file_sims.items():
+        dev_list = devs_by_key.get(key, [])
+        if not dev_list:
             continue
 
-    log_activity(db, "simdata_apply", f"Updated {updated} devices from SIM provider data ({len(unmatched)} unmatched)", user=user)
+        matched_keys.add(frow["raw_key"])
+
+        for d in dev_list:
+            changed = False
+            for field in ("msisdn1", "msisdn2", "act_date", "expiry_date", "sim_provider"):
+                val = frow.get(field)
+                if val is not None and val != "":
+                    curr = getattr(d, field)
+                    if overwrite:
+                        if curr != val:
+                            setattr(d, field, val)
+                            changed = True
+                    else:
+                        if curr is None or curr == "":
+                            setattr(d, field, val)
+                            changed = True
+
+            if match_by == "imei" and frow.get("raw_iccid"):
+                curr_iccid = clean_iccid(d.iccid)
+                new_iccid = frow["raw_iccid"]
+                if overwrite:
+                    if curr_iccid != new_iccid:
+                        d.iccid = new_iccid
+                        changed = True
+                else:
+                    if not curr_iccid and new_iccid:
+                        d.iccid = new_iccid
+                        changed = True
+            elif match_by == "iccid" and overwrite and len(dev_list) == 1:
+                curr_iccid = clean_iccid(d.iccid)
+                new_iccid = frow["raw_iccid"]
+                if curr_iccid != new_iccid and len(new_iccid) > len(curr_iccid):
+                    d.iccid = new_iccid
+                    changed = True
+
+            if changed:
+                updated_count += 1
+                cust_id = d.customer_id
+                cust_name = d.customer.name if d.customer else ""
+                row_mirror = {
+                    "imei": d.imei,
+                    "customer_name": cust_name,
+                    "device_sr_no": d.device_sr_no,
+                    "iccid": d.iccid,
+                    "msisdn1": d.msisdn1,
+                    "msisdn2": d.msisdn2,
+                    "act_date": d.act_date,
+                    "expiry_date": d.expiry_date,
+                    "dispatched_date": d.dispatched_date,
+                    "model": d.model,
+                    "sim_provider": d.sim_provider,
+                    "activation_plan": d.activation_plan,
+                    "firmware": d.firmware,
+                    "flash": d.flash,
+                    "sim_type": d.sim_type,
+                    "extra": d.extra or {}
+                }
+                mirror_items.append((cust_id, cust_name, row_mirror))
+
+    unmatched_keys = [frow["raw_key"] for key, frow in file_sims.items() if frow["raw_key"] not in matched_keys]
+
     db.commit()
-    return {"updated": updated, "unmatched_count": len(unmatched), "unmatched_iccids": unmatched[:5000]}
+
+    if mirror_items:
+        try:
+            customer_tables.mirror_rows(mirror_items)
+        except Exception as me:
+            print(f"Mirroring SIM updates to customer tables warning: {me}")
+
+    log_activity(db, "simdata_apply",
+                 f"Updated {updated_count} devices matched by {match_by.upper()} from SIM provider {chosen_provider or 'file'} ({len(unmatched_keys)} unmatched)",
+                 user=user)
+    db.commit()
+
+    return {
+        "updated": updated_count,
+        "match_by": match_by,
+        "unmatched_count": len(unmatched_keys),
+        "unmatched_keys": unmatched_keys,
+        "unmatched_iccids": unmatched_keys
+    }
 
 
 @router.post("/fetch/bulk")
 def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
-    terms = [q.strip() for q in data.queries if q.strip()]
-    if not terms:
-        return {"exact_matches": [], "similar_matches": [], "total_matches": 0}
+    raw_terms = [q.strip() for q in data.queries if q.strip()]
+    if not raw_terms:
+        return {
+            "exact_matches": [], "similar_matches": [],
+            "total_matches": 0, "values_searched_count": 0,
+            "values_found_count": 0, "not_found_values": []
+        }
+
+    seen = set()
+    terms = []
+    for t in raw_terms:
+        if t not in seen:
+            seen.add(t)
+            terms.append(t)
 
     field = data.field or "all"
-    query = db.query(Device).options(joinedload(Device.customer)).filter(ACTIVE)
+    cust_id = data.customer_id
+    sim_type = data.sim_type or "all"
 
-    if field == "imei":
-        exact_query = query.filter(Device.imei.in_(terms))
-    elif field == "iccid":
-        exact_query = query.filter(Device.iccid.in_(terms))
-    elif field == "device_sr_no":
-        exact_query = query.filter(Device.device_sr_no.in_(terms))
-    elif field == "msisdn1":
-        exact_query = query.filter(Device.msisdn1.in_(terms))
-    else:
-        exact_query = query.filter(or_(
-            Device.imei.in_(terms),
-            Device.iccid.in_(terms),
-            Device.device_sr_no.in_(terms),
-            Device.msisdn1.in_(terms),
-            Device.msisdn2.in_(terms)
+    base_query = db.query(Device).options(joinedload(Device.customer)).filter(ACTIVE)
+    if cust_id:
+        base_query = base_query.filter(Device.customer_id == cust_id)
+
+    if sim_type == "esim":
+        base_query = base_query.filter(or_(
+            func.upper(Device.sim_type) == 'E-SIM',
+            and_(or_(Device.sim_type.is_(None), Device.sim_type == ''), Device.iccid.isnot(None), Device.iccid != '')
         ))
-    exact_items = exact_query.all()
-    exact_set = {d.id for d in exact_items}
+    elif sim_type == "plastic":
+        base_query = base_query.filter(or_(
+            func.upper(Device.sim_type).in_(['PLASTIC SIM', 'PLASTIC']),
+            and_(or_(Device.sim_type.is_(None), Device.sim_type == ''), or_(Device.iccid.is_(None), Device.iccid == ''))
+        ))
 
+    exact_items = []
+    chunk_size = 2000
+    for i in range(0, len(terms), chunk_size):
+        sub_terms = terms[i:i + chunk_size]
+        q = base_query
+        if field == "imei":
+            q = q.filter(Device.imei.in_(sub_terms))
+        elif field == "iccid":
+            clean_terms = [clean_iccid(x) for x in sub_terms]
+            p19 = [c[:19] for c in clean_terms if len(c) >= 19]
+            iccid_conds = [Device.iccid.in_(sub_terms), Device.iccid.in_(clean_terms)]
+            if p19:
+                iccid_conds.append(func.left(Device.iccid, 19).in_(p19))
+            q = q.filter(or_(*iccid_conds))
+        elif field == "device_sr_no":
+            q = q.filter(Device.device_sr_no.in_(sub_terms))
+        elif field == "msisdn1":
+            q = q.filter(Device.msisdn1.in_(sub_terms))
+        elif field == "customer_name":
+            q = q.join(Customer).filter(Customer.name.in_(sub_terms))
+        else:
+            q = q.filter(or_(
+                Device.imei.in_(sub_terms),
+                Device.iccid.in_(sub_terms),
+                Device.device_sr_no.in_(sub_terms),
+                Device.msisdn1.in_(sub_terms),
+                Device.msisdn2.in_(sub_terms)
+            ))
+        exact_items.extend(q.all())
+
+    exact_ids = {d.id for d in exact_items}
+
+    matched_term_set = set()
+    for d in exact_items:
+        for t in (d.imei, d.iccid, d.device_sr_no, d.msisdn1, d.msisdn2, (d.customer.name if d.customer else "")):
+            if t and t in seen:
+                matched_term_set.add(t)
+            elif t and clean_iccid(t) in seen:
+                matched_term_set.add(clean_iccid(t))
+
+    unmatched_terms = [t for t in terms if t not in matched_term_set]
     similar_items = []
-    if len(terms) <= 20:
-        for t in terms:
-            like = f"%{escape_like(t)}%"
-            sim_q = query.filter(or_(
+    similar_terms_to_check = unmatched_terms[:300]
+
+    for t in similar_terms_to_check:
+        like = f"%{escape_like(t)}%"
+        sim_q = base_query
+        if field == "imei":
+            sim_q = sim_q.filter(Device.imei.like(like))
+        elif field == "iccid":
+            sim_q = sim_q.filter(Device.iccid.like(like))
+        elif field == "customer_name":
+            sim_q = sim_q.join(Customer).filter(Customer.name.like(like))
+        else:
+            sim_q = sim_q.filter(or_(
                 Device.imei.like(like),
                 Device.iccid.like(like),
                 Device.device_sr_no.like(like),
                 Device.msisdn1.like(like)
-            )).limit(10).all()
-            for s in sim_q:
-                if s.id not in exact_set and s.id not in {x.id for x in similar_items}:
-                    similar_items.append(s)
+            ))
+        found = sim_q.limit(10).all()
+        for s in found:
+            if s.id not in exact_ids and s.id not in {x.id for x in similar_items}:
+                similar_items.append(s)
+                matched_term_set.add(t)
+
+    not_found_values = [t for t in terms if t not in matched_term_set]
 
     all_returned = exact_items + similar_items
     all_imeis = [d.imei for d in all_returned if d.imei]
@@ -639,7 +1280,10 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
     return {
         "exact_matches": exact_res,
         "similar_matches": similar_res,
-        "total_matches": len(exact_res) + len(similar_res)
+        "total_matches": len(exact_res) + len(similar_res),
+        "values_searched_count": len(terms),
+        "values_found_count": len(terms) - len(not_found_values),
+        "not_found_values": not_found_values
     }
 
 
@@ -820,6 +1464,120 @@ def export_excel(data: schemas.ExportIn, db: Session = Depends(get_db), user: mo
     )
 
 
+@router.post("/columns/add")
+def add_column(data: schemas.AddColumnIn, db: Session = Depends(get_db),
+               user: models.User = Depends(get_current_user)):
+    col_name = data.column_name.strip()
+    if not col_name:
+        raise HTTPException(400, "Column name cannot be blank.")
+    norm = col_name.lower().replace(' ', '_')
+    if norm in BASE_COLUMNS:
+        raise HTTPException(400, f"'{col_name}' is a core system column and cannot be added as a custom column.")
+
+    # 1. Register the column in ColumnRegistry
+    register_columns(db, [col_name])
+
+    # 2. Select target devices
+    query = db.query(Device).options(joinedload(Device.customer)).filter(ACTIVE)
+    if data.target == "customer" and data.customer_id:
+        query = query.filter(Device.customer_id == data.customer_id)
+    elif data.target == "specified":
+        raw_imeis = data.imeis or []
+        cleaned_imeis = [re.sub(r"\D", "", str(s)) for s in raw_imeis if re.sub(r"\D", "", str(s))]
+        if not cleaned_imeis:
+            raise HTTPException(400, "Please provide at least one valid IMEI for specified entries.")
+        query = query.filter(Device.imei.in_(cleaned_imeis))
+        if data.customer_id:
+            query = query.filter(Device.customer_id == data.customer_id)
+    elif data.target == "all" and data.customer_id:
+        query = query.filter(Device.customer_id == data.customer_id)
+
+    val_to_set = str(data.value).strip() if data.value is not None else ""
+    if data.value is None or (data.target != "specified" and not val_to_set):
+        db.commit()
+        log_activity(db, "column_add", f"Added column '{col_name}'", user=user)
+        return {"column": col_name, "value": None, "records_affected": 0}
+
+    # 2. Fast SQL JSON_SET update
+    json_path = f"$.\"{col_name}\""
+    where_clauses = ["deleted_at IS NULL"]
+    params = {"path": json_path, "val": val_to_set}
+
+    if data.target == "customer" and data.customer_id:
+        where_clauses.append("customer_id = :cid")
+        params["cid"] = data.customer_id
+    elif data.target == "specified":
+        raw_imeis = data.imeis or []
+        cleaned_imeis = [re.sub(r"\D", "", str(s)) for s in raw_imeis if re.sub(r"\D", "", str(s))]
+        if not cleaned_imeis:
+            raise HTTPException(400, "Please provide at least one valid IMEI for specified entries.")
+        where_clauses.append("imei IN :imeis")
+        params["imeis"] = tuple(cleaned_imeis)
+        if data.customer_id:
+            where_clauses.append("customer_id = :cid")
+            params["cid"] = data.customer_id
+    elif data.target == "all" and data.customer_id:
+        where_clauses.append("customer_id = :cid")
+        params["cid"] = data.customer_id
+
+    sql = f"UPDATE sim_devices SET extra = JSON_SET(COALESCE(extra, '{{}}'), :path, :val) WHERE {' AND '.join(where_clauses)}"
+    res = db.execute(text(sql), params)
+    count_affected = res.rowcount
+    db.commit()
+
+    # 3. Mirror to customer tables
+    if data.target == "customer" and data.customer_id:
+        cust = db.query(models.Customer).filter(models.Customer.id == data.customer_id).first()
+        if cust:
+            def _mirror_cust(cid, cname, col, v):
+                try:
+                    with customer_tables.engine.begin() as conn:
+                        t = customer_tables.ensure_table(conn, cid, cname, [col])
+                        c_col = customer_tables.extra_col(col)
+                        conn.execute(text(f"UPDATE `{t}` SET `{c_col}` = :v"), {"v": v})
+                except Exception as e:
+                    print(f"Error updating customer table for column add: {e}")
+            import threading
+            threading.Thread(target=_mirror_cust, args=(cust.id, cust.name, col_name, val_to_set), daemon=True).start()
+    elif data.target == "specified":
+        cleaned_imeis = [re.sub(r"\D", "", str(s)) for s in (data.imeis or []) if re.sub(r"\D", "", str(s))]
+        if cleaned_imeis:
+            def _mirror_specified(imeis_list):
+                try:
+                    with SessionLocal() as s_db:
+                        devs = s_db.query(Device).options(joinedload(Device.customer)).filter(Device.imei.in_(imeis_list), ACTIVE).all()
+                        m_items = []
+                        for d in devs:
+                            cname = d.customer.name if d.customer else "Unknown"
+                            r_dict = {
+                                "imei": d.imei,
+                                "device_sr_no": d.device_sr_no,
+                                "iccid": d.iccid,
+                                "msisdn1": d.msisdn1,
+                                "msisdn2": d.msisdn2,
+                                "act_date": d.act_date,
+                                "expiry_date": d.expiry_date,
+                                "dispatched_date": d.dispatched_date,
+                                "model": d.model,
+                                "sim_provider": d.sim_provider,
+                                "activation_plan": d.activation_plan,
+                                "firmware": d.firmware,
+                                "flash": d.flash,
+                                "sim_type": d.sim_type,
+                                "extra": dict(d.extra or {})
+                            }
+                            m_items.append((d.customer_id, cname, r_dict))
+                        if m_items:
+                            customer_tables.mirror_rows(m_items)
+                except Exception as e:
+                    print(f"Error mirroring specified items: {e}")
+            import threading
+            threading.Thread(target=_mirror_specified, args=(cleaned_imeis,), daemon=True).start()
+
+    log_activity(db, "column_add", f"Added column '{col_name}' (value '{val_to_set}' applied to {count_affected} records)", user=user)
+    return {"column": col_name, "value": val_to_set, "records_affected": count_affected}
+
+
 @router.post("/columns/delete", dependencies=[Depends(require_admin)])
 def delete_column(data: schemas.DeleteColumnIn, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
     col_name = data.column_name.strip()
@@ -831,14 +1589,10 @@ def delete_column(data: schemas.DeleteColumnIn, db: Session = Depends(get_db), a
     if entry:
         db.delete(entry)
 
-    devices_with_extra = db.query(Device).filter(Device.extra.isnot(None)).all()
-    count_cleaned = 0
-    for d in devices_with_extra:
-        if d.extra and col_name in d.extra:
-            updated_extra = dict(d.extra)
-            del updated_extra[col_name]
-            d.extra = updated_extra if updated_extra else None
-            count_cleaned += 1
+    json_path = f"$.\"{col_name}\""
+    sql = "UPDATE sim_devices SET extra = JSON_REMOVE(extra, :path) WHERE extra IS NOT NULL AND JSON_CONTAINS_PATH(extra, 'one', :path)"
+    res = db.execute(text(sql), {"path": json_path})
+    count_cleaned = res.rowcount
 
     log_activity(db, "column_delete", f"Deleted column '{col_name}' (cleared from {count_cleaned} records)", user=admin)
     db.commit()
