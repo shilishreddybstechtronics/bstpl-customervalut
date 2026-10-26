@@ -259,6 +259,20 @@
       background: var(--ok);
     }
 
+    .db-status.waking {
+      color: var(--warn, #b45309);
+    }
+
+    .db-status.waking::before {
+      background: var(--warn, #eab308);
+      animation: dbPulse 1.4s infinite;
+    }
+
+    @keyframes dbPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+
     .db-status.fail {
       color: var(--danger);
     }
@@ -3142,7 +3156,7 @@
       const fail = e => toast(e instanceof TypeError ? 'Cannot reach server. Is backend running?' : e.message);
 
       /* ---------- API Client ---------- */
-      const API_BASE = window.API_URL || localStorage.getItem('API_URL') || '';
+      let API_BASE = (window.API_URL || localStorage.getItem('API_URL') || '').replace(/\/+$/, '');
       async function api(path, opt = {}) {
         const r = await fetch(API_BASE + path, {
           ...opt,
@@ -7240,41 +7254,128 @@
         await showContainer('box-inv');
       }
 
-      (async () => {
+      /* ---------- Backend Health & Dynamic Connection Manager ---------- */
+      let isCheckingHealth = false;
+
+      async function pingHealth(baseUrl) {
+        const clean = (baseUrl || '').replace(/\/+$/, '');
+        const ctrl = new AbortController();
+        const tid = setTimeout(() => ctrl.abort(), 10000);
         try {
-          const res = await fetch(API_BASE + '/health/db');
-          const d = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error();
-          $('dbStatus').textContent = 'Database online and verified';
-          $('dbStatus').className = 'db-status ok';
+          const res = await fetch((clean ? clean : '') + '/health/db', { signal: ctrl.signal });
+          clearTimeout(tid);
+          if (!res.ok) return { ok: false, status: res.status };
+          const data = await res.json().catch(() => ({}));
+          return { ok: true, data };
+        } catch (e) {
+          clearTimeout(tid);
+          return { ok: false, error: e };
+        }
+      }
 
-          if (d.master_exists === false) {
-            // Fresh database: clear any old stale tokens
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            tok = null;
-            switchView(false);
+      function promptServerUrl() {
+        const defaultRender = "https://bstpl-customervalut-20.onrender.com";
+        const entered = prompt(
+          "CustomerVault Backend Server URL\n\nIf your backend is deployed on Render, enter:\nhttps://bstpl-customervalut-20.onrender.com\n\nOr leave empty to use this website's same host:",
+          API_BASE || defaultRender
+        );
+        if (entered === null) return;
+        const clean = entered.trim().replace(/\/+$/, '');
+        if (clean) {
+          localStorage.setItem('API_URL', clean);
+          API_BASE = clean;
+        } else {
+          localStorage.removeItem('API_URL');
+          API_BASE = '';
+        }
+        checkBackendHealth(3);
+      }
 
-            // Fresh database: initial one-time setup for master 0001
-            setAuthMode('register');
-            $('authTitle').textContent = 'Master Admin Setup';
-            $('authSub').textContent = 'Fresh setup detected. Create the Master Account (ID 0001). This can only be performed once.';
-            $('authId').value = '0001';
-            $('authId').readOnly = false;
-            if ($('authSwitchText')) $('authSwitchText').textContent = '⚡ One-time fresh master setup';
-            if ($('authSwitchBtn')) $('authSwitchBtn').hidden = true;
-          } else {
-            // Database already has master: self sign-up is permanently closed
-            if ($('authSwitchText')) $('authSwitchText').textContent = 'Need an account?';
-            if ($('authSwitchBtn')) {
-              $('authSwitchBtn').textContent = 'Contact Admin';
-              $('authSwitchBtn').onclick = () => alert('Self sign-up is permanently closed. Only Admins can issue new IDs.');
+      async function checkBackendHealth(maxAttempts = 5) {
+        if (isCheckingHealth) return;
+        isCheckingHealth = true;
+        const el = $('dbStatus');
+
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          if (el) {
+            el.innerHTML = attempt === 1
+              ? 'Checking server connection…'
+              : `Waking up cloud server (attempt ${attempt}/${maxAttempts})…`;
+            el.className = 'db-status ' + (attempt > 1 ? 'waking' : '');
+          }
+
+          // 1. Try current API_BASE
+          let res = await pingHealth(API_BASE);
+
+          // 2. If empty API_BASE failed and we are running locally on another port or file://, auto-detect local port 8000
+          if (!res.ok && !API_BASE) {
+            const isLocal = window.location.protocol === 'file:' ||
+              ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '8000');
+            if (isLocal) {
+              const probe8000 = await pingHealth('http://127.0.0.1:8000');
+              if (probe8000.ok) {
+                API_BASE = 'http://127.0.0.1:8000';
+                localStorage.setItem('API_URL', API_BASE);
+                res = probe8000;
+              }
+            } else if (window.location.hostname.includes('vercel.app')) {
+              const probeRender = await pingHealth('https://bstpl-customervalut-20.onrender.com');
+              if (probeRender.ok) {
+                API_BASE = 'https://bstpl-customervalut-20.onrender.com';
+                localStorage.setItem('API_URL', API_BASE);
+                res = probeRender;
+              }
             }
           }
-        } catch {
-          $('dbStatus').textContent = 'Server or database is offline';
-          $('dbStatus').className = 'db-status fail';
+
+          if (res.ok) {
+            const d = res.data || {};
+            if (el) {
+              el.innerHTML = `Database online and verified <span title="Configure backend server URL" style="cursor:pointer;opacity:0.65;margin-left:4px" onclick="promptServerUrl()">⚙️</span>`;
+              el.className = 'db-status ok';
+            }
+
+            if (d.master_exists === false) {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              tok = null;
+              switchView(false);
+
+              setAuthMode('register');
+              $('authTitle').textContent = 'Master Admin Setup';
+              $('authSub').textContent = 'Fresh setup detected. Create the Master Account (ID 0001). This can only be performed once.';
+              $('authId').value = '0001';
+              $('authId').readOnly = false;
+              if ($('authSwitchText')) $('authSwitchText').textContent = '⚡ One-time fresh master setup';
+              if ($('authSwitchBtn')) $('authSwitchBtn').hidden = true;
+            } else {
+              if ($('authSwitchText')) $('authSwitchText').textContent = 'Need an account?';
+              if ($('authSwitchBtn')) {
+                $('authSwitchBtn').textContent = 'Contact Admin';
+                $('authSwitchBtn').onclick = () => alert('Self sign-up is permanently closed. Only Admins can issue new IDs.');
+              }
+            }
+
+            isCheckingHealth = false;
+            return;
+          }
+
+          // Wait 3 seconds before next retry to give cloud container time to boot
+          if (attempt < maxAttempts) {
+            await new Promise(r => setTimeout(r, 3000));
+          }
         }
+
+        // All attempts failed
+        if (el) {
+          el.innerHTML = `Server or database is offline <button type="button" onclick="promptServerUrl()" style="background:none;border:none;color:var(--primary);cursor:pointer;text-decoration:underline;font-size:12px;margin-left:6px;padding:0">⚙️ Set Server URL</button>`;
+          el.className = 'db-status fail';
+        }
+        isCheckingHealth = false;
+      }
+
+      (async () => {
+        await checkBackendHealth();
 
         if (tok) {
           switchView(true);

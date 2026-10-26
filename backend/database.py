@@ -21,11 +21,11 @@ if DATABASE_URL:
         DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+pymysql://", 1)
     print("Database configured via DATABASE_URL environment variable.")
 else:
-    DB_USER = os.getenv("DB_USER", "")
-    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
-    DB_HOST = os.getenv("DB_HOST", "localhost")
-    DB_PORT = os.getenv("DB_PORT", "3306")
-    DB_NAME = os.getenv("DB_NAME", "")
+    DB_USER = os.getenv("DB_USER") or "2qvzCb4ckY28YTR.root"
+    DB_PASSWORD = os.getenv("DB_PASSWORD") or "TkUlyIt79g9JLww0"
+    DB_HOST = os.getenv("DB_HOST") or "gateway01.ap-northeast-1.prod.aws.tidbcloud.com"
+    DB_PORT = os.getenv("DB_PORT") or "4000"
+    DB_NAME = os.getenv("DB_NAME") or "customer_database"
     print(f"Connecting to database at {DB_HOST}:{DB_PORT} (database: {DB_NAME})")
     DATABASE_URL = (
         f"mysql+pymysql://{quote_plus(DB_USER)}:{quote_plus(DB_PASSWORD)}"
@@ -38,7 +38,7 @@ connect_args = {
     "read_timeout": int(os.getenv("DB_READ_TIMEOUT", "180")),   # big uploads and a distant cloud database need more than 30 s
     "write_timeout": int(os.getenv("DB_WRITE_TIMEOUT", "180")),
 }
-if os.getenv("DB_SSL", "false").lower() == "true":
+if os.getenv("DB_SSL", "true").lower() == "true" or "tidbcloud.com" in DB_HOST:
     connect_args["ssl"] = {"ca": certifi.where()}
 
 # pool_pre_ping + pool_recycle: TiDB Cloud closes idle connections, so test them before use and renew them every 5 minutes

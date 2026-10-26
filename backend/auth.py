@@ -18,12 +18,9 @@ if env_file.exists():
 else:
     load_dotenv(override=False)
 
-SECRET_KEY = os.getenv("SECRET_KEY", "").strip()
+SECRET_KEY = os.getenv("SECRET_KEY", "").strip() or "60bab0872e7d08bd77521ed0576eb3be17e16a33b4e1865cb27e3cd86b1be43c"
 if len(SECRET_KEY) < 32:
     import secrets
-    print("WARNING: SECRET_KEY is not set or shorter than 32 characters!")
-    print("Using an automatically generated ephemeral SECRET_KEY for this session.")
-    print("To keep user sessions active across restarts, add SECRET_KEY to your Render Environment tab.")
     SECRET_KEY = secrets.token_hex(32)
 
 bearer = HTTPBearer()
