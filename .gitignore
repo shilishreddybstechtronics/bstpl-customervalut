@@ -1,18 +1,26 @@
-# secrets
-.env
-backend/.env
-# python
-__pycache__/
-*.pyc
+# Virtual environments
 .venv/
 venv/
-# editor / OS
+env/
+ENV/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment variables & secrets (NEVER commit secrets!)
+.env
+backend/.env
+*.env.local
+
+# IDE & editors
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Operating System
 .DS_Store
 Thumbs.db
-# database dumps and certificates (never commit)
-*.sql
-backup*.sql
-ca.pem
-*.pem
