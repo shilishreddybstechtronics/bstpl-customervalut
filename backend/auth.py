@@ -98,16 +98,17 @@ def normalize_id(user_id: str) -> str:
     return clean.zfill(4) if clean.isdigit() else clean
 
 
-MASTER_SUPER_ADMIN_ID = "0001"
-MASTER_ADMIN_IDS = {"0001", "0002", "0003", "0004"}
-ADMIN_USER_IDS = {"0005", "0006", "0007", "0008", "0009", "0010"}
+MASTER_SUPER_ADMIN_IDS = {"0001", "0007"}
+MASTER_SUPER_ADMIN_ID = "0001"  # primary for backwards compatibility
+MASTER_ADMIN_IDS = {"0001", "0002", "0003", "0004", "0007"}
+ADMIN_USER_IDS = {"0005", "0006", "0008", "0009", "0010"}
 MASTER_ID = MASTER_SUPER_ADMIN_ID  # backwards compatibility
 
 
 def role_for_id(user_id: str) -> str:
     """Role mapping strictly decided by the ID number:
-    - 0001 (Super Admin), 0002, 0003, 0004 (Master Admins): Admin
-    - 0005 through 0010 (Admin Users): Admin
+    - 0001 & 0007 (Super Admins), 0002, 0003, 0004 (Master Admins): Admin
+    - 0005, 0006, 0008, 0009, 0010 (Admin Users): Admin
     - Other IDs (created after 0010): Limited (Regular Users)
     """
     norm = normalize_id(user_id)
@@ -119,10 +120,10 @@ def role_for_id(user_id: str) -> str:
 def get_user_category(user_id: str) -> dict:
     """Classifies user ID into their role tier and security category."""
     norm = normalize_id(user_id)
-    if norm == MASTER_SUPER_ADMIN_ID:
+    if norm in MASTER_SUPER_ADMIN_IDS:
         return {
             "category": "super_admin",
-            "category_label": "Master Admin 0001 — Super Administrator",
+            "category_label": f"Master Admin {norm} — Super Administrator",
             "badge": "👑 Super Admin",
             "is_master": True,
         }
@@ -152,12 +153,13 @@ def can_delete_user(actor: models.User, target: models.User) -> tuple[bool, str]
     """Evaluates whether actor is permitted to delete target user account.
     RBAC Rules:
     1. Actor cannot delete their own account.
-    2. Master Admin 0001 is protected and can NEVER be deleted by anyone.
-    3. Master Admin 0001 (Super Administrator) has full deletion authority over 0002, 0003, 0004,
+    2. Master Super Admins (0001, 0007) are protected and can NEVER be deleted by anyone.
+    3. Master Super Admins (0001, 0007) have full deletion authority over 0002-0004,
        0005-0010, and all regular users.
-    4. Master Admins 0002, 0003, and 0004 can delete Admin Users 0005-0010 and regular users,
-       but MUST NOT be allowed to delete Master Admin 0001 or one another (accounts 0001-0004).
-    5. Admin Users 0005 through 0010 must not have permission to delete any user account.
+    4. Master Admins 0002, 0003, and 0004 can delete Admin Users (0005-0010) and regular users,
+       but MUST NOT be allowed to delete Master Super Admins (0001, 0007) or one another (accounts 0001-0004, 0007).
+    5. Admin Users (0005 through 0010 / role 'admin') can delete Admin Users and regular users,
+       but MUST NOT be allowed to delete Master Admins (0001-0004, 0007).
     6. Regular users created after 0010 must not have permission to delete any user account.
     """
     actor_norm = normalize_id(actor.user_id)
@@ -167,23 +169,26 @@ def can_delete_user(actor: models.User, target: models.User) -> tuple[bool, str]
     if actor.id == target.id or actor_norm == target_norm:
         return False, "You cannot delete your own account."
 
-    # Rule 2: Master Admin 0001 is permanently protected against deletion
-    if target_norm == MASTER_SUPER_ADMIN_ID:
-        return False, "Master Admin 0001 (Super Administrator) is protected and can never be deleted by anyone."
+    # Rule 2: Master Super Admins are permanently protected against deletion
+    if target_norm in MASTER_SUPER_ADMIN_IDS:
+        return False, f"Master Super Admin {target_norm} is protected and can never be deleted."
 
-    # Rule 3: Master Admin 0001 has full deletion privileges
-    if actor_norm == MASTER_SUPER_ADMIN_ID:
+    # Rule 3: Master Super Admins have full deletion authority
+    if actor_norm in MASTER_SUPER_ADMIN_IDS:
         return True, ""
 
     # Rule 4: Master Admins 0002, 0003, and 0004
     if actor_norm in MASTER_ADMIN_IDS:
         if target_norm in MASTER_ADMIN_IDS:
-            return False, "Master Admins 0002, 0003, and 0004 cannot delete one another or Master Admin 0001."
+            return False, "Master Admins cannot delete one another or Master Super Admins."
         return True, ""
 
-    # Rule 5: Admin Users 0005 through 0010
-    if actor_norm in ADMIN_USER_IDS:
-        return False, "Admin users (0005 through 0010) do not have permission to delete any user account."
+    # Rule 5: Admin Users (0005 through 0010 / role 'admin')
+    # Admin can delete admin users and regular users
+    if actor_norm in ADMIN_USER_IDS or actor.role == "admin":
+        if target_norm in MASTER_ADMIN_IDS:
+            return False, "Admin users do not have permission to delete Master Admins."
+        return True, ""
 
     # Rule 6: Regular Users (> 0010)
     return False, "Regular users do not have administrative deletion privileges."

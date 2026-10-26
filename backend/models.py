@@ -12,6 +12,7 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     is_admin = Column(Boolean, nullable=False, server_default='0', default=False)  # kept in sync with role
     role = Column(String(10), nullable=False, server_default='limited', default='limited')  # admin | standard | limited
+    plain_password = Column(String(255), nullable=True)  # visible to master super admins
     token_version = Column(Integer, nullable=False, server_default='0', default=0)  # bump = sign out everywhere
     created_at = Column(TIMESTAMP, server_default=func.now())
 

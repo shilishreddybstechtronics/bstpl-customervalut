@@ -91,6 +91,8 @@ class UserOut(BaseModel):
     badge: Optional[str] = None
     is_master: Optional[bool] = False
     can_delete: Optional[bool] = False
+    plain_password: Optional[str] = None
+    password: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -276,6 +278,10 @@ class UserUpdate(BaseModel):
     @classmethod
     def check_password(cls, v):
         return _pw_ok(v)
+
+
+class UserNameUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
 
 
 # ---- customer management ----

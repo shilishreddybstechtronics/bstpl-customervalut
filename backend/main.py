@@ -30,6 +30,8 @@ def upgrade_database():
             conn.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT FALSE"))
         if "token_version" not in ucols:
             conn.execute(text("ALTER TABLE users ADD COLUMN token_version INT NOT NULL DEFAULT 0"))
+        if "plain_password" not in ucols:
+            conn.execute(text("ALTER TABLE users ADD COLUMN plain_password VARCHAR(255) NULL"))
         if "role" not in ucols:
             conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR(10) NOT NULL DEFAULT 'limited'"))
             # Nobody loses access: current admins stay admins, everyone else becomes "standard" (change it in Manage Users).
@@ -60,10 +62,28 @@ def upgrade_database():
             if col not in have:
                 conn.execute(text(f"ALTER TABLE sim_devices ADD COLUMN {col} {ddl}"))
         old_admin = conn.execute(text("SELECT MIN(id) FROM users WHERE is_admin = TRUE")).scalar()
-        # Roles strictly follow the ID number: 0001-0003 admin, 0004-0010 standard, everything else limited.
+        # Roles strictly follow the ID number: 0001 & 0007 super admin, 0002-0004 master admin, 0005-0010 admin, others limited
         for uid, ident in conn.execute(text("SELECT id, user_id FROM users")).all():
             r = role_for_id(ident)
             conn.execute(text("UPDATE users SET role = :r, is_admin = :a WHERE id = :i"), {"r": r, "a": r == "admin", "i": uid})
+
+        # Ensure user 0007 exists as another master super admin
+        u7 = conn.execute(text("SELECT id FROM users WHERE user_id = '0007'")).first()
+        if not u7:
+            conn.execute(
+                text("INSERT INTO users (name, user_id, password_hash, plain_password, is_admin, role, token_version) "
+                     "VALUES (:name, :uid, :hash, :plain, TRUE, 'admin', 0)"),
+                {
+                    "name": "Super Admin 0007",
+                    "uid": "0007",
+                    "hash": hash_password("Admin@0007"),
+                    "plain": "Admin@0007"
+                }
+            )
+            print("NOTICE: Created 0007 as another master super admin with initial password 'Admin@0007'.")
+        else:
+            conn.execute(text("UPDATE users SET is_admin = TRUE, role = 'admin' WHERE user_id = '0007'"))
+
         if not conn.execute(text("SELECT 1 FROM users WHERE role = 'admin' LIMIT 1")).first():
             owner = old_admin or conn.execute(text("SELECT MIN(id) FROM users")).scalar()
             taken = conn.execute(text("SELECT 1 FROM users WHERE user_id = :m"), {"m": MASTER_ID}).first()
@@ -140,7 +160,7 @@ def register(data: schemas.RegisterIn, request: Request, db: Session = Depends(g
     norm_id = normalize_id(login_id)
     if norm_id != MASTER_ID:
         raise HTTPException(status_code=400, detail=f"Initial registration is reserved for master ID {MASTER_ID} only.")
-    user = models.User(name=data.name.strip(), user_id=MASTER_ID, password_hash=hash_password(data.password), is_admin=True, role="admin")
+    user = models.User(name=data.name.strip(), user_id=MASTER_ID, password_hash=hash_password(data.password), plain_password=data.password, is_admin=True, role="admin")
     db.add(user)
     db.flush()  # gives the new user an id so the log row can point at it
     log_activity(db, "register", "Master account (0001) created", user=user, request=request)

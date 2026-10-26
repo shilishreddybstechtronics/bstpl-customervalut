@@ -1663,6 +1663,7 @@
       <div class="acts">
         <button class="b" id="bAl" title="Toggle Expiry Alerts">Alerts: OFF</button>
         <button class="b" id="bRefresh" title="Reload the current page's data">🔄 Refresh</button>
+        <button class="b" id="bEditMyName" title="Edit your display name">✏️ Edit Name</button>
         <button class="b" id="bPw" title="Change Password">🔑 Password</button>
         <button class="b" id="bQs" title="Quick Search (Ctrl + K)"><span>🔎 Search</span></button>
         <button class="b" id="bLogInv" title="Open the activity log">🕘 Login Inventory</button>
@@ -2848,9 +2849,9 @@
         <div id="roleTierBadge" style="margin:6px 0;font-size:12px;font-weight:600;color:var(--primary)"></div>
         <p class="sub" style="margin:8px 0 12px;font-size:12px;color:var(--muted);line-height:1.5">
           💡 <b>Role Matrix:</b><br />
-          • <code>0001</code> = <b>Super Administrator:</b> Full unrestricted access; can delete all other users.<br />
-          • <code>0002–0004</code> = <b>Master Admins:</b> Full control; can delete regular users & admins; cannot delete 0001–0004.<br />
-          • <code>0005–0010</code> = <b>Admin Users:</b> Full entry & data management; cannot delete any user account.<br />
+          • <code>0001, 0007</code> = <b>Super Administrators:</b> Full unrestricted access; can delete users.<br />
+          • <code>0002–0004</code> = <b>Master Admins:</b> Full control; can delete regular users & admins; cannot delete 0001–0004, 0007.<br />
+          • <code>0005, 0006, 0008–0010</code> = <b>Admin Users:</b> Full entry & data management; can delete admin users & regular users.<br />
           • <code>After 0010</code> = <b>Regular Users:</b> Upload data, fetch/view entries, and edit entries.
         </p>
         <button class="b p" id="uadd">Create Employee User</button>
@@ -3714,6 +3715,22 @@
         if (alertsOn && S.expiring_30_days) toast(`🔔 Attention: ${S.expiring_30_days} devices expire within 30 days.`);
         else toast(alertsOn ? '🔔 Alerts enabled' : '🔕 Alerts disabled');
       };
+      if ($('bEditMyName')) {
+        $('bEditMyName').onclick = async () => {
+          const u = getUser();
+          const p = prompt('Enter your new display name:', u.name || '');
+          if (!p || !p.trim() || p.trim() === u.name) return;
+          try {
+            const r = await api('/api/me/name', { method: 'PUT', body: JSON.stringify({ name: p.trim() }) });
+            u.name = r.name;
+            localStorage.setItem('user', JSON.stringify(u));
+            const h = new Date().getHours();
+            $('hi').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${u.name || u.user_id} 👋`;
+            toast('Your display name has been updated');
+            if (typeof loadUsersContainer === 'function') loadUsersContainer();
+          } catch (err) { fail(err); }
+        };
+      }
       $('bPw').onclick = () => { $('pf').reset(); $('pe').textContent = ''; $('pwd').showModal(); };
       $('pc').onclick = () => $('pwd').close();
       $('pf').onsubmit = async e => {
@@ -6812,27 +6829,27 @@
         const me = getUser();
         const rawMe = (me.user_id || '').trim().toLowerCase();
         const normMe = /^\d+$/.test(rawMe) ? rawMe.padStart(4, '0') : rawMe;
-        const isSuperAdmin = normMe === '0001';
-        const isMasterAdmin = ['0001', '0002', '0003', '0004'].includes(normMe);
-        const isAdminUser = ['0005', '0006', '0007', '0008', '0009', '0010'].includes(normMe);
+        const isSuperAdmin = ['0001', '0007'].includes(normMe);
+        const isMasterAdmin = ['0001', '0002', '0003', '0004', '0007'].includes(normMe);
+        const isAdminUser = ['0005', '0006', '0008', '0009', '0010'].includes(normMe);
 
         try {
           const l = await api('/api/users');
           $('usersTableWrap').innerHTML = `
       <div class="tw"><table><thead><tr>
-        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th><th>Created Date</th><th>Actions</th>
+        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th>${isMasterAdmin ? '<th>User Password</th>' : ''}<th>Created Date</th><th>Actions</th>
       </tr></thead><tbody>
       ${l.map(u => {
             const rawId = (u.user_id || '').trim().toLowerCase();
             const normU = /^\d+$/.test(rawId) ? rawId.padStart(4, '0') : rawId;
             const isSelf = u.id === me.id || normU === normMe;
-            const isTarget0001 = normU === '0001';
-            const isTargetMaster = ['0001', '0002', '0003', '0004'].includes(normU);
-            const isTargetAdmin = ['0005', '0006', '0007', '0008', '0009', '0010'].includes(normU);
+            const isTargetSuper = ['0001', '0007'].includes(normU);
+            const isTargetMaster = ['0001', '0002', '0003', '0004', '0007'].includes(normU);
+            const isTargetAdmin = ['0005', '0006', '0008', '0009', '0010'].includes(normU);
 
             // Tier Badge
             let badgeHtml = '';
-            if (isTarget0001) {
+            if (isTargetSuper) {
               badgeHtml = '<span class="tag ok" style="font-weight:700">👑 Super Admin</span>';
             } else if (isTargetMaster) {
               badgeHtml = '<span class="tag info" style="font-weight:700">⭐ Master Admin</span>';
@@ -6847,32 +6864,44 @@
             if (isSuperAdmin) {
               canEdit = true;
             } else if (isMasterAdmin) {
-              canEdit = !isTargetMaster || isSelf;
+              canEdit = !isTargetSuper || isSelf;
             } else if (isAdminUser) {
               canEdit = !isTargetMaster || isSelf;
             }
 
-            // Deletion permission:
-            // - 0001: Can delete 0002, 0003, 0004, 0005-0010, regular users. Cannot delete self.
-            // - 0002-0004: Can delete 0005-0010 & regular users. CANNOT delete 0001, 0002, 0003, 0004.
-            // - 0005-0010: CANNOT delete ANY user.
-            // - Regular users: CANNOT delete ANY user.
-            const canDelete = (typeof u.can_delete === 'boolean')
-              ? u.can_delete
-              : (isSuperAdmin
-                  ? (!isSelf && !isTarget0001)
-                  : (isMasterAdmin
-                      ? (!isTargetMaster && !isSelf)
-                      : false));
+            // Deletion permission: computed strictly by backend RBAC logic
+            const canDelete = (typeof u.can_delete === 'boolean') ? u.can_delete : false;
+
+            const pwdCol = isMasterAdmin ? `
+              <td>
+                ${u.password ? `
+                  <span style="display:inline-flex;align-items:center;gap:6px;background:var(--card-subtle);padding:3px 8px;border-radius:6px;border:1px solid var(--line);font-family:monospace;font-size:12px">
+                    <span id="pwd-txt-${u.id}" data-real="${esc(u.password)}">••••••••</span>
+                    <button type="button" class="b ghost" data-togglepwd="${u.id}" style="height:22px;padding:0 5px;font-size:11px" title="Show / Hide Password">👁️</button>
+                    <button type="button" class="b ghost" data-copypwd="${u.id}" style="height:22px;padding:0 5px;font-size:11px" title="Copy Password">📋</button>
+                  </span>
+                ` : `
+                  <span class="sub" style="font-size:11px;color:var(--muted)">Hash only (<a href="javascript:void(0)" data-ures="${u.id}" style="color:var(--primary);font-weight:600">Set</a>)</span>
+                `}
+              </td>
+            ` : '';
 
             return `<tr>
-          <td><b>${esc(u.name)}</b> ${isSelf ? '<span class="sub" style="font-size:11px;color:var(--primary);margin-left:4px">(You)</span>' : ''}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <b>${esc(u.name)}</b>
+              ${isSelf ? '<span class="sub" style="font-size:11px;color:var(--primary)">(You)</span>' : ''}
+              <button class="b ghost" data-ueditname="${u.id}" data-curname="${esc(u.name)}" style="height:22px;padding:0 6px;font-size:11px" title="Edit this employee's name">✏️</button>
+            </div>
+          </td>
           <td><code>${esc(u.user_id)}</code></td>
           <td>${badgeHtml}</td>
           <td><span class="role-pill ${u.role}">${esc(u.role)}</span></td>
+          ${pwdCol}
           <td>${esc((u.created_at || '').slice(0, 10))}</td>
           <td>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <button class="b" data-ueditname="${u.id}" data-curname="${esc(u.name)}" style="height:28px;padding:0 8px;font-size:12px">✏️ Edit Name</button>
               ${canEdit ? `
                 <button class="b" data-ures="${u.id}" style="height:28px;padding:0 8px;font-size:12px">Reset Password</button>
               ` : `
@@ -6882,13 +6911,11 @@
                 <button class="b d" data-udel="${u.id}" style="height:28px;padding:0 8px;font-size:12px">Delete</button>
               ` : (isSelf ? `
                 <span class="sub" style="font-size:11px;color:var(--muted)">Active Session</span>
-              ` : (isTarget0001 ? `
+              ` : (isTargetSuper ? `
                 <span class="tag" style="font-size:11px;background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3)">Protected Super Admin</span>
               ` : (isTargetMaster ? `
                 <span class="tag" style="font-size:11px;background:rgba(234,179,8,0.12);color:#b45309;border:1px solid rgba(234,179,8,0.3)">Protected Master Admin</span>
-              ` : (isAdminUser ? `
-                <span class="sub" style="font-size:11px;color:var(--muted)">Deletion Restricted</span>
-              ` : ''))))}
+              ` : '')))}
             </div>
           </td>
         </tr>`;
@@ -6903,15 +6930,15 @@
               const norm = /^\d+$/.test(val) ? val.padStart(4, '0') : val;
               let r = 'limited';
               let badge = '';
-              if (norm === '0001') {
+              if (['0001', '0007'].includes(norm)) {
                 r = 'admin';
-                badge = '👑 Super Administrator (0001) — Full Unrestricted Control';
+                badge = '👑 Super Administrator (' + norm + ') — Full Unrestricted Control';
               } else if (['0002', '0003', '0004'].includes(norm)) {
                 r = 'admin';
                 badge = '⭐ Master Admin (' + norm + ') — Full Access (Protected Deletion)';
-              } else if (['0005', '0006', '0007', '0008', '0009', '0010'].includes(norm)) {
+              } else if (['0005', '0006', '0008', '0009', '0010'].includes(norm)) {
                 r = 'admin';
-                badge = '🛡️ Admin User (' + norm + ') — Data & Entry Management (No Deletion)';
+                badge = '🛡️ Admin User (' + norm + ') — Entry & Admin Deletion Privileges';
               } else {
                 r = 'limited';
                 badge = '👤 Regular User (' + (norm || 'after 0010') + ') — Upload, Fetch & Edit Entries';
@@ -6925,12 +6952,12 @@
             const name = $('un').value.trim(), user_id = $('ui').value.trim(), password = $('up').value;
             if (!name || !user_id || !password) { toast('Please complete all fields'); return; }
             const norm = /^\d+$/.test(user_id) ? user_id.padStart(4, '0') : user_id;
-            if (norm === '0001') {
-              toast('Master ID 0001 is reserved and cannot be created here.');
+            if (['0001', '0007'].includes(norm)) {
+              toast('Master Super Admin IDs (0001, 0007) are reserved and cannot be created here.');
               return;
             }
             if (['0002', '0003', '0004'].includes(norm) && !isSuperAdmin) {
-              toast('Only Master Admin 0001 has permission to provision Master Admin accounts (0002–0004).');
+              toast('Only Master Super Admins (0001, 0007) have permission to provision Master Admin accounts.');
               return;
             }
             try {
@@ -7198,11 +7225,43 @@
             }, true);
             return;
           }
+          if (b.dataset.ueditname) {
+            const cur = b.dataset.curname || '';
+            const p = prompt('Enter new display name for employee:', cur);
+            if (!p || !p.trim() || p.trim() === cur) return;
+            await api('/api/users/' + b.dataset.ueditname, { method: 'PUT', body: JSON.stringify({ name: p.trim() }) });
+            toast('Employee name updated successfully');
+            loadUsersContainer();
+            await updateChrome();
+            return;
+          }
+          if (b.dataset.togglepwd) {
+            const txt = $('pwd-txt-' + b.dataset.togglepwd);
+            if (txt) {
+              const real = txt.dataset.real;
+              if (txt.textContent === '••••••••') {
+                txt.textContent = real;
+                b.textContent = '🙈';
+              } else {
+                txt.textContent = '••••••••';
+                b.textContent = '👁️';
+              }
+            }
+            return;
+          }
+          if (b.dataset.copypwd) {
+            const txt = $('pwd-txt-' + b.dataset.copypwd);
+            if (txt && txt.dataset.real) {
+              navigator.clipboard.writeText(txt.dataset.real).then(() => toast('Password copied to clipboard'));
+            }
+            return;
+          }
           if (b.dataset.ures) {
             const p = prompt('Enter new password for this employee (at least 8 characters):');
             if (!p) return;
             await api('/api/users/' + b.dataset.ures, { method: 'PUT', body: JSON.stringify({ password: p }) });
             toast('Password reset successfully');
+            loadUsersContainer();
             return;
           }
           if (b.dataset.udel) {
