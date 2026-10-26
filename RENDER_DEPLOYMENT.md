@@ -91,12 +91,12 @@ In your Render Web Service dashboard, go to the **Environment** tab and add the 
 
 ### 1. Unified (Default & Simplest)
 Because FastAPI is configured to serve the `frontend/` directory, Render serves **BOTH** your frontend and backend on the same URL:
-- Opening `https://<your-render-service>.onrender.com/` opens the dashboard.
-- Opening `https://<your-render-service>.onrender.com/health/db` checks the database health.
-- Opening `https://<your-render-service>.onrender.com/docs` opens the Swagger API documentation.
+- Opening `https://bstpl-customervalut-l40y.onrender.com/` opens the dashboard.
+- Opening `https://bstpl-customervalut-l40y.onrender.com/health/db` checks the database health.
+- Opening `https://bstpl-customervalut-l40y.onrender.com/docs` opens the Swagger API documentation.
 
 ### 2. Frontend Hosted Separately
 If you prefer to host `frontend/` on Netlify, Vercel, or GitHub Pages:
 - In `frontend/index.html` (or in browser console):
-  `localStorage.setItem('API_URL', 'https://<your-render-service>.onrender.com')`
+  `localStorage.setItem('API_URL', 'https://bstpl-customervalut-l40y.onrender.com')`
 - The backend's CORS is pre-configured to accept requests from your external frontend!

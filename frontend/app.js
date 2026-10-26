@@ -1,4 +1,9 @@
-const API_URL = window.API_URL || localStorage.getItem("API_URL") || ""; // Defaults to same origin (Render unified service)
+const RENDER_BACKEND_URL = "https://bstpl-customervalut-l40y.onrender.com";
+const isLocal = window.location.protocol === "file:" ||
+  ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && window.location.port !== "8000");
+const API_URL = window.API_URL || localStorage.getItem("API_URL") || (
+  isLocal ? "http://127.0.0.1:8000" : (window.location.origin.includes("onrender.com") ? "" : RENDER_BACKEND_URL)
+);
 
 const $ = (id) => document.getElementById(id);
 const ID_RE = /^[A-Za-z0-9_.-]{3,30}$/;
