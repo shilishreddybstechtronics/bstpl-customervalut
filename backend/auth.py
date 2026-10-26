@@ -47,9 +47,10 @@ DUMMY_HASH = hash_password("not-a-real-password")
 
 
 def create_token(user: models.User) -> str:
-    # Sign-in lasts 12 hours. "tv" must match the user's token_version, so a password change logs out other devices.
+    # Token expiration configurable via TOKEN_EXPIRE_MINUTES (default: 60 minutes or 12 hours)
+    expire_minutes = int(os.getenv("TOKEN_EXPIRE_MINUTES", "720"))
     payload = {"sub": str(user.id), "tv": user.token_version or 0,
-               "exp": datetime.now(timezone.utc) + timedelta(hours=12)}
+               "exp": datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)}
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 

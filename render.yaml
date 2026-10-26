@@ -23,3 +23,5 @@ services:
         value: 60bab0872e7d08bd77521ed0576eb3be17e16a33b4e1865cb27e3cd86b1be43c
       - key: TRUST_PROXY
         value: "true"
+      - key: TOKEN_EXPIRE_MINUTES
+        value: "60"
