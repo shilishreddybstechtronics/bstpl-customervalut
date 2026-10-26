@@ -47,10 +47,13 @@ DUMMY_HASH = hash_password("not-a-real-password")
 
 
 def create_token(user: models.User) -> str:
-    # Token expiration configurable via TOKEN_EXPIRE_MINUTES (default: 60 minutes or 12 hours)
-    expire_minutes = int(os.getenv("TOKEN_EXPIRE_MINUTES", "720"))
-    payload = {"sub": str(user.id), "tv": user.token_version or 0,
-               "exp": datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)}
+    # Lifetime token: valid for 100 years (~lifetime) without time expiration.
+    # "tv" still tracks token_version so a manual password change can revoke sessions if needed.
+    payload = {
+        "sub": str(user.id),
+        "tv": user.token_version or 0,
+        "exp": datetime.now(timezone.utc) + timedelta(days=36500)  # 100 years lifetime
+    }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
 
@@ -59,10 +62,11 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> models.User:
     try:
-        data = jwt.decode(creds.credentials, SECRET_KEY, algorithms=["HS256"])
+        # Lifetime token verification: verify signature and decode without expiration constraint
+        data = jwt.decode(creds.credentials, SECRET_KEY, algorithms=["HS256"], options={"verify_exp": False})
         user = db.get(models.User, int(data["sub"]))
     except (jwt.PyJWTError, ValueError, KeyError):
-        raise HTTPException(status_code=401, detail="Session expired. Please sign in again.")
+        raise HTTPException(status_code=401, detail="Invalid session. Please sign in again.")
     if not user:
         raise HTTPException(status_code=401, detail="Account not found.")
     if data.get("tv", 0) != (user.token_version or 0):
