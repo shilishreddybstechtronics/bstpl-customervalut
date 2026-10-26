@@ -54,11 +54,8 @@ Vercel will:
 
 ---
 
-## 🔗 Connecting Vercel Frontend to Render Backend (Alternative)
-If you prefer running your backend on Render (`https://bstpl-customervalut-20.onrender.com`) and your frontend on Vercel:
-1. On your Vercel website, click the **`⚙️ Set Server URL`** button right next to the database status.
-2. Enter:
-   ```text
-   https://bstpl-customervalut-20.onrender.com
-   ```
-3. Click OK. Your website will instantly connect to your Render backend and turn green!
+## 🔗 Connecting Vercel Frontend to Render Backend (Automatic & Instant)
+Your frontend is now programmed to **automatically connect to your live Render backend (`https://bstpl-customervalut-l40y.onrender.com`)**:
+1. When you open your Vercel deployment URL (e.g., `https://your-app.vercel.app`), the frontend automatically probes `https://bstpl-customervalut-l40y.onrender.com/health/db`.
+2. It detects the database is online and automatically routes all authentication, customer data, and API calls to Render!
+3. You can also manually view or change the backend URL anytime by clicking the **`⚙️`** icon next to the database status indicator.
