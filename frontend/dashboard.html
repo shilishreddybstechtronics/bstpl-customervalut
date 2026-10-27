@@ -1667,7 +1667,7 @@
         <button class="b" id="bPw" title="Change Password">🔑 Password</button>
         <button class="b" id="bQs" title="Quick Search (Ctrl + K)"><span>🔎 Search</span></button>
         <button class="b" id="bLogInv" title="Open the activity log">🕘 Login Inventory</button>
-        <button class="b" id="bUsers" title="Manage Users" hidden>👥 Manage Users</button>
+        <button class="b" id="bUsers" title="Manage Users & Permissions" hidden>👥 Manage Users & Permissions</button>
         <button class="b" id="bTheme" hidden>🌙 Theme</button>
         <button class="b" id="bManInv" hidden>📋 Manage Inventory</button>
         <button class="b" id="bLo" title="Sign out of your session">Logout</button>
@@ -1849,6 +1849,8 @@
                 customer card to view its devices.</p>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="b p" id="btnDownloadAllCustData" type="button"
+                style="background:linear-gradient(135deg, #2563eb, #1d4ed8);border-color:#2563eb;color:#fff;display:inline-flex;align-items:center;gap:6px;font-weight:600">📥 Download All Customer Data</button>
               <button class="b p" id="btnCustBulkUpload" type="button"
                 style="background:var(--ok);border-color:var(--ok)">📤 Bulk Upload</button>
               <button class="b p" id="cadd">+ Add Customer</button>
@@ -2862,6 +2864,179 @@
     </div>
   </dialog>
 
+  <!-- User Permissions & Granular Access Control Dialog (Super Admin Only) -->
+  <dialog id="dlgUserPermissions" class="modal-card"
+    style="width:min(720px, 94vw);border-radius:18px;padding:0;overflow:hidden">
+    <div
+      style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
+      <div>
+        <h3 style="margin:0;font-size:17px;display:flex;align-items:center;gap:8px">
+          <span>🛡️</span> <span id="permModalTitle">User Permissions & Access Control</span>
+        </h3>
+        <p class="sub" id="permModalSub" style="margin:2px 0 0;font-size:12px">
+          Configure actions and page permissions for this user account. Enforced strictly on backend APIs.
+        </p>
+      </div>
+      <button class="b ghost" id="closeDlgUserPermissions" type="button" style="font-size:20px;padding:4px 10px;cursor:pointer">✕</button>
+    </div>
+    <form id="formUserPermissions" style="padding:18px 22px;overflow-y:auto;max-height:calc(85vh - 75px)">
+      <input type="hidden" id="permUserId" />
+      <div id="permUserBanner"
+        style="display:flex;align-items:center;justify-content:space-between;background:var(--card-subtle);padding:10px 14px;border-radius:10px;border:1px solid var(--line);margin-bottom:16px">
+        <div>
+          <b id="permUserName" style="font-size:14px"></b>
+          <span id="permUserBadge" style="margin-left:8px"></span>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="b" id="btnPermSelectAll" style="height:26px;padding:0 8px;font-size:11px">Check All</button>
+          <button type="button" class="b" id="btnPermResetRole" style="height:26px;padding:0 8px;font-size:11px">Role Defaults</button>
+        </div>
+      </div>
+
+      <!-- Action Permissions Section -->
+      <div style="margin-bottom:16px">
+        <h4 style="margin:0 0 8px;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--text)">
+          <span>⚡</span> <span>Action & Data Permissions</span>
+        </h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:10px">
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_view" data-perm="view" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">👁️ View Data</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Read inventories, records & lists</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_add" data-perm="add" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">➕ Add Data</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Add devices, customers & columns</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_edit" data-perm="edit" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">✏️ Edit Data</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Edit records, SIM data & renames</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_delete" data-perm="delete" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">🗑️ Delete Data</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Delete records, errors & bin purge</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_search" data-perm="search" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">🔍 Search Data</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Quick search, fetch & SIM matches</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_download" data-perm="download" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">📥 Download & Export</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Download all data & Excel exports</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_upload" data-perm="upload" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">📤 Upload Data</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Bulk Excel & sheet uploads</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Page Access Section -->
+      <div style="margin-bottom:16px">
+        <h4 style="margin:0 0 8px;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--text)">
+          <span>📑</span> <span>Page & Feature Navigation Access</span>
+        </h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:10px">
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_live" data-perm="page_live" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">⚡ Live Updates</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Live telemetry & data feed</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_inventory" data-perm="page_inventory" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">📋 Customer Inventory</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Portfolios & inventory tables</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_upload" data-perm="page_upload" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">📶 SIM Data Upload</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">SIM provider data updates</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_fetch" data-perm="page_fetch" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">🔍 Fetch Data</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Bulk IMEI search engine</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_edit" data-perm="page_edit" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">✏️ Edit / Delete by IMEI</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Direct record editor tool</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_alerts" data-perm="page_alerts" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">🔔 Expiry Alerts</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Expiring devices watchlist</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_health" data-perm="page_health" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">🩺 Data Health</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Anomaly & quality audit</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_errors" data-perm="page_errors" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">⚠️ Errored Entries</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Correction staging bin</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_cart" data-perm="page_cart" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">🛒 Cart & Recycle Bin</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Deleted records & restore</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_page_audit" data-perm="page_audit" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">🕘 Audit Logs</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">System activity & history</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;border-top:1px solid var(--line);padding-top:14px">
+        <button type="button" class="b" id="cancelDlgUserPermissions">Cancel</button>
+        <button type="submit" class="b p" id="btnSaveUserPermissions" style="font-weight:700">💾 Save Permissions</button>
+      </div>
+    </form>
+  </dialog>
+
   <!-- Quick Search Dialog (Ctrl+K) -->
   <dialog id="qsdlg">
     <div class="qs-input-wrap">
@@ -3661,14 +3836,53 @@
           S = s; XC = x;
           localStorage.setItem('user', JSON.stringify(me));
 
-          if ($('bUsers')) $('bUsers').hidden = !isAdm;
-          if ($('btnEmptyCart')) $('btnEmptyCart').hidden = !isAdm;
+          const rawMe = (me.user_id || '').trim().toLowerCase();
+          const normMe = /^\d+$/.test(rawMe) ? rawMe.padStart(4, '0') : rawMe;
+          const isSuperAdmin = ['0001', '0007'].includes(normMe);
+          const perms = me.permissions || {};
+          const canView = perm => isSuperAdmin || perms[perm] !== false;
+
+          // Both Super Admins have access to the Manage Users & Permissions section
+          if ($('bUsers')) $('bUsers').hidden = !isSuperAdmin;
+          if ($('btnEmptyCart')) $('btnEmptyCart').hidden = !isAdm || !canView('delete');
           $('cartCountBadge').textContent = (cart.length + (S.deleted_customers || 0)).toString();
           if ($('errorsCountBadge')) $('errorsCountBadge').textContent = (S.errored_records || 0).toString();
 
-          // Hide cart tab button for limited users (no delete/restore access)
-          const binTabBtn = document.querySelector('.tab-btn[data-target="box-bin"]');
-          if (binTabBtn) binTabBtn.hidden = !isStaff;
+          // Apply page permissions to navigation tabs
+          const tabMap = {
+            'box-live': 'page_live',
+            'box-inv': 'page_inventory',
+            'box-sim': 'page_upload',
+            'box-fetch': 'page_fetch',
+            'box-edit': 'page_edit',
+            'box-exp': 'page_alerts',
+            'box-health': 'page_health',
+            'box-errors': 'page_errors',
+            'box-bin': 'page_cart'
+          };
+          for (const [target, permKey] of Object.entries(tabMap)) {
+            const btn = document.querySelector(`.tab-btn[data-target="${target}"]`);
+            if (btn) {
+              const allowed = isSuperAdmin || perms[permKey] !== false;
+              if (target === 'box-bin') {
+                btn.hidden = !isStaff || !allowed;
+              } else {
+                btn.hidden = !allowed;
+              }
+            }
+          }
+          if ($('bLogInv')) $('bLogInv').hidden = !canView('page_audit');
+
+          // Action button visibility
+          if ($('btnDownloadAllCustData')) $('btnDownloadAllCustData').hidden = !canView('download');
+          if ($('liveExportExcel')) $('liveExportExcel').hidden = !canView('download');
+          if ($('invExport')) $('invExport').hidden = !canView('download');
+          if ($('dlAlerts')) $('dlAlerts').hidden = !canView('download');
+          if ($('btnExportErrors')) $('btnExportErrors').hidden = !canView('download');
+
+          if ($('cadd')) $('cadd').hidden = !canView('add');
+          if ($('btnManualAdd')) $('btnManualAdd').hidden = !canView('add');
+          if ($('btnCustBulkUpload')) $('btnCustBulkUpload').hidden = !canView('upload');
 
           // Summary KPI Ribbon (if present)
           if ($('statsRibbon')) {
@@ -6835,9 +7049,10 @@
 
         try {
           const l = await api('/api/users');
+          window._allLoadedUsers = l;
           $('usersTableWrap').innerHTML = `
       <div class="tw"><table><thead><tr>
-        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th>${isMasterAdmin ? '<th>User Password</th>' : ''}<th>Created Date</th><th>Actions</th>
+        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th><th>Configured Permissions</th><th>Created Date</th><th>Actions</th>
       </tr></thead><tbody>
       ${l.map(u => {
             const rawId = (u.user_id || '').trim().toLowerCase();
@@ -6846,6 +7061,7 @@
             const isTargetSuper = ['0001', '0007'].includes(normU);
             const isTargetMaster = ['0001', '0002', '0003', '0004', '0007'].includes(normU);
             const isTargetAdmin = ['0005', '0006', '0008', '0009', '0010'].includes(normU);
+            const isOtherSuper = isTargetSuper && !isSelf;
 
             // Tier Badge
             let badgeHtml = '';
@@ -6859,65 +7075,67 @@
               badgeHtml = '<span class="tag mut" style="font-weight:700">👤 Regular User</span>';
             }
 
-            // Edit / Reset password permission
-            let canEdit = false;
-            if (isSuperAdmin) {
-              canEdit = true;
-            } else if (isMasterAdmin) {
-              canEdit = !isTargetSuper || isSelf;
-            } else if (isAdminUser) {
-              canEdit = !isTargetMaster || isSelf;
-            }
-
             // Deletion permission: computed strictly by backend RBAC logic
             const canDelete = (typeof u.can_delete === 'boolean') ? u.can_delete : false;
 
-            const pwdCol = isMasterAdmin ? `
-              <td>
-                ${u.password ? `
-                  <span style="display:inline-flex;align-items:center;gap:6px;background:var(--card-subtle);padding:3px 8px;border-radius:6px;border:1px solid var(--line);font-family:monospace;font-size:12px">
-                    <span id="pwd-txt-${u.id}" data-real="${esc(u.password)}">••••••••</span>
-                    <button type="button" class="b ghost" data-togglepwd="${u.id}" style="height:22px;padding:0 5px;font-size:11px" title="Show / Hide Password">👁️</button>
-                    <button type="button" class="b ghost" data-copypwd="${u.id}" style="height:22px;padding:0 5px;font-size:11px" title="Copy Password">📋</button>
-                  </span>
-                ` : `
-                  <span class="sub" style="font-size:11px;color:var(--muted)">Hash only (<a href="javascript:void(0)" data-ures="${u.id}" style="color:var(--primary);font-weight:600">Set</a>)</span>
-                `}
-              </td>
-            ` : '';
+            // Permissions summary overview
+            const perms = u.permissions || {};
+            const acts = ['view', 'add', 'edit', 'delete', 'search', 'download', 'upload'];
+            const enabledActs = acts.filter(a => perms[a] !== false);
+            const pages = ['page_live', 'page_inventory', 'page_upload', 'page_fetch', 'page_edit', 'page_alerts', 'page_health', 'page_errors', 'page_cart', 'page_audit'];
+            const enabledPages = pages.filter(p => perms[p] !== false);
+            let permSummaryHtml = '';
+            if (isTargetSuper) {
+              permSummaryHtml = '<span class="tag ok" style="font-weight:700;font-size:11px">Full System Access</span>';
+            } else {
+              permSummaryHtml = `
+                <div style="display:flex;align-items:center;gap:6px;font-size:11.5px">
+                  <span class="tag mut" style="font-size:11px" title="Enabled actions: ${enabledActs.join(', ')}">⚡ ${enabledActs.length}/${acts.length} Acts</span>
+                  <span class="tag mut" style="font-size:11px" title="Enabled pages: ${enabledPages.join(', ')}">📑 ${enabledPages.length}/${pages.length} Pages</span>
+                </div>
+              `;
+            }
+
+            // Actions rendering with mutual Super Admin protection
+            let actionsHtml = '';
+            if (isOtherSuper) {
+              actionsHtml = `
+                <span class="tag ok" style="font-size:11px;background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3);font-weight:700">
+                  🔒 Protected Super Admin
+                </span>
+              `;
+            } else if (isSelf) {
+              actionsHtml = `
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <button class="b" data-ueditname="${u.id}" data-curname="${esc(u.name)}" style="height:28px;padding:0 8px;font-size:12px">✏️ Edit My Name</button>
+                  <button class="b" type="button" onclick="document.getElementById('bPw')?.click()" style="height:28px;padding:0 8px;font-size:12px">🔑 Change Password</button>
+                  <span class="sub" style="font-size:11px;color:var(--primary)">(Current User)</span>
+                </div>
+              `;
+            } else {
+              actionsHtml = `
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <button class="b" data-ueditname="${u.id}" data-curname="${esc(u.name)}" style="height:28px;padding:0 8px;font-size:12px">✏️ Edit Name</button>
+                  <button class="b" data-ures="${u.id}" style="height:28px;padding:0 8px;font-size:12px">🔑 Reset Password</button>
+                  ${isSuperAdmin ? `<button class="b p" data-uperm="${u.id}" style="height:28px;padding:0 8px;font-size:12px;background:var(--primary);font-weight:600">🛡️ Permissions</button>` : ''}
+                  ${canDelete ? `<button class="b d" data-udel="${u.id}" style="height:28px;padding:0 8px;font-size:12px">Delete</button>` : ''}
+                </div>
+              `;
+            }
 
             return `<tr>
           <td>
             <div style="display:flex;align-items:center;gap:6px">
               <b>${esc(u.name)}</b>
               ${isSelf ? '<span class="sub" style="font-size:11px;color:var(--primary)">(You)</span>' : ''}
-              <button class="b ghost" data-ueditname="${u.id}" data-curname="${esc(u.name)}" style="height:22px;padding:0 6px;font-size:11px" title="Edit this employee's name">✏️</button>
             </div>
           </td>
           <td><code>${esc(u.user_id)}</code></td>
           <td>${badgeHtml}</td>
           <td><span class="role-pill ${u.role}">${esc(u.role)}</span></td>
-          ${pwdCol}
+          <td>${permSummaryHtml}</td>
           <td>${esc((u.created_at || '').slice(0, 10))}</td>
-          <td>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              <button class="b" data-ueditname="${u.id}" data-curname="${esc(u.name)}" style="height:28px;padding:0 8px;font-size:12px">✏️ Edit Name</button>
-              ${canEdit ? `
-                <button class="b" data-ures="${u.id}" style="height:28px;padding:0 8px;font-size:12px">Reset Password</button>
-              ` : `
-                <span class="sub" style="font-size:11px;color:var(--muted)">Protected Account</span>
-              `}
-              ${canDelete ? `
-                <button class="b d" data-udel="${u.id}" style="height:28px;padding:0 8px;font-size:12px">Delete</button>
-              ` : (isSelf ? `
-                <span class="sub" style="font-size:11px;color:var(--muted)">Active Session</span>
-              ` : (isTargetSuper ? `
-                <span class="tag" style="font-size:11px;background:rgba(16,185,129,0.12);color:#059669;border:1px solid rgba(16,185,129,0.3)">Protected Super Admin</span>
-              ` : (isTargetMaster ? `
-                <span class="tag" style="font-size:11px;background:rgba(234,179,8,0.12);color:#b45309;border:1px solid rgba(234,179,8,0.3)">Protected Master Admin</span>
-              ` : '')))}
-            </div>
-          </td>
+          <td>${actionsHtml}</td>
         </tr>`;
           }).join('')}
       </tbody></table></div>
@@ -7235,25 +7453,8 @@
             await updateChrome();
             return;
           }
-          if (b.dataset.togglepwd) {
-            const txt = $('pwd-txt-' + b.dataset.togglepwd);
-            if (txt) {
-              const real = txt.dataset.real;
-              if (txt.textContent === '••••••••') {
-                txt.textContent = real;
-                b.textContent = '🙈';
-              } else {
-                txt.textContent = '••••••••';
-                b.textContent = '👁️';
-              }
-            }
-            return;
-          }
-          if (b.dataset.copypwd) {
-            const txt = $('pwd-txt-' + b.dataset.copypwd);
-            if (txt && txt.dataset.real) {
-              navigator.clipboard.writeText(txt.dataset.real).then(() => toast('Password copied to clipboard'));
-            }
+          if (b.dataset.uperm) {
+            openUserPermissionsModal(b.dataset.uperm);
             return;
           }
           if (b.dataset.ures) {
@@ -7460,6 +7661,106 @@
         loadUsersContainer();
         if ($('dlgManageUsers')) $('dlgManageUsers').showModal();
       }
+      function openUserPermissionsModal(uid) {
+        const user = (window._allLoadedUsers || []).find(u => String(u.id) === String(uid));
+        if (!user) { toast('User record not found'); return; }
+        const rawId = (user.user_id || '').trim().toLowerCase();
+        const normU = /^\d+$/.test(rawId) ? rawId.padStart(4, '0') : rawId;
+        if (['0001', '0007'].includes(normU)) {
+          toast('Super Admin permissions are fixed and cannot be modified.');
+          return;
+        }
+
+        $('permUserId').value = user.id;
+        $('permUserName').textContent = `${user.name} (${user.user_id})`;
+        $('permUserBadge').innerHTML = user.badge || `<span class="tag">${user.role}</span>`;
+        $('permModalTitle').textContent = `Permissions — ${user.name}`;
+
+        const perms = user.permissions || {};
+        const allKeys = [
+          'view', 'add', 'edit', 'delete', 'search', 'download', 'upload',
+          'page_live', 'page_inventory', 'page_upload', 'page_fetch', 'page_edit',
+          'page_alerts', 'page_health', 'page_errors', 'page_cart', 'page_audit'
+        ];
+
+        allKeys.forEach(k => {
+          const chk = document.querySelector(`input[data-perm="${k}"]`);
+          if (chk) {
+            chk.checked = perms[k] !== false;
+          }
+        });
+
+        $('dlgUserPermissions').showModal();
+      }
+
+      if ($('btnPermSelectAll')) {
+        $('btnPermSelectAll').onclick = () => {
+          document.querySelectorAll('#formUserPermissions input[data-perm]').forEach(c => c.checked = true);
+        };
+      }
+      if ($('btnPermResetRole')) {
+        $('btnPermResetRole').onclick = () => {
+          const uid = $('permUserId').value;
+          const user = (window._allLoadedUsers || []).find(u => String(u.id) === String(uid));
+          const cat = user ? (user.category || 'regular_user') : 'regular_user';
+          const isReg = cat === 'regular_user';
+          document.querySelectorAll('#formUserPermissions input[data-perm]').forEach(c => {
+            const k = c.dataset.perm;
+            if (isReg && ['delete', 'page_errors', 'page_cart', 'page_audit'].includes(k)) {
+              c.checked = false;
+            } else {
+              c.checked = true;
+            }
+          });
+        };
+      }
+      if ($('closeDlgUserPermissions')) $('closeDlgUserPermissions').onclick = () => $('dlgUserPermissions').close();
+      if ($('cancelDlgUserPermissions')) $('cancelDlgUserPermissions').onclick = () => $('dlgUserPermissions').close();
+      if ($('dlgUserPermissions')) $('dlgUserPermissions').onclick = e => { if (e.target === $('dlgUserPermissions')) $('dlgUserPermissions').close(); };
+
+      if ($('formUserPermissions')) {
+        $('formUserPermissions').onsubmit = async e => {
+          e.preventDefault();
+          const uid = $('permUserId').value;
+          if (!uid) return;
+          const updatedPerms = {};
+          document.querySelectorAll('#formUserPermissions input[data-perm]').forEach(c => {
+            updatedPerms[c.dataset.perm] = c.checked;
+          });
+          try {
+            toast('Saving permissions…');
+            await api(`/api/users/${uid}/permissions`, {
+              method: 'PUT',
+              body: JSON.stringify({ permissions: updatedPerms })
+            });
+            toast('User permissions updated successfully');
+            $('dlgUserPermissions').close();
+            loadUsersContainer();
+            await updateChrome();
+          } catch (err) { fail(err); }
+        };
+      }
+
+      if ($('btnDownloadAllCustData')) {
+        $('btnDownloadAllCustData').onclick = async () => {
+          try {
+            toast('Preparing download for all customer data…');
+            const res = await api('/api/devices/export?title=All_Customer_Data', { rawResponse: true });
+            if (!res.ok) throw new Error('Download failed');
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `All_Customer_Data_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+            toast('All customer data downloaded successfully');
+          } catch (err) { fail(err); }
+        };
+      }
+
       if ($('bRefresh')) $('bRefresh').onclick = async () => { toast('Refreshing…'); await loadCU(); await showContainer(currentContainerId); };
       if ($('bUsers')) $('bUsers').onclick = openManageUsersModal;
       if ($('closeDlgManageUsers')) $('closeDlgManageUsers').onclick = () => $('dlgManageUsers').close();

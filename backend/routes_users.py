@@ -12,7 +12,9 @@ from auth import (
     normalize_id,
     role_for_id,
     get_user_category,
+    get_user_permissions,
     can_delete_user,
+    can_modify_user,
     create_token,
     get_current_user,
     hash_password,
@@ -28,10 +30,10 @@ router = APIRouter(prefix="/api")
 def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
     cat = get_user_category(u.user_id)
     can_del = False
+    can_mod = False
     if actor is not None:
         can_del, _ = can_delete_user(actor, u)
-    actor_norm = normalize_id(actor.user_id) if (actor and actor.user_id) else ""
-    is_master_viewer = actor_norm in MASTER_ADMIN_IDS or actor_norm in MASTER_SUPER_ADMIN_IDS
+        can_mod, _ = can_modify_user(actor, u)
     return {
         "id": u.id,
         "name": u.name,
@@ -43,7 +45,8 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
         "badge": cat["badge"],
         "is_master": cat["is_master"],
         "can_delete": can_del,
-        "password": u.plain_password if is_master_viewer else None,
+        "can_modify": can_mod,
+        "permissions": get_user_permissions(u),
         "created_at": u.created_at
     }
 
@@ -51,15 +54,15 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
 @router.post("/me/password")
 def change_password(data: schemas.PasswordIn, request: Request, db: Session = Depends(get_db),
                     user: models.User = Depends(get_current_user)):
+    """Allows each user to securely change their own password."""
     if not verify_password(data.current_password, user.password_hash):
         log_activity(db, "password_failed", "Wrong current password", user=user, request=request, commit=True)
         raise HTTPException(400, "Your current password is incorrect.")
     user.password_hash = hash_password(data.new_password)
-    user.plain_password = data.new_password
     user.token_version = (user.token_version or 0) + 1  # every other signed-in device is signed out
     log_activity(db, "password_change", "Changed own password", user=user, request=request)
     db.commit()
-    return {"ok": True, "access_token": create_token(user)}  # this device keeps working with a fresh token
+    return {"ok": True, "access_token": create_token(user)}
 
 
 @router.put("/me/name")
@@ -88,7 +91,7 @@ def create_user(data: schemas.UserCreate, db: Session = Depends(get_db), admin: 
     norm_admin = normalize_id(admin.user_id)
 
     if (norm_id in MASTER_SUPER_ADMIN_IDS or login_id in MASTER_SUPER_ADMIN_IDS) and norm_admin not in MASTER_SUPER_ADMIN_IDS:
-        raise HTTPException(400, "Master Super Admin accounts (0001, 0007) are reserved and cannot be created via user management.")
+        raise HTTPException(400, "Master Super Admin accounts (0001, 0007) are reserved.")
 
     # Only Master Super Admins (0001, 0007) can provision Master Admin accounts
     if norm_id in MASTER_ADMIN_IDS and norm_admin not in MASTER_SUPER_ADMIN_IDS:
@@ -97,12 +100,12 @@ def create_user(data: schemas.UserCreate, db: Session = Depends(get_db), admin: 
     if db.query(models.User).filter(models.User.user_id == login_id).first():
         raise HTTPException(400, "This ID is already taken. Choose another one.")
 
-    role = role_for_id(norm_id)  # decided strictly by the ID number
+    role = role_for_id(norm_id)
     u = models.User(
         name=data.name.strip(),
         user_id=login_id,
         password_hash=hash_password(data.password),
-        plain_password=data.password
+        permissions=data.permissions
     )
     set_role(u, role)
     db.add(u)
@@ -125,11 +128,11 @@ def update_user(uid: int, data: schemas.UserUpdate, db: Session = Depends(get_db
     norm_u = normalize_id(u.user_id)
     norm_admin = normalize_id(admin.user_id)
 
-    # Master Super Admin accounts (0001, 0007) can only be modified by Super Admins or self
-    if norm_u in MASTER_SUPER_ADMIN_IDS and norm_admin not in MASTER_SUPER_ADMIN_IDS and norm_u != norm_admin:
-        raise HTTPException(403, "Only Master Super Admins (0001, 0007) can modify Super Admin accounts.")
+    # Mutual Super Admin Protection: Super Admins CANNOT modify each other
+    if norm_u in MASTER_SUPER_ADMIN_IDS and norm_u != norm_admin:
+        raise HTTPException(403, f"Super Admin {norm_u} is protected and cannot be modified by another Super Admin or user.")
 
-    # Admin Users cannot modify Master Admin accounts
+    # Master Admins cannot be modified by Admin Users
     if norm_u in MASTER_ADMIN_IDS and norm_admin in ADMIN_USER_IDS:
         raise HTTPException(403, "Admin users cannot modify Master Admin accounts.")
 
@@ -137,22 +140,56 @@ def update_user(uid: int, data: schemas.UserUpdate, db: Session = Depends(get_db
     if norm_u in MASTER_ADMIN_IDS and norm_admin in MASTER_ADMIN_IDS and norm_admin not in MASTER_SUPER_ADMIN_IDS and norm_u != norm_admin:
         raise HTTPException(403, "Master Admins cannot modify one another's accounts.")
 
-    new_role = role_for_id(u.user_id)  # roles are fixed strictly by ID
+    new_role = role_for_id(u.user_id)
     done = []
     if data.name is not None and data.name.strip():
         u.name = data.name.strip()
-        done.append("renamed")
+        done.append(f"renamed to {u.name}")
     if new_role and new_role != u.role:
         set_role(u, new_role)
         done.append(f"role set to {new_role}")
     if data.password:
+        # Super Admins can reset ordinary users' passwords
         u.password_hash = hash_password(data.password)
-        u.plain_password = data.password
         u.token_version = (u.token_version or 0) + 1  # signs that user out everywhere
         done.append("password reset")
+        log_activity(db, "user_password_reset", f"Reset password for {u.user_id}", user=admin)
+    if data.permissions is not None:
+        if norm_admin not in MASTER_SUPER_ADMIN_IDS:
+            raise HTTPException(403, "Only Super Admins can configure permissions.")
+        merged = dict(u.permissions or {})
+        merged.update(data.permissions)
+        u.permissions = merged
+        done.append("permissions updated")
+        log_activity(db, "permission_update", f"Updated permissions for {u.user_id}", user=admin)
     if done:
         log_activity(db, "user_update", f"{u.user_id}: {', '.join(done)}", user=admin)
     db.commit()
+    return user_out(u, actor=admin)
+
+
+@router.put("/users/{uid}/permissions")
+def update_permissions(uid: int, data: schemas.PermissionsUpdate, db: Session = Depends(get_db),
+                       admin: models.User = Depends(require_admin)):
+    """Super Admins can grant or revoke granular permissions for individual users."""
+    norm_admin = normalize_id(admin.user_id)
+    if norm_admin not in MASTER_SUPER_ADMIN_IDS:
+        raise HTTPException(403, "Only Super Admins (0001, 0007) have permission to configure user permissions.")
+
+    u = db.get(models.User, uid)
+    if not u:
+        raise HTTPException(404, "User not found.")
+
+    norm_u = normalize_id(u.user_id)
+    if norm_u in MASTER_SUPER_ADMIN_IDS:
+        raise HTTPException(403, "Permissions of a Super Admin are fixed and cannot be modified.")
+
+    merged = dict(u.permissions or {})
+    merged.update(data.permissions)
+    u.permissions = merged
+    log_activity(db, "permission_update", f"Updated permissions for {u.user_id}", user=admin)
+    db.commit()
+    db.refresh(u)
     return user_out(u, actor=admin)
 
 
@@ -171,7 +208,7 @@ def delete_user(uid: int, db: Session = Depends(get_db), admin: models.User = De
 
     # keep their records, just clear who added them
     db.query(models.Device).filter(models.Device.added_by == uid).update({"added_by": None})
-    log_activity(db, "user_delete", f"Deleted user {u.user_id}", user=admin)  # their old log rows stay
+    log_activity(db, "user_delete", f"Deleted user {u.user_id}", user=admin)
     db.delete(u)
     db.commit()
     return {"deleted": uid}

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session, joinedload
 import customer_tables
 import models, schemas
 from activity import log_activity
-from auth import get_current_user, require_admin, require_staff
+from auth import get_current_user, require_admin, require_staff, require_permission
 from database import get_db, SessionLocal
 
 # Every route here needs a signed-in user.
@@ -237,14 +237,14 @@ def stats(db: Session = Depends(get_db), user: models.User = Depends(get_current
     }
 
 
-@router.get("/columns")
+@router.get("/columns", dependencies=[Depends(require_permission("view"))])
 def columns(db: Session = Depends(get_db)):
     """Extra column names found in uploads, shown after the built-in columns."""
     return [n for (n,) in db.query(models.ColumnRegistry.name).order_by(models.ColumnRegistry.name)]
 
 
 # ---------- customers ----------
-@router.get("/customers")
+@router.get("/customers", dependencies=[Depends(require_permission("view"))])
 def customers(db: Session = Depends(get_db)):
     soon = date.today() + timedelta(days=30)
     rows = (db.query(Customer.id, Customer.name, Customer.avatar, func.count(Device.id),
@@ -255,7 +255,7 @@ def customers(db: Session = Depends(get_db)):
     return [{"id": i, "name": n, "avatar": a, "devices": c, "expiring_or_expired": int(e or 0)} for i, n, a, c, e in rows]
 
 
-@router.post("/customers", status_code=201)
+@router.post("/customers", status_code=201, dependencies=[Depends(require_permission("add"))])
 def add_customer(data: schemas.CustomerIn, db: Session = Depends(get_db),
                  user: models.User = Depends(get_current_user)):
     c = customer_by_name(db, data.name.strip())
@@ -356,7 +356,7 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
     return query.order_by(desc(col_attr) if sort_dir == "desc" else asc(col_attr), asc(Device.id))
 
 
-@router.get("/devices")
+@router.get("/devices", dependencies=[Depends(require_permission("view"))])
 def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optional[str] = "all",
                  sim_type: Optional[str] = "all",
                  sort_by: Optional[str] = "id", sort_dir: Optional[str] = "asc",
@@ -369,7 +369,7 @@ def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optiona
             "pages": max(1, -(-total // page_size)), "items": [out(d) for d in items]}
 
 
-@router.get("/devices/export")
+@router.get("/devices/export", dependencies=[Depends(require_permission("download"))])
 def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optional[str] = "all",
                    sim_type: Optional[str] = "all",
                    sort_by: Optional[str] = "id", sort_dir: Optional[str] = "asc",
@@ -400,7 +400,7 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
         headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 
-@router.post("/devices/bulk/validate")
+@router.post("/devices/bulk/validate", dependencies=[Depends(require_permission("upload"))])
 def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
     imeis = [r.imei.strip() for r in data.rows if r.imei]
     sr_nos = [r.device_sr_no.strip() for r in data.rows if r.device_sr_no]
@@ -581,7 +581,7 @@ def insert_chunk(db: Session, rows: list):
             return
 
 
-@router.post("/devices/bulk")
+@router.post("/devices/bulk", dependencies=[Depends(require_permission("upload"))])
 def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
              user: models.User = Depends(get_current_user)):
     imeis = [r.imei.strip() for r in data.rows if r.imei]
@@ -702,13 +702,13 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
     return {"added": added, "updated": updated, "skipped_duplicates": len(skipped), "skipped_imeis": skipped[:50]}
 
 
-@router.post("/devices/sheet-upload")
+@router.post("/devices/sheet-upload", dependencies=[Depends(require_permission("upload"))])
 def sheet_upload(data: schemas.BulkIn, db: Session = Depends(get_db),
                  user: models.User = Depends(get_current_user)):
     return bulk_add(data, db, user)
 
 
-@router.post("/devices", status_code=201)
+@router.post("/devices", status_code=201, dependencies=[Depends(require_permission("add"))])
 def add_device(data: schemas.DeviceIn, db: Session = Depends(get_db),
                user: models.User = Depends(get_current_user)):
     if not data.imei or len(data.imei) < 5 or not data.customer_name:
@@ -732,7 +732,7 @@ def clean_imei(val) -> str:
     return s.strip()
 
 
-@router.post("/simdata/check")
+@router.post("/simdata/check", dependencies=[Depends(require_permission("search"))])
 def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
                     user: models.User = Depends(get_current_user)):
     rows = data.rows
@@ -978,7 +978,7 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
     }
 
 
-@router.post("/simdata/apply")
+@router.post("/simdata/apply", dependencies=[Depends(require_permission("edit"))])
 def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                    user: models.User = Depends(get_current_user)):
     rows = data.rows
@@ -1154,7 +1154,7 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     }
 
 
-@router.post("/fetch/bulk")
+@router.post("/fetch/bulk", dependencies=[Depends(require_permission("search"))])
 def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
     raw_terms = [q.strip() for q in data.queries if q.strip()]
     if not raw_terms:
@@ -1287,7 +1287,7 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/devices/quick-search")
+@router.get("/devices/quick-search", dependencies=[Depends(require_permission("search"))])
 def quick_search(q: str = Query("", min_length=1), db: Session = Depends(get_db)):
     term = q.strip()
     if not term:
@@ -1314,7 +1314,7 @@ def quick_search(q: str = Query("", min_length=1), db: Session = Depends(get_db)
     }
 
 
-@router.get("/inventory/insights")
+@router.get("/inventory/insights", dependencies=[Depends(require_permission("view"))])
 def inventory_insights(db: Session = Depends(get_db)):
     today = date.today()
     soon_30 = today + timedelta(days=30)
@@ -1372,7 +1372,7 @@ def inventory_insights(db: Session = Depends(get_db)):
     }
 
 
-@router.get("/inventory/health")
+@router.get("/inventory/health", dependencies=[Depends(require_permission("view"))])
 def inventory_health(db: Session = Depends(get_db)):
     def find_dups(column):
         return db.query(column, func.count(Device.id)).filter(ACTIVE, column.isnot(None), column != '').group_by(column).having(func.count(Device.id) > 1).all()
@@ -1431,7 +1431,7 @@ def inventory_health(db: Session = Depends(get_db)):
     }
 
 
-@router.get("/inventory/report")
+@router.get("/inventory/report", dependencies=[Depends(require_permission("download"))])
 def inventory_report(db: Session = Depends(get_db)):
     today = date.today()
     soon_30 = today + timedelta(days=30)
@@ -1450,7 +1450,7 @@ def inventory_report(db: Session = Depends(get_db)):
     return [{"id": i, "name": n, "total": int(t or 0), "active": int(a or 0), "expiring_30": int(e or 0), "expired": int(x or 0)} for i, n, t, a, e, x in rows]
 
 
-@router.post("/export")
+@router.post("/export", dependencies=[Depends(require_permission("download"))])
 def export_excel(data: schemas.ExportIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     buf = make_excel(data.title or "CustomerVault_Export", data.headers, data.rows)
     clean_title = re.sub(r'[^a-zA-Z0-9_-]', '_', data.title or 'Export')
@@ -1464,7 +1464,7 @@ def export_excel(data: schemas.ExportIn, db: Session = Depends(get_db), user: mo
     )
 
 
-@router.post("/columns/add")
+@router.post("/columns/add", dependencies=[Depends(require_permission("add"))])
 def add_column(data: schemas.AddColumnIn, db: Session = Depends(get_db),
                user: models.User = Depends(get_current_user)):
     col_name = data.column_name.strip()
@@ -1578,7 +1578,7 @@ def add_column(data: schemas.AddColumnIn, db: Session = Depends(get_db),
     return {"column": col_name, "value": val_to_set, "records_affected": count_affected}
 
 
-@router.post("/columns/delete", dependencies=[Depends(require_admin)])
+@router.post("/columns/delete", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
 def delete_column(data: schemas.DeleteColumnIn, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
     col_name = data.column_name.strip()
     norm = col_name.lower().replace(' ', '_')
@@ -1599,7 +1599,7 @@ def delete_column(data: schemas.DeleteColumnIn, db: Session = Depends(get_db), a
     return {"deleted": col_name, "records_affected": count_cleaned}
 
 
-@router.get("/devices/lookup")
+@router.get("/devices/lookup", dependencies=[Depends(require_permission("view"))])
 def lookup(value: str, db: Session = Depends(get_db)):
     v = value.strip()
     items = (db.query(Device).options(joinedload(Device.customer))
@@ -1608,7 +1608,7 @@ def lookup(value: str, db: Session = Depends(get_db)):
     return [out(d) for d in items]
 
 
-@router.get("/devices/{device_id}")
+@router.get("/devices/{device_id}", dependencies=[Depends(require_permission("view"))])
 def get_device_by_id(device_id: int, db: Session = Depends(get_db)):
     d = db.query(Device).options(joinedload(Device.customer)).filter(Device.id == device_id, ACTIVE).first()
     if not d:
@@ -1616,7 +1616,7 @@ def get_device_by_id(device_id: int, db: Session = Depends(get_db)):
     return out(d)
 
 
-@router.put("/devices/{device_id}")
+@router.put("/devices/{device_id}", dependencies=[Depends(require_permission("edit"))])
 def update_device_by_id(device_id: int, data: schemas.DeviceUpdate, db: Session = Depends(get_db),
                         user: models.User = Depends(get_current_user)):
     d = db.query(Device).options(joinedload(Device.customer)).filter(Device.id == device_id, ACTIVE).first()
@@ -1647,12 +1647,12 @@ def update_device_by_id(device_id: int, data: schemas.DeviceUpdate, db: Session 
     return out(d)
 
 
-@router.get("/devices/by-imei/{imei}")
+@router.get("/devices/by-imei/{imei}", dependencies=[Depends(require_permission("view"))])
 def get_by_imei(imei: str, db: Session = Depends(get_db)):
     return out(active_by_imei(db, imei))
 
 
-@router.put("/devices/by-imei/{imei}")
+@router.put("/devices/by-imei/{imei}", dependencies=[Depends(require_permission("edit"))])
 def update_by_imei(imei: str, data: schemas.DeviceUpdate, db: Session = Depends(get_db),
                    user: models.User = Depends(get_current_user)):
     d = active_by_imei(db, imei)
@@ -1681,7 +1681,7 @@ def update_by_imei(imei: str, data: schemas.DeviceUpdate, db: Session = Depends(
     return out(d)
 
 
-@router.delete("/devices/by-imei/{imei}", dependencies=[Depends(require_staff)])
+@router.delete("/devices/by-imei/{imei}", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
 def delete_by_imei(imei: str, data: Optional[schemas.ReasonIn] = None, db: Session = Depends(get_db),
                    user: models.User = Depends(get_current_user)):
     d = active_by_imei(db, imei)
@@ -1696,7 +1696,7 @@ def delete_by_imei(imei: str, data: Optional[schemas.ReasonIn] = None, db: Sessi
     return {"moved_to_bin": d.imei}
 
 
-@router.delete("/devices/{device_id}", dependencies=[Depends(require_staff)])
+@router.delete("/devices/{device_id}", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
 def delete_device(device_id: int, db: Session = Depends(get_db),
                   user: models.User = Depends(get_current_user)):
     d = db.query(Device).filter(Device.id == device_id, ACTIVE).first()
@@ -1715,7 +1715,7 @@ def delete_device(device_id: int, db: Session = Depends(get_db),
 
 
 # ---------- expiry alerts ----------
-@router.get("/alerts/expiry")
+@router.get("/alerts/expiry", dependencies=[Depends(require_permission("view"))])
 def expiry_alerts(days: int = Query(30, ge=0, le=365), customer_id: Optional[int] = None, limit: int = 5000, db: Session = Depends(get_db)):
     q = (db.query(Device).options(joinedload(Device.customer))
          .filter(ACTIVE, Device.expiry_date.isnot(None), Device.expiry_date <= date.today() + timedelta(days=days)))
@@ -1726,14 +1726,14 @@ def expiry_alerts(days: int = Query(30, ge=0, le=365), customer_id: Optional[int
 
 
 # ---------- deleted customers (recycle bin) ----------
-@router.get("/bin", dependencies=[Depends(require_staff)])
+@router.get("/bin", dependencies=[Depends(require_staff), Depends(require_permission("view"))])
 def bin_list(db: Session = Depends(get_db)):
     items = (db.query(Device).options(joinedload(Device.customer))
              .filter(Device.deleted_at.isnot(None)).order_by(Device.deleted_at.desc()).all())
     return [out(d) for d in items]
 
 
-@router.post("/bin/{device_id}/restore", dependencies=[Depends(require_staff)])
+@router.post("/bin/{device_id}/restore", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
 def bin_restore(device_id: int, db: Session = Depends(get_db),
                 user: models.User = Depends(get_current_user)):
     d = db.query(Device).filter(Device.id == device_id, Device.deleted_at.isnot(None)).first()
@@ -1747,7 +1747,7 @@ def bin_restore(device_id: int, db: Session = Depends(get_db),
     return {"restored": d.id}
 
 
-@router.delete("/bin/{device_id}")
+@router.delete("/bin/{device_id}", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
 def bin_purge(device_id: int, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
     d = db.query(Device).filter(Device.id == device_id, Device.deleted_at.isnot(None)).first()
     if not d:
@@ -1764,7 +1764,7 @@ def bin_purge(device_id: int, db: Session = Depends(get_db), admin: models.User 
     return {"deleted_forever": device_id}
 
 
-@router.delete("/bin")
+@router.delete("/bin", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
 def bin_empty(db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
     # Drop tables for deleted customers permanently
     deleted_custs = db.query(Customer).filter(Customer.deleted_at.isnot(None)).all()
@@ -1805,13 +1805,13 @@ def errored_out(r: models.ErroredRecord):
     }
 
 
-@router.get("/errors")
+@router.get("/errors", dependencies=[Depends(require_permission("view"))])
 def list_errors(db: Session = Depends(get_db)):
     rows = db.query(models.ErroredRecord).order_by(models.ErroredRecord.created_at.desc(), models.ErroredRecord.id.desc()).all()
     return [errored_out(r) for r in rows]
 
 
-@router.post("/errors")
+@router.post("/errors", dependencies=[Depends(require_permission("view"))])
 def save_errors(data: schemas.BulkErrorsIn, db: Session = Depends(get_db)):
     added = 0
     for item in data.records:
@@ -1840,7 +1840,7 @@ def save_errors(data: schemas.BulkErrorsIn, db: Session = Depends(get_db)):
     return {"saved_errors": added}
 
 
-@router.put("/errors/{error_id}/upload")
+@router.put("/errors/{error_id}/upload", dependencies=[Depends(require_permission("upload"))])
 def upload_corrected_error(error_id: int, data: schemas.DeviceIn, db: Session = Depends(get_db),
                            user: models.User = Depends(get_current_user)):
     err = db.query(models.ErroredRecord).filter(models.ErroredRecord.id == error_id).first()
@@ -1861,7 +1861,7 @@ def upload_corrected_error(error_id: int, data: schemas.DeviceIn, db: Session = 
     return {"success": True, "result": res}
 
 
-@router.delete("/errors/{error_id}", dependencies=[Depends(require_staff)])
+@router.delete("/errors/{error_id}", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
 def move_error_to_cart(error_id: int, db: Session = Depends(get_db),
                        user: models.User = Depends(get_current_user)):
     err = db.query(models.ErroredRecord).filter(models.ErroredRecord.id == error_id).first()
@@ -1907,7 +1907,7 @@ def move_error_to_cart(error_id: int, db: Session = Depends(get_db),
     return {"moved_to_cart": error_id}
 
 
-@router.post("/errors/empty", dependencies=[Depends(require_staff)])
+@router.post("/errors/empty", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
 def move_all_errors_to_cart(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     errors = db.query(models.ErroredRecord).all()
     count = 0

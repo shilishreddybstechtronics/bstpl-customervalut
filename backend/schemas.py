@@ -91,8 +91,7 @@ class UserOut(BaseModel):
     badge: Optional[str] = None
     is_master: Optional[bool] = False
     can_delete: Optional[bool] = False
-    plain_password: Optional[str] = None
-    password: Optional[str] = None
+    permissions: Optional[dict[str, bool]] = None
 
     class Config:
         from_attributes = True
@@ -266,6 +265,7 @@ class UserCreate(BaseModel):
         return _pw_ok(v)
     role: Optional[Role] = None       # new
     is_admin: bool = False            # old field, still accepted: used only when role is not given
+    permissions: Optional[dict[str, bool]] = None
 
 
 class UserUpdate(BaseModel):
@@ -273,6 +273,7 @@ class UserUpdate(BaseModel):
     role: Optional[Role] = None
     is_admin: Optional[bool] = None   # old field, used only when role is not given
     password: Optional[str] = Field(None, min_length=8, max_length=64)  # admin password reset
+    permissions: Optional[dict[str, bool]] = None
 
     @field_validator("password")
     @classmethod
@@ -282,6 +283,10 @@ class UserUpdate(BaseModel):
 
 class UserNameUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
+
+
+class PermissionsUpdate(BaseModel):
+    permissions: dict[str, bool]
 
 
 # ---- customer management ----

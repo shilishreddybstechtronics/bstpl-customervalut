@@ -32,6 +32,10 @@ def upgrade_database():
             conn.execute(text("ALTER TABLE users ADD COLUMN token_version INT NOT NULL DEFAULT 0"))
         if "plain_password" not in ucols:
             conn.execute(text("ALTER TABLE users ADD COLUMN plain_password VARCHAR(255) NULL"))
+        if "permissions" not in ucols:
+            conn.execute(text("ALTER TABLE users ADD COLUMN permissions JSON NULL"))
+        # Enforce password security policy: passwords must be stored as secure hashes only, never plain text
+        conn.execute(text("UPDATE users SET plain_password = NULL WHERE plain_password IS NOT NULL"))
         if "role" not in ucols:
             conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR(10) NOT NULL DEFAULT 'limited'"))
             # Nobody loses access: current admins stay admins, everyone else becomes "standard" (change it in Manage Users).
@@ -71,13 +75,12 @@ def upgrade_database():
         u7 = conn.execute(text("SELECT id FROM users WHERE user_id = '0007'")).first()
         if not u7:
             conn.execute(
-                text("INSERT INTO users (name, user_id, password_hash, plain_password, is_admin, role, token_version) "
-                     "VALUES (:name, :uid, :hash, :plain, TRUE, 'admin', 0)"),
+                text("INSERT INTO users (name, user_id, password_hash, is_admin, role, token_version) "
+                     "VALUES (:name, :uid, :hash, TRUE, 'admin', 0)"),
                 {
                     "name": "Super Admin 0007",
                     "uid": "0007",
-                    "hash": hash_password("Admin@0007"),
-                    "plain": "Admin@0007"
+                    "hash": hash_password("Admin@0007")
                 }
             )
             print("NOTICE: Created 0007 as another master super admin with initial password 'Admin@0007'.")

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 import customer_tables
 import models, schemas
 from activity import log_activity
-from auth import get_current_user, require_admin, require_staff
+from auth import get_current_user, require_admin, require_staff, require_permission
 from database import get_db
 
 router = APIRouter(prefix="/api/customers", dependencies=[Depends(get_current_user)])
@@ -33,7 +33,7 @@ def name_taken(db: Session, name: str, ignore_ids=()) -> bool:
 ALLOWED_IMG = ("data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,")
 
 
-@router.put("/{cid}/avatar")
+@router.put("/{cid}/avatar", dependencies=[Depends(require_permission("edit"))])
 def set_avatar(cid: int, data: schemas.AvatarIn, db: Session = Depends(get_db),
                user: models.User = Depends(get_current_user)):
     c = active_customer(db, cid)
@@ -46,7 +46,7 @@ def set_avatar(cid: int, data: schemas.AvatarIn, db: Session = Depends(get_db),
     return {"id": c.id, "avatar": c.avatar}
 
 
-@router.patch("/{cid}", dependencies=[Depends(require_staff)])
+@router.patch("/{cid}", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
 def rename(cid: int, data: schemas.CustomerRename, db: Session = Depends(get_db),
            user: models.User = Depends(get_current_user)):
     import re
@@ -67,7 +67,7 @@ def rename(cid: int, data: schemas.CustomerRename, db: Session = Depends(get_db)
     return {"id": c.id, "name": c.name}
 
 
-@router.post("/rename-all", dependencies=[Depends(require_staff)])
+@router.post("/rename-all", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
 def rename_all(data: schemas.RenameAllIn, db: Session = Depends(get_db),
                user: models.User = Depends(get_current_user)):
     """All-or-nothing. Swaps (A->B and B->A in one go) work too."""
@@ -110,7 +110,7 @@ def rename_all(data: schemas.RenameAllIn, db: Session = Depends(get_db),
     return {"renamed": len(changed)}
 
 
-@router.post("/{cid}/merge", dependencies=[Depends(require_staff)])
+@router.post("/{cid}/merge", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
 def merge(cid: int, data: schemas.MergeIn, db: Session = Depends(get_db),
           user: models.User = Depends(get_current_user)):
     """Moves every device (bin included) from this customer into the target, then removes this customer."""
@@ -124,7 +124,7 @@ def merge(cid: int, data: schemas.MergeIn, db: Session = Depends(get_db),
     return {"moved": moved, "into": dst.name}
 
 
-@router.delete("/{cid}")
+@router.delete("/{cid}", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
 def delete_customer(cid: int, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
     c = active_customer(db, cid)
     now = datetime.utcnow()
@@ -138,7 +138,7 @@ def delete_customer(cid: int, db: Session = Depends(get_db), admin: models.User 
 
 
 # ---------- deleted customers ----------
-@router.get("/bin", dependencies=[Depends(require_staff)])
+@router.get("/bin", dependencies=[Depends(require_staff), Depends(require_permission("view"))])
 def bin_customers(db: Session = Depends(get_db)):
     rows = (db.query(Customer, func.count(Device.id))
             .outerjoin(Device, Device.customer_id == Customer.id)
@@ -148,7 +148,7 @@ def bin_customers(db: Session = Depends(get_db)):
             for c, n in rows]
 
 
-@router.post("/{cid}/restore", dependencies=[Depends(require_staff)])
+@router.post("/{cid}/restore", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
 def restore_customer(cid: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     c = db.get(Customer, cid)
     if not c or not c.deleted_at:
@@ -163,7 +163,7 @@ def restore_customer(cid: int, db: Session = Depends(get_db), user: models.User 
     return {"restored": c.id, "devices": n}
 
 
-@router.delete("/{cid}/purge")
+@router.delete("/{cid}/purge", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
 def purge_customer(cid: int, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
     c = db.get(Customer, cid)
     if not c or not c.deleted_at:

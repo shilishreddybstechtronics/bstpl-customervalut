@@ -89,6 +89,13 @@ def require_admin(user: models.User = Depends(get_current_user)) -> models.User:
     return user
 
 
+def require_super_admin(user: models.User = Depends(get_current_user)) -> models.User:
+    norm = normalize_id(user.user_id)
+    if norm not in MASTER_SUPER_ADMIN_IDS:
+        raise HTTPException(status_code=403, detail="Access restricted to Super Admins (0001 and 0007) only.")
+    return user
+
+
 # admin + standard: everything except admin screens. "limited" users cannot delete, restore or manage customers.
 require_staff = require_role("admin", "standard")
 
@@ -103,6 +110,60 @@ MASTER_SUPER_ADMIN_ID = "0001"  # primary for backwards compatibility
 MASTER_ADMIN_IDS = {"0001", "0002", "0003", "0004", "0007"}
 ADMIN_USER_IDS = {"0005", "0006", "0008", "0009", "0010"}
 MASTER_ID = MASTER_SUPER_ADMIN_ID  # backwards compatibility
+
+
+DEFAULT_PERMISSIONS = {
+    "super_admin": {
+        "view": True, "add": True, "edit": True, "delete": True, "search": True, "download": True, "upload": True,
+        "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
+        "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": True, "page_cart": True, "page_audit": True
+    },
+    "master_admin": {
+        "view": True, "add": True, "edit": True, "delete": True, "search": True, "download": True, "upload": True,
+        "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
+        "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": True, "page_cart": True, "page_audit": True
+    },
+    "admin_user": {
+        "view": True, "add": True, "edit": True, "delete": True, "search": True, "download": True, "upload": True,
+        "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
+        "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": True, "page_cart": True, "page_audit": True
+    },
+    "regular_user": {
+        "view": True, "add": True, "edit": True, "delete": False, "search": True, "download": True, "upload": True,
+        "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
+        "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": False, "page_cart": False, "page_audit": False
+    }
+}
+
+
+def get_user_permissions(user: models.User) -> dict[str, bool]:
+    """Returns complete effective permissions for user, combining role defaults and individual overrides."""
+    norm = normalize_id(user.user_id)
+    if norm in MASTER_SUPER_ADMIN_IDS:
+        return {k: True for k in DEFAULT_PERMISSIONS["super_admin"]}
+    cat = get_user_category(norm)["category"]
+    perms = dict(DEFAULT_PERMISSIONS.get(cat, DEFAULT_PERMISSIONS["regular_user"]))
+    if user.permissions and isinstance(user.permissions, dict):
+        for k, v in user.permissions.items():
+            if isinstance(v, bool):
+                perms[k] = v
+    return perms
+
+
+def user_has_permission(user: models.User, perm: str) -> bool:
+    norm = normalize_id(user.user_id)
+    if norm in MASTER_SUPER_ADMIN_IDS:
+        return True
+    perms = get_user_permissions(user)
+    return bool(perms.get(perm, False))
+
+
+def require_permission(perm: str):
+    def dep(user: models.User = Depends(get_current_user)) -> models.User:
+        if not user_has_permission(user, perm):
+            raise HTTPException(403, f"Access denied: you do not have permission to '{perm}'. Contact a Super Admin.")
+        return user
+    return dep
 
 
 def role_for_id(user_id: str) -> str:
@@ -149,11 +210,39 @@ def get_user_category(user_id: str) -> dict:
     }
 
 
+def can_modify_user(actor: models.User, target: models.User) -> tuple[bool, str]:
+    """Ensures mutual protection between Super Admins while allowing them to manage ordinary users."""
+    actor_norm = normalize_id(actor.user_id)
+    target_norm = normalize_id(target.user_id)
+
+    # Editing self is always permitted
+    if actor.id == target.id or actor_norm == target_norm:
+        return True, ""
+
+    # Mutual Super Admin Protection: Super Admins CANNOT modify each other
+    if target_norm in MASTER_SUPER_ADMIN_IDS:
+        return False, f"Super Admin {target_norm} is protected and cannot be modified by another Super Admin or user."
+
+    # Super Admins can manage any other user account
+    if actor_norm in MASTER_SUPER_ADMIN_IDS:
+        return True, ""
+
+    # Master Admins (0002-0004) cannot modify other Master Admins
+    if target_norm in MASTER_ADMIN_IDS:
+        return False, "Master Admin accounts cannot be modified by other users."
+
+    # Admin Users can modify ordinary accounts if given administrative privileges
+    if actor_norm in ADMIN_USER_IDS or actor.role == "admin":
+        return True, ""
+
+    return False, "You do not have permission to modify user accounts."
+
+
 def can_delete_user(actor: models.User, target: models.User) -> tuple[bool, str]:
     """Evaluates whether actor is permitted to delete target user account.
     RBAC Rules:
     1. Actor cannot delete their own account.
-    2. Master Super Admins (0001, 0007) are protected and can NEVER be deleted by anyone.
+    2. Master Super Admins (0001, 0007) are protected and can NEVER be deleted by anyone (including the other Super Admin).
     3. Master Super Admins (0001, 0007) have full deletion authority over 0002-0004,
        0005-0010, and all regular users.
     4. Master Admins 0002, 0003, and 0004 can delete Admin Users (0005-0010) and regular users,
@@ -169,11 +258,11 @@ def can_delete_user(actor: models.User, target: models.User) -> tuple[bool, str]
     if actor.id == target.id or actor_norm == target_norm:
         return False, "You cannot delete your own account."
 
-    # Rule 2: Master Super Admins are permanently protected against deletion
+    # Rule 2: Master Super Admins are permanently protected against deletion by anyone
     if target_norm in MASTER_SUPER_ADMIN_IDS:
-        return False, f"Master Super Admin {target_norm} is protected and can never be deleted."
+        return False, f"Master Super Admin {target_norm} is protected and can never be deleted by anyone."
 
-    # Rule 3: Master Super Admins have full deletion authority
+    # Rule 3: Master Super Admins have full deletion authority over all non-super accounts
     if actor_norm in MASTER_SUPER_ADMIN_IDS:
         return True, ""
 
