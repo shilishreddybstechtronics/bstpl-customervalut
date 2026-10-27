@@ -6017,9 +6017,13 @@
         return convertDateToStandardFormat(val);
       }
 
-      async function runSimAutoCheck() {
-        if (!simRawFileRows.length) return;
+      async function runSimAutoCheck(isManual = false) {
+        if (!simRawFileRows.length) {
+          if (isManual) toast('⚠️ Please select or upload a SIM file first in Step 1.');
+          return;
+        }
 
+        const keyLabel = 'ICCID / CCID';
         const keyCol = $('colMapKey') ? $('colMapKey').value : '';
         const msisdn1Col = $('colMapMsisdn1') ? $('colMapMsisdn1').value : '';
         const msisdn2Col = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
@@ -6032,12 +6036,18 @@
           $('simCheckResults').hidden = false;
           $('kpiSimFileRows').textContent = simRawFileRows.length.toLocaleString();
           $('simNotesBox').hidden = false;
-          $('simNotesBox').innerHTML = '⚠️ <b>ICCID Column Required:</b> Please select which column in your file represents the ICCID in the dropdown above.';
+          $('simNotesBox').innerHTML = '⚠️ <b>ICCID / CCID Column Required:</b> Please select which column in your file represents the ICCID / CCID in the dropdown above.';
           $('btnSimPush').style.display = 'none';
           if ($('btnSimInsertNew')) $('btnSimInsertNew').style.display = 'none';
           if ($('btnSimApplyBoth')) $('btnSimApplyBoth').style.display = 'none';
-          $('simPushMsg').textContent = 'Please select the ICCID column to continue.';
+          $('simPushMsg').textContent = 'Please select the ICCID / CCID column to continue.';
           return;
+        }
+
+        const compareBtn = $('btnRunSimCompare');
+        if (compareBtn) {
+          compareBtn.disabled = true;
+          compareBtn.innerHTML = '<span>⏳</span> <span>Comparing & Checking Records…</span>';
         }
 
         const standardCols = new Set([keyCol, msisdn1Col, msisdn2Col, actDateCol, expDateCol].filter(Boolean));
@@ -6190,6 +6200,14 @@
 
           $('simCheckResults').hidden = false;
 
+          if (isManual) {
+            setTimeout(() => {
+              if ($('simCheckResults')) {
+                $('simCheckResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }, 100);
+          }
+
           showEventPopup({
             type: 'uploading',
             title: 'SIM Data Compared & Fetched',
@@ -6205,6 +6223,11 @@
           });
         } catch (err) {
           fail(err);
+        } finally {
+          if (compareBtn) {
+            compareBtn.disabled = false;
+            compareBtn.innerHTML = '<span>🔍</span> <span>Compare & Check Records</span>';
+          }
         }
       }
 
