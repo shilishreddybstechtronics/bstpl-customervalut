@@ -1871,24 +1871,16 @@
       <!-- Sub-View 3: Bulk Upload (Excel) -->
       <div id="subViewUpload" class="inv-sub-view" hidden>
         <div class="card" style="padding:18px 20px;border:1px solid var(--line);margin:10px 0 16px">
-          <h3 style="margin:0 0 4px">📤 Bulk Upload (Excel)</h3>
-          <p class="sub" style="margin:0 0 12px">Upload <code>.xlsx</code> or <code>.xls</code> workbooks. Each sheet
-            creates or updates a customer with its own MySQL table and automatic E-SIM/Plastic SIM tagging.</p>
-
-          <!-- Bulk Upload Mode Selector: Standard vs Direct Upload (Max 2 uses) -->
-          <div style="margin:14px 0 16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-            <div style="display:flex;gap:8px;flex-wrap:wrap" id="uploadModeGroup">
-              <button type="button" class="b on" id="btnModeStandardUpload" onclick="setUploadMode('standard')" style="font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px">
-                📋 Standard Bulk Upload
-              </button>
-              <button type="button" class="b" id="btnModeDirectUpload" onclick="setUploadMode('direct')" style="font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;display:inline-flex;align-items:center;gap:6px">
-                <span>⚡</span> Direct Upload (Empty Columns)
-                <span id="badgeDirectUploadQuota" class="badge" style="background:var(--primary);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px">2 uses left</span>
-              </button>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+            <div>
+              <h3 style="margin:0 0 4px">📤 Bulk Upload (Excel)</h3>
+              <p class="sub" style="margin:0">Upload <code>.xlsx</code> or <code>.xls</code> workbooks. Each sheet
+                creates or updates a customer with its own MySQL table and automatic E-SIM/Plastic SIM tagging.</p>
             </div>
-            <div id="directUploadStatusText" style="font-size:12px;color:var(--muted)">
-              Standard bulk upload with validation, optional defaults, and error staging.
-            </div>
+            <button class="b" id="btnDownloadUploadTemplate" type="button" onclick="downloadBulkUploadTemplate()"
+              style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:8px 16px;border-radius:8px;background:var(--card-subtle);border:1.5px solid var(--primary);color:var(--primary);cursor:pointer">
+              <span>📥</span> <span>Download Excel Upload Format</span>
+            </button>
           </div>
 
           <!-- Customer Chooser -->
@@ -2003,36 +1995,9 @@
             <div id="sheetList" style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0"></div>
           </div>
 
-          <!-- Direct Upload Dedicated Feature Card inside Bulk Upload -->
-          <div class="card" id="directUploadCard" hidden
-            style="padding:16px 20px;border:1.5px solid var(--primary);border-radius:12px;margin:14px 0;background:linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%)">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
-              <div>
-                <h4 style="margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:6px;color:var(--primary)">
-                  <span>⚡</span> <span>Direct Upload Mode (Exclusive Feature &bull; Max 2 Uses)</span>
-                </h4>
-                <div style="font-size:13px;line-height:1.7">
-                  <div>✔ <b>Invalid rows will ALSO be inserted into customer</b> (auto-assigned unique identifiers if missing).</div>
-                  <div>✔ <b>Duplicated records will NOT be inserted</b> (strictly skipped to prevent duplicates).</div>
-                  <div>✔ <b>All remaining columns will be left completely empty</b> (no default values applied).</div>
-                  <div style="color:var(--warn);font-weight:700;margin-top:4px">⚠️ <b>Usage Limit:</b> This feature can only be used <b>twice</b> (<span id="txtDirectQuotaRemaining">2 of 2 uses remaining</span>).</div>
-                </div>
-              </div>
-              <button class="b p" id="btnDirectUploadTop" type="button" style="font-weight:700;padding:12px 24px;border-radius:8px;font-size:14px">
-                ⚡ Direct Upload Now
-              </button>
-            </div>
-            <div id="directUploadQuotaExceededBanner" style="display:none;background:var(--danger-bg, #fee2e2);border:1px solid var(--danger);color:var(--danger);padding:10px 14px;border-radius:8px;margin-top:12px;font-size:13px;font-weight:700">
-              🔒 Direct Upload Limit Reached: You have already used your 2 allowed direct uploads. Please use Standard Bulk Upload.
-            </div>
-          </div>
-
           <!-- Optional Values Saved into Every Record -->
           <div class="card" id="optValuesCard"
             style="padding:16px;border:1px solid var(--line);border-radius:10px;margin:14px 0;background:var(--card-subtle);transition:opacity 0.2s">
-            <div id="optValuesDisabledBanner" style="display:none;background:var(--warn-bg);border:1px solid var(--warn);padding:8px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:12px">
-              ⚡ <b>Direct Upload Mode Active:</b> Optional default values are bypassed. All columns missing or blank in the file will be saved as completely empty.
-            </div>
             <h4 style="margin:0 0 4px;font-size:14px;display:flex;align-items:center;gap:6px">
               <span>⚙️</span> <span>Optional Values (Saved into every record if blank in file)</span>
             </h4>
@@ -2141,45 +2106,56 @@
               style="background:var(--danger-bg, #fee2e2);border:1px solid var(--danger);color:var(--danger);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600">
             </div>
 
-            <div
-              style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:14px">
-              <h4 style="margin:0">Validation & Preview</h4>
-              <div style="display:flex;gap:6px" id="valFilterBtns">
-                <button class="b on" data-valfilter="all" type="button" id="btnFilterAll">All (<span
-                    id="vAllCount">0</span>)</button>
-                <button class="b" data-valfilter="valid" type="button" id="btnFilterValid">Valid (<span
-                    id="vValidCount">0</span>)</button>
-                <button class="b" data-valfilter="duplicate" type="button" id="btnFilterDup">Duplicate (<span
-                    id="vDupCount">0</span>)</button>
-                <button class="b" data-valfilter="invalid" type="button" id="btnFilterInvalid">Invalid (<span
-                    id="vInvalidCount">0</span>)</button>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+              <div>
+                <h4 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">
+                  <span>📋</span> <span>Exact File Review & Validation</span>
+                </h4>
+                <div class="sub" style="font-size:12px;margin-top:2px">
+                  Review exact rows from the uploaded file. Only duplicate IMEI, ICCID, and Device Sr No are held as error entries; all other rows are inserted to their customer data.
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <input type="search" id="valReviewSearch" placeholder="🔍 Search in file review..."
+                  style="font-size:12.5px;padding:6px 12px;border-radius:6px;min-width:220px;border:1px solid var(--line)" />
+                <div style="display:flex;gap:6px" id="valFilterBtns">
+                  <button class="b on" data-valfilter="all" type="button" id="btnFilterAll">All (<span id="vAllCount">0</span>)</button>
+                  <button class="b" data-valfilter="valid" type="button" id="btnFilterValid">Ready to Insert (<span id="vValidCount">0</span>)</button>
+                  <button class="b" data-valfilter="duplicate" type="button" id="btnFilterDup">Duplicate Errors (<span id="vDupCount">0</span>)</button>
+                </div>
               </div>
             </div>
 
             <div class="stats" style="margin-top:10px">
-              <div class="card stat" style="border-left-color:var(--ok)"><b id="vValid">0</b><span>Valid Rows</span>
-              </div>
-              <div class="card stat" style="border-left-color:var(--warn)"><b id="vDup">0</b><span>Duplicate
-                  Records</span></div>
-              <div class="card stat" style="border-left-color:var(--danger)"><b id="vInvalid">0</b><span>Invalid
-                  Rows</span></div>
+              <div class="card stat" style="border-left-color:var(--ok)"><b id="vValid">0</b><span>Ready to Insert</span></div>
+              <div class="card stat" style="border-left-color:var(--warn)"><b id="vDup">0</b><span>Duplicate Errors</span></div>
               <div class="card stat" style="border-left-color:#38bdf8"><b id="vEsim">0</b><span>E-SIM Total</span></div>
-              <div class="card stat" style="border-left-color:#a855f7"><b id="vPlastic">0</b><span>Plastic SIM
-                  Total</span></div>
+              <div class="card stat" style="border-left-color:#a855f7"><b id="vPlastic">0</b><span>Plastic SIM Total</span></div>
             </div>
 
             <div id="valMetaBadges" style="margin:10px 0;display:flex;gap:12px;flex-wrap:wrap;font-size:13px"></div>
 
             <div class="row" style="margin:14px 0;gap:10px;flex-wrap:wrap;align-items:center">
-              <button class="b p" id="btnConfirmUpload" type="button">Confirm & Upload Records</button>
-              <button class="b" id="btnDirectUploadBottom" type="button" style="display:none;background:var(--primary);color:#fff;font-weight:700">⚡ Direct Upload (Leave Remaining Columns Empty)</button>
-              <button class="b" id="btnDlSkipped" type="button" hidden>Download Skipped / Invalid Excel</button>
+              <button class="b p" id="btnConfirmUpload" type="button" style="font-weight:700;padding:10px 22px;border-radius:8px">
+                Confirm & Upload Records to Customer Data
+              </button>
+              <button class="b" id="btnDlSkipped" type="button" hidden>Download Duplicate Errors Excel</button>
             </div>
 
-            <div style="font-size:12px;color:var(--muted);margin-bottom:6px" id="valPreviewTableNote">Showing first 200
-              rows preview (all rows validated and checked).</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+              <div style="font-size:12px;color:var(--muted)" id="valPreviewTableNote">Showing exact rows parsed from file.</div>
+              <div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+                <span>Display:</span>
+                <select id="valReviewLimit" style="font-size:12px;padding:2px 8px;border-radius:4px">
+                  <option value="100">100 rows</option>
+                  <option value="250">250 rows</option>
+                  <option value="500">500 rows</option>
+                  <option value="all">All rows</option>
+                </select>
+              </div>
+            </div>
             <div id="valPreviewTable"
-              style="max-height:420px;overflow:auto;border:1px solid var(--line);border-radius:8px"></div>
+              style="max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:8px"></div>
           </div>
 
           <!-- Progress Container -->
@@ -2205,7 +2181,7 @@
       <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:6px">
         <div>
           <h2 style="margin:0">SIM Data Upload</h2>
-          <p class="sub" style="margin:4px 0 0">Match devices by ICCID (or IMEI) and compare activation date, expiry date, MSISDN1, and MSISDN2. Fetches values from the uploaded file and replaces them in our data.</p>
+          <p class="sub" style="margin:4px 0 0">Match devices by ICCID and compare activation date, expiry date, MSISDN1, and MSISDN2. Fetches values from the uploaded file and replaces them in our data.</p>
         </div>
       </div>
 
@@ -2216,23 +2192,18 @@
       </div>
 
       <div id="simMainContent">
-        <!-- Matching Mode Selector -->
+        <!-- Matching Mode Indicator: ICCID Only -->
         <div style="margin:12px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:12px 16px">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <span style="font-size:12.5px;font-weight:800;color:var(--ink);letter-spacing:.04em;text-transform:uppercase">
               <span>🎯</span> Match Records By:
             </span>
-            <div class="sim-mode-toggle" id="simModeToggleWrap">
-              <button type="button" class="sim-mode-btn active" id="btnModeIccid" onclick="setSimMatchMode('iccid')">
-                <span>💳</span> <b>ICCID</b> <span style="font-size:11px;opacity:.8">(Recommended)</span>
-              </button>
-              <button type="button" class="sim-mode-btn" id="btnModeImei" onclick="setSimMatchMode('imei')">
-                <span>📱</span> <b>IMEI</b>
-              </button>
+            <div style="display:inline-flex;align-items:center;gap:6px;background:var(--primary);color:#fff;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700">
+              <span>💳</span> <b>ICCID</b> <span style="font-size:11px;opacity:.9">(Only ICCID enabled)</span>
             </div>
           </div>
-          <span style="font-size:12px;color:var(--muted)" id="simModeDesc">
-            Matches device records across our database by ICCID and replaces MSISDN1, MSISDN2, Act Date, Exp Date.
+          <span style="font-size:12px;color:var(--muted)">
+            Matches device records across our database strictly by ICCID and replaces MSISDN1, MSISDN2, Act Date, Exp Date.
           </span>
         </div>
 
@@ -2340,10 +2311,6 @@
               <div class="sim-map-card">
                 <label for="colMapMsisdn2" style="font-size:12px;font-weight:600">📞 MSISDN 2</label>
                 <select id="colMapMsisdn2" style="font-size:13px;width:100%;margin-top:4px"></select>
-              </div>
-              <div class="sim-map-card">
-                <label for="colMapIccidAlt" id="lblColMapIccidAlt" style="font-size:12px;font-weight:600">💳 ICCID / IMEI (Optional)</label>
-                <select id="colMapIccidAlt" style="font-size:13px;width:100%;margin-top:4px"></select>
               </div>
               <div class="sim-map-card">
                 <label for="simTargetCustSelect" style="font-size:12px;font-weight:600">📁 Customer for New Inserts</label>
@@ -2798,6 +2765,7 @@
             to move to Cart.</p>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="b p" id="btnPushAllErrorsCustomer" style="background:#2563eb;color:#fff" title="Push all errored entries into a specified customer">🚀 Push All to Customer</button>
           <button class="b" id="btnRefreshErrors">🔄 Refresh</button>
           <button class="b" id="btnExportErrors">📥 Export Errored Records</button>
           <button class="b d" id="btnMoveAllErrorsCart">🗑️ Move All to Cart</button>
@@ -3312,9 +3280,43 @@
           </div>
         </div>
         <p class="err" id="dlgErrMessage" role="alert"></p>
-        <div class="row" style="margin:16px 0 0; justify-content: flex-end; gap:8px">
+        <div class="row" style="margin:16px 0 0; justify-content: flex-end; gap:8px; flex-wrap:wrap">
           <button class="b" type="button" id="btnCancelEditError">Cancel</button>
+          <button class="b" type="button" id="btnForcePushFromEdit" style="background:#2563eb;color:#fff" title="Push this entry into the specified customer even with error">🚀 Push to Customer (Even with Error)</button>
           <button class="b p" type="submit" id="btnSaveUploadError">Upload to Customer</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Push Errored Entry to Specified Customer Dialog -->
+    <dialog id="dlgPushError" style="width:min(540px, 94vw)">
+      <form id="formPushError">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h2 style="margin:0;display:flex;align-items:center;gap:8px"><span>🚀</span> <span id="dlgPushErrorTitle">Push Entry to Customer</span></h2>
+          <button class="b ghost" type="button" id="closeDlgPushError" style="font-size:20px;padding:4px 10px;cursor:pointer">✕</button>
+        </div>
+        <input type="hidden" id="pushErrorId" />
+        <div class="note" style="background:var(--warn-bg);border:1px solid var(--warn);margin-bottom:14px;font-size:13px;line-height:1.5">
+          ℹ️ <b>Bypass Validation:</b> This will insert this entry directly into the specified customer data even if it has flagged errors (duplicate attributes, missing fields, or unrecognized formats).
+        </div>
+        <div id="pushEntryDetailsBox" style="background:var(--card-subtle);padding:12px;border-radius:8px;margin-bottom:14px;font-size:13px">
+          <div><b>Flagged Error:</b> <span id="pushErrReason" style="color:var(--danger)"></span></div>
+          <div style="margin-top:4px"><b>IMEI:</b> <code id="pushErrImei"></code> | <b>ICCID:</b> <span id="pushErrIccid"></span></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <label for="pushTargetCustSel" style="font-weight:600;display:block;margin-bottom:6px">Select Target Customer:</label>
+          <select id="pushTargetCustSel" style="width:100%;padding:8px 12px;font-size:14px;border-radius:8px">
+            <option value="">-- Choose Existing Customer --</option>
+          </select>
+        </div>
+        <div style="margin-bottom:14px">
+          <label for="pushTargetCustManual" style="font-weight:600;display:block;margin-bottom:6px">Or Type Customer Name:</label>
+          <input id="pushTargetCustManual" placeholder="e.g. Tata_Motors or General_Customer" style="width:100%;padding:8px 12px;font-size:14px;border-radius:8px" />
+        </div>
+        <p class="err" id="dlgPushErrMessage" role="alert" style="margin:0 0 10px"></p>
+        <div class="row" style="margin:16px 0 0; justify-content: flex-end; gap:8px">
+          <button class="b" type="button" id="btnCancelPushError">Cancel</button>
+          <button class="b p" type="submit" id="btnConfirmPushError" style="background:#2563eb;color:#fff">🚀 Push to Customer Now</button>
         </div>
       </form>
     </dialog>
@@ -4649,85 +4651,37 @@
         });
       }
 
-      let currentUploadMode = 'standard'; // 'standard' | 'direct'
-      let directUploadQuota = { used: 0, max_allowed: 2, remaining: 2, can_upload: true };
+      function downloadBulkUploadTemplate() {
+        const headers = [
+          'customer_name', 'imei', 'device_sr_no', 'iccid', 'msisdn1', 'msisdn2',
+          'act_date', 'expiry_date', 'dispatched_date', 'model', 'sim_provider',
+          'sim_type', 'activation_plan', 'firmware', 'flash'
+        ];
+        const sampleRows = [
+          [
+            'Acme_Corp', '860000000000001', 'SR10001', '8991000000000000001', '9876543210', '9876543211',
+            '2024-01-15', '2025-01-15', '2024-01-10', '17IS', 'TAISYS (Airtel + BSNL)',
+            'E-SIM', 'Annual Plan', 'v2.4.1', 'Winbond'
+          ],
+          [
+            'Tata_Motors', '860000000000002', 'SR10002', '', '9876543212', '',
+            '2024-02-01', '2025-02-01', '2024-01-28', '17L', 'VI',
+            'Plastic SIM', 'Quarterly Plan', 'v2.4.1', 'Adesto'
+          ]
+        ];
 
-      async function fetchDirectUploadQuota() {
-        try {
-          const res = await api('/api/devices/bulk/direct-status');
-          if (res) directUploadQuota = res;
-        } catch (e) {
-          console.warn('Could not fetch direct upload quota:', e);
-        }
-        updateDirectUploadQuotaUI();
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+        ws['!cols'] = [
+          { wch: 18 }, { wch: 20 }, { wch: 16 }, { wch: 24 }, { wch: 14 }, { wch: 14 },
+          { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 24 },
+          { wch: 14 }, { wch: 16 }, { wch: 12 }, { wch: 12 }
+        ];
+        XLSX.utils.book_append_sheet(wb, ws, 'Sample_Customer');
+        XLSX.writeFile(wb, 'CustomerVault_Bulk_Upload_Template.xlsx');
+        toast('📥 Excel upload format template downloaded successfully!');
       }
-
-      function updateDirectUploadQuotaUI() {
-        const remaining = (typeof directUploadQuota.remaining === 'number') ? directUploadQuota.remaining : 2;
-        const used = directUploadQuota.used || 0;
-        const canUpload = remaining > 0 && used < 2;
-
-        if ($('badgeDirectUploadQuota')) {
-          if (canUpload) {
-            $('badgeDirectUploadQuota').textContent = `${remaining} use${remaining === 1 ? '' : 's'} left`;
-            $('badgeDirectUploadQuota').style.background = 'var(--primary)';
-          } else {
-            $('badgeDirectUploadQuota').textContent = 'Limit reached (0 left)';
-            $('badgeDirectUploadQuota').style.background = 'var(--danger)';
-          }
-        }
-        if ($('txtDirectQuotaRemaining')) {
-          $('txtDirectQuotaRemaining').textContent = `${remaining} of 2 uses remaining`;
-        }
-        if ($('directUploadQuotaExceededBanner')) {
-          $('directUploadQuotaExceededBanner').style.display = canUpload ? 'none' : 'block';
-        }
-        ['btnDirectUploadTop', 'btnDirectUploadBottom'].forEach(id => {
-          const btn = $(id);
-          if (btn) {
-            btn.disabled = !canUpload;
-            if (!canUpload) {
-              btn.innerHTML = '🔒 Direct Upload Limit Reached';
-              btn.style.opacity = '0.6';
-              btn.style.cursor = 'not-allowed';
-            } else {
-              btn.innerHTML = '⚡ Direct Upload Now';
-              btn.style.opacity = '1';
-              btn.style.cursor = 'pointer';
-            }
-          }
-        });
-      }
-
-      function setUploadMode(mode) {
-        currentUploadMode = mode;
-        const isDirect = (mode === 'direct');
-
-        if ($('btnModeStandardUpload')) $('btnModeStandardUpload').classList.toggle('on', !isDirect);
-        if ($('btnModeDirectUpload')) $('btnModeDirectUpload').classList.toggle('on', isDirect);
-
-        if ($('directUploadCard')) $('directUploadCard').hidden = !isDirect;
-        if ($('btnConfirmUpload')) $('btnConfirmUpload').style.display = isDirect ? 'none' : 'inline-block';
-        if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').style.display = isDirect ? 'inline-block' : 'none';
-
-        if ($('directUploadStatusText')) {
-          if (isDirect) {
-            $('directUploadStatusText').innerHTML = '⚡ <b>Direct Upload Mode:</b> Remaining columns left empty &bull; Invalid rows inserted into customer &bull; Duplicates skipped &bull; Max 2 uses';
-          } else {
-            $('directUploadStatusText').textContent = 'Standard bulk upload with validation, optional defaults, and error staging.';
-          }
-        }
-
-        if ($('optValuesDisabledBanner')) $('optValuesDisabledBanner').style.display = isDirect ? 'block' : 'none';
-        if ($('optValuesCard')) {
-          $('optValuesCard').querySelectorAll('select, input').forEach(el => el.disabled = isDirect);
-          $('optValuesCard').style.opacity = isDirect ? '0.5' : '1';
-        }
-
-        if (window._processSheets) window._processSheets();
-      }
-      window.setUploadMode = setUploadMode;
-      window.fetchDirectUploadQuota = fetchDirectUploadQuota;
+      window.downloadBulkUploadTemplate = downloadBulkUploadTemplate;
 
       function initBulkUploadContainer() {
         loadCustomModels();
@@ -4961,25 +4915,19 @@
 
                 // Automatic SIM Type: ICCID present = E-SIM, otherwise Plastic SIM
                 const sheetSimType = sheetHasIccid ? 'E-SIM' : 'Plastic SIM';
-                const isDirect = (typeof currentUploadMode !== 'undefined' && currentUploadMode === 'direct');
 
                 preRows.forEach(dev => {
                   dev.customer_name = assignedCust;
-                  if (isDirect) {
-                    // Direct upload: leave all remaining columns completely empty
-                    dev.sim_type = dev.sim_type || null;
-                  } else {
-                    dev.sim_type = sheetSimType;
+                  dev.sim_type = sheetSimType;
 
-                    // Optional defaults: if row already has a value, row's value wins
-                    if (!dev.model && optModel) dev.model = optModel;
-                    if (!dev.dispatched_date && optDispatchedDate) dev.dispatched_date = optDispatchedDate;
-                    if (!dev.act_date && optActDate) dev.act_date = optActDate;
-                    if (!dev.expiry_date && optExpiryDate) dev.expiry_date = optExpiryDate;
-                    if (!dev.flash && optFlash) dev.flash = optFlash;
-                    if (!dev.firmware && optFirmware) dev.firmware = optFirmware;
-                    if (!dev.sim_provider && optSimProvider) dev.sim_provider = optSimProvider;
-                  }
+                  // Optional defaults: if row already has a value, row's value wins
+                  if (!dev.model && optModel) dev.model = optModel;
+                  if (!dev.dispatched_date && optDispatchedDate) dev.dispatched_date = optDispatchedDate;
+                  if (!dev.act_date && optActDate) dev.act_date = optActDate;
+                  if (!dev.expiry_date && optExpiryDate) dev.expiry_date = optExpiryDate;
+                  if (!dev.flash && optFlash) dev.flash = optFlash;
+                  if (!dev.firmware && optFirmware) dev.firmware = optFirmware;
+                  if (!dev.sim_provider && optSimProvider) dev.sim_provider = optSimProvider;
 
                   allRows.push(dev);
                 });
@@ -5101,64 +5049,88 @@
         }
 
         function applyPreviewFilter(filter) {
-          activeValFilter = filter;
+          activeValFilter = filter || 'all';
           document.querySelectorAll('#valFilterBtns button').forEach(b => {
-            b.classList.toggle('on', b.dataset.valfilter === filter);
+            b.classList.toggle('on', b.dataset.valfilter === activeValFilter);
           });
           if (!activeValResult) return;
           let list = [];
-          if (filter === 'valid') list = activeValResult.valid_sample;
-          else if (filter === 'duplicate') list = activeValResult.duplicates;
-          else if (filter === 'invalid') list = activeValResult.invalids;
-          else list = activeValResult.all_sample;
-          $('valPreviewTable').innerHTML = renderValidationTable(list);
+          if (activeValFilter === 'valid') list = activeValResult.valid_sample || [];
+          else if (activeValFilter === 'duplicate') list = activeValResult.duplicates || [];
+          else list = activeValResult.all_sample || [];
+
+          // Search filtering
+          const searchVal = $('valReviewSearch') ? $('valReviewSearch').value.trim().toLowerCase() : '';
+          if (searchVal) {
+            list = list.filter(r => {
+              const imei = String(r.imei || '').toLowerCase();
+              const sr = String(r.device_sr_no || '').toLowerCase();
+              const iccid = String(r.iccid || '').toLowerCase();
+              const cust = String(r.customer_name || '').toLowerCase();
+              const model = String(r.model || '').toLowerCase();
+              const reason = String(r.reason || '').toLowerCase();
+              return imei.includes(searchVal) || sr.includes(searchVal) || iccid.includes(searchVal) || cust.includes(searchVal) || model.includes(searchVal) || reason.includes(searchVal);
+            });
+          }
+
+          // Row display limit
+          const limitVal = $('valReviewLimit') ? $('valReviewLimit').value : '100';
+          let displayList = list;
+          if (limitVal !== 'all') {
+            const num = parseInt(limitVal, 10) || 100;
+            displayList = list.slice(0, num);
+          }
+
+          if ($('valPreviewTableNote')) {
+            $('valPreviewTableNote').textContent = `Showing ${displayList.length.toLocaleString()} of ${list.length.toLocaleString()} records in this view (Total parsed: ${parsedRows.length.toLocaleString()}).`;
+          }
+
+          $('valPreviewTable').innerHTML = renderValidationTable(displayList);
         }
 
         document.querySelectorAll('#valFilterBtns button').forEach(b => {
           b.onclick = () => applyPreviewFilter(b.dataset.valfilter);
         });
 
+        if ($('valReviewSearch')) {
+          $('valReviewSearch').oninput = () => applyPreviewFilter(activeValFilter);
+        }
+        if ($('valReviewLimit')) {
+          $('valReviewLimit').onchange = () => applyPreviewFilter(activeValFilter);
+        }
+
         async function validateAndPreview(rows) {
           if (!rows.length) {
             $('valSummaryWrap').hidden = true;
             return;
           }
-          toast('Validating rows…');
+          toast('Validating rows against database…');
           $('valSummaryWrap').hidden = false;
           $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and cloud tables…</div>';
 
           try {
-            const isDirect = (typeof currentUploadMode !== 'undefined' && currentUploadMode === 'direct');
             const valResult = await api('/api/devices/bulk/validate', {
               method: 'POST',
-              body: JSON.stringify({ rows: rows.slice(0, 10000), mode: $('dupMode').value, direct_empty: isDirect })
+              body: JSON.stringify({ rows: rows.slice(0, 10000), mode: $('dupMode').value })
             });
             activeValResult = valResult;
 
             $('vValid').textContent = valResult.valid_count.toLocaleString();
             $('vDup').textContent = valResult.duplicate_count.toLocaleString();
-            $('vInvalid').textContent = valResult.invalid_count.toLocaleString() + (isDirect ? ' (will insert)' : '');
             $('vEsim').textContent = (valResult.esim_count || 0).toLocaleString();
             $('vPlastic').textContent = (valResult.plastic_count || 0).toLocaleString();
 
-            const totalCount = valResult.valid_count + valResult.duplicate_count + valResult.invalid_count;
+            const totalCount = valResult.valid_count + valResult.duplicate_count;
             $('vAllCount').textContent = totalCount.toLocaleString();
             $('vValidCount').textContent = valResult.valid_count.toLocaleString();
             $('vDupCount').textContent = valResult.duplicate_count.toLocaleString();
-            $('vInvalidCount').textContent = valResult.invalid_count.toLocaleString();
 
-            // Warnings for missing essential columns (suppressed in direct mode since fallbacks are generated)
-            if (valResult.missing_columns_warning && valResult.missing_columns_warning.length && !isDirect) {
-              $('valColWarnings').hidden = false;
-              $('valColWarnings').innerHTML = `⚠️ <b>Missing Essential Column Warning:</b> The uploaded file is missing: <u>${valResult.missing_columns_warning.join(', ')}</u>. Every record must have an IMEI.`;
-            } else {
-              $('valColWarnings').hidden = true;
-            }
+            $('valColWarnings').hidden = true;
 
             // Metadata badges (New customers, new cloud columns)
             const badges = [];
             if (valResult.new_customers && valResult.new_customers.length) {
-              badges.push(`<span class="badge" style="background:var(--ok);color:#fff;padding:4px 10px;border-radius:6px">📁 New Customers (${valResult.new_customers.length}): <b>${esc(valResult.new_customers.join(', '))}</b> (tables will be created automatically)</span>`);
+              badges.push(`<span class="badge" style="background:var(--ok);color:#fff;padding:4px 10px;border-radius:6px">📁 New Customers (${valResult.new_customers.length}): <b>${esc(valResult.new_customers.join(', '))}</b> (tables created automatically)</span>`);
             }
             if (valResult.new_columns && valResult.new_columns.length) {
               badges.push(`<span class="badge" style="background:var(--primary);color:#fff;padding:4px 10px;border-radius:6px">📊 New Cloud Columns (${valResult.new_columns.length}): <b>${esc(valResult.new_columns.join(', '))}</b></span>`);
@@ -5168,153 +5140,149 @@
             applyPreviewFilter(activeValFilter || 'all');
 
             const dupMode = $('dupMode').value;
-            if (isDirect) {
-              const willUpload = (valResult.valid_count + valResult.invalid_count) > 0;
-              const hasQuota = directUploadQuota.used < 2;
-              $('btnConfirmUpload').disabled = !willUpload;
-              if ($('btnDirectUploadTop')) $('btnDirectUploadTop').disabled = !willUpload || !hasQuota;
-              if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').disabled = !willUpload || !hasQuota;
-            } else {
-              $('btnConfirmUpload').disabled = (valResult.valid_count === 0 && (dupMode !== 'replace' || valResult.duplicate_count === 0));
-            }
-            $('btnDlSkipped').hidden = (valResult.duplicate_count + valResult.invalid_count) === 0;
+            $('btnConfirmUpload').disabled = (valResult.valid_count === 0 && (dupMode !== 'replace' || valResult.duplicate_count === 0));
+            $('btnDlSkipped').hidden = (valResult.duplicate_count === 0);
 
             $('btnDlSkipped').onclick = () => {
-              const headers = ['Row', 'Customer Name', 'Status', 'IMEI', 'Device Sr No', 'Status Reason'];
-              const skipRows = [
-                ...valResult.duplicates.map(d => [d.row_num || '—', d.customer_name, 'Duplicate', d.imei, d.device_sr_no, d.reason]),
-                ...valResult.invalids.map(i => [i.row_num || '—', i.customer_name, 'Invalid', i.imei, i.device_sr_no, (i.errors || []).join('; ') || i.reason])
-              ];
-              exportExcel('Skipped_Duplicate_Invalid_Records', headers, skipRows);
+              const headers = ['Row', 'Customer Name', 'Status', 'IMEI', 'Device Sr No', 'ICCID', 'Reason'];
+              const skipRows = valResult.duplicates.map(d => [d.row_num || '—', d.customer_name, 'Duplicate Error', d.imei, d.device_sr_no, d.iccid, d.reason]);
+              exportExcel('Duplicate_Error_Records', headers, skipRows);
             };
           } catch (err) {
             $('valPreviewTable').innerHTML = `<div class="empty err">${esc(err.message)}</div>`;
           }
         }
 
-        async function executeBulkUpload(isDirect) {
+        async function executeBulkUpload() {
           if (!parsedRows.length) {
             toast('⚠️ Please select an Excel file first.');
             return;
           }
 
-          if (isDirect) {
-            if (directUploadQuota.used >= 2) {
-              toast('🔒 Direct Upload limit reached: You have already used your 2 allowed direct uploads. Please use Standard Bulk Upload.');
-              return;
-            }
-          }
-
           const mode = $('dupMode').value;
           const validRowsToUpload = [];
-          const invalidsToStage = [];
+          const duplicatesToStage = [];
           let duplicateRecordsSkipped = 0;
 
-          if (isDirect) {
-            // Direct Upload:
-            // 1. Invalid rows will ALSO be inserted into customer (assigned fallback identifiers)
-            // 2. Duplicated records will NOT be inserted (strictly skipped)
-            // 3. All remaining columns left completely empty
-            const seenImeis = new Set();
-            const seenSrs = new Set();
-            const seenIccids = new Set();
+          // Collect known duplicate values from validation response
+          const dbExistingImeis = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('IMEI already exists')).map(d => String(d.imei).toLowerCase()) : []));
+          const dbExistingSrs = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('Device Sr No already exists')).map(d => String(d.device_sr_no).toLowerCase()) : []));
+          const dbExistingIccids = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('ICCID already exists')).map(d => String(d.iccid).toLowerCase()) : []));
 
-            parsedRows.forEach((r, idx) => {
-              const rawImei = String(r.imei || '').trim();
-              const rawSr = String(r.device_sr_no || '').trim();
-              const rawIccid = String(r.iccid || '').trim();
+          const seenImeis = new Set();
+          const seenSrs = new Set();
+          const seenIccids = new Set();
 
-              // Check if duplicate within file
-              let isDup = false;
-              if (rawImei && seenImeis.has(rawImei.toLowerCase())) isDup = true;
-              if (rawSr && seenSrs.has(rawSr.toLowerCase())) isDup = true;
-              if (rawIccid && seenIccids.has(rawIccid.toLowerCase())) isDup = true;
+          parsedRows.forEach((r, idx) => {
+            const rawImei = String(r.imei || '').trim();
+            const rawSr = String(r.device_sr_no || '').trim();
+            const rawIccid = String(r.iccid || '').trim();
 
-              if (isDup) {
-                duplicateRecordsSkipped++;
-                return;
+            let isDup = false;
+            let dupReason = '';
+
+            // 1. Check duplicate IMEI
+            if (rawImei) {
+              const lowerImei = rawImei.toLowerCase();
+              if (seenImeis.has(lowerImei)) {
+                isDup = true;
+                dupReason = 'Duplicate IMEI repeats earlier in this file';
+              } else if (mode === 'skip' && dbExistingImeis.has(lowerImei)) {
+                isDup = true;
+                dupReason = 'IMEI already exists under a customer in database';
               }
+            }
 
-              if (rawImei) seenImeis.add(rawImei.toLowerCase());
-              if (rawSr) seenSrs.add(rawSr.toLowerCase());
-              if (rawIccid) seenIccids.add(rawIccid.toLowerCase());
-
-              // For invalid rows: auto-assign fallback customer & unique identifier so customer table receives row
-              const rowCopy = Object.assign({}, r);
-              if (!rowCopy.customer_name || !String(rowCopy.customer_name).trim()) {
-                rowCopy.customer_name = 'General_Customer';
+            // 2. Check duplicate Device Sr No
+            if (!isDup && rawSr) {
+              const lowerSr = rawSr.toLowerCase();
+              if (seenSrs.has(lowerSr)) {
+                isDup = true;
+                dupReason = 'Duplicate Device Sr No repeats earlier in this file';
+              } else if (dbExistingSrs.has(lowerSr)) {
+                isDup = true;
+                dupReason = 'Device Sr No already exists under a customer in database';
               }
-              const cleanImei = String(rowCopy.imei || '').replace(/[^0-9A-Za-z_-]/g, '');
-              if (!cleanImei || cleanImei.length < 5) {
-                const alt = (rowCopy.device_sr_no || rowCopy.iccid || '').replace(/[^0-9A-Za-z_-]/g, '');
-                if (alt && alt.length >= 5) {
-                  rowCopy.imei = alt.substring(0, 20);
-                } else {
-                  rowCopy.imei = 'INV_' + Math.random().toString(36).substring(2, 8).toUpperCase() + (idx + 1);
-                }
-              }
-              validRowsToUpload.push(rowCopy);
-            });
-          } else {
-            // Standard Bulk Upload:
-            parsedRows.forEach(r => {
-              const imei = String(r.imei || '').trim();
-              const cname = String(r.customer_name || '').trim();
-              const errs = [];
-              if (!imei) errs.push('Missing IMEI');
-              else if (imei.length < 5) errs.push('IMEI too short (< 5 digits)');
-              if (!cname) errs.push('Missing Customer Name');
-              if (r.act_date && r.expiry_date && r.expiry_date < r.act_date) errs.push('Expiry date before activation date');
+            }
 
-              if (errs.length > 0) {
-                invalidsToStage.push({
-                  customer_name: cname,
-                  imei: imei,
-                  device_sr_no: r.device_sr_no || '',
-                  iccid: r.iccid || '',
-                  msisdn1: r.msisdn1 || '',
-                  msisdn2: r.msisdn2 || '',
-                  act_date: r.act_date || null,
-                  expiry_date: r.expiry_date || null,
-                  dispatched_date: r.dispatched_date || null,
-                  model: r.model || '',
-                  sim_provider: r.sim_provider || '',
-                  activation_plan: r.activation_plan || '',
-                  firmware: r.firmware || '',
-                  flash: r.flash || '',
-                  sim_type: r.sim_type || '',
-                  extra: r.extra || null,
-                  error_reason: errs.join('; ')
-                });
+            // 3. Check duplicate ICCID
+            if (!isDup && rawIccid) {
+              const lowerIccid = rawIccid.toLowerCase();
+              if (seenIccids.has(lowerIccid)) {
+                isDup = true;
+                dupReason = 'Duplicate ICCID repeats earlier in this file';
+              } else if (dbExistingIccids.has(lowerIccid)) {
+                isDup = true;
+                dupReason = 'ICCID already exists under a customer in database';
+              }
+            }
+
+            if (isDup) {
+              duplicateRecordsSkipped++;
+              duplicatesToStage.push({
+                customer_name: r.customer_name || 'General_Customer',
+                imei: r.imei || '',
+                device_sr_no: r.device_sr_no || '',
+                iccid: r.iccid || '',
+                msisdn1: r.msisdn1 || '',
+                msisdn2: r.msisdn2 || '',
+                act_date: r.act_date || null,
+                expiry_date: r.expiry_date || null,
+                dispatched_date: r.dispatched_date || null,
+                model: r.model || '',
+                sim_provider: r.sim_provider || '',
+                activation_plan: r.activation_plan || '',
+                firmware: r.firmware || '',
+                flash: r.flash || '',
+                sim_type: r.sim_type || '',
+                extra: r.extra || null,
+                error_reason: dupReason
+              });
+              return;
+            }
+
+            if (rawImei) seenImeis.add(rawImei.toLowerCase());
+            if (rawSr) seenSrs.add(rawSr.toLowerCase());
+            if (rawIccid) seenIccids.add(rawIccid.toLowerCase());
+
+            // All other rows are inserted into customer data!
+            const rowCopy = Object.assign({}, r);
+            if (!rowCopy.customer_name || !String(rowCopy.customer_name).trim()) {
+              rowCopy.customer_name = 'General_Customer';
+            }
+            const cleanImei = String(rowCopy.imei || '').replace(/[^0-9A-Za-z_-]/g, '');
+            if (!cleanImei || cleanImei.length < 5) {
+              const alt = (rowCopy.device_sr_no || rowCopy.iccid || '').replace(/[^0-9A-Za-z_-]/g, '');
+              if (alt && alt.length >= 5) {
+                rowCopy.imei = alt.substring(0, 20);
               } else {
-                validRowsToUpload.push(r);
+                rowCopy.imei = 'INV_' + Math.random().toString(36).substring(2, 8).toUpperCase() + (idx + 1);
               }
-            });
-          }
+            }
+            validRowsToUpload.push(rowCopy);
+          });
 
-          if (!validRowsToUpload.length && !invalidsToStage.length) {
+          if (!validRowsToUpload.length && !duplicatesToStage.length) {
             toast('⚠️ No device records found to upload.');
             return;
           }
 
           $('uploadProgressWrap').hidden = false;
           if ($('btnConfirmUpload')) $('btnConfirmUpload').disabled = true;
-          if ($('btnDirectUploadTop')) $('btnDirectUploadTop').disabled = true;
-          if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').disabled = true;
 
-          // Stage errored entries so user can edit them in Errored Entries container (Standard mode only)
-          if (!isDirect && invalidsToStage.length > 0) {
+          // Stage duplicate error entries to Errored Entries container
+          if (duplicatesToStage.length > 0) {
             try {
               await api('/api/errors', {
                 method: 'POST',
-                body: JSON.stringify({ records: invalidsToStage })
+                body: JSON.stringify({ records: duplicatesToStage })
               });
             } catch (errPost) {
-              console.warn('Could not stage errored records:', errPost);
+              console.warn('Could not stage duplicate errored records:', errPost);
             }
           }
 
-          let addedTotal = 0, updatedTotal = 0, skippedTotal = invalidsToStage.length + duplicateRecordsSkipped;
+          let addedTotal = 0, updatedTotal = 0, skippedTotal = duplicateRecordsSkipped;
           const chunkSize = 2000;
           try {
             for (let i = 0; i < validRowsToUpload.length; i += chunkSize) {
@@ -5325,7 +5293,7 @@
               $('progStatus').textContent = `Uploading records ${i + 1} to ${Math.min(i + chunkSize, validRowsToUpload.length)}…`;
 
               try {
-                const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode: isDirect ? 'skip' : mode, direct_empty: isDirect }) });
+                const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode: mode }) });
                 addedTotal += (r.added || 0);
                 updatedTotal += (r.updated || 0);
                 skippedTotal += (r.skipped_duplicates || 0);
@@ -5335,7 +5303,7 @@
                 for (let j = 0; j < chunk.length; j += subSize) {
                   const sub = chunk.slice(j, j + subSize);
                   try {
-                    const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: sub, mode: isDirect ? 'skip' : mode, direct_empty: isDirect }) });
+                    const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: sub, mode: mode }) });
                     addedTotal += (r.added || 0);
                     updatedTotal += (r.updated || 0);
                     skippedTotal += (r.skipped_duplicates || 0);
@@ -5348,23 +5316,21 @@
             }
             $('progBar').style.width = '100%';
             $('progPct').textContent = '100%';
-            $('progStatus').textContent = `Complete: ${addedTotal} added, ${updatedTotal} updated, ${skippedTotal} skipped/held.`;
-            toast(isDirect ? `⚡ Direct upload finished! ${addedTotal} records inserted into customer (invalid rows saved), ${skippedTotal} duplicates skipped.` : `Upload finished! ${addedTotal} added, ${updatedTotal} updated.`);
-            if (isDirect) {
-              await fetchDirectUploadQuota();
-            }
+            $('progStatus').textContent = `Complete: ${addedTotal} added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`;
+            toast(`Upload finished! ${addedTotal} added to customer data, ${updatedTotal} updated, ${duplicatesToStage.length} duplicates held.`);
+
             await loadCU(); await updateChrome();
             loadCustomerFilesContainer();
             fetchInventoryRows();
             if ($('invCustCountBadge')) $('invCustCountBadge').textContent = CU.length;
 
-            if (!isDirect && invalidsToStage.length > 0) {
+            if (duplicatesToStage.length > 0) {
               $('dlgUploadErrorsAlertBody').innerHTML = `
           <div style="background:var(--ok-bg);border:1px solid var(--ok);padding:12px;border-radius:8px;margin-bottom:12px">
-            <b>${addedTotal}</b> records were processed successfully.
+            <b>${addedTotal + updatedTotal}</b> records were successfully inserted/updated into customer data.
           </div>
-          <p><b>${invalidsToStage.length}</b> records had errors and have been safely saved into the <b>Errored / Invalid Entries</b> container.</p>
-          <p class="sub" style="margin:0">You can review where each record is wrong, then choose to <b>Edit & Upload</b> or <b>Move to Cart</b>.</p>
+          <p><b>${duplicatesToStage.length}</b> duplicate records (duplicate IMEI, ICCID, or Device Sr No) were held and saved into the <b>Errored / Invalid Entries</b> container.</p>
+          <p class="sub" style="margin:0">All remaining records have been safely inserted to their customer tables.</p>
         `;
               $('dlgUploadErrorsAlert').showModal();
             }
@@ -5376,30 +5342,14 @@
             fail(err);
             $('progStatus').textContent = 'Upload error: ' + err.message;
             if ($('btnConfirmUpload')) $('btnConfirmUpload').disabled = false;
-            if ($('btnDirectUploadTop')) $('btnDirectUploadTop').disabled = false;
-            if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').disabled = false;
           }
         }
 
         if ($('btnConfirmUpload')) {
-          $('btnConfirmUpload').onclick = () => executeBulkUpload(currentUploadMode === 'direct');
-        }
-        if ($('btnDirectUploadTop')) {
-          $('btnDirectUploadTop').onclick = () => executeBulkUpload(true);
-        }
-        if ($('btnDirectUploadBottom')) {
-          $('btnDirectUploadBottom').onclick = () => executeBulkUpload(true);
-        }
-        if ($('btnModeStandardUpload')) {
-          $('btnModeStandardUpload').onclick = () => setUploadMode('standard');
-        }
-        if ($('btnModeDirectUpload')) {
-          $('btnModeDirectUpload').onclick = () => setUploadMode('direct');
+          $('btnConfirmUpload').onclick = () => executeBulkUpload();
         }
 
         syncCustMode();
-        setUploadMode('standard');
-        fetchDirectUploadQuota();
       }
 
       /* =========================================================================
@@ -5415,12 +5365,6 @@
       function initSimDataContainer() {
         if ($('simRoleAlert')) $('simRoleAlert').hidden = true;
         if ($('simMainContent')) $('simMainContent').hidden = false;
-
-        // Mode Toggle: ICCID vs IMEI
-        if ($('btnModeImei') && $('btnModeIccid')) {
-          $('btnModeImei').onclick = () => setSimMatchMode('imei');
-          $('btnModeIccid').onclick = () => setSimMatchMode('iccid');
-        }
 
         const dropzone = $('simDropzone');
         const fileInput = $('simFileInput');
@@ -5474,7 +5418,7 @@
         window.refreshSimTargetCustDropdown = populateSimTargetCust;
 
         // Trigger auto-check whenever user changes options or mappings
-        ['colMapKey', 'colMapActDate', 'colMapExpDate', 'colMapMsisdn1', 'colMapMsisdn2', 'colMapIccidAlt', 'simProviderSelect', 'simTargetCustSelect'].forEach(id => {
+        ['colMapKey', 'colMapActDate', 'colMapExpDate', 'colMapMsisdn1', 'colMapMsisdn2', 'simProviderSelect', 'simTargetCustSelect'].forEach(id => {
           const el = $(id);
           if (el) el.onchange = () => scheduleSimAutoCheck();
         });
@@ -5516,30 +5460,22 @@
               toast('No unmatched entries to download.');
               return;
             }
-            const keyColName = currentSimMatchMode === 'imei' ? 'NOT FOUND IMEI' : 'NOT FOUND ICCID';
-            exportExcel('Not_Found_SIM_Upload_Entries', [keyColName], simActiveCheckResult.not_found_keys.map(i => [i]));
+            exportExcel('Not_Found_SIM_Upload_Entries', ['NOT FOUND ICCID'], simActiveCheckResult.not_found_keys.map(i => [i]));
           };
         }
       }
 
       function setSimMatchMode(mode) {
-        currentSimMatchMode = mode;
-        if ($('btnModeImei')) $('btnModeImei').classList.toggle('active', mode === 'imei');
-        if ($('btnModeIccid')) $('btnModeIccid').classList.toggle('active', mode === 'iccid');
+        currentSimMatchMode = 'iccid';
 
         if ($('simMatchModeBadge')) {
-          $('simMatchModeBadge').textContent = mode === 'imei' ? 'Matching by IMEI' : 'Matching by ICCID';
+          $('simMatchModeBadge').textContent = 'Matching by ICCID';
         }
         if ($('titleColMapKey')) {
-          $('titleColMapKey').textContent = mode === 'imei' ? '📱 IMEI Column *' : '💳 ICCID Column * (Required)';
-        }
-        if ($('lblColMapIccidAlt')) {
-          $('lblColMapIccidAlt').textContent = mode === 'imei' ? '💳 ICCID (Optional)' : '📱 IMEI (Optional)';
+          $('titleColMapKey').textContent = '💳 ICCID Column * (Required)';
         }
         if ($('simModeDesc')) {
-          $('simModeDesc').textContent = mode === 'imei'
-            ? 'Matches device records in customer tables by 15-digit IMEI.'
-            : 'Matches device records across our database by ICCID and replaces MSISDN1, MSISDN2, Act Date, Exp Date.';
+          $('simModeDesc').textContent = 'Matches device records across our database strictly by ICCID and replaces MSISDN1, MSISDN2, Act Date, Exp Date.';
         }
 
         if (simDetectedHeaders.length) {
@@ -5638,16 +5574,8 @@
             return;
           }
 
-          // Prioritize ICCID matching for SIM data upload
-          const hasIccidCol = simDetectedHeaders.some(h => /^(iccid|ccidno|ccid|sim\s*iccid|sim\s*no|sim\s*number|simno|sim_no|iccid\s*no|iccid\s*number)$/i.test(h));
-          const hasImeiCol = simDetectedHeaders.some(h => /^(imei|device\s*imei|imei\s*no|imeino|device_imei)$/i.test(h));
-          if (hasIccidCol) {
-            setSimMatchMode('iccid');
-          } else if (hasImeiCol) {
-            setSimMatchMode('imei');
-          } else {
-            setSimMatchMode('iccid');
-          }
+          // Strictly match by ICCID for SIM data upload
+          setSimMatchMode('iccid');
 
           populateSimColumnDropdowns(simDetectedHeaders);
 
@@ -5665,15 +5593,11 @@
       }
 
       function populateSimColumnDropdowns(headers) {
-        const isImei = (currentSimMatchMode === 'imei');
-
         const fields = [
           {
             id: 'colMapKey',
-            patterns: isImei
-              ? /^(imei|device\s*imei|imei\s*no|imeino|device_imei|imei_number)$/i
-              : /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|sim\s*ccid|iccid\s*no|iccid\s*number|ccid\s*no|ccid\s*number|ccidnum|iccidnum)$/i,
-            fuzzy: isImei ? ['imei'] : ['iccid', 'ccid', 'sim'],
+            patterns: /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|sim\s*ccid|iccid\s*no|iccid\s*number|ccid\s*no|ccid\s*number|ccidnum|iccidnum)$/i,
+            fuzzy: ['iccid', 'ccid', 'sim'],
             required: true
           },
           {
@@ -5695,13 +5619,6 @@
             id: 'colMapMsisdn2',
             patterns: /^(msisdn2|msisdn\s*2|mobile2|mobile\s*2|phone2|phone\s*2|sim2|sim\s*2|secondary\s*mobile|secondary\s*number)$/i,
             fuzzy: ['mobile2', 'msisdn2', 'sim2']
-          },
-          {
-            id: 'colMapIccidAlt',
-            patterns: isImei
-              ? /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|sim\s*ccid|iccid\s*no|iccid\s*number|ccid\s*no|ccid\s*number|ccidnum|iccidnum)$/i
-              : /^(imei|device\s*imei|imei\s*no|imeino|device_imei|imei_number)$/i,
-            fuzzy: isImei ? ['iccid', 'ccid', 'sim'] : ['imei']
           }
         ];
 
@@ -5839,21 +5756,18 @@
         const msisdn2Col = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
         const actDateCol = $('colMapActDate') ? $('colMapActDate').value : '';
         const expDateCol = $('colMapExpDate') ? $('colMapExpDate').value : '';
-        const altCol = $('colMapIccidAlt') ? $('colMapIccidAlt').value : '';
         const chosenProvider = $('simProviderSelect') ? $('simProviderSelect').value : '';
         const overwrite = $('simOverwriteChk') ? $('simOverwriteChk').checked : true;
-
-        const keyLabel = currentSimMatchMode === 'imei' ? 'IMEI' : 'ICCID';
 
         if (!keyCol) {
           $('simCheckResults').hidden = false;
           $('kpiSimFileRows').textContent = simRawFileRows.length.toLocaleString();
           $('simNotesBox').hidden = false;
-          $('simNotesBox').innerHTML = `⚠️ <b>${keyLabel} Column Required:</b> Please select which column in your file represents the ${keyLabel} in the dropdown above.`;
+          $('simNotesBox').innerHTML = '⚠️ <b>ICCID Column Required:</b> Please select which column in your file represents the ICCID in the dropdown above.';
           $('btnSimPush').style.display = 'none';
           if ($('btnSimInsertNew')) $('btnSimInsertNew').style.display = 'none';
           if ($('btnSimApplyBoth')) $('btnSimApplyBoth').style.display = 'none';
-          $('simPushMsg').textContent = `Please select the ${keyLabel} column to continue.`;
+          $('simPushMsg').textContent = 'Please select the ICCID column to continue.';
           return;
         }
 
@@ -5870,8 +5784,7 @@
               if (!isNaN(num) && Number.isFinite(num)) rawKey = BigInt(Math.round(num)).toString();
             } catch { }
           }
-          rawKey = rawKey.replace(/[\s\-_]+/g, '');
-          if (currentSimMatchMode === 'iccid') rawKey = rawKey.toUpperCase();
+          rawKey = rawKey.replace(/[\s\-_]+/g, '').toUpperCase();
 
           const m1 = msisdn1Col ? (rawObj[msisdn1Col] || '').trim() : '';
           const m2 = msisdn2Col ? (rawObj[msisdn2Col] || '').trim() : '';
@@ -5890,20 +5803,8 @@
             else unreadableDatesCount++;
           }
 
-          let altVal = altCol ? (rawObj[altCol] != null ? String(rawObj[altCol]).trim() : '') : '';
-          if (altVal.endsWith('.0') && /^\d+\.0$/.test(altVal)) altVal = altVal.slice(0, -2);
-          if (/[eE]\+?/.test(altVal)) {
-            try {
-              const num = Number(altVal);
-              if (!isNaN(num) && Number.isFinite(num)) altVal = BigInt(Math.round(num)).toString();
-            } catch { }
-          }
-          altVal = altVal.replace(/[\s\-_]+/g, '');
-          if (currentSimMatchMode === 'imei') altVal = altVal.toUpperCase();
-
           payloadRows.push({
-            imei: currentSimMatchMode === 'imei' ? rawKey : (altVal || null),
-            iccid: currentSimMatchMode === 'iccid' ? rawKey : (altVal || ''),
+            iccid: rawKey,
             msisdn1: m1 || null,
             msisdn2: m2 || null,
             act_date: actParsed || null,
@@ -5913,16 +5814,6 @@
         });
 
         const hasDataCol = !!(msisdn1Col || msisdn2Col || actDateCol || expDateCol);
-        if (!chosenProvider && !hasDataCol) {
-          $('simCheckResults').hidden = false;
-          $('simNotesBox').hidden = false;
-          $('simNotesBox').innerHTML = '⚠️ <b>Data Column Required:</b> Please map at least one column (Activation Date, Expiry Date, MSISDN 1, MSISDN 2) or choose a SIM Provider.';
-          $('btnSimPush').style.display = 'none';
-          if ($('btnSimInsertNew')) $('btnSimInsertNew').style.display = 'none';
-          if ($('btnSimApplyBoth')) $('btnSimApplyBoth').style.display = 'none';
-          $('simPushMsg').textContent = 'Map data columns to run comparison.';
-          return;
-        }
 
         try {
           const res = await api('/api/simdata/check', {
@@ -7257,8 +7148,9 @@
                 <td>${esc(err.act_date || '—')}</td>
                 <td>${esc(err.expiry_date || '—')}</td>
                 <td>
-                  <div style="display:flex;gap:6px">
-                    <button class="b p" data-erredit="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit fields and upload to customer">✏️ Edit & Upload</button>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="b p" data-errpush="${err.id}" style="height:28px;padding:0 8px;font-size:12px;background:#2563eb;color:#fff" title="Push this entry into the specified customer even with error">🚀 Push to Customer</button>
+                    <button class="b" data-erredit="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit fields and upload to customer">✏️ Edit & Upload</button>
                     <button class="b d" data-errdel="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move this entry to Cart">🗑️ Move to Cart</button>
                   </div>
                 </td>
@@ -7274,8 +7166,50 @@
         }
       }
 
+      function openPushErrorModal(id) {
+        $('pushErrorId').value = id;
+        $('dlgPushErrMessage').textContent = '';
+
+        const sel = $('pushTargetCustSel');
+        if (sel) {
+          const opts = (CU || []).map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+          sel.innerHTML = `<option value="">-- Choose Existing Customer --</option><option value="General_Customer">General_Customer</option>` + opts;
+        }
+
+        if (id === 'all') {
+          $('dlgPushErrorTitle').textContent = `Push All ${cachedErrors.length} Errored Entries to Customer`;
+          $('pushEntryDetailsBox').innerHTML = `<b>Bulk Push:</b> All ${cachedErrors.length} entries currently in Errored Entries will be inserted into the specified customer data immediately.`;
+          if (sel) sel.value = 'General_Customer';
+          $('pushTargetCustManual').value = '';
+        } else {
+          const item = cachedErrors.find(x => x.id === id);
+          if (!item) return;
+          $('dlgPushErrorTitle').textContent = `Push Entry #${id} to Customer`;
+          $('pushEntryDetailsBox').innerHTML = `
+            <div><b>Flagged Error:</b> <span style="color:var(--danger);font-weight:700">${esc(item.error_reason || 'Unknown error')}</span></div>
+            <div style="margin-top:4px"><b>IMEI:</b> <code>${esc(item.imei || 'INV (Auto-assigned)')}</code> | <b>ICCID:</b> <span>${esc(item.iccid || '—')}</span> | <b>SR No:</b> <span>${esc(item.device_sr_no || '—')}</span></div>
+          `;
+          const target = item.customer_name || 'General_Customer';
+          if (sel && Array.from(sel.options).some(o => o.value.toLowerCase() === target.toLowerCase())) {
+            sel.value = target;
+            $('pushTargetCustManual').value = '';
+          } else {
+            if (sel) sel.value = '';
+            $('pushTargetCustManual').value = target;
+          }
+        }
+        $('dlgPushError').showModal();
+      }
+
       // Wire up actions for Errored Records
       $('errorsTableWrap').onclick = async e => {
+        const pushBtn = e.target.closest('[data-errpush]');
+        if (pushBtn) {
+          const id = +pushBtn.dataset.errpush;
+          openPushErrorModal(id);
+          return;
+        }
+
         const editBtn = e.target.closest('[data-erredit]');
         if (editBtn) {
           const id = +editBtn.dataset.erredit;
@@ -7314,6 +7248,82 @@
           } catch (err) { fail(err); }
         }
       };
+
+      $('closeDlgPushError').onclick = () => $('dlgPushError').close();
+      $('btnCancelPushError').onclick = () => $('dlgPushError').close();
+
+      $('formPushError').onsubmit = async e => {
+        e.preventDefault();
+        $('dlgPushErrMessage').textContent = '';
+        const id = $('pushErrorId').value;
+        const selCust = $('pushTargetCustSel').value.trim();
+        const manCust = $('pushTargetCustManual').value.trim();
+        const targetCust = manCust || selCust || 'General_Customer';
+
+        const btn = $('btnConfirmPushError');
+        btn.disabled = true;
+        btn.textContent = 'Pushing…';
+
+        try {
+          if (id === 'all') {
+            const res = await api('/api/errors/bulk-push', {
+              method: 'POST',
+              body: JSON.stringify({ customer_name: targetCust })
+            });
+            $('dlgPushError').close();
+            toast(`✓ Successfully pushed ${res.pushed_count} entries into customer "${targetCust}"!`);
+          } else {
+            const res = await api(`/api/errors/${id}/push`, {
+              method: 'POST',
+              body: JSON.stringify({ customer_name: targetCust })
+            });
+            $('dlgPushError').close();
+            toast(`✓ Successfully pushed entry into customer "${res.customer_name}" (IMEI: ${res.imei})!`);
+          }
+          await loadErrorsContainer();
+          await loadCU();
+          await updateChrome();
+        } catch (err) {
+          $('dlgPushErrMessage').textContent = err.message;
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '🚀 Push to Customer Now';
+        }
+      };
+
+      if ($('btnPushAllErrorsCustomer')) {
+        $('btnPushAllErrorsCustomer').onclick = () => {
+          if (!cachedErrors.length) { toast('No errored entries to push.'); return; }
+          openPushErrorModal('all');
+        };
+      }
+
+      if ($('btnForcePushFromEdit')) {
+        $('btnForcePushFromEdit').onclick = async () => {
+          const id = $('editErrorId').value;
+          if (!id) return;
+          const cname = $('errCustName').value.trim() || 'General_Customer';
+          const btn = $('btnForcePushFromEdit');
+          btn.disabled = true;
+          btn.textContent = 'Pushing…';
+          try {
+            const res = await api(`/api/errors/${id}/push`, {
+              method: 'POST',
+              body: JSON.stringify({ customer_name: cname })
+            });
+            $('dlgEditError').close();
+            toast(`✓ Record pushed to Customer "${res.customer_name}" even with error!`);
+            await loadErrorsContainer();
+            await loadCU();
+            await updateChrome();
+          } catch (err) {
+            $('dlgErrMessage').textContent = err.message;
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '🚀 Push to Customer (Even with Error)';
+          }
+        };
+      }
 
       $('closeDlgEditError').onclick = () => $('dlgEditError').close();
       $('btnCancelEditError').onclick = () => $('dlgEditError').close();
@@ -7863,9 +7873,10 @@
         <select id="mTarget">${others.map(o => `<option value="${o.id}">${esc(o.name)} (${o.devices} devices)</option>`).join('')}</select>
       `, 'Merge Customers', async () => {
               const targetId = $('mTarget').value;
-              await api(`/api/customers/${c.id}/merge`, { method: 'POST', body: JSON.stringify({ target_customer_id: +targetId }) });
-              toast('Customers merged');
+              await api(`/api/customers/${c.id}/merge`, { method: 'POST', body: JSON.stringify({ target_id: +targetId, target_customer_id: +targetId }) });
+              toast(`✓ Successfully merged "${c.name}" into target customer!`);
               await loadCU(); await updateChrome(); loadCustomerFilesContainer();
+              if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
             });
             return;
           }

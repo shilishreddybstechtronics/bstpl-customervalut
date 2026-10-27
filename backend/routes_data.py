@@ -529,13 +529,9 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
             row_dict["status"] = "Duplicate"
             row_dict["reason"] = dup_reason
             duplicates.append(row_dict)
-        elif errs:
-            row_dict["status"] = "Invalid"
-            row_dict["reason"] = "; ".join(errs)
-            invalids.append(row_dict)
         else:
             row_dict["status"] = "Valid"
-            row_dict["reason"] = "Ready to upload"
+            row_dict["reason"] = "Ready to insert into customer data"
             valid.append(row_dict)
 
         if r.imei:
@@ -593,36 +589,9 @@ def insert_chunk(db: Session, rows: list):
             return
 
 
-def get_direct_upload_count(db: Session, user: models.User) -> int:
-    try:
-        return db.query(models.ActivityLog).filter(
-            models.ActivityLog.user_id == user.id,
-            models.ActivityLog.action == "direct_bulk_upload"
-        ).count()
-    except Exception:
-        return 0
-
-
-@router.get("/devices/bulk/direct-status", dependencies=[Depends(require_permission("upload"))])
-def get_direct_status(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    used = get_direct_upload_count(db, user)
-    return {
-        "used": used,
-        "max_allowed": 2,
-        "remaining": max(0, 2 - used),
-        "can_upload": used < 2
-    }
-
-
 @router.post("/devices/bulk", dependencies=[Depends(require_permission("upload"))])
 def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
              user: models.User = Depends(get_current_user)):
-    direct_empty = getattr(data, "direct_empty", False)
-    if direct_empty:
-        used_count = get_direct_upload_count(db, user)
-        if used_count >= 2:
-            raise HTTPException(status_code=403, detail="Direct Upload limit reached: This feature can only be used 2 times.")
-
     imeis = [r.imei.strip() for r in data.rows if r.imei]
     sr_nos = [r.device_sr_no.strip() for r in data.rows if r.device_sr_no]
     iccids = [r.iccid.strip() for r in data.rows if r.iccid]
@@ -698,18 +667,14 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                 cache[key] = customer_by_name(db, cust_name)
             cust = cache[key]
 
-            if direct_empty:
-                exp = r.expiry_date
-                stype = r.sim_type
-            else:
-                exp = r.expiry_date or (r.act_date + timedelta(days=365) if r.act_date else None)
-                stype = r.sim_type or classify_sim_type(r.iccid)
+            exp = r.expiry_date or (r.act_date + timedelta(days=365) if r.act_date else None)
+            stype = r.sim_type or classify_sim_type(r.iccid)
             extra = clean_extra(r.extra)
             names.update(extra)
 
             if imei in existing_devices:
                 in_bin = getattr(existing_devices[imei], "deleted_at", None)  # deleted earlier: bring it back instead of skipping it
-                if not direct_empty and (mode == "replace" or in_bin):
+                if mode == "replace" or in_bin:
                     d = existing_devices[imei]
                     d.customer_id = cust.id
                     d.act_date = r.act_date or d.act_date
@@ -761,9 +726,7 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
             insert_chunk(db, chunk)
             saved += len(chunk)
         register_columns(db, names)
-        if direct_empty:
-            log_activity(db, "direct_bulk_upload", f"{saved} records directly uploaded (remaining columns empty), {len(skipped)} duplicates skipped", user=user)
-        elif len(data.rows) == 1:
+        if len(data.rows) == 1:
             log_activity(db, "device_add", f"IMEI {data.rows[0].imei}" + (" (updated)" if updated else "" if added else " (skipped)"), user=user)
         else:
             log_activity(db, "device_upload", f"{saved} added, {updated} updated, {len(skipped)} duplicates skipped (batch of {len(data.rows)})", user=user)
@@ -909,19 +872,15 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
     rows = data.rows
     overwrite = data.overwrite
     chosen_provider = (data.sim_provider or "").strip()
-    match_by = (data.match_by or "iccid").strip().lower()
-    if match_by in ("iccid", "ccid"):
-        match_by = "iccid"
-    elif match_by != "imei":
-        match_by = "iccid"
+    match_by = "iccid"  # SIM Data upload strictly matches by ICCID; IMEI option disabled and removed
 
-    # Verify that either a provider or at least one data column is provided
+    # Verify that either a provider, ICCID, or at least one data column is provided
     has_any_data = any(
-        (r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.model or r.firmware or r.flash or r.activation_plan or r.sim_type or r.sim_provider or (r.iccid if match_by == "imei" else r.imei))
+        (r.iccid or r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.model or r.firmware or r.flash or r.activation_plan or r.sim_type or r.sim_provider)
         for r in rows
     )
     if not chosen_provider and not has_any_data:
-        raise HTTPException(400, "Refused: The file contains no MSISDN, date, or SIM data columns and no SIM Provider was selected.")
+        raise HTTPException(400, "Refused: The file contains no ICCID, MSISDN, date, or SIM data columns and no SIM Provider was selected.")
 
     total_file_rows = len(rows)
     skipped_rows = 0
@@ -1126,18 +1085,14 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     rows = data.rows
     overwrite = data.overwrite
     chosen_provider = (data.sim_provider or "").strip()
-    match_by = (data.match_by or "iccid").strip().lower()
-    if match_by in ("iccid", "ccid"):
-        match_by = "iccid"
-    elif match_by != "imei":
-        match_by = "iccid"
+    match_by = "iccid"  # SIM Data upload strictly matches by ICCID
 
     has_any_data = any(
-        (r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.sim_provider or (r.iccid if match_by == "imei" else r.imei))
+        (r.iccid or r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.sim_provider or r.imei)
         for r in rows
     )
-    if not chosen_provider and not has_any_data:
-        raise HTTPException(400, "Refused: No data columns and no SIM Provider specified.")
+    if not chosen_provider and not has_any_data and not getattr(data, "insert_new", False):
+        raise HTTPException(400, "Refused: No ICCID, data columns, or SIM Provider specified.")
 
     file_sims = {}
     for r in rows:
@@ -2052,8 +2007,16 @@ def upload_corrected_error(error_id: int, data: schemas.DeviceIn, db: Session = 
     if not err:
         raise HTTPException(404, "Errored record not found.")
 
-    if not data.imei or len(data.imei.strip()) < 5 or not data.customer_name:
-        raise HTTPException(400, "A valid IMEI (at least 5 characters) and Customer Name are required to upload.")
+    cname = (data.customer_name or err.customer_name or "").strip() or "General_Customer"
+    imei_val = (data.imei or "").strip()
+    if not imei_val or len(imei_val) < 5:
+        alt = clean_imei(data.device_sr_no or data.iccid or err.device_sr_no or err.iccid or "")
+        if alt and len(alt) >= 5:
+            imei_val = alt[:20]
+        else:
+            imei_val = f"INV_{uuid.uuid4().hex[:10].upper()}"
+    data.imei = imei_val
+    data.customer_name = cname
 
     # Ingest using bulk_add logic so customer and TiDB Cloud table are synchronized
     res = bulk_add(schemas.BulkIn(rows=[data], mode="replace"), db=db, user=user)
@@ -2064,6 +2027,189 @@ def upload_corrected_error(error_id: int, data: schemas.DeviceIn, db: Session = 
 
     log_activity(db, "error_resolved", f"Corrected and uploaded record IMEI {data.imei} to customer {data.customer_name}", user=user)
     return {"success": True, "result": res}
+
+
+@router.post("/errors/{error_id}/push", dependencies=[Depends(require_permission("upload"))])
+def push_error_to_customer(error_id: int, data: Optional[schemas.PushErrorIn] = None,
+                           db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Pushes an errored entry directly into the specified customer even if it contains errors or duplicate attributes."""
+    err = db.query(models.ErroredRecord).filter(models.ErroredRecord.id == error_id).first()
+    if not err:
+        raise HTTPException(404, "Errored record not found.")
+
+    target_cname = ""
+    if data and data.customer_name:
+        target_cname = data.customer_name.strip()
+    if not target_cname:
+        target_cname = (err.customer_name or "").strip()
+    if not target_cname:
+        target_cname = "General_Customer"
+
+    cust = customer_by_name(db, target_cname)
+
+    raw_imei = clean_imei(err.imei) if err.imei else ""
+    extra = dict(err.extra or {})
+    extra["pushed_with_error"] = True
+    if err.error_reason:
+        extra["original_error"] = err.error_reason
+
+    if not raw_imei or len(raw_imei) < 5:
+        alt = clean_imei(err.device_sr_no or err.iccid or "")
+        if alt and len(alt) >= 5:
+            raw_imei = alt[:20]
+        else:
+            raw_imei = f"INV_{uuid.uuid4().hex[:10].upper()}"
+
+    final_imei = raw_imei[:20]
+    existing_dev = db.query(Device).filter(Device.imei == final_imei).first()
+    if existing_dev:
+        if existing_dev.deleted_at:
+            existing_dev.deleted_at = existing_dev.deleted_by = existing_dev.delete_reason = None
+            existing_dev.customer_id = cust.id
+        else:
+            extra["original_imei"] = final_imei
+            suffix = f"_E{err.id}"
+            max_prefix = 20 - len(suffix)
+            final_imei = f"{final_imei[:max_prefix]}{suffix}"
+
+    stype = err.sim_type or ("E-SIM" if err.iccid else "Plastic SIM")
+    dev = Device(
+        customer_id=cust.id,
+        imei=final_imei,
+        device_sr_no=err.device_sr_no,
+        iccid=err.iccid,
+        msisdn1=err.msisdn1,
+        msisdn2=err.msisdn2,
+        act_date=err.act_date,
+        expiry_date=err.expiry_date,
+        dispatched_date=err.dispatched_date,
+        model=err.model,
+        sim_provider=err.sim_provider,
+        activation_plan=err.activation_plan,
+        firmware=err.firmware,
+        flash=err.flash,
+        sim_type=stype,
+        extra=extra or None,
+        added_by=user.id if user else None
+    )
+    db.add(dev)
+    db.delete(err)
+    db.commit()
+    db.refresh(dev)
+
+    row_mirror = {
+        "imei": dev.imei,
+        "customer_name": cust.name,
+        "device_sr_no": dev.device_sr_no,
+        "iccid": dev.iccid,
+        "msisdn1": dev.msisdn1,
+        "msisdn2": dev.msisdn2,
+        "act_date": dev.act_date,
+        "expiry_date": dev.expiry_date,
+        "dispatched_date": dev.dispatched_date,
+        "model": dev.model,
+        "sim_provider": dev.sim_provider,
+        "activation_plan": dev.activation_plan,
+        "firmware": dev.firmware,
+        "flash": dev.flash,
+        "sim_type": dev.sim_type,
+        "extra": dev.extra or {}
+    }
+    try:
+        customer_tables.mirror_rows([(cust.id, cust.name, row_mirror)])
+    except Exception as me:
+        print(f"Customer table mirror notice: {me}")
+
+    log_activity(db, "error_force_pushed", f"Pushed errored entry #{error_id} (IMEI {final_imei}) to customer '{cust.name}'", user=user)
+    db.commit()
+
+    return {"success": True, "device_id": dev.id, "imei": final_imei, "customer_name": cust.name}
+
+
+@router.post("/errors/bulk-push", dependencies=[Depends(require_permission("upload"))])
+def bulk_push_errors_to_customer(data: schemas.BulkPushErrorsIn, db: Session = Depends(get_db),
+                                 user: models.User = Depends(get_current_user)):
+    """Bulk pushes errored entries directly into a specified customer."""
+    query = db.query(models.ErroredRecord)
+    if data.error_ids:
+        query = query.filter(models.ErroredRecord.id.in_(data.error_ids))
+    records = query.all()
+    if not records:
+        return {"pushed_count": 0, "customer_name": data.customer_name or "General_Customer"}
+
+    target_cname = (data.customer_name or "").strip() or "General_Customer"
+    cust = customer_by_name(db, target_cname)
+
+    mirror_items = []
+    pushed = 0
+    for err in records:
+        raw_imei = clean_imei(err.imei) if err.imei else ""
+        extra = dict(err.extra or {})
+        extra["pushed_with_error"] = True
+        if err.error_reason:
+            extra["original_error"] = err.error_reason
+
+        if not raw_imei or len(raw_imei) < 5:
+            alt = clean_imei(err.device_sr_no or err.iccid or "")
+            if alt and len(alt) >= 5:
+                raw_imei = alt[:20]
+            else:
+                raw_imei = f"INV_{uuid.uuid4().hex[:10].upper()}"
+
+        final_imei = raw_imei[:20]
+        existing_dev = db.query(Device).filter(Device.imei == final_imei).first()
+        if existing_dev:
+            if existing_dev.deleted_at:
+                existing_dev.deleted_at = existing_dev.deleted_by = existing_dev.delete_reason = None
+                existing_dev.customer_id = cust.id
+            else:
+                extra["original_imei"] = final_imei
+                suffix = f"_E{err.id}"
+                max_prefix = 20 - len(suffix)
+                final_imei = f"{final_imei[:max_prefix]}{suffix}"
+
+        stype = err.sim_type or ("E-SIM" if err.iccid else "Plastic SIM")
+        dev = Device(
+            customer_id=cust.id,
+            imei=final_imei,
+            device_sr_no=err.device_sr_no,
+            iccid=err.iccid,
+            msisdn1=err.msisdn1,
+            msisdn2=err.msisdn2,
+            act_date=err.act_date,
+            expiry_date=err.expiry_date,
+            dispatched_date=err.dispatched_date,
+            model=err.model,
+            sim_provider=err.sim_provider,
+            activation_plan=err.activation_plan,
+            firmware=err.firmware,
+            flash=err.flash,
+            sim_type=stype,
+            extra=extra or None,
+            added_by=user.id if user else None
+        )
+        db.add(dev)
+        db.delete(err)
+        pushed += 1
+        mirror_items.append((cust.id, cust.name, {
+            "imei": final_imei, "customer_name": cust.name, "device_sr_no": dev.device_sr_no,
+            "iccid": dev.iccid, "msisdn1": dev.msisdn1, "msisdn2": dev.msisdn2,
+            "act_date": dev.act_date, "expiry_date": dev.expiry_date, "dispatched_date": dev.dispatched_date,
+            "model": dev.model, "sim_provider": dev.sim_provider, "activation_plan": dev.activation_plan,
+            "firmware": dev.firmware, "flash": dev.flash, "sim_type": dev.sim_type, "extra": extra
+        }))
+
+    db.commit()
+    if mirror_items:
+        try:
+            customer_tables.mirror_rows(mirror_items)
+        except Exception as me:
+            print(f"Customer table mirror notice: {me}")
+
+    log_activity(db, "error_bulk_force_pushed", f"Bulk pushed {pushed} errored entries to customer '{cust.name}'", user=user)
+    db.commit()
+
+    return {"pushed_count": pushed, "customer_name": cust.name}
 
 
 @router.delete("/errors/{error_id}", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])

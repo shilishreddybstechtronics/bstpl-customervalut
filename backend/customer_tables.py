@@ -148,6 +148,58 @@ def drop_table(cid: int, name: str = ""):
             conn.execute(text(f"DROP TABLE IF EXISTS `{t}`"))
 
 
+def merge_tables(src_cid: int, src_name: str, dst_cid: int, dst_name: str):
+    """Merges all rows and columns from src customer's table into dst customer's table, then drops src table."""
+    with engine.begin() as conn:
+        src_t = find_table(conn, src_cid, src_name)
+        dst_t = ensure_table(conn, dst_cid, dst_name)
+        if not src_t or src_t == dst_t:
+            return
+
+        insp = inspect(conn)
+        src_cols = {c["name"]: str(c["type"]) for c in insp.get_columns(src_t)}
+        dst_cols = {c["name"] for c in insp.get_columns(dst_t)}
+
+        # Add any missing columns from src into dst
+        for col, col_type in src_cols.items():
+            if col not in dst_cols and col not in ("updated_at",):
+                try:
+                    conn.execute(text(f"ALTER TABLE `{dst_t}` ADD COLUMN `{col}` {col_type} NULL"))
+                    dst_cols.add(col)
+                except Exception as e:
+                    print(f"Error adding column `{col}` to `{dst_t}`: {e}")
+
+        # Shared columns to copy
+        common_cols = [c for c in src_cols.keys() if c in dst_cols and c != "updated_at"]
+        if common_cols:
+            col_list_sql = ", ".join(f"`{c}`" for c in common_cols)
+            select_cols = []
+            for c in common_cols:
+                if c == "customer_name":
+                    select_cols.append(":dst_name AS `customer_name`")
+                else:
+                    select_cols.append(f"`{c}`")
+            select_cols_sql = ", ".join(select_cols)
+            update_sql = ", ".join(f"`{c}`=VALUES(`{c}`)" for c in common_cols if c != "imei")
+
+            insert_sql = text(f"""
+                INSERT INTO `{dst_t}` ({col_list_sql})
+                SELECT {select_cols_sql} FROM `{src_t}`
+                ON DUPLICATE KEY UPDATE {update_sql}
+            """)
+            try:
+                conn.execute(insert_sql, {"dst_name": dst_name})
+            except Exception as e:
+                print(f"Error copying rows from `{src_t}` to `{dst_t}`: {e}")
+
+        # Drop the old src table
+        try:
+            conn.execute(text(f"DROP TABLE IF EXISTS `{src_t}`"))
+        except Exception as e:
+            print(f"Error dropping merged table `{src_t}`: {e}")
+
+
+
 def mirror_single_device(cid: int, cname: str, row: dict):
     """Mirrors a single device into the customer's individual table."""
     try:

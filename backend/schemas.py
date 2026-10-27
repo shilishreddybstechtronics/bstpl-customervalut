@@ -376,7 +376,8 @@ class AvatarIn(BaseModel):
 
 
 class MergeIn(BaseModel):
-    target_id: int
+    model_config = ConfigDict(str_strip_whitespace=True)
+    target_id: int = Field(..., validation_alias=AliasChoices("target_id", "target_customer_id"))
 
 
 # ---- errored records ----
@@ -408,4 +409,15 @@ class ErroredRecordIn(BaseModel):
 
 class BulkErrorsIn(BaseModel):
     records: list[ErroredRecordIn]
+
+
+class PushErrorIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    customer_name: Optional[str] = None
+
+
+class BulkPushErrorsIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    error_ids: Optional[list[int]] = None
+    customer_name: Optional[str] = None
 

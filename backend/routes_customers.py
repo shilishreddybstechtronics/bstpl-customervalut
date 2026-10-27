@@ -113,15 +113,70 @@ def rename_all(data: schemas.RenameAllIn, db: Session = Depends(get_db),
 @router.post("/{cid}/merge", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
 def merge(cid: int, data: schemas.MergeIn, db: Session = Depends(get_db),
           user: models.User = Depends(get_current_user)):
-    """Moves every device (bin included) from this customer into the target, then removes this customer."""
-    if cid == data.target_id:
+    """Moves every device (bin included) from this customer into the target, syncs customer tables, then removes this customer."""
+    target_id = getattr(data, "target_id", None) or getattr(data, "target_customer_id", None)
+    if not target_id or cid == target_id:
         raise HTTPException(400, "Choose a different customer to merge into.")
-    src, dst = active_customer(db, cid), active_customer(db, data.target_id)
-    moved = db.query(Device).filter(Device.customer_id == src.id).update({"customer_id": dst.id}, synchronize_session=False)
-    log_activity(db, "customer_merge", f"{src.name} merged into {dst.name} ({moved} records moved)", user=user)
+    src, dst = active_customer(db, cid), active_customer(db, target_id)
+
+    # 1. Update customer_id for all devices (active and bin)
+    moved = db.query(Device).filter(Device.customer_id == src.id).update(
+        {"customer_id": dst.id},
+        synchronize_session=False
+    )
+
+    # 2. Update delete_reason if any devices were deleted with src
+    db.query(Device).filter(
+        Device.customer_id == dst.id,
+        Device.delete_reason == f"{TAG}{src.name}"
+    ).update(
+        {"delete_reason": f"{TAG}{dst.name}"},
+        synchronize_session=False
+    )
+
+    # 3. Update any ErroredRecords referencing src.name to dst.name
+    db.query(models.ErroredRecord).filter(
+        models.ErroredRecord.customer_name == src.name
+    ).update(
+        {"customer_name": dst.name},
+        synchronize_session=False
+    )
+
+    # 4. Remove src customer from customers table
+    src_name = src.name
+    dst_name = dst.name
+    src_id = src.id
+    dst_id = dst.id
+
     db.delete(src)
+    log_activity(db, "customer_merge", f"{src_name} merged into {dst_name} ({moved} records moved)", user=user)
     db.commit()
-    return {"moved": moved, "into": dst.name}
+
+    # 5. Merge dedicated SQL/TiDB Cloud customer tables
+    try:
+        customer_tables.merge_tables(src_id, src_name, dst_id, dst_name)
+    except Exception as me:
+        print(f"Customer table merge notice: {me}")
+
+    # 6. Mirror all active devices of dst to ensure dst customer table is completely synchronized
+    try:
+        devs = db.query(Device).filter(Device.customer_id == dst_id, Device.deleted_at.is_(None)).all()
+        mirror_items = []
+        for d in devs:
+            mirror_items.append((dst_id, dst_name, {
+                "imei": d.imei, "customer_name": dst_name, "device_sr_no": d.device_sr_no,
+                "iccid": d.iccid, "msisdn1": d.msisdn1, "msisdn2": d.msisdn2,
+                "act_date": d.act_date, "expiry_date": d.expiry_date, "dispatched_date": d.dispatched_date,
+                "model": d.model, "sim_provider": d.sim_provider, "activation_plan": d.activation_plan,
+                "firmware": d.firmware, "flash": d.flash, "sim_type": d.sim_type,
+                "extra": d.extra or {}
+            }))
+        if mirror_items:
+            customer_tables.mirror_rows(mirror_items)
+    except Exception as me:
+        print(f"Customer table mirror notice after merge: {me}")
+
+    return {"moved": moved, "into": dst_name}
 
 
 @router.delete("/{cid}", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
