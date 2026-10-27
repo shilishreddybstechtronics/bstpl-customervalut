@@ -2293,7 +2293,7 @@
 
             <div class="sim-map-grid" style="margin-top:10px">
               <div class="sim-map-card">
-                <label for="colMapKey" id="titleColMapKey" style="font-size:12px;font-weight:700;color:var(--danger)">💳 ICCID Column * (Required)</label>
+                <label for="colMapKey" id="titleColMapKey" style="font-size:12px;font-weight:700;color:var(--danger)">💳 ICCID / CCID Column * (Required - Both are Same)</label>
                 <select id="colMapKey" style="font-size:13px;width:100%;margin-top:4px;border-color:var(--danger)"></select>
               </div>
               <div class="sim-map-card">
@@ -2315,6 +2315,27 @@
               <div class="sim-map-card">
                 <label for="simTargetCustSelect" style="font-size:12px;font-weight:600">📁 Customer for New Inserts</label>
                 <select id="simTargetCustSelect" style="font-size:13px;width:100%;margin-top:4px"></select>
+              </div>
+            </div>
+
+            <!-- Select Additional Columns to Add to Database & Website -->
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+                <div>
+                  <h4 style="margin:0 0 2px;font-size:13.5px;display:flex;align-items:center;gap:6px">
+                    <span>📋</span> <span>Select Columns to Add / Update in Database & Website</span>
+                  </h4>
+                  <p class="sub" style="margin:0;font-size:11.5px">
+                    Choose which columns from this file to store in the database and customer tables on the website:
+                  </p>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button type="button" class="b" id="btnSimSelectAllCols" style="height:26px;font-size:11px;padding:0 10px">Select All Columns</button>
+                  <button type="button" class="b" id="btnSimClearCols" style="height:26px;font-size:11px;padding:0 10px">Reset to Defaults</button>
+                </div>
+              </div>
+              <div id="simExtraColumnsList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;min-height:48px">
+                <span style="font-size:12px;color:var(--muted)">Upload a SIM file above to view and select available columns.</span>
               </div>
             </div>
 
@@ -5573,15 +5594,36 @@
         // Trigger auto-check whenever user changes options or mappings
         ['colMapKey', 'colMapActDate', 'colMapExpDate', 'colMapMsisdn1', 'colMapMsisdn2', 'simProviderSelect', 'simTargetCustSelect'].forEach(id => {
           const el = $(id);
-          if (el) el.onchange = () => scheduleSimAutoCheck();
+          if (el) el.onchange = () => {
+            if (typeof renderSimExtraColumnsCheckboxes === 'function' && simDetectedHeaders.length) {
+              renderSimExtraColumnsCheckboxes(simDetectedHeaders);
+            }
+            scheduleSimAutoCheck();
+          };
         });
         if ($('simOverwriteChk')) {
           $('simOverwriteChk').onchange = () => scheduleSimAutoCheck();
         }
 
+        // Column selection helper buttons
+        if ($('btnSimSelectAllCols')) {
+          $('btnSimSelectAllCols').onclick = () => {
+            (simDetectedHeaders || []).forEach(h => simSelectedExtraCols.add(h));
+            renderSimExtraColumnsCheckboxes(simDetectedHeaders);
+            scheduleSimAutoCheck(100);
+          };
+        }
+        if ($('btnSimClearCols')) {
+          $('btnSimClearCols').onclick = () => {
+            simSelectedExtraCols.clear();
+            renderSimExtraColumnsCheckboxes(simDetectedHeaders);
+            scheduleSimAutoCheck(100);
+          };
+        }
+
         // Compare & Validate Records Button
         if ($('btnRunSimCompare')) {
-          $('btnRunSimCompare').onclick = () => runSimAutoCheck();
+          $('btnRunSimCompare').onclick = () => runSimAutoCheck(true);
         }
 
         // Comparison Filter Pills
@@ -5625,10 +5667,10 @@
           $('simMatchModeBadge').textContent = 'Matching by ICCID';
         }
         if ($('titleColMapKey')) {
-          $('titleColMapKey').textContent = '💳 ICCID Column * (Required)';
+          $('titleColMapKey').textContent = '💳 ICCID / CCID Column * (Required - Both are Same)';
         }
         if ($('simModeDesc')) {
-          $('simModeDesc').textContent = 'Matches device records across our database strictly by ICCID and replaces MSISDN1, MSISDN2, Act Date, Exp Date.';
+          $('simModeDesc').textContent = 'Matches device records across our database strictly by ICCID / CCID (both are identical) and updates selected columns.';
         }
 
         if (simDetectedHeaders.length) {
@@ -5727,10 +5769,11 @@
             return;
           }
 
-          // Strictly match by ICCID for SIM data upload
+          // Strictly match by ICCID for SIM data upload (handles CCID identically)
           setSimMatchMode('iccid');
 
           populateSimColumnDropdowns(simDetectedHeaders);
+          populateSimExtraColumns(simDetectedHeaders);
 
           $('simFileName').textContent = file.name;
           $('simFileSize').textContent = Math.round(file.size / 1024) + ' KB';
@@ -5739,10 +5782,83 @@
           $('simDropzone').hidden = true;
           $('simConfigCard').hidden = false;
 
+          showEventPopup({
+            type: 'uploading',
+            title: 'SIM File Uploaded & Read',
+            message: `Parsed ${simRawFileRows.length.toLocaleString()} rows and ${simDetectedHeaders.length} columns from "${file.name}". ICCID / CCID column detected. Select columns below to add/update in database and website.`,
+            meta: {
+              'File Name': file.name,
+              'Total Rows': simRawFileRows.length,
+              'Columns Detected': simDetectedHeaders.length,
+              'ICCID / CCID': 'Identified & Matched'
+            },
+            progress: '25% Uploaded & Parsed'
+          });
+
           scheduleSimAutoCheck(50);
         } catch (err) {
           fail(err);
         }
+      }
+
+      let simSelectedExtraCols = new Set();
+
+      function populateSimExtraColumns(headers) {
+        simSelectedExtraCols.clear();
+        const keyCol = $('colMapKey') ? $('colMapKey').value : '';
+        const m1 = $('colMapMsisdn1') ? $('colMapMsisdn1').value : '';
+        const m2 = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
+        const act = $('colMapActDate') ? $('colMapActDate').value : '';
+        const exp = $('colMapExpDate') ? $('colMapExpDate').value : '';
+        const standardCols = new Set([keyCol, m1, m2, act, exp].filter(Boolean));
+
+        (headers || []).forEach(h => {
+          if (h && !standardCols.has(h)) {
+            simSelectedExtraCols.add(h);
+          }
+        });
+
+        renderSimExtraColumnsCheckboxes(headers);
+      }
+
+      function renderSimExtraColumnsCheckboxes(headers) {
+        const wrap = $('simExtraColumnsList');
+        if (!wrap) return;
+        const keyCol = $('colMapKey') ? $('colMapKey').value : '';
+        const m1 = $('colMapMsisdn1') ? $('colMapMsisdn1').value : '';
+        const m2 = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
+        const act = $('colMapActDate') ? $('colMapActDate').value : '';
+        const exp = $('colMapExpDate') ? $('colMapExpDate').value : '';
+        const standardCols = new Set([keyCol, m1, m2, act, exp].filter(Boolean));
+
+        if (!headers || !headers.length) {
+          wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">No columns detected yet.</span>';
+          return;
+        }
+
+        wrap.innerHTML = headers.map(h => {
+          const isKey = (h === keyCol);
+          const isStandard = standardCols.has(h);
+          const isChecked = isKey || isStandard || simSelectedExtraCols.has(h);
+          const disabled = isKey ? 'disabled' : '';
+          const tag = isKey ? '<span style="color:var(--danger);font-weight:700"> (Key: ICCID/CCID)</span>' : (isStandard ? '<span style="color:var(--primary);font-weight:600"> (Standard Field)</span>' : '<span style="color:var(--ok);font-weight:600"> (Custom Column)</span>');
+
+          return `
+            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--card);padding:6px 12px;border:1px solid ${isChecked ? 'var(--primary)' : 'var(--line)'};border-radius:20px;cursor:pointer;user-select:none">
+              <input type="checkbox" class="sim-col-chk" data-col="${esc(h)}" ${isChecked ? 'checked' : ''} ${disabled} style="margin:0;cursor:pointer" />
+              <span><b>${esc(h)}</b>${tag}</span>
+            </label>
+          `;
+        }).join('');
+
+        wrap.querySelectorAll('.sim-col-chk:not(:disabled)').forEach(chk => {
+          chk.onchange = () => {
+            const col = chk.dataset.col;
+            if (chk.checked) simSelectedExtraCols.add(col);
+            else simSelectedExtraCols.delete(col);
+            scheduleSimAutoCheck(150);
+          };
+        });
       }
 
       function populateSimColumnDropdowns(headers) {
@@ -5924,6 +6040,7 @@
           return;
         }
 
+        const standardCols = new Set([keyCol, msisdn1Col, msisdn2Col, actDateCol, expDateCol].filter(Boolean));
         const payloadRows = [];
         let unreadableDatesCount = 0;
         let convertedDatesCount = 0;
@@ -5956,17 +6073,26 @@
             else unreadableDatesCount++;
           }
 
+          const extra = {};
+          (simSelectedExtraCols || []).forEach(col => {
+            if (!standardCols.has(col) && col !== keyCol) {
+              const v = rawObj[col] != null ? String(rawObj[col]).trim() : '';
+              if (v) extra[col] = v;
+            }
+          });
+
           payloadRows.push({
             iccid: rawKey,
             msisdn1: m1 || null,
             msisdn2: m2 || null,
             act_date: actParsed || null,
             expiry_date: expParsed || null,
-            sim_provider: chosenProvider || null
+            sim_provider: chosenProvider || null,
+            extra: Object.keys(extra).length ? extra : null
           });
         });
 
-        const hasDataCol = !!(msisdn1Col || msisdn2Col || actDateCol || expDateCol);
+        const hasDataCol = !!(msisdn1Col || msisdn2Col || actDateCol || expDateCol || (simSelectedExtraCols && simSelectedExtraCols.size));
 
         try {
           const res = await api('/api/simdata/check', {
@@ -6063,6 +6189,20 @@
           renderSimCustomerBreakdown(res.customer_breakdown || []);
 
           $('simCheckResults').hidden = false;
+
+          showEventPopup({
+            type: 'uploading',
+            title: 'SIM Data Compared & Fetched',
+            message: `Comparison complete: ${res.records_matched.toLocaleString()} records matched in database, ${res.records_to_update.toLocaleString()} differing to replace, ${notFoundCount.toLocaleString()} ready to insert.`,
+            meta: {
+              'Total File Rows': res.file_rows_count,
+              'Matched in DB': res.records_matched,
+              'Differing to Replace': res.records_to_update,
+              'Can Insert into DB': notFoundCount,
+              'Columns Selected': (simSelectedExtraCols.size + 1)
+            },
+            progress: '50% Checked & Fetched'
+          });
         } catch (err) {
           fail(err);
         }
@@ -6222,6 +6362,7 @@
           return;
         }
 
+        const standardCols = new Set([keyCol, msisdn1Col, msisdn2Col, actDateCol, expDateCol].filter(Boolean));
         const fullPayload = [];
         simRawFileRows.forEach(rawObj => {
           let rawKey = rawObj[keyCol] != null ? String(rawObj[keyCol]).trim() : '';
@@ -6247,6 +6388,14 @@
           altVal = altVal.replace(/[\s\-_]+/g, '');
           if (currentSimMatchMode === 'imei') altVal = altVal.toUpperCase();
 
+          const extra = {};
+          (simSelectedExtraCols || []).forEach(col => {
+            if (!standardCols.has(col) && col !== keyCol) {
+              const v = rawObj[col] != null ? String(rawObj[col]).trim() : '';
+              if (v) extra[col] = v;
+            }
+          });
+
           fullPayload.push({
             imei: currentSimMatchMode === 'imei' ? rawKey : (altVal || null),
             iccid: currentSimMatchMode === 'iccid' ? rawKey : (altVal || ''),
@@ -6254,7 +6403,8 @@
             msisdn2: msisdn2Col ? (rawObj[msisdn2Col] || '').trim() || null : null,
             act_date: actDateCol ? convertDateToStandardFormat(rawObj[actDateCol]) : null,
             expiry_date: expDateCol ? convertDateToStandardFormat(rawObj[expDateCol]) : null,
-            sim_provider: chosenProvider || null
+            sim_provider: chosenProvider || null,
+            extra: Object.keys(extra).length ? extra : null
           });
         });
 
@@ -6282,11 +6432,11 @@
             const partNum = Math.floor(i / chunkSize) + 1;
             const totalParts = Math.ceil(fullPayload.length / chunkSize);
             const chunk = fullPayload.slice(i, i + chunkSize);
-            const pct = Math.round((i / (fullPayload.length || 1)) * 100);
+            const pct = Math.min(99, Math.round(50 + ((i + chunk.length) / (fullPayload.length || 1)) * 50));
 
             progressBar.style.width = pct + '%';
             progressPct.textContent = pct + '%';
-            progressStatus.textContent = `Processing Part ${partNum} of ${totalParts} (${chunk.length} rows)…`;
+            progressStatus.textContent = `Uploading batch ${partNum} of ${totalParts} (${pct}% complete)…`;
 
             const res = await api('/api/simdata/apply', {
               method: 'POST',
@@ -6314,21 +6464,21 @@
 
           progressBar.style.width = '100%';
           progressPct.textContent = '100%';
-          progressStatus.textContent = `✅ Process Complete: ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted.`;
+          progressStatus.textContent = `✅ Process Complete (100%): ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted.`;
           if (runningInserted > 0) {
             toast(`Complete! ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} new records inserted into "${targetCust}".`);
           } else {
             toast(`Push complete! ${runningUpdated.toLocaleString()} records updated.`);
           }
           showEventPopup({
-            type: insertNew ? 'inserting' : 'uploading',
-            title: insertNew ? 'SIM File Upload & Insertion Completed' : 'SIM File Upload & Update Completed',
-            message: `SIM file processed: ${runningUpdated.toLocaleString()} records updated, ${runningInserted.toLocaleString()} inserted into "${targetCust || 'Customer Data'}".`,
+            type: (action === 'insert_only' || action === 'both') ? 'inserting' : 'uploading',
+            title: (action === 'insert_only' || action === 'both') ? 'SIM Records Inserted & Updated' : 'SIM File Upload Completed',
+            message: `SIM Data Upload Complete: ${runningUpdated.toLocaleString()} records updated, ${runningInserted.toLocaleString()} inserted into database & website customer tables!`,
             meta: {
-              'Updated Records': runningUpdated,
-              'Inserted Records': runningInserted,
-              'Unmatched Keys': runningUnmatched,
-              'Target Customer': targetCust || 'Existing Mappings'
+              'Updated in Database': runningUpdated,
+              'Inserted into Customer': runningInserted,
+              'Target Customer': targetCust || 'Existing Customers',
+              'Columns Stored': simSelectedExtraCols.size + 1
             },
             progress: '100% Complete'
           });

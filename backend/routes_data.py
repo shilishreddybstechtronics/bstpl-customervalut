@@ -876,7 +876,7 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
 
     # Verify that either a provider, ICCID, or at least one data column is provided
     has_any_data = any(
-        (r.iccid or r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.model or r.firmware or r.flash or r.activation_plan or r.sim_type or r.sim_provider)
+        (r.iccid or r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.model or r.firmware or r.flash or r.activation_plan or r.sim_type or r.sim_provider or r.extra)
         for r in rows
     )
     if not chosen_provider and not has_any_data:
@@ -912,7 +912,8 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
             "msisdn2": clean_str(r.msisdn2),
             "act_date": r.act_date,
             "expiry_date": r.expiry_date,
-            "sim_provider": chosen_provider or clean_str(r.sim_provider)
+            "sim_provider": chosen_provider or clean_str(r.sim_provider),
+            "extra": r.extra or {}
         }
 
         if match_key in file_sims:
@@ -921,6 +922,8 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
             for f in ("msisdn1", "msisdn2", "act_date", "expiry_date", "sim_provider", "raw_iccid", "raw_imei"):
                 if not existing.get(f) and row_dict.get(f):
                     existing[f] = row_dict[f]
+            if row_dict.get("extra"):
+                existing["extra"] = {**(existing.get("extra") or {}), **row_dict["extra"]}
         else:
             file_sims[match_key] = row_dict
 
@@ -1088,7 +1091,7 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     match_by = "iccid"  # SIM Data upload strictly matches by ICCID
 
     has_any_data = any(
-        (r.iccid or r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.sim_provider or r.imei)
+        (r.iccid or r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.sim_provider or r.imei or r.extra)
         for r in rows
     )
     if not chosen_provider and not has_any_data and not getattr(data, "insert_new", False):
@@ -1117,13 +1120,16 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
             "msisdn2": clean_str(r.msisdn2),
             "act_date": r.act_date,
             "expiry_date": r.expiry_date,
-            "sim_provider": chosen_provider or clean_str(r.sim_provider)
+            "sim_provider": chosen_provider or clean_str(r.sim_provider),
+            "extra": r.extra or {}
         }
         if match_key in file_sims:
             existing = file_sims[match_key]
             for f in ("msisdn1", "msisdn2", "act_date", "expiry_date", "sim_provider", "raw_iccid", "raw_imei"):
                 if not existing.get(f) and row_dict.get(f):
                     existing[f] = row_dict[f]
+            if row_dict.get("extra"):
+                existing["extra"] = {**(existing.get("extra") or {}), **row_dict["extra"]}
         else:
             file_sims[match_key] = row_dict
 
@@ -1157,6 +1163,23 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                             setattr(d, field, val)
                             changed = True
 
+            if frow.get("extra"):
+                cur_extra = dict(d.extra or {})
+                new_extra = {k: str(v).strip() for k, v in frow["extra"].items() if v is not None and str(v).strip()}
+                extra_changed = False
+                for ek, ev in new_extra.items():
+                    if overwrite:
+                        if cur_extra.get(ek) != ev:
+                            cur_extra[ek] = ev
+                            extra_changed = True
+                    else:
+                        if not cur_extra.get(ek):
+                            cur_extra[ek] = ev
+                            extra_changed = True
+                if extra_changed:
+                    d.extra = cur_extra
+                    changed = True
+
             if match_by == "iccid" and overwrite and frow.get("raw_iccid"):
                 curr_iccid = clean_iccid(d.iccid)
                 new_iccid = frow["raw_iccid"]
@@ -1173,6 +1196,7 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                 else:
                     if not curr_iccid and new_iccid:
                         d.iccid = new_iccid
+                        changed = True
                         changed = True
 
             if changed:
@@ -1243,6 +1267,7 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                 expiry_date=frow.get("expiry_date"),
                 sim_provider=frow.get("sim_provider") or chosen_provider or None,
                 sim_type=stype,
+                extra=frow.get("extra") or {},
                 added_by=user.id if user else None
             ))
             mirror_items.append((target_cust.id, target_cust.name, {
@@ -1254,7 +1279,8 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                 "act_date": frow.get("act_date"),
                 "expiry_date": frow.get("expiry_date"),
                 "sim_provider": frow.get("sim_provider") or chosen_provider or None,
-                "sim_type": stype
+                "sim_type": stype,
+                "extra": frow.get("extra") or {}
             }))
 
         if new_dev_rows:

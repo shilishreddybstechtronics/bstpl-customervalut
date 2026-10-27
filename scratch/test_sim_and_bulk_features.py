@@ -313,6 +313,76 @@ class TestSimAndBulkFeatures(unittest.TestCase):
         finally:
             db.close()
 
+    def test_sim_upload_ccid_and_extra_columns(self):
+        """Verify CCID is treated identically to ICCID and selected extra columns are added to DB and customer tables"""
+        from routes_data import check_sim_data, apply_sim_data
+        import customer_tables
+        from database import engine
+        from sqlalchemy import inspect, text
+
+        db = SessionLocal()
+        try:
+            user = db.query(models.User).first()
+            sfx = uuid.uuid4().hex[:6].upper()
+            target_cust = f"SimCust_{sfx}"
+
+            # 1. Verify schema validation with 'ccid' alias and 'extra' columns
+            row_dict = {
+                "ccid": f"8991{sfx}99",
+                "msisdn1": "9876543210",
+                "act_date": "2024-05-01",
+                "expiry_date": "2025-05-01",
+                "extra": {
+                    "Circle": "Mumbai",
+                    "Plan_Name": "Enterprise_VIP"
+                }
+            }
+            validated_row = schemas.SimDataRow.model_validate(row_dict)
+            self.assertEqual(validated_row.iccid, f"8991{sfx}99")
+            self.assertEqual(validated_row.extra.get("Circle"), "Mumbai")
+            self.assertEqual(validated_row.extra.get("Plan_Name"), "Enterprise_VIP")
+            print("[PASS] SimDataRow model_validate successfully mapped 'ccid' -> 'iccid' and preserved extra columns.")
+
+            # 2. Test check_sim_data with CCID and extra columns
+            check_req = schemas.SimDataCheckIn(rows=[validated_row], overwrite=True)
+            res_check = check_sim_data(check_req, db=db, user=user)
+            self.assertEqual(res_check["file_rows_count"], 1)
+            self.assertEqual(res_check["can_insert_count"], 1)
+            print("[PASS] check_sim_data successfully processed CCID with extra columns.")
+
+            # 3. Test apply_sim_data to insert record into database and customer table
+            apply_req = schemas.SimDataApplyIn(
+                rows=[validated_row],
+                insert_new=True,
+                target_customer=target_cust,
+                overwrite=True
+            )
+            res_apply = apply_sim_data(apply_req, db=db, user=user)
+            self.assertEqual(res_apply["inserted"], 1)
+            print("[PASS] apply_sim_data successfully inserted new SIM record with CCID & extra columns.")
+
+            # 4. Verify in database
+            dev = db.query(models.Device).filter(models.Device.iccid == f"8991{sfx}99").first()
+            self.assertIsNotNone(dev)
+            self.assertEqual(dev.sim_type, "E-SIM")
+            self.assertEqual(dev.msisdn1, "9876543210")
+            self.assertIsNotNone(dev.extra)
+            self.assertEqual(dev.extra.get("Circle"), "Mumbai")
+            self.assertEqual(dev.extra.get("Plan_Name"), "Enterprise_VIP")
+
+            # Clean up
+            cust_obj = db.query(models.Customer).filter(models.Customer.name == target_cust).first()
+            if cust_obj:
+                db.query(models.Device).filter(models.Device.customer_id == cust_obj.id).delete()
+                db.delete(cust_obj)
+            db.commit()
+            if cust_obj:
+                with engine.begin() as conn:
+                    customer_tables.drop_table(cust_obj.id, target_cust)
+            print("[PASS] Verified SIM device record in database and cleaned up successfully.")
+        finally:
+            db.close()
+
 if __name__ == "__main__":
     unittest.main()
 

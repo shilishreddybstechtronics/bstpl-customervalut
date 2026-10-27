@@ -215,6 +215,7 @@ class SimDataRow(BaseModel):
     sim_type: Optional[str] = Field(None, max_length=100)
     act_date: Optional[date] = None
     expiry_date: Optional[date] = None
+    extra: Optional[dict[str, Optional[str]]] = None
 
     @field_validator("iccid", mode="before")
     @classmethod
