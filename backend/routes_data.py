@@ -302,6 +302,7 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
         col_map = {
             "imei": Device.imei,
             "iccid": Device.iccid,
+            "ccid": Device.iccid,
             "device_sr_no": Device.device_sr_no,
             "msisdn1": Device.msisdn1,
             "msisdn2": Device.msisdn2,
@@ -319,8 +320,19 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
             like = f"%{escape_like(part)}%"
             norm_dt = normalize_date_input(part)
             dt_like = f"%{norm_dt.isoformat()}%" if norm_dt else None
+            clean_part = clean_iccid(part)
 
-            if column and column in col_map:
+            if column and column.lower() in ("iccid", "ccid"):
+                iccid_likes = [Device.iccid.like(like)]
+                if clean_part:
+                    iccid_likes.append(Device.iccid.like(f"%{escape_like(clean_part)}%"))
+                    stripped = clean_part.rstrip("F")
+                    if stripped and stripped != clean_part:
+                        iccid_likes.append(Device.iccid.like(f"%{escape_like(stripped)}%"))
+                    if len(clean_part) >= 19:
+                        iccid_likes.append(func.left(Device.iccid, 19) == clean_part[:19])
+                term_filters.append(or_(*iccid_likes))
+            elif column and column in col_map:
                 f_expr = col_map[column].like(like)
                 if dt_like and column in ("act_date", "expiry_date", "dispatched_date"):
                     f_expr = or_(f_expr, col_map[column].like(dt_like))
@@ -334,6 +346,11 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
                     cast(Device.expiry_date, String).like(like),
                     cast(Device.extra, String).like(like)
                 ]
+                if clean_part:
+                    sub_or.append(Device.iccid.like(f"%{escape_like(clean_part)}%"))
+                    stripped = clean_part.rstrip("F")
+                    if stripped and stripped != clean_part:
+                        sub_or.append(Device.iccid.like(f"%{escape_like(stripped)}%"))
                 if dt_like:
                     sub_or.extend([
                         cast(Device.act_date, String).like(dt_like),
@@ -353,12 +370,13 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
         "customer_name": Customer.name,
         "device_sr_no": Device.device_sr_no,
         "iccid": Device.iccid,
+        "ccid": Device.iccid,
         "act_date": Device.act_date,
         "expiry_date": Device.expiry_date,
         "model": Device.model,
         "sim_provider": Device.sim_provider,
     }
-    col_attr = sort_fields.get(sort_by, Device.id)
+    col_attr = sort_fields.get((sort_by or "").lower(), Device.id)
     return query.order_by(desc(col_attr) if sort_dir == "desc" else asc(col_attr), asc(Device.id))
 
 
@@ -836,8 +854,10 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
     rows = data.rows
     overwrite = data.overwrite
     chosen_provider = (data.sim_provider or "").strip()
-    match_by = (data.match_by or "iccid").lower()
-    if match_by not in ("imei", "iccid"):
+    match_by = (data.match_by or "iccid").strip().lower()
+    if match_by in ("iccid", "ccid"):
+        match_by = "iccid"
+    elif match_by != "imei":
         match_by = "iccid"
 
     # Verify that either a provider or at least one data column is provided
@@ -1050,8 +1070,10 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     rows = data.rows
     overwrite = data.overwrite
     chosen_provider = (data.sim_provider or "").strip()
-    match_by = (data.match_by or "iccid").lower()
-    if match_by not in ("imei", "iccid"):
+    match_by = (data.match_by or "iccid").strip().lower()
+    if match_by in ("iccid", "ccid"):
+        match_by = "iccid"
+    elif match_by != "imei":
         match_by = "iccid"
 
     has_any_data = any(
@@ -1207,7 +1229,9 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
             seen.add(t)
             terms.append(t)
 
-    field = data.field or "all"
+    field = (data.field or "all").strip().lower()
+    if field in ("iccid", "ccid"):
+        field = "iccid"
     cust_id = data.customer_id
     sim_type = data.sim_type or "all"
 
@@ -1233,10 +1257,13 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
         q = base_query
         if field == "imei":
             q = q.filter(Device.imei.in_(sub_terms))
-        elif field == "iccid":
-            clean_terms = [clean_iccid(x) for x in sub_terms]
+        elif field in ("iccid", "ccid"):
+            clean_terms = [clean_iccid(x) for x in sub_terms if x]
+            stripped_terms = [c.rstrip("F") for c in clean_terms if c]
+            f_terms = [c.rstrip("F") + "F" for c in clean_terms if c]
             p19 = [c[:19] for c in clean_terms if len(c) >= 19]
-            iccid_conds = [Device.iccid.in_(sub_terms), Device.iccid.in_(clean_terms)]
+            iccid_search = list(set(sub_terms + clean_terms + stripped_terms + f_terms))
+            iccid_conds = [Device.iccid.in_(iccid_search)]
             if p19:
                 iccid_conds.append(func.left(Device.iccid, 19).in_(p19))
             q = q.filter(or_(*iccid_conds))
@@ -1247,9 +1274,13 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
         elif field == "customer_name":
             q = q.join(Customer).filter(Customer.name.in_(sub_terms))
         else:
+            clean_terms = [clean_iccid(x) for x in sub_terms if x]
+            stripped_terms = [c.rstrip("F") for c in clean_terms if c]
+            f_terms = [c.rstrip("F") + "F" for c in clean_terms if c]
+            iccid_search = list(set(sub_terms + clean_terms + stripped_terms + f_terms))
             q = q.filter(or_(
                 Device.imei.in_(sub_terms),
-                Device.iccid.in_(sub_terms),
+                Device.iccid.in_(iccid_search),
                 Device.device_sr_no.in_(sub_terms),
                 Device.msisdn1.in_(sub_terms),
                 Device.msisdn2.in_(sub_terms)
@@ -1260,11 +1291,20 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
 
     matched_term_set = set()
     for d in exact_items:
+        d_iccid_clean = clean_iccid(d.iccid) if d.iccid else ""
         for t in (d.imei, d.iccid, d.device_sr_no, d.msisdn1, d.msisdn2, (d.customer.name if d.customer else "")):
             if t and t in seen:
                 matched_term_set.add(t)
             elif t and clean_iccid(t) in seen:
                 matched_term_set.add(clean_iccid(t))
+        for t in terms:
+            t_clean = clean_iccid(t)
+            if t_clean and d_iccid_clean and (
+                t_clean == d_iccid_clean or
+                t_clean.rstrip("F") == d_iccid_clean.rstrip("F") or
+                (len(t_clean) >= 19 and len(d_iccid_clean) >= 19 and t_clean[:19] == d_iccid_clean[:19])
+            ):
+                matched_term_set.add(t)
 
     unmatched_terms = [t for t in terms if t not in matched_term_set]
     similar_items = []
@@ -1275,17 +1315,27 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
         sim_q = base_query
         if field == "imei":
             sim_q = sim_q.filter(Device.imei.like(like))
-        elif field == "iccid":
-            sim_q = sim_q.filter(Device.iccid.like(like))
+        elif field in ("iccid", "ccid"):
+            clean_t = clean_iccid(t)
+            sim_conds = [Device.iccid.like(like)]
+            if clean_t:
+                sim_conds.append(Device.iccid.like(f"%{escape_like(clean_t)}%"))
+                if clean_t.rstrip("F") != clean_t:
+                    sim_conds.append(Device.iccid.like(f"%{escape_like(clean_t.rstrip('F'))}%"))
+            sim_q = sim_q.filter(or_(*sim_conds))
         elif field == "customer_name":
             sim_q = sim_q.join(Customer).filter(Customer.name.like(like))
         else:
-            sim_q = sim_q.filter(or_(
+            clean_t = clean_iccid(t)
+            sim_or = [
                 Device.imei.like(like),
                 Device.iccid.like(like),
                 Device.device_sr_no.like(like),
                 Device.msisdn1.like(like)
-            ))
+            ]
+            if clean_t:
+                sim_or.append(Device.iccid.like(f"%{escape_like(clean_t)}%"))
+            sim_q = sim_q.filter(or_(*sim_or))
         found = sim_q.limit(10).all()
         for s in found:
             if s.id not in exact_ids and s.id not in {x.id for x in similar_items}:

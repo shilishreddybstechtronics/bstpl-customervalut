@@ -4,7 +4,7 @@ from typing import Optional
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, AliasChoices
 
 ID_PATTERN = r"^[A-Za-z0-9_.-]{3,30}$"
 Role = Literal["admin", "standard", "limited"]
@@ -64,6 +64,23 @@ def _clean_str_val(v):
     return s
 
 
+def _clean_iccid_val(v):
+    if v is None:
+        return None
+    s = str(v).strip()
+    if s.lower() in ("nan", "none", "null", "undefined"):
+        return None
+    if re.search(r"e\+", s, re.I):
+        try:
+            s = str(int(float(s)))
+        except Exception:
+            pass
+    if s.endswith(".0"):
+        s = s[:-2]
+    s = re.sub(r"[\s\-_]+", "", s)
+    return s.strip().upper()
+
+
 class RegisterIn(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     user_id: str = Field(pattern=ID_PATTERN)
@@ -110,7 +127,7 @@ class DeviceIn(BaseModel):
     customer_name: str = Field("", max_length=255)
     imei: str = Field("", max_length=100)
     device_sr_no: Optional[str] = Field(None, max_length=150)
-    iccid: Optional[str] = Field(None, max_length=100)
+    iccid: Optional[str] = Field(None, validation_alias=AliasChoices("iccid", "ccid", "ICCID", "CCID", "Iccid", "Ccid"), max_length=100)
     msisdn1: Optional[str] = Field(None, max_length=100)
     msisdn2: Optional[str] = Field(None, max_length=100)
     act_date: Optional[date] = None
@@ -124,7 +141,12 @@ class DeviceIn(BaseModel):
     sim_type: Optional[str] = Field(None, max_length=100)
     dispatched_date: Optional[date] = None
 
-    @field_validator("customer_name", "imei", "device_sr_no", "iccid", "msisdn1", "msisdn2",
+    @field_validator("iccid", mode="before")
+    @classmethod
+    def _clean_iccid(cls, v):
+        return _clean_iccid_val(v)
+
+    @field_validator("customer_name", "imei", "device_sr_no", "msisdn1", "msisdn2",
                      "model", "sim_provider", "activation_plan", "firmware", "flash", "sim_type", mode="before")
     @classmethod
     def _clean_str(cls, v):
@@ -140,7 +162,7 @@ class DeviceUpdate(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     customer_name: Optional[str] = Field(None, min_length=1, max_length=255)
     device_sr_no: Optional[str] = Field(None, max_length=150)
-    iccid: Optional[str] = Field(None, max_length=100)
+    iccid: Optional[str] = Field(None, validation_alias=AliasChoices("iccid", "ccid", "ICCID", "CCID", "Iccid", "Ccid"), max_length=100)
     msisdn1: Optional[str] = Field(None, max_length=100)
     msisdn2: Optional[str] = Field(None, max_length=100)
     act_date: Optional[date] = None
@@ -154,7 +176,12 @@ class DeviceUpdate(BaseModel):
     sim_type: Optional[str] = Field(None, max_length=100)
     dispatched_date: Optional[date] = None
 
-    @field_validator("device_sr_no", "iccid", "msisdn1", "msisdn2",
+    @field_validator("iccid", mode="before")
+    @classmethod
+    def _clean_iccid(cls, v):
+        return _clean_iccid_val(v)
+
+    @field_validator("device_sr_no", "msisdn1", "msisdn2",
                      "model", "sim_provider", "activation_plan", "firmware", "flash", "sim_type", mode="before")
     @classmethod
     def _clean_str(cls, v):
@@ -174,7 +201,7 @@ class BulkIn(BaseModel):
 class SimDataRow(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     imei: Optional[str] = Field(None, max_length=100)
-    iccid: str = Field("", max_length=100)
+    iccid: str = Field("", validation_alias=AliasChoices("iccid", "ccid", "ICCID", "CCID", "Iccid", "Ccid"), max_length=100)
     msisdn1: Optional[str] = Field(None, max_length=100)
     msisdn2: Optional[str] = Field(None, max_length=100)
     sim_provider: Optional[str] = Field(None, max_length=150)
@@ -186,7 +213,12 @@ class SimDataRow(BaseModel):
     act_date: Optional[date] = None
     expiry_date: Optional[date] = None
 
-    @field_validator("imei", "iccid", "msisdn1", "msisdn2", "sim_provider", "model", "activation_plan", "firmware", "flash", "sim_type", mode="before")
+    @field_validator("iccid", mode="before")
+    @classmethod
+    def _clean_iccid(cls, v):
+        return _clean_iccid_val(v) or ""
+
+    @field_validator("imei", "msisdn1", "msisdn2", "sim_provider", "model", "activation_plan", "firmware", "flash", "sim_type", mode="before")
     @classmethod
     def _clean_str(cls, v):
         return _clean_str_val(v) or ""
@@ -199,16 +231,36 @@ class SimDataRow(BaseModel):
 
 class SimDataCheckIn(BaseModel):
     rows: list[SimDataRow] = Field(max_length=50000)
-    match_by: Optional[Literal["imei", "iccid"]] = "iccid"
+    match_by: Optional[str] = "iccid"
     overwrite: bool = True
     sim_provider: Optional[str] = None
+
+    @field_validator("match_by", mode="before")
+    @classmethod
+    def _norm_match_by(cls, v):
+        if not v:
+            return "iccid"
+        s = str(v).strip().lower()
+        if s in ("iccid", "ccid"):
+            return "iccid"
+        return s
 
 
 class SimDataApplyIn(BaseModel):
     rows: list[SimDataRow] = Field(max_length=50000)
-    match_by: Optional[Literal["imei", "iccid"]] = "iccid"
+    match_by: Optional[str] = "iccid"
     overwrite: bool = True
     sim_provider: Optional[str] = None
+
+    @field_validator("match_by", mode="before")
+    @classmethod
+    def _norm_match_by(cls, v):
+        if not v:
+            return "iccid"
+        s = str(v).strip().lower()
+        if s in ("iccid", "ccid"):
+            return "iccid"
+        return s
 
 
 class BulkFetchIn(BaseModel):
@@ -216,6 +268,16 @@ class BulkFetchIn(BaseModel):
     field: Optional[str] = "all"
     customer_id: Optional[int] = None
     sim_type: Optional[str] = "all"
+
+    @field_validator("field", mode="before")
+    @classmethod
+    def _norm_field(cls, v):
+        if not v:
+            return "all"
+        s = str(v).strip().lower()
+        if s in ("iccid", "ccid"):
+            return "iccid"
+        return s
 
 
 class AddColumnIn(BaseModel):

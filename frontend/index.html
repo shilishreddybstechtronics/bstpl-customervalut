@@ -1749,7 +1749,7 @@
             <select id="liveFieldFilter">
               <option value="all">All Columns</option>
               <option value="imei">IMEI</option>
-              <option value="iccid">ICCID</option>
+              <option value="iccid">ICCID / CCID</option>
               <option value="device_sr_no">Device SR No</option>
               <option value="msisdn1">MSISDN1</option>
               <option value="customer_name">Customer Name</option>
@@ -1821,7 +1821,7 @@
             <select id="invColSel">
               <option value="all">All Columns</option>
               <option value="imei">IMEI</option>
-              <option value="iccid">ICCID</option>
+              <option value="iccid">ICCID / CCID</option>
               <option value="device_sr_no">Device SR No</option>
               <option value="msisdn1">MSISDN1</option>
               <option value="customer_name">Customer Name</option>
@@ -2549,7 +2549,7 @@
               <label for="bfSearchCol" style="font-size:12px;font-weight:700">Search Column (In Database)</label>
               <select id="bfSearchCol" style="font-size:13px">
                 <option value="imei">IMEI</option>
-                <option value="iccid">ICCID</option>
+                <option value="iccid">ICCID / CCID</option>
                 <option value="device_sr_no">Device Serial No</option>
                 <option value="msisdn1">MSISDN 1</option>
                 <option value="customer_name">Customer Name</option>
@@ -3283,7 +3283,7 @@
         ['customer_name', 'Customer Name'],
         ['device_sr_no', 'Device SR No'],
         ['imei', 'IMEI'],
-        ['iccid', 'ICCID'],
+        ['iccid', 'ICCID / CCID'],
         ['msisdn1', 'MSISDN1'],
         ['msisdn2', 'MSISDN2'],
         ['act_date', 'Act Date'],
@@ -4478,6 +4478,19 @@
           imeino: 'imei',
           iccid: 'iccid',
           iccidno: 'iccid',
+          iccidnumber: 'iccid',
+          iccidnum: 'iccid',
+          ccid: 'iccid',
+          ccidno: 'iccid',
+          ccidnumber: 'iccid',
+          ccidnum: 'iccid',
+          simiccid: 'iccid',
+          simccid: 'iccid',
+          simno: 'iccid',
+          simnumber: 'iccid',
+          simnum: 'iccid',
+          esimiccid: 'iccid',
+          esimccid: 'iccid',
           msisdn1: 'msisdn1',
           msisdn2: 'msisdn2',
           actdate: 'act_date',
@@ -4531,6 +4544,10 @@
                 if (!isNaN(num) && Number.isFinite(num)) val = BigInt(Math.round(num)).toString();
               } catch { }
             }
+          }
+
+          if (mapped === 'iccid') {
+            val = val.replace(/[\s\-_]+/g, '').toUpperCase();
           }
 
           if (mapped === 'act_date' || mapped === 'expiry_date' || mapped === 'dispatched_date') {
@@ -5385,8 +5402,8 @@
             id: 'colMapKey',
             patterns: isImei
               ? /^(imei|device\s*imei|imei\s*no|imeino|device_imei|imei_number)$/i
-              : /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|iccid\s*no|iccid\s*number)$/i,
-            fuzzy: isImei ? ['imei'] : ['iccid', 'ccid'],
+              : /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|sim\s*ccid|iccid\s*no|iccid\s*number|ccid\s*no|ccid\s*number|ccidnum|iccidnum)$/i,
+            fuzzy: isImei ? ['imei'] : ['iccid', 'ccid', 'sim'],
             required: true
           },
           {
@@ -5412,9 +5429,9 @@
           {
             id: 'colMapIccidAlt',
             patterns: isImei
-              ? /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|iccid\s*no|iccid\s*number)$/i
+              ? /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|sim\s*ccid|iccid\s*no|iccid\s*number|ccid\s*no|ccid\s*number|ccidnum|iccidnum)$/i
               : /^(imei|device\s*imei|imei\s*no|imeino|device_imei|imei_number)$/i,
-            fuzzy: isImei ? ['iccid', 'ccid'] : ['imei']
+            fuzzy: isImei ? ['iccid', 'ccid', 'sim'] : ['imei']
           }
         ];
 
@@ -5505,8 +5522,15 @@
 
         simRawFileRows.forEach(rawObj => {
           let rawKey = rawObj[keyCol] != null ? String(rawObj[keyCol]).trim() : '';
-          if (rawKey.endsWith('.0')) rawKey = rawKey.slice(0, -2);
+          if (rawKey.endsWith('.0') && /^\d+\.0$/.test(rawKey)) rawKey = rawKey.slice(0, -2);
+          if (/[eE]\+?/.test(rawKey)) {
+            try {
+              const num = Number(rawKey);
+              if (!isNaN(num) && Number.isFinite(num)) rawKey = BigInt(Math.round(num)).toString();
+            } catch { }
+          }
           rawKey = rawKey.replace(/[\s\-_]+/g, '');
+          if (currentSimMatchMode === 'iccid') rawKey = rawKey.toUpperCase();
 
           const m1 = msisdn1Col ? (rawObj[msisdn1Col] || '').trim() : '';
           const m2 = msisdn2Col ? (rawObj[msisdn2Col] || '').trim() : '';
@@ -5519,7 +5543,16 @@
           if (rawAct && !actParsed) unreadableDatesCount++;
           if (rawExp && !expParsed) unreadableDatesCount++;
 
-          const altVal = altCol ? (rawObj[altCol] || '').trim() : '';
+          let altVal = altCol ? (rawObj[altCol] != null ? String(rawObj[altCol]).trim() : '') : '';
+          if (altVal.endsWith('.0') && /^\d+\.0$/.test(altVal)) altVal = altVal.slice(0, -2);
+          if (/[eE]\+?/.test(altVal)) {
+            try {
+              const num = Number(altVal);
+              if (!isNaN(num) && Number.isFinite(num)) altVal = BigInt(Math.round(num)).toString();
+            } catch { }
+          }
+          altVal = altVal.replace(/[\s\-_]+/g, '');
+          if (currentSimMatchMode === 'imei') altVal = altVal.toUpperCase();
 
           payloadRows.push({
             imei: currentSimMatchMode === 'imei' ? rawKey : (altVal || null),
@@ -5754,11 +5787,27 @@
         const fullPayload = [];
         simRawFileRows.forEach(rawObj => {
           let rawKey = rawObj[keyCol] != null ? String(rawObj[keyCol]).trim() : '';
-          if (rawKey.endsWith('.0')) rawKey = rawKey.slice(0, -2);
+          if (rawKey.endsWith('.0') && /^\d+\.0$/.test(rawKey)) rawKey = rawKey.slice(0, -2);
+          if (/[eE]\+?/.test(rawKey)) {
+            try {
+              const num = Number(rawKey);
+              if (!isNaN(num) && Number.isFinite(num)) rawKey = BigInt(Math.round(num)).toString();
+            } catch { }
+          }
           rawKey = rawKey.replace(/[\s\-_]+/g, '');
+          if (currentSimMatchMode === 'iccid') rawKey = rawKey.toUpperCase();
           if (!rawKey || rawKey.length < 5) return;
 
-          const altVal = altCol ? (rawObj[altCol] || '').trim() : '';
+          let altVal = altCol ? (rawObj[altCol] != null ? String(rawObj[altCol]).trim() : '') : '';
+          if (altVal.endsWith('.0') && /^\d+\.0$/.test(altVal)) altVal = altVal.slice(0, -2);
+          if (/[eE]\+?/.test(altVal)) {
+            try {
+              const num = Number(altVal);
+              if (!isNaN(num) && Number.isFinite(num)) altVal = BigInt(Math.round(num)).toString();
+            } catch { }
+          }
+          altVal = altVal.replace(/[\s\-_]+/g, '');
+          if (currentSimMatchMode === 'imei') altVal = altVal.toUpperCase();
 
           fullPayload.push({
             imei: currentSimMatchMode === 'imei' ? rawKey : (altVal || null),
@@ -6343,6 +6392,22 @@
           return `<option value="${idx}">${esc(label)}</option>`;
         }).join('');
 
+        // Auto-detect ICCID/CCID or IMEI column and auto-switch search column
+        let autoSelected = false;
+        firstRow.forEach((cell, idx) => {
+          if (autoSelected) return;
+          const clean = String(cell || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (/^(iccid|ccid|simno|simnumber|simiccid|simccid|esimiccid|esimccid|iccidno|ccidno)/i.test(clean)) {
+            colSel.value = String(idx);
+            if ($('bfSearchCol')) $('bfSearchCol').value = 'iccid';
+            autoSelected = true;
+          } else if (/^(imei|imeino|deviceimei)/i.test(clean)) {
+            colSel.value = String(idx);
+            if ($('bfSearchCol')) $('bfSearchCol').value = 'imei';
+            autoSelected = true;
+          }
+        });
+
         readBfColumnValues();
       }
 
@@ -6360,9 +6425,16 @@
         let expCount = 0;
 
         for (let r = startRow; r < rows.length; r++) {
-          const val = String((rows[r] && rows[r][colIdx]) || '').trim();
+          let val = String((rows[r] && rows[r][colIdx]) || '').trim();
           if (val) {
-            if (/e\+/i.test(val)) expCount++;
+            if (/e\+/i.test(val)) {
+              expCount++;
+              try {
+                const num = Number(val);
+                if (!isNaN(num) && Number.isFinite(num)) val = BigInt(Math.round(num)).toString();
+              } catch (_) {}
+            }
+            if (val.endsWith('.0') && /^\d+\.0$/.test(val)) val = val.slice(0, -2);
             rawVals.push(val);
           }
         }
