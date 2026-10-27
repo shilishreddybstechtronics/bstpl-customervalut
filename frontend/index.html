@@ -3339,6 +3339,28 @@
       </div>
     </dialog>
 
+    <!-- Event Notification Popup Dialog -->
+    <dialog id="dlgEventPopup" class="modal-card" style="width:min(500px, 92vw); padding:0; border-radius:16px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.45); overflow:hidden; z-index:999999">
+      <div id="dlgEventPopupHeader" style="padding:18px 24px; display:flex; align-items:center; gap:14px; background:var(--card-subtle); border-bottom:1px solid var(--line)">
+        <span id="dlgEventPopupIcon" style="font-size:32px; line-height:1">✅</span>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+            <span id="dlgEventPopupTag" style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">Event Notification</span>
+            <span id="dlgEventPopupProgress" style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:var(--card); border:1px solid var(--line); color:var(--ok)">100% Complete</span>
+          </div>
+          <h3 id="dlgEventPopupTitle" style="margin:0; font-size:17px; font-weight:700">Action Completed</h3>
+        </div>
+        <button class="b ghost" type="button" id="closeDlgEventPopup" style="font-size:20px; padding:4px 8px; cursor:pointer">✕</button>
+      </div>
+      <div style="padding:20px 24px">
+        <p id="dlgEventPopupMessage" style="margin:0 0 14px; font-size:14px; line-height:1.55; color:var(--text)"></p>
+        <div id="dlgEventPopupMeta" style="background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:12px; line-height:1.7; margin-bottom:18px" hidden></div>
+        <div class="row" style="justify-content:flex-end">
+          <button class="b p" id="btnOkEventPopup" style="min-width:90px">OK</button>
+        </div>
+      </div>
+    </dialog>
+
     <!-- Global Toast Notification -->
     <div id="toast" role="status"></div>
 
@@ -3401,6 +3423,103 @@
         toast.t = setTimeout(() => t.classList.remove('show'), 2800);
       };
       const fail = e => toast(e instanceof TypeError ? 'Cannot reach server. Is backend running?' : e.message);
+
+      /* ---------- Event Notification Popup System ---------- */
+      function showEventPopup({ type = 'info', title = '', message = '', meta = null, progress = '100% Complete', duration = 4500 }) {
+        const dlg = $('dlgEventPopup');
+        if (!dlg) { toast(title + ': ' + message); return; }
+
+        const typeConfig = {
+          deletion: {
+            tag: '🗑️ Deletion Event',
+            tagColor: '#ef4444',
+            icon: '🗑️',
+            headerBg: 'rgba(239, 68, 68, 0.12)',
+            border: 'rgba(239, 68, 68, 0.35)',
+            progressColor: '#ef4444'
+          },
+          inserting: {
+            tag: '➕ Insertion Event',
+            tagColor: '#10b981',
+            icon: '✨',
+            headerBg: 'rgba(16, 185, 129, 0.12)',
+            border: 'rgba(16, 185, 129, 0.35)',
+            progressColor: '#10b981'
+          },
+          uploading: {
+            tag: '📁 File Upload Event',
+            tagColor: '#3b82f6',
+            icon: '📊',
+            headerBg: 'rgba(59, 130, 246, 0.12)',
+            border: 'rgba(59, 130, 246, 0.35)',
+            progressColor: '#3b82f6'
+          },
+          file_delete: {
+            tag: '📄 File / Customer Deletion Event',
+            tagColor: '#f43f5e',
+            icon: '⚠️',
+            headerBg: 'rgba(244, 63, 94, 0.12)',
+            border: 'rgba(244, 63, 94, 0.35)',
+            progressColor: '#f43f5e'
+          },
+          info: {
+            tag: 'ℹ️ System Notification',
+            tagColor: 'var(--primary)',
+            icon: '🔔',
+            headerBg: 'var(--card-subtle)',
+            border: 'var(--line)',
+            progressColor: 'var(--ok)'
+          }
+        };
+
+        const cfg = typeConfig[type] || typeConfig.info;
+
+        if ($('dlgEventPopupTag')) {
+          $('dlgEventPopupTag').textContent = cfg.tag;
+          $('dlgEventPopupTag').style.color = cfg.tagColor;
+        }
+        if ($('dlgEventPopupProgress')) {
+          $('dlgEventPopupProgress').textContent = progress;
+          $('dlgEventPopupProgress').style.color = cfg.progressColor;
+        }
+        if ($('dlgEventPopupIcon')) $('dlgEventPopupIcon').textContent = cfg.icon;
+        if ($('dlgEventPopupHeader')) {
+          $('dlgEventPopupHeader').style.background = cfg.headerBg;
+          $('dlgEventPopupHeader').style.borderBottomColor = cfg.border;
+        }
+        if ($('dlgEventPopupTitle')) $('dlgEventPopupTitle').textContent = title || 'Event Notification';
+        if ($('dlgEventPopupMessage')) $('dlgEventPopupMessage').textContent = message;
+
+        if ($('dlgEventPopupMeta')) {
+          if (meta && typeof meta === 'object' && Object.keys(meta).length) {
+            $('dlgEventPopupMeta').hidden = false;
+            $('dlgEventPopupMeta').innerHTML = Object.entries(meta)
+              .map(([k, v]) => `<div><b>${esc(k)}:</b> <span style="font-family:monospace;background:var(--card-subtle);padding:1px 5px;border-radius:4px">${esc(String(v))}</span></div>`)
+              .join('');
+          } else {
+            $('dlgEventPopupMeta').hidden = true;
+            $('dlgEventPopupMeta').innerHTML = '';
+          }
+        }
+
+        toast(`${cfg.icon} ${title}: ${message}`);
+
+        try {
+          if (typeof dlg.showModal === 'function') {
+            if (!dlg.open) dlg.showModal();
+          }
+        } catch (_) { }
+
+        clearTimeout(showEventPopup.timer);
+        if (duration > 0) {
+          showEventPopup.timer = setTimeout(() => {
+            try { if (dlg.open) dlg.close(); } catch (_) { }
+          }, duration);
+        }
+      }
+
+      if ($('closeDlgEventPopup')) $('closeDlgEventPopup').onclick = () => $('dlgEventPopup').close();
+      if ($('btnOkEventPopup')) $('btnOkEventPopup').onclick = () => $('dlgEventPopup').close();
 
       /* ---------- API Client ---------- */
       let API_BASE = (window.API_URL || localStorage.getItem('API_URL') || '').replace(/\/+$/, '');
@@ -3629,6 +3748,13 @@
             await api('/api/devices', { method: 'POST', body: JSON.stringify(body) });
             $('devdlg').close();
             toast('Device record created');
+            showEventPopup({
+              type: 'inserting',
+              title: 'Device Record Inserted',
+              message: `Successfully inserted new device record (IMEI: ${body.imei || 'Auto-Assigned'}).`,
+              meta: { 'IMEI': body.imei || '—', 'Customer': body.customer_name || 'General', 'Model': body.model || '—' },
+              progress: '100% Complete'
+            });
             await refreshActiveContainer();
           } catch (err) { $('devErr').textContent = err.message; }
         };
@@ -3719,6 +3845,13 @@
             });
             dlg.close();
             toast(`Column "${res.column}" added! Updated ${res.records_affected} record(s).`);
+            showEventPopup({
+              type: 'inserting',
+              title: 'Custom Column Added',
+              message: `Successfully inserted column "${res.column}" into customer inventory tables.`,
+              meta: { 'Column Name': res.column, 'Target': target, 'Records Affected': res.records_affected },
+              progress: '100% Complete'
+            });
             await loadStats();
             if (typeof fetchInventoryRows === 'function') {
               await fetchInventoryRows();
@@ -4470,6 +4603,13 @@
             if (!n) throw new Error('Please enter customer name');
             await api('/api/customers', { method: 'POST', body: JSON.stringify({ name: n }) });
             toast('Customer created');
+            showEventPopup({
+              type: 'inserting',
+              title: 'Customer Portfolio Created',
+              message: `Successfully created new customer portfolio "${n}".`,
+              meta: { 'Customer Name': n, 'Status': 'Active' },
+              progress: '100% Complete'
+            });
             await loadCU(); await updateChrome(); loadCustomerFilesContainer();
           });
         };
@@ -5318,6 +5458,19 @@
             $('progPct').textContent = '100%';
             $('progStatus').textContent = `Complete: ${addedTotal} added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`;
             toast(`Upload finished! ${addedTotal} added to customer data, ${updatedTotal} updated, ${duplicatesToStage.length} duplicates held.`);
+            showEventPopup({
+              type: 'uploading',
+              title: 'Bulk File Upload Completed',
+              message: `Bulk spreadsheet processed successfully: ${addedTotal} records added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`,
+              meta: {
+                'Total Processed': validRows.length + duplicatesToStage.length,
+                'Records Added': addedTotal,
+                'Records Updated': updatedTotal,
+                'Duplicate Errors Held': duplicatesToStage.length,
+                'Upload Mode': mode
+              },
+              progress: '100% Complete'
+            });
 
             await loadCU(); await updateChrome();
             loadCustomerFilesContainer();
@@ -6167,6 +6320,18 @@
           } else {
             toast(`Push complete! ${runningUpdated.toLocaleString()} records updated.`);
           }
+          showEventPopup({
+            type: insertNew ? 'inserting' : 'uploading',
+            title: insertNew ? 'SIM File Upload & Insertion Completed' : 'SIM File Upload & Update Completed',
+            message: `SIM file processed: ${runningUpdated.toLocaleString()} records updated, ${runningInserted.toLocaleString()} inserted into "${targetCust || 'Customer Data'}".`,
+            meta: {
+              'Updated Records': runningUpdated,
+              'Inserted Records': runningInserted,
+              'Unmatched Keys': runningUnmatched,
+              'Target Customer': targetCust || 'Existing Mappings'
+            },
+            progress: '100% Complete'
+          });
 
           await loadCU(); await updateChrome();
           if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
@@ -6945,6 +7110,13 @@
               try {
                 await api('/api/devices/by-imei/' + encodeURIComponent(d.imei), { method: 'PUT', body: JSON.stringify(body) });
                 toast('Changes saved successfully');
+                showEventPopup({
+                  type: 'inserting',
+                  title: 'Device Record Updated',
+                  message: `Device record ${d.imei} was successfully saved and updated.`,
+                  meta: { 'IMEI': d.imei, 'Status': 'Updated' },
+                  progress: '100% Complete'
+                });
                 updateChrome();
               } catch (e) { fail(e); }
             };
@@ -6954,6 +7126,13 @@
                 try {
                   await api('/api/devices/by-imei/' + encodeURIComponent(d.imei), { method: 'DELETE' });
                   toast('Record moved to Cart');
+                  showEventPopup({
+                    type: 'deletion',
+                    title: 'Device Record Moved to Cart',
+                    message: `Device record ${d.imei} was deleted from active inventory and moved to Cart.`,
+                    meta: { 'IMEI': d.imei, 'Customer': d.customer_name || '—', 'Status': 'In Cart' },
+                    progress: '100% Complete'
+                  });
                   showContainer('box-bin');
                 } catch (e) { fail(e); }
               };
@@ -7243,6 +7422,13 @@
           try {
             await api('/api/errors/' + id, { method: 'DELETE' });
             toast('Entry moved to Cart');
+            showEventPopup({
+              type: 'deletion',
+              title: 'Errored Entry Moved to Cart',
+              message: `Errored entry #${id} was moved to Cart.`,
+              meta: { 'Error ID': id, 'Status': 'In Cart (Recoverable)' },
+              progress: '100% Complete'
+            });
             await loadErrorsContainer();
             await updateChrome();
           } catch (err) { fail(err); }
@@ -7272,6 +7458,13 @@
             });
             $('dlgPushError').close();
             toast(`✓ Successfully pushed ${res.pushed_count} entries into customer "${targetCust}"!`);
+            showEventPopup({
+              type: 'inserting',
+              title: 'Bulk Error Entries Inserted',
+              message: `Successfully pushed and inserted ${res.pushed_count} entries into customer "${targetCust}".`,
+              meta: { 'Entries Pushed': res.pushed_count, 'Target Customer': targetCust, 'Status': 'Inserted' },
+              progress: '100% Complete'
+            });
           } else {
             const res = await api(`/api/errors/${id}/push`, {
               method: 'POST',
@@ -7279,6 +7472,13 @@
             });
             $('dlgPushError').close();
             toast(`✓ Successfully pushed entry into customer "${res.customer_name}" (IMEI: ${res.imei})!`);
+            showEventPopup({
+              type: 'inserting',
+              title: 'Errored Entry Inserted into Customer',
+              message: `Successfully inserted entry into customer "${res.customer_name}" (IMEI: ${res.imei}).`,
+              meta: { 'IMEI': res.imei, 'Customer': res.customer_name, 'Status': 'Inserted' },
+              progress: '100% Complete'
+            });
           }
           await loadErrorsContainer();
           await loadCU();
@@ -7313,6 +7513,13 @@
             });
             $('dlgEditError').close();
             toast(`✓ Record pushed to Customer "${res.customer_name}" even with error!`);
+            showEventPopup({
+              type: 'inserting',
+              title: 'Entry Force-Inserted into Customer',
+              message: `Successfully inserted record into Customer "${res.customer_name}" (IMEI: ${res.imei}).`,
+              meta: { 'IMEI': res.imei, 'Customer': res.customer_name, 'Status': 'Force-Inserted' },
+              progress: '100% Complete'
+            });
             await loadErrorsContainer();
             await loadCU();
             await updateChrome();
@@ -7361,6 +7568,13 @@
           await api(`/api/errors/${id}/upload`, { method: 'PUT', body: JSON.stringify(body) });
           $('dlgEditError').close();
           toast(`✓ Record corrected and uploaded to Customer "${cname}"!`);
+          showEventPopup({
+            type: 'uploading',
+            title: 'Corrected Entry Uploaded',
+            message: `Corrected record successfully uploaded and inserted to Customer "${cname}".`,
+            meta: { 'IMEI': imei, 'Customer': cname, 'Status': 'Uploaded & Active' },
+            progress: '100% Complete'
+          });
           await loadErrorsContainer();
           await loadCU();
           await updateChrome();
@@ -7379,7 +7593,15 @@
         if (!confirm(`Move all ${cachedErrors.length} errored entries to Cart?`)) return;
         try {
           const res = await api('/api/errors/empty', { method: 'POST' });
-          toast(`Moved ${res.moved_all_to_cart || cachedErrors.length} entries to Cart.`);
+          const count = res.moved_all_to_cart || cachedErrors.length;
+          toast(`Moved ${count} entries to Cart.`);
+          showEventPopup({
+            type: 'deletion',
+            title: 'All Errored Entries Moved to Cart',
+            message: `Successfully moved all ${count} errored entries to Cart.`,
+            meta: { 'Total Entries': count, 'Status': 'In Cart' },
+            progress: '100% Complete'
+          });
           await loadErrorsContainer();
           await updateChrome();
         } catch (err) { fail(err); }
@@ -7459,6 +7681,13 @@
       `, 'Empty Cart Permanently', async () => {
               await api('/api/bin', { method: 'DELETE' });
               toast('Permanently deleted: Cart emptied and all records erased forever.');
+              showEventPopup({
+                type: 'deletion',
+                title: 'Cart Permanently Emptied',
+                message: 'All deleted records and customer tables were permanently purged forever from database and TiDB Cloud.',
+                meta: { 'Action': 'Purge All Cart Items', 'Status': 'Permanently Erased' },
+                progress: '100% Complete'
+              });
               await updateChrome();
               loadCartContainer();
             }, true);
@@ -7875,6 +8104,13 @@
               const targetId = $('mTarget').value;
               await api(`/api/customers/${c.id}/merge`, { method: 'POST', body: JSON.stringify({ target_id: +targetId, target_customer_id: +targetId }) });
               toast(`✓ Successfully merged "${c.name}" into target customer!`);
+              showEventPopup({
+                type: 'file_delete',
+                title: 'Customer Merged & Old File Removed',
+                message: `Successfully merged customer file "${c.name}" (${c.devices} records) into target customer! Source file deleted and data synchronized.`,
+                meta: { 'Source Customer': c.name, 'Target Customer ID': targetId, 'Records Merged': c.devices },
+                progress: '100% Complete'
+              });
               await loadCU(); await updateChrome(); loadCustomerFilesContainer();
               if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
             });
@@ -7903,6 +8139,13 @@
       `, 'Delete & Move to Cart', async () => {
               await api('/api/customers/' + c.id, { method: 'DELETE' });
               toast(`Customer "${c.name}" deleted and moved to Cart`);
+              showEventPopup({
+                type: 'file_delete',
+                title: 'Customer File Deleted & Moved to Cart',
+                message: `Customer file "${c.name}" (${c.devices} records) was deleted from active portfolio and moved to Cart.`,
+                meta: { 'Customer Name': c.name, 'Records Moved': c.devices, 'Status': 'In Cart (Recoverable)' },
+                progress: '100% Complete'
+              });
               await loadCU(); await updateChrome(); loadCustomerFilesContainer();
               if (invCid === String(c.id)) {
                 invCid = '';
@@ -7915,6 +8158,13 @@
           if (b.dataset.cres) {
             await api(`/api/customers/${b.dataset.cres}/restore`, { method: 'POST' });
             toast('Customer restored from Cart');
+            showEventPopup({
+              type: 'inserting',
+              title: 'Customer Restored from Cart',
+              message: `Customer file #${b.dataset.cres} was successfully restored to active inventory.`,
+              meta: { 'Customer ID': b.dataset.cres, 'Status': 'Restored & Active' },
+              progress: '100% Complete'
+            });
             await loadCU(); await updateChrome(); loadCartContainer();
             return;
           }
@@ -7939,6 +8189,13 @@
       `, 'Permanently Delete Forever', async () => {
               await api(`/api/customers/${cid}/purge`, { method: 'DELETE' });
               toast('Customer permanently deleted from Cart and database forever.');
+              showEventPopup({
+                type: 'file_delete',
+                title: 'Customer Permanently Purged',
+                message: `Customer file #${cid} has been permanently purged forever from database and TiDB Cloud.`,
+                meta: { 'Customer ID': cid, 'Status': 'Permanently Deleted' },
+                progress: '100% Complete'
+              });
               await updateChrome();
               loadCartContainer();
             }, true);
@@ -7962,6 +8219,13 @@
       `, 'Move to Cart', async () => {
               await api('/api/devices/' + devId, { method: 'DELETE' });
               toast('Device deleted and moved to Cart');
+              showEventPopup({
+                type: 'deletion',
+                title: 'Device Deleted & Moved to Cart',
+                message: `Device record #${devId} was deleted from active inventory and moved to Cart.`,
+                meta: { 'Device ID': devId, 'Status': 'In Cart (Recoverable)' },
+                progress: '100% Complete'
+              });
               await updateChrome();
               await refreshActiveContainer();
             });
@@ -7970,6 +8234,13 @@
           if (b.dataset.res) {
             await api(`/api/bin/${b.dataset.res}/restore`, { method: 'POST' });
             toast('Device record restored');
+            showEventPopup({
+              type: 'inserting',
+              title: 'Device Restored from Cart',
+              message: `Device record #${b.dataset.res} was successfully restored to active inventory.`,
+              meta: { 'Device ID': b.dataset.res, 'Status': 'Restored & Active' },
+              progress: '100% Complete'
+            });
             await updateChrome();
             loadCartContainer();
             return;
@@ -7995,6 +8266,13 @@
       `, 'Permanently Delete Forever', async () => {
               await api('/api/bin/' + devId, { method: 'DELETE' });
               toast('Record permanently deleted from Cart and database forever.');
+              showEventPopup({
+                type: 'deletion',
+                title: 'Device Record Permanently Deleted',
+                message: `Device record #${devId} was permanently purged from Cart and TiDB Cloud.`,
+                meta: { 'Device ID': devId, 'Status': 'Permanently Deleted' },
+                progress: '100% Complete'
+              });
               await updateChrome();
               loadCartContainer();
             }, true);
