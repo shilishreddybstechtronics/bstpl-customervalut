@@ -1875,6 +1875,22 @@
           <p class="sub" style="margin:0 0 12px">Upload <code>.xlsx</code> or <code>.xls</code> workbooks. Each sheet
             creates or updates a customer with its own MySQL table and automatic E-SIM/Plastic SIM tagging.</p>
 
+          <!-- Bulk Upload Mode Selector: Standard vs Direct Upload (Max 2 uses) -->
+          <div style="margin:14px 0 16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="uploadModeGroup">
+              <button type="button" class="b on" id="btnModeStandardUpload" onclick="setUploadMode('standard')" style="font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px">
+                📋 Standard Bulk Upload
+              </button>
+              <button type="button" class="b" id="btnModeDirectUpload" onclick="setUploadMode('direct')" style="font-size:13px;font-weight:700;padding:8px 16px;border-radius:8px;display:inline-flex;align-items:center;gap:6px">
+                <span>⚡</span> Direct Upload (Empty Columns)
+                <span id="badgeDirectUploadQuota" class="badge" style="background:var(--primary);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px">2 uses left</span>
+              </button>
+            </div>
+            <div id="directUploadStatusText" style="font-size:12px;color:var(--muted)">
+              Standard bulk upload with validation, optional defaults, and error staging.
+            </div>
+          </div>
+
           <!-- Customer Chooser -->
           <div class="card"
             style="padding:16px 18px;border:1px solid var(--primary-light, #2563eb44);background:var(--card-subtle);border-radius:10px;margin:14px 0">
@@ -1987,23 +2003,28 @@
             <div id="sheetList" style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0"></div>
           </div>
 
-          <!-- Direct Upload Option -->
-          <div class="card" id="directUploadCard"
-            style="padding:14px 18px;border:1.5px solid var(--primary);border-radius:10px;margin:14px 0;background:linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-            <div style="display:flex;align-items:center;gap:12px">
-              <input type="checkbox" id="chkDirectUpload" style="width:20px;height:20px;cursor:pointer;accent-color:var(--primary)" />
+          <!-- Direct Upload Dedicated Feature Card inside Bulk Upload -->
+          <div class="card" id="directUploadCard" hidden
+            style="padding:16px 20px;border:1.5px solid var(--primary);border-radius:12px;margin:14px 0;background:linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%)">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
               <div>
-                <label for="chkDirectUpload" style="font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
-                  <span>⚡</span> Direct Upload (Leave Remaining Columns Empty)
-                </label>
-                <div class="sub" style="font-size:12px;margin-top:2px">
-                  Upload file directly into database as-is without filling optional defaults. All columns not present or blank in the file will be left completely empty in the database.
+                <h4 style="margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:6px;color:var(--primary)">
+                  <span>⚡</span> <span>Direct Upload Mode (Exclusive Feature &bull; Max 2 Uses)</span>
+                </h4>
+                <div style="font-size:13px;line-height:1.7">
+                  <div>✔ <b>Invalid rows will ALSO be inserted into customer</b> (auto-assigned unique identifiers if missing).</div>
+                  <div>✔ <b>Duplicated records will NOT be inserted</b> (strictly skipped to prevent duplicates).</div>
+                  <div>✔ <b>All remaining columns will be left completely empty</b> (no default values applied).</div>
+                  <div style="color:var(--warn);font-weight:700;margin-top:4px">⚠️ <b>Usage Limit:</b> This feature can only be used <b>twice</b> (<span id="txtDirectQuotaRemaining">2 of 2 uses remaining</span>).</div>
                 </div>
               </div>
+              <button class="b p" id="btnDirectUploadTop" type="button" style="font-weight:700;padding:12px 24px;border-radius:8px;font-size:14px">
+                ⚡ Direct Upload Now
+              </button>
             </div>
-            <button class="b p" id="btnDirectUploadTop" type="button" style="display:none;font-weight:700;padding:8px 18px;border-radius:8px">
-              ⚡ Direct Upload Now
-            </button>
+            <div id="directUploadQuotaExceededBanner" style="display:none;background:var(--danger-bg, #fee2e2);border:1px solid var(--danger);color:var(--danger);padding:10px 14px;border-radius:8px;margin-top:12px;font-size:13px;font-weight:700">
+              🔒 Direct Upload Limit Reached: You have already used your 2 allowed direct uploads. Please use Standard Bulk Upload.
+            </div>
           </div>
 
           <!-- Optional Values Saved into Every Record -->
@@ -2321,20 +2342,37 @@
                 <select id="colMapMsisdn2" style="font-size:13px;width:100%;margin-top:4px"></select>
               </div>
               <div class="sim-map-card">
-                <label for="colMapIccidAlt" id="lblColMapIccidAlt" style="font-size:12px;font-weight:600">💳 ICCID (Optional)</label>
+                <label for="colMapIccidAlt" id="lblColMapIccidAlt" style="font-size:12px;font-weight:600">💳 ICCID / IMEI (Optional)</label>
                 <select id="colMapIccidAlt" style="font-size:13px;width:100%;margin-top:4px"></select>
               </div>
+              <div class="sim-map-card">
+                <label for="simTargetCustSelect" style="font-size:12px;font-weight:600">📁 Customer for New Inserts</label>
+                <select id="simTargetCustSelect" style="font-size:13px;width:100%;margin-top:4px"></select>
+              </div>
+            </div>
+
+            <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+              <div style="font-size:12px;color:var(--muted)">
+                💡 <b>Step 1:</b> Select column names above for matching & replacing. <b>Step 2:</b> Click <b>Compare & Check Records</b> to validate date formats, detect duplicates, and preview differences.
+              </div>
+              <button type="button" class="b p" id="btnRunSimCompare" style="padding:10px 22px;font-weight:800;font-size:13.5px;display:inline-flex;align-items:center;gap:6px">
+                <span>🔍</span> <span>Compare & Check Records</span>
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Pre-check Results & Stats (Automatic check ~250ms debounced) -->
         <div id="simCheckResults" hidden>
-          <!-- 5 KPI Counters -->
-          <div class="stats" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px">
+          <!-- 6 KPI Counters -->
+          <div class="stats" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px">
             <div class="card stat" style="border-left:4px solid var(--primary);padding:14px">
               <b id="kpiSimFileRows" style="font-size:22px">0</b>
               <span style="font-size:12px;color:var(--muted)">Rows in File</span>
+            </div>
+            <div class="card stat" style="border-left:4px solid #f97316;padding:14px">
+              <b id="kpiSimDuplicates" style="font-size:22px">0</b>
+              <span style="font-size:12px;color:#f97316;font-weight:700">Duplicates in File</span>
             </div>
             <div class="card stat" style="border-left:4px solid #38bdf8;padding:14px">
               <b id="kpiSimMatched" style="font-size:22px">0</b>
@@ -2348,9 +2386,9 @@
               <b id="kpiSimAlreadySame" style="font-size:22px">0</b>
               <span style="font-size:12px;color:var(--ok);font-weight:700">Already Identical (Keep)</span>
             </div>
-            <div class="card stat" style="border-left:4px solid var(--danger);padding:14px">
-              <b id="kpiSimNotFound" style="font-size:22px">0</b>
-              <span style="font-size:12px;color:var(--danger)">Not Found in DB</span>
+            <div class="card stat" style="border-left:4px solid #8b5cf6;padding:14px">
+              <b id="kpiSimCanInsert" style="font-size:22px">0</b>
+              <span style="font-size:12px;color:#8b5cf6;font-weight:700">Can Insert (Not in DB)</span>
             </div>
           </div>
 
@@ -2359,13 +2397,21 @@
             style="background:var(--card-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:14px 0;font-size:12.5px"
             hidden></div>
 
-          <!-- Action Bar: Push button & Download Not Found -->
+          <!-- Action Bar: Push buttons & Download Not Found -->
           <div class="row"
             style="align-items:center;justify-content:space-between;margin:16px 0;flex-wrap:wrap;gap:12px">
-            <div style="display:flex;align-items:center;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
               <button class="b p" id="btnSimPush" type="button"
-                style="font-size:14px;padding:0 24px;height:42px;font-weight:800;display:inline-flex;align-items:center;gap:8px">
+                style="font-size:13.5px;padding:0 20px;height:42px;font-weight:800;display:inline-flex;align-items:center;gap:8px">
                 <span>🚀</span> <span>Replace Differing Values in Database</span>
+              </button>
+              <button class="b" id="btnSimInsertNew" type="button"
+                style="display:none;font-size:13.5px;padding:0 20px;height:42px;font-weight:800;background:var(--ok);color:#fff;border-color:var(--ok);align-items:center;gap:8px">
+                <span>➕</span> <span>Insert New Records into Customer</span>
+              </button>
+              <button class="b" id="btnSimApplyBoth" type="button"
+                style="display:none;font-size:13.5px;padding:0 20px;height:42px;font-weight:800;background:linear-gradient(135deg, #2563eb, #8b5cf6);color:#fff;align-items:center;gap:8px">
+                <span>⚡</span> <span>Replace & Insert All</span>
               </button>
               <span id="simPushMsg" style="font-size:13px;color:var(--muted);font-weight:600"></span>
             </div>
@@ -4603,6 +4649,86 @@
         });
       }
 
+      let currentUploadMode = 'standard'; // 'standard' | 'direct'
+      let directUploadQuota = { used: 0, max_allowed: 2, remaining: 2, can_upload: true };
+
+      async function fetchDirectUploadQuota() {
+        try {
+          const res = await api('/api/devices/bulk/direct-status');
+          if (res) directUploadQuota = res;
+        } catch (e) {
+          console.warn('Could not fetch direct upload quota:', e);
+        }
+        updateDirectUploadQuotaUI();
+      }
+
+      function updateDirectUploadQuotaUI() {
+        const remaining = (typeof directUploadQuota.remaining === 'number') ? directUploadQuota.remaining : 2;
+        const used = directUploadQuota.used || 0;
+        const canUpload = remaining > 0 && used < 2;
+
+        if ($('badgeDirectUploadQuota')) {
+          if (canUpload) {
+            $('badgeDirectUploadQuota').textContent = `${remaining} use${remaining === 1 ? '' : 's'} left`;
+            $('badgeDirectUploadQuota').style.background = 'var(--primary)';
+          } else {
+            $('badgeDirectUploadQuota').textContent = 'Limit reached (0 left)';
+            $('badgeDirectUploadQuota').style.background = 'var(--danger)';
+          }
+        }
+        if ($('txtDirectQuotaRemaining')) {
+          $('txtDirectQuotaRemaining').textContent = `${remaining} of 2 uses remaining`;
+        }
+        if ($('directUploadQuotaExceededBanner')) {
+          $('directUploadQuotaExceededBanner').style.display = canUpload ? 'none' : 'block';
+        }
+        ['btnDirectUploadTop', 'btnDirectUploadBottom'].forEach(id => {
+          const btn = $(id);
+          if (btn) {
+            btn.disabled = !canUpload;
+            if (!canUpload) {
+              btn.innerHTML = '🔒 Direct Upload Limit Reached';
+              btn.style.opacity = '0.6';
+              btn.style.cursor = 'not-allowed';
+            } else {
+              btn.innerHTML = '⚡ Direct Upload Now';
+              btn.style.opacity = '1';
+              btn.style.cursor = 'pointer';
+            }
+          }
+        });
+      }
+
+      function setUploadMode(mode) {
+        currentUploadMode = mode;
+        const isDirect = (mode === 'direct');
+
+        if ($('btnModeStandardUpload')) $('btnModeStandardUpload').classList.toggle('on', !isDirect);
+        if ($('btnModeDirectUpload')) $('btnModeDirectUpload').classList.toggle('on', isDirect);
+
+        if ($('directUploadCard')) $('directUploadCard').hidden = !isDirect;
+        if ($('btnConfirmUpload')) $('btnConfirmUpload').style.display = isDirect ? 'none' : 'inline-block';
+        if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').style.display = isDirect ? 'inline-block' : 'none';
+
+        if ($('directUploadStatusText')) {
+          if (isDirect) {
+            $('directUploadStatusText').innerHTML = '⚡ <b>Direct Upload Mode:</b> Remaining columns left empty &bull; Invalid rows inserted into customer &bull; Duplicates skipped &bull; Max 2 uses';
+          } else {
+            $('directUploadStatusText').textContent = 'Standard bulk upload with validation, optional defaults, and error staging.';
+          }
+        }
+
+        if ($('optValuesDisabledBanner')) $('optValuesDisabledBanner').style.display = isDirect ? 'block' : 'none';
+        if ($('optValuesCard')) {
+          $('optValuesCard').querySelectorAll('select, input').forEach(el => el.disabled = isDirect);
+          $('optValuesCard').style.opacity = isDirect ? '0.5' : '1';
+        }
+
+        if (window._processSheets) window._processSheets();
+      }
+      window.setUploadMode = setUploadMode;
+      window.fetchDirectUploadQuota = fetchDirectUploadQuota;
+
       function initBulkUploadContainer() {
         loadCustomModels();
 
@@ -4835,8 +4961,7 @@
 
                 // Automatic SIM Type: ICCID present = E-SIM, otherwise Plastic SIM
                 const sheetSimType = sheetHasIccid ? 'E-SIM' : 'Plastic SIM';
-
-                const isDirect = $('chkDirectUpload') && $('chkDirectUpload').checked;
+                const isDirect = (typeof currentUploadMode !== 'undefined' && currentUploadMode === 'direct');
 
                 preRows.forEach(dev => {
                   dev.customer_name = assignedCust;
@@ -5003,7 +5128,7 @@
           $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and cloud tables…</div>';
 
           try {
-            const isDirect = $('chkDirectUpload') && $('chkDirectUpload').checked;
+            const isDirect = (typeof currentUploadMode !== 'undefined' && currentUploadMode === 'direct');
             const valResult = await api('/api/devices/bulk/validate', {
               method: 'POST',
               body: JSON.stringify({ rows: rows.slice(0, 10000), mode: $('dupMode').value, direct_empty: isDirect })
@@ -5012,7 +5137,7 @@
 
             $('vValid').textContent = valResult.valid_count.toLocaleString();
             $('vDup').textContent = valResult.duplicate_count.toLocaleString();
-            $('vInvalid').textContent = valResult.invalid_count.toLocaleString();
+            $('vInvalid').textContent = valResult.invalid_count.toLocaleString() + (isDirect ? ' (will insert)' : '');
             $('vEsim').textContent = (valResult.esim_count || 0).toLocaleString();
             $('vPlastic').textContent = (valResult.plastic_count || 0).toLocaleString();
 
@@ -5022,8 +5147,8 @@
             $('vDupCount').textContent = valResult.duplicate_count.toLocaleString();
             $('vInvalidCount').textContent = valResult.invalid_count.toLocaleString();
 
-            // Warnings for missing essential columns
-            if (valResult.missing_columns_warning && valResult.missing_columns_warning.length) {
+            // Warnings for missing essential columns (suppressed in direct mode since fallbacks are generated)
+            if (valResult.missing_columns_warning && valResult.missing_columns_warning.length && !isDirect) {
               $('valColWarnings').hidden = false;
               $('valColWarnings').innerHTML = `⚠️ <b>Missing Essential Column Warning:</b> The uploaded file is missing: <u>${valResult.missing_columns_warning.join(', ')}</u>. Every record must have an IMEI.`;
             } else {
@@ -5043,7 +5168,15 @@
             applyPreviewFilter(activeValFilter || 'all');
 
             const dupMode = $('dupMode').value;
-            $('btnConfirmUpload').disabled = (valResult.valid_count === 0 && (dupMode !== 'replace' || valResult.duplicate_count === 0));
+            if (isDirect) {
+              const willUpload = (valResult.valid_count + valResult.invalid_count) > 0;
+              const hasQuota = directUploadQuota.used < 2;
+              $('btnConfirmUpload').disabled = !willUpload;
+              if ($('btnDirectUploadTop')) $('btnDirectUploadTop').disabled = !willUpload || !hasQuota;
+              if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').disabled = !willUpload || !hasQuota;
+            } else {
+              $('btnConfirmUpload').disabled = (valResult.valid_count === 0 && (dupMode !== 'replace' || valResult.duplicate_count === 0));
+            }
             $('btnDlSkipped').hidden = (valResult.duplicate_count + valResult.invalid_count) === 0;
 
             $('btnDlSkipped').onclick = () => {
@@ -5064,45 +5197,100 @@
             toast('⚠️ Please select an Excel file first.');
             return;
           }
-          const mode = $('dupMode').value;
 
-          // Filter rows to upload based on duplicate mode
+          if (isDirect) {
+            if (directUploadQuota.used >= 2) {
+              toast('🔒 Direct Upload limit reached: You have already used your 2 allowed direct uploads. Please use Standard Bulk Upload.');
+              return;
+            }
+          }
+
+          const mode = $('dupMode').value;
           const validRowsToUpload = [];
           const invalidsToStage = [];
+          let duplicateRecordsSkipped = 0;
 
-          parsedRows.forEach(r => {
-            const imei = String(r.imei || '').trim();
-            const cname = String(r.customer_name || '').trim();
-            const errs = [];
-            if (!imei) errs.push('Missing IMEI');
-            else if (imei.length < 5) errs.push('IMEI too short (< 5 digits)');
-            if (!cname) errs.push('Missing Customer Name');
-            if (r.act_date && r.expiry_date && r.expiry_date < r.act_date) errs.push('Expiry date before activation date');
+          if (isDirect) {
+            // Direct Upload:
+            // 1. Invalid rows will ALSO be inserted into customer (assigned fallback identifiers)
+            // 2. Duplicated records will NOT be inserted (strictly skipped)
+            // 3. All remaining columns left completely empty
+            const seenImeis = new Set();
+            const seenSrs = new Set();
+            const seenIccids = new Set();
 
-            if (errs.length > 0) {
-              invalidsToStage.push({
-                customer_name: cname,
-                imei: imei,
-                device_sr_no: r.device_sr_no || '',
-                iccid: r.iccid || '',
-                msisdn1: r.msisdn1 || '',
-                msisdn2: r.msisdn2 || '',
-                act_date: r.act_date || null,
-                expiry_date: r.expiry_date || null,
-                dispatched_date: r.dispatched_date || null,
-                model: r.model || '',
-                sim_provider: r.sim_provider || '',
-                activation_plan: r.activation_plan || '',
-                firmware: r.firmware || '',
-                flash: r.flash || '',
-                sim_type: r.sim_type || '',
-                extra: r.extra || null,
-                error_reason: errs.join('; ')
-              });
-            } else {
-              validRowsToUpload.push(r);
-            }
-          });
+            parsedRows.forEach((r, idx) => {
+              const rawImei = String(r.imei || '').trim();
+              const rawSr = String(r.device_sr_no || '').trim();
+              const rawIccid = String(r.iccid || '').trim();
+
+              // Check if duplicate within file
+              let isDup = false;
+              if (rawImei && seenImeis.has(rawImei.toLowerCase())) isDup = true;
+              if (rawSr && seenSrs.has(rawSr.toLowerCase())) isDup = true;
+              if (rawIccid && seenIccids.has(rawIccid.toLowerCase())) isDup = true;
+
+              if (isDup) {
+                duplicateRecordsSkipped++;
+                return;
+              }
+
+              if (rawImei) seenImeis.add(rawImei.toLowerCase());
+              if (rawSr) seenSrs.add(rawSr.toLowerCase());
+              if (rawIccid) seenIccids.add(rawIccid.toLowerCase());
+
+              // For invalid rows: auto-assign fallback customer & unique identifier so customer table receives row
+              const rowCopy = Object.assign({}, r);
+              if (!rowCopy.customer_name || !String(rowCopy.customer_name).trim()) {
+                rowCopy.customer_name = 'General_Customer';
+              }
+              const cleanImei = String(rowCopy.imei || '').replace(/[^0-9A-Za-z_-]/g, '');
+              if (!cleanImei || cleanImei.length < 5) {
+                const alt = (rowCopy.device_sr_no || rowCopy.iccid || '').replace(/[^0-9A-Za-z_-]/g, '');
+                if (alt && alt.length >= 5) {
+                  rowCopy.imei = alt.substring(0, 20);
+                } else {
+                  rowCopy.imei = 'INV_' + Math.random().toString(36).substring(2, 8).toUpperCase() + (idx + 1);
+                }
+              }
+              validRowsToUpload.push(rowCopy);
+            });
+          } else {
+            // Standard Bulk Upload:
+            parsedRows.forEach(r => {
+              const imei = String(r.imei || '').trim();
+              const cname = String(r.customer_name || '').trim();
+              const errs = [];
+              if (!imei) errs.push('Missing IMEI');
+              else if (imei.length < 5) errs.push('IMEI too short (< 5 digits)');
+              if (!cname) errs.push('Missing Customer Name');
+              if (r.act_date && r.expiry_date && r.expiry_date < r.act_date) errs.push('Expiry date before activation date');
+
+              if (errs.length > 0) {
+                invalidsToStage.push({
+                  customer_name: cname,
+                  imei: imei,
+                  device_sr_no: r.device_sr_no || '',
+                  iccid: r.iccid || '',
+                  msisdn1: r.msisdn1 || '',
+                  msisdn2: r.msisdn2 || '',
+                  act_date: r.act_date || null,
+                  expiry_date: r.expiry_date || null,
+                  dispatched_date: r.dispatched_date || null,
+                  model: r.model || '',
+                  sim_provider: r.sim_provider || '',
+                  activation_plan: r.activation_plan || '',
+                  firmware: r.firmware || '',
+                  flash: r.flash || '',
+                  sim_type: r.sim_type || '',
+                  extra: r.extra || null,
+                  error_reason: errs.join('; ')
+                });
+              } else {
+                validRowsToUpload.push(r);
+              }
+            });
+          }
 
           if (!validRowsToUpload.length && !invalidsToStage.length) {
             toast('⚠️ No device records found to upload.');
@@ -5114,8 +5302,8 @@
           if ($('btnDirectUploadTop')) $('btnDirectUploadTop').disabled = true;
           if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').disabled = true;
 
-          // Stage errored entries so user can edit them in Errored Entries container
-          if (invalidsToStage.length > 0) {
+          // Stage errored entries so user can edit them in Errored Entries container (Standard mode only)
+          if (!isDirect && invalidsToStage.length > 0) {
             try {
               await api('/api/errors', {
                 method: 'POST',
@@ -5126,7 +5314,7 @@
             }
           }
 
-          let addedTotal = 0, updatedTotal = 0, skippedTotal = invalidsToStage.length;
+          let addedTotal = 0, updatedTotal = 0, skippedTotal = invalidsToStage.length + duplicateRecordsSkipped;
           const chunkSize = 2000;
           try {
             for (let i = 0; i < validRowsToUpload.length; i += chunkSize) {
@@ -5137,7 +5325,7 @@
               $('progStatus').textContent = `Uploading records ${i + 1} to ${Math.min(i + chunkSize, validRowsToUpload.length)}…`;
 
               try {
-                const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode, direct_empty: isDirect }) });
+                const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode: isDirect ? 'skip' : mode, direct_empty: isDirect }) });
                 addedTotal += (r.added || 0);
                 updatedTotal += (r.updated || 0);
                 skippedTotal += (r.skipped_duplicates || 0);
@@ -5147,7 +5335,7 @@
                 for (let j = 0; j < chunk.length; j += subSize) {
                   const sub = chunk.slice(j, j + subSize);
                   try {
-                    const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: sub, mode, direct_empty: isDirect }) });
+                    const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: sub, mode: isDirect ? 'skip' : mode, direct_empty: isDirect }) });
                     addedTotal += (r.added || 0);
                     updatedTotal += (r.updated || 0);
                     skippedTotal += (r.skipped_duplicates || 0);
@@ -5161,13 +5349,16 @@
             $('progBar').style.width = '100%';
             $('progPct').textContent = '100%';
             $('progStatus').textContent = `Complete: ${addedTotal} added, ${updatedTotal} updated, ${skippedTotal} skipped/held.`;
-            toast(`Upload finished! ${addedTotal} added, ${updatedTotal} updated.`);
+            toast(isDirect ? `⚡ Direct upload finished! ${addedTotal} records inserted into customer (invalid rows saved), ${skippedTotal} duplicates skipped.` : `Upload finished! ${addedTotal} added, ${updatedTotal} updated.`);
+            if (isDirect) {
+              await fetchDirectUploadQuota();
+            }
             await loadCU(); await updateChrome();
             loadCustomerFilesContainer();
             fetchInventoryRows();
             if ($('invCustCountBadge')) $('invCustCountBadge').textContent = CU.length;
 
-            if (invalidsToStage.length > 0) {
+            if (!isDirect && invalidsToStage.length > 0) {
               $('dlgUploadErrorsAlertBody').innerHTML = `
           <div style="background:var(--ok-bg);border:1px solid var(--ok);padding:12px;border-radius:8px;margin-bottom:12px">
             <b>${addedTotal}</b> records were processed successfully.
@@ -5191,7 +5382,7 @@
         }
 
         if ($('btnConfirmUpload')) {
-          $('btnConfirmUpload').onclick = () => executeBulkUpload($('chkDirectUpload') && $('chkDirectUpload').checked);
+          $('btnConfirmUpload').onclick = () => executeBulkUpload(currentUploadMode === 'direct');
         }
         if ($('btnDirectUploadTop')) {
           $('btnDirectUploadTop').onclick = () => executeBulkUpload(true);
@@ -5199,25 +5390,16 @@
         if ($('btnDirectUploadBottom')) {
           $('btnDirectUploadBottom').onclick = () => executeBulkUpload(true);
         }
-
-        const syncDirectUploadMode = () => {
-          const isDirect = $('chkDirectUpload') && $('chkDirectUpload').checked;
-          if ($('btnDirectUploadTop')) $('btnDirectUploadTop').style.display = isDirect ? 'inline-block' : 'none';
-          if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').style.display = isDirect ? 'inline-block' : 'none';
-          if ($('optValuesDisabledBanner')) $('optValuesDisabledBanner').style.display = isDirect ? 'block' : 'none';
-          if ($('optValuesCard')) {
-            $('optValuesCard').querySelectorAll('select, input').forEach(el => el.disabled = isDirect);
-            $('optValuesCard').style.opacity = isDirect ? '0.6' : '1';
-          }
-          if (window._processSheets) window._processSheets();
-        };
-
-        if ($('chkDirectUpload')) {
-          $('chkDirectUpload').onchange = syncDirectUploadMode;
+        if ($('btnModeStandardUpload')) {
+          $('btnModeStandardUpload').onclick = () => setUploadMode('standard');
+        }
+        if ($('btnModeDirectUpload')) {
+          $('btnModeDirectUpload').onclick = () => setUploadMode('direct');
         }
 
         syncCustMode();
-        syncDirectUploadMode();
+        setUploadMode('standard');
+        fetchDirectUploadQuota();
       }
 
       /* =========================================================================
@@ -5279,13 +5461,30 @@
           };
         }
 
+        // Populate target customer selector for new SIM inserts
+        const populateSimTargetCust = () => {
+          const sel = $('simTargetCustSelect');
+          if (!sel) return;
+          const cur = sel.value;
+          const opts = (CU || []).map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+          sel.innerHTML = `<option value="General_Customer">General_Customer (Default)</option>` + opts;
+          if (cur) sel.value = cur;
+        };
+        populateSimTargetCust();
+        window.refreshSimTargetCustDropdown = populateSimTargetCust;
+
         // Trigger auto-check whenever user changes options or mappings
-        ['colMapKey', 'colMapActDate', 'colMapExpDate', 'colMapMsisdn1', 'colMapMsisdn2', 'colMapIccidAlt', 'simProviderSelect'].forEach(id => {
+        ['colMapKey', 'colMapActDate', 'colMapExpDate', 'colMapMsisdn1', 'colMapMsisdn2', 'colMapIccidAlt', 'simProviderSelect', 'simTargetCustSelect'].forEach(id => {
           const el = $(id);
           if (el) el.onchange = () => scheduleSimAutoCheck();
         });
         if ($('simOverwriteChk')) {
           $('simOverwriteChk').onchange = () => scheduleSimAutoCheck();
+        }
+
+        // Compare & Validate Records Button
+        if ($('btnRunSimCompare')) {
+          $('btnRunSimCompare').onclick = () => runSimAutoCheck();
         }
 
         // Comparison Filter Pills
@@ -5299,9 +5498,15 @@
           $('btnDiffFilterSame').onclick = () => setSimDiffFilter('same');
         }
 
-        // Push button
+        // Push / Insert action buttons
         if ($('btnSimPush')) {
-          $('btnSimPush').onclick = () => executeSimPush();
+          $('btnSimPush').onclick = () => executeSimPush('update_only');
+        }
+        if ($('btnSimInsertNew')) {
+          $('btnSimInsertNew').onclick = () => executeSimPush('insert_only');
+        }
+        if ($('btnSimApplyBoth')) {
+          $('btnSimApplyBoth').onclick = () => executeSimPush('both');
         }
 
         // Download Not Found button
@@ -5534,28 +5739,96 @@
         }, delayMs);
       }
 
-      function parseDateCell(val) {
-        if (!val) return null;
-        val = String(val).trim();
-        if (/^\d{5}$/.test(val)) {
+      function convertDateToStandardFormat(val) {
+        if (val === null || val === undefined) return null;
+        if (val instanceof Date && !isNaN(val)) {
+          return val.toISOString().slice(0, 10);
+        }
+        let str = String(val).trim();
+        if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined' || str === '-' || str === '--') return null;
+
+        // Strip time portion if present (e.g. " 00:00:00", "T00:00:00", " 10:30:15 AM")
+        str = str.replace(/[T\s]\d{1,2}:\d{2}(:\d{2})?.*$/i, '').trim();
+
+        // 1. Excel serial number: e.g. 44561 or 44561.5
+        if (/^\d{4,6}(\.\d+)?$/.test(str)) {
           try {
-            const d = XLSX.SSF.parse_date_code(parseInt(val, 10));
-            if (d && d.y) {
-              const mm = String(d.m).padStart(2, '0');
-              const dd = String(d.d).padStart(2, '0');
-              return `${d.y}-${mm}-${dd}`;
+            const num = parseFloat(str);
+            if (num > 20000 && num < 80000) {
+              if (typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
+                const d = XLSX.SSF.parse_date_code(Math.floor(num));
+                if (d && d.y) {
+                  const mm = String(d.m).padStart(2, '0');
+                  const dd = String(d.d).padStart(2, '0');
+                  return `${d.y}-${mm}-${dd}`;
+                }
+              }
+              const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+              const dateObj = new Date(excelEpoch.getTime() + num * 86400000);
+              if (!isNaN(dateObj)) {
+                return dateObj.toISOString().slice(0, 10);
+              }
             }
           } catch (_) { }
         }
-        const m1 = val.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-        if (m1) {
-          return `${m1[3]}-${m1[2].padStart(2, '0')}-${m1[1].padStart(2, '0')}`;
+
+        // 2. Format YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+        const ym = str.match(/^(\d{4})[-/. ](\d{1,2})[-/. ](\d{1,2})$/);
+        if (ym) {
+          return `${ym[1]}-${ym[2].padStart(2, '0')}-${ym[3].padStart(2, '0')}`;
         }
-        const m2 = val.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
-        if (m2) {
-          return `${m2[1]}-${m2[2].padStart(2, '0')}-${m2[3].padStart(2, '0')}`;
+
+        // 3. Format DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+        const dm = str.match(/^(\d{1,2})[-/. ](\d{1,2})[-/. ](\d{4})$/);
+        if (dm) {
+          const p1 = parseInt(dm[1], 10);
+          const p2 = parseInt(dm[2], 10);
+          // If p2 > 12, it's definitely MM-DD-YYYY
+          if (p2 > 12 && p1 <= 12) {
+            return `${dm[3]}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
+          }
+          // In telecom / Indian formats, day comes first (DD-MM-YYYY)
+          return `${dm[3]}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
         }
+
+        // 4. Month name formats: e.g. "12-Jan-2024", "12 Jan 2024", "Jan 12, 2024", "12-January-2024"
+        const months = {
+          jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+          jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        };
+        const monthRegex = /(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i;
+
+        if (monthRegex.test(str)) {
+          const mMatch = str.match(monthRegex);
+          const monKey = mMatch[1].toLowerCase().slice(0, 3);
+          const mm = months[monKey];
+          const parts = str.replace(monthRegex, ' ').trim().split(/[-/. ,]+/);
+          const nums = parts.filter(p => /^\d+$/.test(p)).map(n => parseInt(n, 10));
+          if (nums.length >= 2 && mm) {
+            let year = nums.find(n => n > 1900 && n < 2100);
+            let day = nums.find(n => n !== year && n >= 1 && n <= 31);
+            if (!year && nums.length === 2) {
+              year = nums[1] < 100 ? 2000 + nums[1] : nums[1];
+              day = nums[0];
+            }
+            if (year && day) {
+              return `${year}-${mm}-${String(day).padStart(2, '0')}`;
+            }
+          }
+        }
+
+        // 5. Try native Date parse
+        const parsed = Date.parse(str);
+        if (!isNaN(parsed)) {
+          const d = new Date(parsed);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+
         return null;
+      }
+
+      function parseDateCell(val) {
+        return convertDateToStandardFormat(val);
       }
 
       async function runSimAutoCheck() {
@@ -5578,12 +5851,15 @@
           $('simNotesBox').hidden = false;
           $('simNotesBox').innerHTML = `⚠️ <b>${keyLabel} Column Required:</b> Please select which column in your file represents the ${keyLabel} in the dropdown above.`;
           $('btnSimPush').style.display = 'none';
+          if ($('btnSimInsertNew')) $('btnSimInsertNew').style.display = 'none';
+          if ($('btnSimApplyBoth')) $('btnSimApplyBoth').style.display = 'none';
           $('simPushMsg').textContent = `Please select the ${keyLabel} column to continue.`;
           return;
         }
 
         const payloadRows = [];
         let unreadableDatesCount = 0;
+        let convertedDatesCount = 0;
 
         simRawFileRows.forEach(rawObj => {
           let rawKey = rawObj[keyCol] != null ? String(rawObj[keyCol]).trim() : '';
@@ -5602,11 +5878,17 @@
           const rawAct = actDateCol ? rawObj[actDateCol] : '';
           const rawExp = expDateCol ? rawObj[expDateCol] : '';
 
-          const actParsed = rawAct ? parseDateCell(rawAct) : null;
-          const expParsed = rawExp ? parseDateCell(rawExp) : null;
+          const actParsed = rawAct ? convertDateToStandardFormat(rawAct) : null;
+          const expParsed = rawExp ? convertDateToStandardFormat(rawExp) : null;
 
-          if (rawAct && !actParsed) unreadableDatesCount++;
-          if (rawExp && !expParsed) unreadableDatesCount++;
+          if (rawAct) {
+            if (actParsed) convertedDatesCount++;
+            else unreadableDatesCount++;
+          }
+          if (rawExp) {
+            if (expParsed) convertedDatesCount++;
+            else unreadableDatesCount++;
+          }
 
           let altVal = altCol ? (rawObj[altCol] != null ? String(rawObj[altCol]).trim() : '') : '';
           if (altVal.endsWith('.0') && /^\d+\.0$/.test(altVal)) altVal = altVal.slice(0, -2);
@@ -5636,6 +5918,8 @@
           $('simNotesBox').hidden = false;
           $('simNotesBox').innerHTML = '⚠️ <b>Data Column Required:</b> Please map at least one column (Activation Date, Expiry Date, MSISDN 1, MSISDN 2) or choose a SIM Provider.';
           $('btnSimPush').style.display = 'none';
+          if ($('btnSimInsertNew')) $('btnSimInsertNew').style.display = 'none';
+          if ($('btnSimApplyBoth')) $('btnSimApplyBoth').style.display = 'none';
           $('simPushMsg').textContent = 'Map data columns to run comparison.';
           return;
         }
@@ -5653,22 +5937,31 @@
 
           simActiveCheckResult = res;
 
+          const notFoundCount = (res.can_insert_count != null ? res.can_insert_count : (res.not_found_keys_count || 0));
+
           $('kpiSimFileRows').textContent = res.file_rows_count.toLocaleString();
+          if ($('kpiSimDuplicates')) $('kpiSimDuplicates').textContent = (res.repeated_keys_count || 0).toLocaleString();
           $('kpiSimMatched').textContent = res.records_matched.toLocaleString();
           $('kpiSimToUpdate').textContent = res.records_to_update.toLocaleString();
           $('kpiSimAlreadySame').textContent = res.records_already_same.toLocaleString();
-          const notFoundCount = res.not_found_keys_count != null ? res.not_found_keys_count : (res.iccids_not_found_count || 0);
-          $('kpiSimNotFound').textContent = notFoundCount.toLocaleString();
+          if ($('kpiSimCanInsert')) $('kpiSimCanInsert').textContent = notFoundCount.toLocaleString();
+          else if ($('kpiSimNotFound')) $('kpiSimNotFound').textContent = notFoundCount.toLocaleString();
 
           const notes = [];
           if (res.skipped_rows > 0) {
-            notes.push(`• <b>${res.skipped_rows} rows skipped</b> because ${keyLabel} was missing or invalid.`);
+            notes.push(`• <b>${res.skipped_rows} rows skipped:</b> ${keyLabel} was missing or too short.`);
           }
           if (res.repeated_keys_count > 0) {
-            notes.push(`• <b>${res.repeated_keys_count} repeated ${keyLabel}s in file:</b> earlier rows were preserved; later rows only filled empty values.`);
+            notes.push(`• <b>${res.repeated_keys_count} duplicate ${keyLabel}s in file:</b> earlier rows were preserved; duplicates will not be inserted twice.`);
+          }
+          if (notFoundCount > 0) {
+            notes.push(`• <b>${notFoundCount.toLocaleString()} new ${keyLabel}s found (not in database):</b> ready to be inserted into customer database.`);
+          }
+          if (convertedDatesCount > 0) {
+            notes.push(`• <b>${convertedDatesCount} dates successfully converted</b> into standard YYYY-MM-DD format.`);
           }
           if (unreadableDatesCount > 0) {
-            notes.push(`• <b>${unreadableDatesCount} unreadable date cells:</b> format should be YYYY-MM-DD or DD-MM-YYYY.`);
+            notes.push(`• ⚠️ <b>${unreadableDatesCount} unreadable date cells:</b> left blank so database values are preserved.`);
           }
           if (notes.length) {
             $('simNotesBox').hidden = false;
@@ -5677,15 +5970,40 @@
             $('simNotesBox').hidden = true;
           }
 
+          // Button states
           if (res.records_to_update > 0) {
             $('btnSimPush').style.display = 'inline-block';
             $('btnSimPush').disabled = false;
-            $('btnSimPush').textContent = `🚀 Replace ${res.records_to_update.toLocaleString()} Differing Records in Database`;
-            $('simPushMsg').textContent = `${res.records_to_update.toLocaleString()} records have differing values and will be replaced. ${res.records_already_same.toLocaleString()} records are already identical and kept unchanged.`;
-            $('simPushMsg').style.color = 'var(--ok)';
+            $('btnSimPush').textContent = `🚀 Replace ${res.records_to_update.toLocaleString()} Differing Records`;
           } else {
             $('btnSimPush').style.display = 'none';
-            $('simPushMsg').textContent = `All ${res.records_matched.toLocaleString()} matched records already have identical values in the database (no updates needed).`;
+          }
+
+          if ($('btnSimInsertNew')) {
+            if (notFoundCount > 0) {
+              $('btnSimInsertNew').style.display = 'inline-block';
+              $('btnSimInsertNew').disabled = false;
+              $('btnSimInsertNew').textContent = `➕ Insert ${notFoundCount.toLocaleString()} New Records into Customer`;
+            } else {
+              $('btnSimInsertNew').style.display = 'none';
+            }
+          }
+
+          if ($('btnSimApplyBoth')) {
+            if (res.records_to_update > 0 && notFoundCount > 0) {
+              $('btnSimApplyBoth').style.display = 'inline-block';
+              $('btnSimApplyBoth').disabled = false;
+              $('btnSimApplyBoth').textContent = `⚡ Replace Differing (${res.records_to_update}) & Insert New (${notFoundCount})`;
+            } else {
+              $('btnSimApplyBoth').style.display = 'none';
+            }
+          }
+
+          if (res.records_to_update > 0 || notFoundCount > 0) {
+            $('simPushMsg').textContent = `${res.records_to_update.toLocaleString()} records differ; ${notFoundCount.toLocaleString()} can be inserted as new.`;
+            $('simPushMsg').style.color = 'var(--ok)';
+          } else {
+            $('simPushMsg').textContent = `All ${res.records_matched.toLocaleString()} matched records already have identical values in database.`;
             $('simPushMsg').style.color = 'var(--muted)';
           }
 
@@ -5831,8 +6149,8 @@
         `;
       }
 
-      async function executeSimPush() {
-        if (!simActiveCheckResult || !simActiveCheckResult.records_to_update) return;
+      async function executeSimPush(action = 'update_only') {
+        if (!simActiveCheckResult) return;
 
         const keyCol = $('colMapKey') ? $('colMapKey').value : '';
         const msisdn1Col = $('colMapMsisdn1') ? $('colMapMsisdn1').value : '';
@@ -5842,10 +6160,21 @@
         const altCol = $('colMapIccidAlt') ? $('colMapIccidAlt').value : '';
         const chosenProvider = $('simProviderSelect') ? $('simProviderSelect').value : '';
         const overwrite = $('simOverwriteChk') ? $('simOverwriteChk').checked : true;
+        const targetCust = $('simTargetCustSelect') ? ($('simTargetCustSelect').value || 'General_Customer') : 'General_Customer';
 
-        const keyLabel = currentSimMatchMode === 'imei' ? 'IMEI' : 'ICCID';
+        const canInsert = simActiveCheckResult.can_insert_count != null ? simActiveCheckResult.can_insert_count : (simActiveCheckResult.not_found_keys_count || 0);
+        const toUpdate = simActiveCheckResult.records_to_update || 0;
 
-        if (!confirm(`Apply SIM details to database? This will update approximately ${simActiveCheckResult.records_to_update.toLocaleString()} customer records.`)) {
+        let confirmMsg = '';
+        if (action === 'insert_only') {
+          confirmMsg = `Insert approximately ${canInsert.toLocaleString()} new SIM records into customer "${targetCust}"?`;
+        } else if (action === 'both') {
+          confirmMsg = `Replace ${toUpdate.toLocaleString()} differing records in database AND insert ${canInsert.toLocaleString()} new SIM records into customer "${targetCust}"?`;
+        } else {
+          confirmMsg = `Apply SIM details to database? This will update approximately ${toUpdate.toLocaleString()} customer records.`;
+        }
+
+        if (!confirm(confirmMsg)) {
           return;
         }
 
@@ -5879,8 +6208,8 @@
             iccid: currentSimMatchMode === 'iccid' ? rawKey : (altVal || ''),
             msisdn1: msisdn1Col ? (rawObj[msisdn1Col] || '').trim() || null : null,
             msisdn2: msisdn2Col ? (rawObj[msisdn2Col] || '').trim() || null : null,
-            act_date: actDateCol ? parseDateCell(rawObj[actDateCol]) : null,
-            expiry_date: expDateCol ? parseDateCell(rawObj[expDateCol]) : null,
+            act_date: actDateCol ? convertDateToStandardFormat(rawObj[actDateCol]) : null,
+            expiry_date: expDateCol ? convertDateToStandardFormat(rawObj[expDateCol]) : null,
             sim_provider: chosenProvider || null
           });
         });
@@ -5893,11 +6222,14 @@
         const logsEl = $('simPushLogs');
 
         progressWrap.hidden = false;
-        $('btnSimPush').disabled = true;
+        if ($('btnSimPush')) $('btnSimPush').disabled = true;
+        if ($('btnSimInsertNew')) $('btnSimInsertNew').disabled = true;
+        if ($('btnSimApplyBoth')) $('btnSimApplyBoth').disabled = true;
         logsEl.innerHTML = '';
 
         const chunkSize = 1000;
         let runningUpdated = 0;
+        let runningInserted = 0;
         let runningUnmatched = 0;
         const allUnmatchedList = [];
 
@@ -5910,7 +6242,7 @@
 
             progressBar.style.width = pct + '%';
             progressPct.textContent = pct + '%';
-            progressStatus.textContent = `Pushing Part ${partNum} of ${totalParts} (${chunk.length} rows)…`;
+            progressStatus.textContent = `Processing Part ${partNum} of ${totalParts} (${chunk.length} rows)…`;
 
             const res = await api('/api/simdata/apply', {
               method: 'POST',
@@ -5918,36 +6250,46 @@
                 rows: chunk,
                 overwrite: overwrite,
                 match_by: currentSimMatchMode,
-                sim_provider: chosenProvider || null
+                sim_provider: chosenProvider || null,
+                insert_new: (action === 'insert_only' || action === 'both'),
+                target_customer: targetCust
               })
             });
 
             runningUpdated += (res.updated || 0);
+            runningInserted += (res.inserted || 0);
             runningUnmatched += (res.unmatched_count || 0);
             if (res.unmatched_keys) allUnmatchedList.push(...res.unmatched_keys);
 
-            liveCount.textContent = `${runningUpdated.toLocaleString()} records updated so far…`;
+            liveCount.textContent = `${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted so far…`;
             const logLine = document.createElement('div');
-            logLine.textContent = `[Part ${partNum}/${totalParts}] Updated ${res.updated} records (${res.unmatched_count} unmatched).`;
+            logLine.textContent = `[Part ${partNum}/${totalParts}] Updated ${res.updated || 0}, Inserted ${res.inserted || 0} (${res.unmatched_count || 0} remaining).`;
             logsEl.appendChild(logLine);
             logsEl.scrollTop = logsEl.scrollHeight;
           }
 
           progressBar.style.width = '100%';
           progressPct.textContent = '100%';
-          progressStatus.textContent = `✅ Push Complete: ${runningUpdated.toLocaleString()} records updated.`;
-          toast(`Push complete! ${runningUpdated.toLocaleString()} records updated.`);
+          progressStatus.textContent = `✅ Process Complete: ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted.`;
+          if (runningInserted > 0) {
+            toast(`Complete! ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} new records inserted into "${targetCust}".`);
+          } else {
+            toast(`Push complete! ${runningUpdated.toLocaleString()} records updated.`);
+          }
 
-          await updateChrome();
+          await loadCU(); await updateChrome();
           if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
+          if (typeof loadCustomerFilesContainer === 'function') loadCustomerFilesContainer();
 
           setTimeout(() => {
             runSimAutoCheck();
-          }, 500);
+          }, 600);
         } catch (err) {
           fail(err);
-          progressStatus.textContent = `⚠️ Push failed partway: ${err.message}. ${runningUpdated.toLocaleString()} records were already updated.`;
-          $('btnSimPush').disabled = false;
+          progressStatus.textContent = `⚠️ Push failed partway: ${err.message}.`;
+          if ($('btnSimPush')) $('btnSimPush').disabled = false;
+          if ($('btnSimInsertNew')) $('btnSimInsertNew').disabled = false;
+          if ($('btnSimApplyBoth')) $('btnSimApplyBoth').disabled = false;
         }
       }
 

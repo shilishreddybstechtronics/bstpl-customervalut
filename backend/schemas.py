@@ -10,8 +10,9 @@ ID_PATTERN = r"^[A-Za-z0-9_.-]{3,30}$"
 Role = Literal["admin", "standard", "limited"]
 
 
-_DATE_FORMATS = ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y", "%Y/%m/%d", "%d-%b-%Y", "%d %b %Y",
-                 "%d-%b-%y", "%d/%m/%y", "%d-%m-%y", "%b %d, %Y",
+_DATE_FORMATS = ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y", "%Y/%m/%d", "%Y.%m.%d",
+                 "%m/%d/%Y", "%m-%d-%Y", "%m.%d.%Y",
+                 "%d-%b-%Y", "%d %b %Y", "%d-%b-%y", "%d/%m/%y", "%d-%m-%y", "%b %d, %Y", "%b %d %Y",
                  "%d-%B-%Y", "%d-%B-%y", "%d %B %Y", "%B %d, %Y")
 
 
@@ -38,6 +39,7 @@ def _to_date(v):
             return date(1899, 12, 30) + timedelta(days=int(n))
         return None
     s = re.split(r"[T ]\d{1,2}:\d{2}", s)[0].strip()  # drop any time part
+    s = re.sub(r"\s*([/\-.])\s*", r"\1", s)
     for fmt in _DATE_FORMATS:
         try:
             return datetime.strptime(s, fmt).date()
@@ -252,6 +254,8 @@ class SimDataApplyIn(BaseModel):
     match_by: Optional[str] = "iccid"
     overwrite: bool = True
     sim_provider: Optional[str] = None
+    insert_new: bool = False
+    target_customer: Optional[str] = "General_Customer"
 
     @field_validator("match_by", mode="before")
     @classmethod
