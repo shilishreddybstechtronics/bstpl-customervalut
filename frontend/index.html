@@ -1987,9 +1987,31 @@
             <div id="sheetList" style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0"></div>
           </div>
 
+          <!-- Direct Upload Option -->
+          <div class="card" id="directUploadCard"
+            style="padding:14px 18px;border:1.5px solid var(--primary);border-radius:10px;margin:14px 0;background:linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <input type="checkbox" id="chkDirectUpload" style="width:20px;height:20px;cursor:pointer;accent-color:var(--primary)" />
+              <div>
+                <label for="chkDirectUpload" style="font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+                  <span>⚡</span> Direct Upload (Leave Remaining Columns Empty)
+                </label>
+                <div class="sub" style="font-size:12px;margin-top:2px">
+                  Upload file directly into database as-is without filling optional defaults. All columns not present or blank in the file will be left completely empty in the database.
+                </div>
+              </div>
+            </div>
+            <button class="b p" id="btnDirectUploadTop" type="button" style="display:none;font-weight:700;padding:8px 18px;border-radius:8px">
+              ⚡ Direct Upload Now
+            </button>
+          </div>
+
           <!-- Optional Values Saved into Every Record -->
-          <div class="card"
-            style="padding:16px;border:1px solid var(--line);border-radius:10px;margin:14px 0;background:var(--card-subtle)">
+          <div class="card" id="optValuesCard"
+            style="padding:16px;border:1px solid var(--line);border-radius:10px;margin:14px 0;background:var(--card-subtle);transition:opacity 0.2s">
+            <div id="optValuesDisabledBanner" style="display:none;background:var(--warn-bg);border:1px solid var(--warn);padding:8px 12px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:12px">
+              ⚡ <b>Direct Upload Mode Active:</b> Optional default values are bypassed. All columns missing or blank in the file will be saved as completely empty.
+            </div>
             <h4 style="margin:0 0 4px;font-size:14px;display:flex;align-items:center;gap:6px">
               <span>⚙️</span> <span>Optional Values (Saved into every record if blank in file)</span>
             </h4>
@@ -2127,8 +2149,9 @@
 
             <div id="valMetaBadges" style="margin:10px 0;display:flex;gap:12px;flex-wrap:wrap;font-size:13px"></div>
 
-            <div class="row" style="margin:14px 0">
+            <div class="row" style="margin:14px 0;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="b p" id="btnConfirmUpload" type="button">Confirm & Upload Records</button>
+              <button class="b" id="btnDirectUploadBottom" type="button" style="display:none;background:var(--primary);color:#fff;font-weight:700">⚡ Direct Upload (Leave Remaining Columns Empty)</button>
               <button class="b" id="btnDlSkipped" type="button" hidden>Download Skipped / Invalid Excel</button>
             </div>
 
@@ -4813,18 +4836,25 @@
                 // Automatic SIM Type: ICCID present = E-SIM, otherwise Plastic SIM
                 const sheetSimType = sheetHasIccid ? 'E-SIM' : 'Plastic SIM';
 
+                const isDirect = $('chkDirectUpload') && $('chkDirectUpload').checked;
+
                 preRows.forEach(dev => {
                   dev.customer_name = assignedCust;
-                  dev.sim_type = sheetSimType;
+                  if (isDirect) {
+                    // Direct upload: leave all remaining columns completely empty
+                    dev.sim_type = dev.sim_type || null;
+                  } else {
+                    dev.sim_type = sheetSimType;
 
-                  // Optional defaults: if row already has a value, row's value wins
-                  if (!dev.model && optModel) dev.model = optModel;
-                  if (!dev.dispatched_date && optDispatchedDate) dev.dispatched_date = optDispatchedDate;
-                  if (!dev.act_date && optActDate) dev.act_date = optActDate;
-                  if (!dev.expiry_date && optExpiryDate) dev.expiry_date = optExpiryDate;
-                  if (!dev.flash && optFlash) dev.flash = optFlash;
-                  if (!dev.firmware && optFirmware) dev.firmware = optFirmware;
-                  if (!dev.sim_provider && optSimProvider) dev.sim_provider = optSimProvider;
+                    // Optional defaults: if row already has a value, row's value wins
+                    if (!dev.model && optModel) dev.model = optModel;
+                    if (!dev.dispatched_date && optDispatchedDate) dev.dispatched_date = optDispatchedDate;
+                    if (!dev.act_date && optActDate) dev.act_date = optActDate;
+                    if (!dev.expiry_date && optExpiryDate) dev.expiry_date = optExpiryDate;
+                    if (!dev.flash && optFlash) dev.flash = optFlash;
+                    if (!dev.firmware && optFirmware) dev.firmware = optFirmware;
+                    if (!dev.sim_provider && optSimProvider) dev.sim_provider = optSimProvider;
+                  }
 
                   allRows.push(dev);
                 });
@@ -4973,9 +5003,10 @@
           $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and cloud tables…</div>';
 
           try {
+            const isDirect = $('chkDirectUpload') && $('chkDirectUpload').checked;
             const valResult = await api('/api/devices/bulk/validate', {
               method: 'POST',
-              body: JSON.stringify({ rows: rows.slice(0, 10000), mode: $('dupMode').value })
+              body: JSON.stringify({ rows: rows.slice(0, 10000), mode: $('dupMode').value, direct_empty: isDirect })
             });
             activeValResult = valResult;
 
@@ -5028,8 +5059,11 @@
           }
         }
 
-        $('btnConfirmUpload').onclick = async () => {
-          if (!parsedRows.length) return;
+        async function executeBulkUpload(isDirect) {
+          if (!parsedRows.length) {
+            toast('⚠️ Please select an Excel file first.');
+            return;
+          }
           const mode = $('dupMode').value;
 
           // Filter rows to upload based on duplicate mode
@@ -5076,7 +5110,9 @@
           }
 
           $('uploadProgressWrap').hidden = false;
-          $('btnConfirmUpload').disabled = true;
+          if ($('btnConfirmUpload')) $('btnConfirmUpload').disabled = true;
+          if ($('btnDirectUploadTop')) $('btnDirectUploadTop').disabled = true;
+          if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').disabled = true;
 
           // Stage errored entries so user can edit them in Errored Entries container
           if (invalidsToStage.length > 0) {
@@ -5101,7 +5137,7 @@
               $('progStatus').textContent = `Uploading records ${i + 1} to ${Math.min(i + chunkSize, validRowsToUpload.length)}…`;
 
               try {
-                const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode }) });
+                const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode, direct_empty: isDirect }) });
                 addedTotal += (r.added || 0);
                 updatedTotal += (r.updated || 0);
                 skippedTotal += (r.skipped_duplicates || 0);
@@ -5111,7 +5147,7 @@
                 for (let j = 0; j < chunk.length; j += subSize) {
                   const sub = chunk.slice(j, j + subSize);
                   try {
-                    const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: sub, mode }) });
+                    const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: sub, mode, direct_empty: isDirect }) });
                     addedTotal += (r.added || 0);
                     updatedTotal += (r.updated || 0);
                     skippedTotal += (r.skipped_duplicates || 0);
@@ -5148,11 +5184,40 @@
           } catch (err) {
             fail(err);
             $('progStatus').textContent = 'Upload error: ' + err.message;
-            $('btnConfirmUpload').disabled = false;
+            if ($('btnConfirmUpload')) $('btnConfirmUpload').disabled = false;
+            if ($('btnDirectUploadTop')) $('btnDirectUploadTop').disabled = false;
+            if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').disabled = false;
           }
+        }
+
+        if ($('btnConfirmUpload')) {
+          $('btnConfirmUpload').onclick = () => executeBulkUpload($('chkDirectUpload') && $('chkDirectUpload').checked);
+        }
+        if ($('btnDirectUploadTop')) {
+          $('btnDirectUploadTop').onclick = () => executeBulkUpload(true);
+        }
+        if ($('btnDirectUploadBottom')) {
+          $('btnDirectUploadBottom').onclick = () => executeBulkUpload(true);
+        }
+
+        const syncDirectUploadMode = () => {
+          const isDirect = $('chkDirectUpload') && $('chkDirectUpload').checked;
+          if ($('btnDirectUploadTop')) $('btnDirectUploadTop').style.display = isDirect ? 'inline-block' : 'none';
+          if ($('btnDirectUploadBottom')) $('btnDirectUploadBottom').style.display = isDirect ? 'inline-block' : 'none';
+          if ($('optValuesDisabledBanner')) $('optValuesDisabledBanner').style.display = isDirect ? 'block' : 'none';
+          if ($('optValuesCard')) {
+            $('optValuesCard').querySelectorAll('select, input').forEach(el => el.disabled = isDirect);
+            $('optValuesCard').style.opacity = isDirect ? '0.6' : '1';
+          }
+          if (window._processSheets) window._processSheets();
         };
 
+        if ($('chkDirectUpload')) {
+          $('chkDirectUpload').onchange = syncDirectUploadMode;
+        }
+
         syncCustMode();
+        syncDirectUploadMode();
       }
 
       /* =========================================================================

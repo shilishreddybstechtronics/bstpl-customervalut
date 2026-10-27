@@ -196,6 +196,7 @@ class DeviceUpdate(BaseModel):
 class BulkIn(BaseModel):
     rows: list[DeviceIn] = Field(max_length=20000)  # the page sends 1,000-2,000 at a time; this is only a safety ceiling
     mode: Optional[Literal["skip", "replace"]] = "skip"
+    direct_empty: Optional[bool] = False
 
 
 class SimDataRow(BaseModel):

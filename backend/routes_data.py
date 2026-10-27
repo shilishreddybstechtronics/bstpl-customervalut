@@ -461,7 +461,7 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
     has_sr_any = any(bool(r.device_sr_no) for r in data.rows)
     if not has_imei_any:
         missing_columns.add("IMEI")
-    if not has_sr_any:
+    if not has_sr_any and not getattr(data, "direct_empty", False):
         missing_columns.add("Device Sr No")
 
     for idx, r in enumerate(data.rows, start=1):
@@ -507,10 +507,13 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
                 if v and len(str(v)) > 255:
                     errs.append(f"Value for '{k_clean}' exceeds 255 characters")
 
-        stype = r.sim_type or ("E-SIM" if r.iccid else "Plastic SIM")
+        if getattr(data, "direct_empty", False):
+            stype = r.sim_type
+        else:
+            stype = r.sim_type or ("E-SIM" if r.iccid else "Plastic SIM")
         if stype == "E-SIM":
             esim_count += 1
-        else:
+        elif stype:
             plastic_count += 1
 
         row_dict = r.model_dump()
@@ -610,6 +613,7 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
              user: models.User = Depends(get_current_user)):
     imeis = [r.imei.strip() for r in data.rows if r.imei]
     mode = getattr(data, "mode", "skip") or "skip"
+    direct_empty = getattr(data, "direct_empty", False)
 
     existing_devices = {}
     for i in range(0, len(imeis), 2000):
@@ -649,8 +653,12 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                 cache[key] = customer_by_name(db, cust_name)
             cust = cache[key]
 
-            exp = r.expiry_date or (r.act_date + timedelta(days=365) if r.act_date else None)
-            stype = r.sim_type or classify_sim_type(r.iccid)
+            if direct_empty:
+                exp = r.expiry_date
+                stype = r.sim_type
+            else:
+                exp = r.expiry_date or (r.act_date + timedelta(days=365) if r.act_date else None)
+                stype = r.sim_type or classify_sim_type(r.iccid)
             extra = clean_extra(r.extra)
             names.update(extra)
 
