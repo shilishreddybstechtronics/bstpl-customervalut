@@ -91,6 +91,7 @@ class UserOut(BaseModel):
     badge: Optional[str] = None
     is_master: Optional[bool] = False
     can_delete: Optional[bool] = False
+    password: Optional[str] = None
     permissions: Optional[dict[str, bool]] = None
 
     class Config:
@@ -198,14 +199,14 @@ class SimDataRow(BaseModel):
 
 class SimDataCheckIn(BaseModel):
     rows: list[SimDataRow] = Field(max_length=50000)
-    match_by: Optional[Literal["imei", "iccid"]] = "imei"
+    match_by: Optional[Literal["imei", "iccid"]] = "iccid"
     overwrite: bool = True
     sim_provider: Optional[str] = None
 
 
 class SimDataApplyIn(BaseModel):
     rows: list[SimDataRow] = Field(max_length=50000)
-    match_by: Optional[Literal["imei", "iccid"]] = "imei"
+    match_by: Optional[Literal["imei", "iccid"]] = "iccid"
     overwrite: bool = True
     sim_provider: Optional[str] = None
 

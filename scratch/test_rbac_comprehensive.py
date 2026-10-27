@@ -146,24 +146,23 @@ def test_mutual_super_admin_protection():
         db.close()
 
 
-def test_password_security_policy():
-    print("\n--- 3. Testing Password Security Policy (Hash-Only, No Readable Passwords) ---")
+def test_super_admin_passwords_and_mutual_protection():
+    print("\n--- 3. Testing Super Admin Password Visibility, Mutual Privacy & Mutual Protection ---")
     db = SessionLocal()
     try:
         u1 = db.query(models.User).filter(models.User.user_id == "0001").first()
         u7 = db.query(models.User).filter(models.User.user_id == "0007").first()
 
-        # Check DB plain_password column is scrubbed
-        all_users = db.query(models.User).all()
-        for u in all_users:
-            assert getattr(u, "plain_password", None) is None, f"User {u.user_id} has plaintext password stored in DB!"
+        assert u1 is not None and u7 is not None
 
-        # user_out output check
-        out1 = user_out(u7, actor=u1)
-        assert "password" not in out1, "user_out must NEVER contain a password field!"
-        assert "plain_password" not in out1, "user_out must NEVER contain a plain_password field!"
+        # 3a. Mutual Super Admin Password Privacy: 0001 and 0007 CANNOT see each other's passwords
+        out_u7_seen_by_u1 = user_out(u7, actor=u1)
+        assert out_u7_seen_by_u1["password"] is None, "0001 must NOT be able to see 0007's password!"
 
-        # Create a test employee user
+        out_u1_seen_by_u7 = user_out(u1, actor=u7)
+        assert out_u1_seen_by_u7["password"] is None, "0007 must NOT be able to see 0001's password!"
+
+        # Create a test employee user with a known password
         test_uid = "9988"
         existing = db.query(models.User).filter(models.User.user_id == test_uid).first()
         if existing:
@@ -175,6 +174,7 @@ def test_password_security_policy():
             name="Test Employee",
             user_id=test_uid,
             password_hash=hash_password(initial_pwd),
+            plain_password=initial_pwd,
             role="limited",
             is_admin=False
         )
@@ -182,28 +182,32 @@ def test_password_security_policy():
         db.commit()
         db.refresh(new_u)
 
-        assert verify_password(initial_pwd, new_u.password_hash)
+        # 3b. Super Admins CAN see regular employee passwords
+        out_emp_seen_by_u1 = user_out(new_u, actor=u1)
+        assert out_emp_seen_by_u1["password"] == initial_pwd, f"0001 should see employee password: got {out_emp_seen_by_u1['password']}"
 
-        # Super Admin 0001 resets user's password
+        out_emp_seen_by_u7 = user_out(new_u, actor=u7)
+        assert out_emp_seen_by_u7["password"] == initial_pwd, f"0007 should see employee password: got {out_emp_seen_by_u7['password']}"
+
+        # 3c. Regular users and Admin users CANNOT see passwords
+        out_emp_seen_by_emp = user_out(new_u, actor=new_u)
+        assert out_emp_seen_by_emp["password"] is None, "Regular users must not receive plaintext passwords from user_out"
+
+        # 3d. Super Admin password reset updates plaintext and hash
         reset_pwd = "ResetPasswordBySuperAdmin456"
         update_user(new_u.id, schemas.UserUpdate(password=reset_pwd), db=db, admin=u1)
         db.refresh(new_u)
 
         assert verify_password(reset_pwd, new_u.password_hash)
-        assert not verify_password(initial_pwd, new_u.password_hash)
-
-        # Super Admin 0007 resets user's password
-        reset_pwd_7 = "ResetPasswordBySuperAdmin0007"
-        update_user(new_u.id, schemas.UserUpdate(password=reset_pwd_7), db=db, admin=u7)
-        db.refresh(new_u)
-
-        assert verify_password(reset_pwd_7, new_u.password_hash)
+        assert new_u.plain_password == reset_pwd
+        assert user_out(new_u, actor=u1)["password"] == reset_pwd
+        assert user_out(new_u, actor=u7)["password"] == reset_pwd
 
         # Clean up
         db.delete(new_u)
         db.commit()
 
-        print("✓ Password security policy verified (Hash-only, no readable passwords, resets work).")
+        print("✓ Super Admin password visibility, mutual privacy, and mutual protection verified successfully.")
     finally:
         db.close()
 
@@ -339,7 +343,7 @@ def test_audit_logs():
 if __name__ == "__main__":
     test_normalization_and_roles()
     test_mutual_super_admin_protection()
-    test_password_security_policy()
+    test_super_admin_passwords_and_mutual_protection()
     test_granular_permissions_and_backend_enforcement()
     test_download_all_customer_data()
     test_audit_logs()

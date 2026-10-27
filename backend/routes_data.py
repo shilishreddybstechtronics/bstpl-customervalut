@@ -43,9 +43,15 @@ def clean_iccid(val: Optional[str]) -> str:
     if not val:
         return ""
     s = str(val).strip()
+    if re.search(r"e\+", s, re.I):
+        try:
+            s = str(int(float(s)))
+        except Exception:
+            pass
     if s.endswith(".0"):
         s = s[:-2]
-    return re.sub(r"[\s\-_]+", "", s)
+    s = re.sub(r"[\s\-_]+", "", s)
+    return s.strip().upper()
 
 
 def normalize_date_input(val):
@@ -732,15 +738,107 @@ def clean_imei(val) -> str:
     return s.strip()
 
 
+def find_devices_for_sim_data(db: Session, file_sims: dict, match_by: str) -> dict[str, list[models.Device]]:
+    """Fetches and maps devices for SIM data upload.
+    When matching by ICCID:
+    Matches against all records where ICCID matches the uploaded file's ICCID:
+    1. Exact match (case-insensitive)
+    2. Stripped of trailing 'F' / 'f'
+    3. Standard 19-digit core
+    Returns a dict mapping file_key -> list of matching Device objects.
+    """
+    devs_by_key = {}
+    if not file_sims:
+        return devs_by_key
+
+    if match_by == "imei":
+        all_keys = list(file_sims.keys())
+        matched_devices = []
+        chunk_size = 1000
+        for i in range(0, len(all_keys), chunk_size):
+            sub_keys = all_keys[i:i + chunk_size]
+            found = db.query(Device).options(joinedload(Device.customer)).filter(
+                ACTIVE,
+                Device.imei.in_(sub_keys)
+            ).all()
+            matched_devices.extend(found)
+        for d in matched_devices:
+            if not d.imei:
+                continue
+            k = clean_imei(d.imei)
+            devs_by_key.setdefault(k, []).append(d)
+        return devs_by_key
+
+    # ICCID Matching
+    search_keys_set = set()
+    file_keys_exact = {}
+    file_keys_rstrip = {}
+    file_keys_prefix19 = {}
+
+    for fk in file_sims.keys():
+        cleaned_fk = clean_iccid(fk)
+        file_keys_exact.setdefault(cleaned_fk, []).append(fk)
+        search_keys_set.add(cleaned_fk)
+
+        stripped = cleaned_fk.rstrip("F")
+        file_keys_rstrip.setdefault(stripped, []).append(fk)
+        search_keys_set.add(stripped)
+        search_keys_set.add(stripped + "F")
+
+        if len(cleaned_fk) >= 19:
+            p19 = cleaned_fk[:19]
+            file_keys_prefix19.setdefault(p19, []).append(fk)
+            search_keys_set.add(p19)
+            search_keys_set.add(p19 + "F")
+
+    all_search_keys = list(search_keys_set)
+    matched_devices = []
+    chunk_size = 1000
+    for i in range(0, len(all_search_keys), chunk_size):
+        sub = all_search_keys[i:i + chunk_size]
+        sub_19 = [k[:19] for k in sub if len(k) >= 19]
+        filters = [Device.iccid.in_(sub)]
+        if sub_19:
+            filters.append(func.left(Device.iccid, 19).in_(sub_19))
+        found = db.query(Device).options(joinedload(Device.customer)).filter(
+            ACTIVE,
+            or_(*filters)
+        ).all()
+        matched_devices.extend(found)
+
+    seen_ids = set()
+    unique_devices = []
+    for d in matched_devices:
+        if d.id not in seen_ids:
+            seen_ids.add(d.id)
+            unique_devices.append(d)
+
+    for d in unique_devices:
+        if not d.iccid:
+            continue
+        dicc = clean_iccid(d.iccid)
+        target_fks = file_keys_exact.get(dicc)
+        if not target_fks:
+            target_fks = file_keys_rstrip.get(dicc.rstrip("F"))
+        if not target_fks and len(dicc) >= 19:
+            target_fks = file_keys_prefix19.get(dicc[:19])
+
+        if target_fks:
+            for fk in set(target_fks):
+                devs_by_key.setdefault(fk, []).append(d)
+
+    return devs_by_key
+
+
 @router.post("/simdata/check", dependencies=[Depends(require_permission("search"))])
 def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
                     user: models.User = Depends(get_current_user)):
     rows = data.rows
     overwrite = data.overwrite
     chosen_provider = (data.sim_provider or "").strip()
-    match_by = (data.match_by or "imei").lower()
+    match_by = (data.match_by or "iccid").lower()
     if match_by not in ("imei", "iccid"):
-        match_by = "imei"
+        match_by = "iccid"
 
     # Verify that either a provider or at least one data column is provided
     has_any_data = any(
@@ -770,7 +868,7 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
                 skipped_rows += 1
                 continue
             raw_key = raw_iccid
-            match_key = raw_iccid[:19] if len(raw_iccid) >= 19 else raw_iccid
+            match_key = raw_iccid
 
         row_dict = {
             "raw_key": raw_key,
@@ -792,39 +890,7 @@ def check_sim_data(data: schemas.SimDataCheckIn, db: Session = Depends(get_db),
         else:
             file_sims[match_key] = row_dict
 
-    all_keys = list(file_sims.keys())
-    matched_devices = []
-    chunk_size = 1000
-    for i in range(0, len(all_keys), chunk_size):
-        sub_keys = all_keys[i:i + chunk_size]
-        if match_by == "imei":
-            found = db.query(Device).options(joinedload(Device.customer)).filter(
-                ACTIVE,
-                Device.imei.in_(sub_keys)
-            ).all()
-        else:
-            found = db.query(Device).options(joinedload(Device.customer)).filter(
-                ACTIVE,
-                or_(
-                    Device.iccid.in_(sub_keys),
-                    func.left(Device.iccid, 19).in_(sub_keys)
-                )
-            ).all()
-        matched_devices.extend(found)
-
-    devs_by_key = {}
-    for d in matched_devices:
-        if match_by == "imei":
-            if not d.imei:
-                continue
-            k = clean_imei(d.imei)
-            devs_by_key.setdefault(k, []).append(d)
-        else:
-            if not d.iccid:
-                continue
-            c_iccid = clean_iccid(d.iccid)
-            d_key = c_iccid[:19] if len(c_iccid) >= 19 else c_iccid
-            devs_by_key.setdefault(d_key, []).append(d)
+    devs_by_key = find_devices_for_sim_data(db, file_sims, match_by)
 
     keys_found_set = set()
     records_matched = 0
@@ -984,9 +1050,9 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     rows = data.rows
     overwrite = data.overwrite
     chosen_provider = (data.sim_provider or "").strip()
-    match_by = (data.match_by or "imei").lower()
+    match_by = (data.match_by or "iccid").lower()
     if match_by not in ("imei", "iccid"):
-        match_by = "imei"
+        match_by = "iccid"
 
     has_any_data = any(
         (r.msisdn1 or r.msisdn2 or r.act_date or r.expiry_date or r.sim_provider or (r.iccid if match_by == "imei" else r.imei))
@@ -1008,7 +1074,7 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
             if not raw_iccid or len(raw_iccid) < 5:
                 continue
             raw_key = raw_iccid
-            match_key = raw_iccid[:19] if len(raw_iccid) >= 19 else raw_iccid
+            match_key = raw_iccid
 
         row_dict = {
             "raw_key": raw_key,
@@ -1028,39 +1094,7 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
         else:
             file_sims[match_key] = row_dict
 
-    all_keys = list(file_sims.keys())
-    matched_devices = []
-    chunk_size = 1000
-    for i in range(0, len(all_keys), chunk_size):
-        sub_keys = all_keys[i:i + chunk_size]
-        if match_by == "imei":
-            found = db.query(Device).options(joinedload(Device.customer)).filter(
-                ACTIVE,
-                Device.imei.in_(sub_keys)
-            ).all()
-        else:
-            found = db.query(Device).options(joinedload(Device.customer)).filter(
-                ACTIVE,
-                or_(
-                    Device.iccid.in_(sub_keys),
-                    func.left(Device.iccid, 19).in_(sub_keys)
-                )
-            ).all()
-        matched_devices.extend(found)
-
-    devs_by_key = {}
-    for d in matched_devices:
-        if match_by == "imei":
-            if not d.imei:
-                continue
-            k = clean_imei(d.imei)
-            devs_by_key.setdefault(k, []).append(d)
-        else:
-            if not d.iccid:
-                continue
-            c_iccid = clean_iccid(d.iccid)
-            d_key = c_iccid[:19] if len(c_iccid) >= 19 else c_iccid
-            devs_by_key.setdefault(d_key, []).append(d)
+    devs_by_key = find_devices_for_sim_data(db, file_sims, match_by)
 
     updated_count = 0
     matched_keys = set()
@@ -1079,16 +1113,24 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                 val = frow.get(field)
                 if val is not None and val != "":
                     curr = getattr(d, field)
+                    curr_cmp = curr.isoformat() if isinstance(curr, date) else str(curr or "").strip()
+                    val_cmp = val.isoformat() if isinstance(val, date) else str(val or "").strip()
                     if overwrite:
-                        if curr != val:
+                        if curr_cmp != val_cmp:
                             setattr(d, field, val)
                             changed = True
                     else:
-                        if curr is None or curr == "":
+                        if not curr_cmp and val_cmp:
                             setattr(d, field, val)
                             changed = True
 
-            if match_by == "imei" and frow.get("raw_iccid"):
+            if match_by == "iccid" and overwrite and frow.get("raw_iccid"):
+                curr_iccid = clean_iccid(d.iccid)
+                new_iccid = frow["raw_iccid"]
+                if curr_iccid != new_iccid and len(new_iccid) >= len(curr_iccid):
+                    d.iccid = new_iccid
+                    changed = True
+            elif match_by == "imei" and frow.get("raw_iccid"):
                 curr_iccid = clean_iccid(d.iccid)
                 new_iccid = frow["raw_iccid"]
                 if overwrite:
@@ -1099,12 +1141,6 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
                     if not curr_iccid and new_iccid:
                         d.iccid = new_iccid
                         changed = True
-            elif match_by == "iccid" and overwrite and len(dev_list) == 1:
-                curr_iccid = clean_iccid(d.iccid)
-                new_iccid = frow["raw_iccid"]
-                if curr_iccid != new_iccid and len(new_iccid) > len(curr_iccid):
-                    d.iccid = new_iccid
-                    changed = True
 
             if changed:
                 updated_count += 1

@@ -2161,7 +2161,7 @@
       <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:6px">
         <div>
           <h2 style="margin:0">SIM Data Upload</h2>
-          <p class="sub" style="margin:4px 0 0">Match devices by IMEI or ICCID and compare activation date, expiry date, MSISDN1, and MSISDN2. Identical values remain unchanged; differing values are replaced.</p>
+          <p class="sub" style="margin:4px 0 0">Match devices by ICCID (or IMEI) and compare activation date, expiry date, MSISDN1, and MSISDN2. Fetches values from the uploaded file and replaces them in our data.</p>
         </div>
       </div>
 
@@ -2179,16 +2179,16 @@
               <span>🎯</span> Match Records By:
             </span>
             <div class="sim-mode-toggle" id="simModeToggleWrap">
-              <button type="button" class="sim-mode-btn active" id="btnModeImei" onclick="setSimMatchMode('imei')">
-                <span>📱</span> <b>IMEI</b> <span style="font-size:11px;opacity:.8">(Recommended)</span>
+              <button type="button" class="sim-mode-btn active" id="btnModeIccid" onclick="setSimMatchMode('iccid')">
+                <span>💳</span> <b>ICCID</b> <span style="font-size:11px;opacity:.8">(Recommended)</span>
               </button>
-              <button type="button" class="sim-mode-btn" id="btnModeIccid" onclick="setSimMatchMode('iccid')">
-                <span>💳</span> <b>ICCID</b>
+              <button type="button" class="sim-mode-btn" id="btnModeImei" onclick="setSimMatchMode('imei')">
+                <span>📱</span> <b>IMEI</b>
               </button>
             </div>
           </div>
           <span style="font-size:12px;color:var(--muted)" id="simModeDesc">
-            Matches device records in customer tables by 15-digit IMEI.
+            Matches device records across our database by ICCID and replaces MSISDN1, MSISDN2, Act Date, Exp Date.
           </span>
         </div>
 
@@ -2197,7 +2197,7 @@
           <div class="bulk-drop-icon">📂</div>
           <div class="bulk-drop-text">
             <b>Click to browse</b> or drag & drop SIM provider file here (.xlsx, .xls, .csv)<br />
-            <span style="font-size:12px;color:var(--muted)">Header row is auto-detected. If specific column headers are missing, choose each column manually below.</span>
+            <span style="font-size:12px;color:var(--muted)">Header row is auto-detected. Matches by ICCID and replaces differing values with uploaded file data.</span>
           </div>
           <input type="file" id="simFileInput" accept=".xlsx, .xls, .csv" hidden />
         </div>
@@ -2215,7 +2215,7 @@
               <span class="badge" id="simTotalRowsBadge"
                 style="background:var(--accent-light);color:var(--accentd);font-size:11px;font-weight:700">0 rows</span>
               <span class="badge" id="simMatchModeBadge"
-                style="background:var(--ink);color:#fff;font-size:11px;font-weight:700">Matching by IMEI</span>
+                style="background:var(--ink);color:#fff;font-size:11px;font-weight:700">Matching by ICCID</span>
             </div>
             <button class="b" id="simResetFileBtn" type="button" style="height:30px;font-size:12px">✕ Choose Different File</button>
           </div>
@@ -2278,7 +2278,7 @@
 
             <div class="sim-map-grid" style="margin-top:10px">
               <div class="sim-map-card">
-                <label for="colMapKey" id="titleColMapKey" style="font-size:12px;font-weight:700;color:var(--danger)">📱 IMEI Column * (Required)</label>
+                <label for="colMapKey" id="titleColMapKey" style="font-size:12px;font-weight:700;color:var(--danger)">💳 ICCID Column * (Required)</label>
                 <select id="colMapKey" style="font-size:13px;width:100%;margin-top:4px;border-color:var(--danger)"></select>
               </div>
               <div class="sim-map-card">
@@ -5145,14 +5145,14 @@
       let simDetectedHeaders = []; // Header strings
       let simActiveCheckResult = null; // Last check result from /api/simdata/check
       let simDebounceTimer = null; // Debounce timer for auto-check (~250ms)
-      let currentSimMatchMode = 'imei'; // 'imei' | 'iccid'
+      let currentSimMatchMode = 'iccid'; // 'iccid' | 'imei'
       let simDiffFilterMode = 'all'; // 'all' | 'updated' | 'same'
 
       function initSimDataContainer() {
         if ($('simRoleAlert')) $('simRoleAlert').hidden = true;
         if ($('simMainContent')) $('simMainContent').hidden = false;
 
-        // Mode Toggle: IMEI vs ICCID
+        // Mode Toggle: ICCID vs IMEI
         if ($('btnModeImei') && $('btnModeIccid')) {
           $('btnModeImei').onclick = () => setSimMatchMode('imei');
           $('btnModeIccid').onclick = () => setSimMatchMode('iccid');
@@ -5244,10 +5244,15 @@
           $('simMatchModeBadge').textContent = mode === 'imei' ? 'Matching by IMEI' : 'Matching by ICCID';
         }
         if ($('titleColMapKey')) {
-          $('titleColMapKey').textContent = mode === 'imei' ? '📱 IMEI Column *' : '💳 ICCID Column *';
+          $('titleColMapKey').textContent = mode === 'imei' ? '📱 IMEI Column *' : '💳 ICCID Column * (Required)';
         }
         if ($('lblColMapIccidAlt')) {
           $('lblColMapIccidAlt').textContent = mode === 'imei' ? '💳 ICCID (Optional)' : '📱 IMEI (Optional)';
+        }
+        if ($('simModeDesc')) {
+          $('simModeDesc').textContent = mode === 'imei'
+            ? 'Matches device records in customer tables by 15-digit IMEI.'
+            : 'Matches device records across our database by ICCID and replaces MSISDN1, MSISDN2, Act Date, Exp Date.';
         }
 
         if (simDetectedHeaders.length) {
@@ -5346,12 +5351,14 @@
             return;
           }
 
-          // Auto-select mode based on header presence
+          // Prioritize ICCID matching for SIM data upload
+          const hasIccidCol = simDetectedHeaders.some(h => /^(iccid|ccidno|ccid|sim\s*iccid|sim\s*no|sim\s*number|simno|sim_no|iccid\s*no|iccid\s*number)$/i.test(h));
           const hasImeiCol = simDetectedHeaders.some(h => /^(imei|device\s*imei|imei\s*no|imeino|device_imei)$/i.test(h));
-          const hasIccidCol = simDetectedHeaders.some(h => /^(iccid|ccidno|ccid|sim\s*iccid)$/i.test(h));
-          if (hasImeiCol) {
+          if (hasIccidCol) {
+            setSimMatchMode('iccid');
+          } else if (hasImeiCol) {
             setSimMatchMode('imei');
-          } else if (hasIccidCol) {
+          } else {
             setSimMatchMode('iccid');
           }
 
@@ -7039,6 +7046,45 @@
       /* =========================================================================
          CONTAINER 12: SEPARATE MANAGE USERS (Admin Only)
          ========================================================================= */
+      window.toggleUserPwd = function(btn) {
+        const wrap = btn.closest('div');
+        const span = wrap ? wrap.querySelector('.user-pwd-text') : null;
+        if (!span) return;
+        const isMasked = span.getAttribute('data-masked') !== 'false';
+        if (isMasked) {
+          span.textContent = span.getAttribute('data-plain') || '';
+          span.setAttribute('data-masked', 'false');
+          btn.textContent = '🙈';
+          btn.title = 'Hide Password';
+        } else {
+          span.textContent = '••••••••';
+          span.setAttribute('data-masked', 'true');
+          btn.textContent = '👁️';
+          btn.title = 'Show Password';
+        }
+      };
+
+      window.copyUserPwd = async function(btn) {
+        const wrap = btn.closest('div');
+        const span = wrap ? wrap.querySelector('.user-pwd-text') : null;
+        const pwd = span ? (span.getAttribute('data-plain') || '') : '';
+        if (!pwd) return;
+        try {
+          await navigator.clipboard.writeText(pwd);
+          toast('Password copied to clipboard');
+        } catch (e) {
+          const ta = document.createElement('textarea');
+          ta.value = pwd;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          toast('Password copied to clipboard');
+        }
+      };
+
       async function loadUsersContainer() {
         const me = getUser();
         const rawMe = (me.user_id || '').trim().toLowerCase();
@@ -7052,7 +7098,7 @@
           window._allLoadedUsers = l;
           $('usersTableWrap').innerHTML = `
       <div class="tw"><table><thead><tr>
-        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th><th>Configured Permissions</th><th>Created Date</th><th>Actions</th>
+        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th>${isSuperAdmin ? '<th>User Password</th>' : ''}<th>Configured Permissions</th><th>Created Date</th><th>Actions</th>
       </tr></thead><tbody>
       ${l.map(u => {
             const rawId = (u.user_id || '').trim().toLowerCase();
@@ -7077,6 +7123,26 @@
 
             // Deletion permission: computed strictly by backend RBAC logic
             const canDelete = (typeof u.can_delete === 'boolean') ? u.can_delete : false;
+
+            // Super Admin password visibility (mutual privacy: 0001 and 0007 cannot see each other's passwords)
+            let pwdColHtml = '';
+            if (isSuperAdmin) {
+              if (isOtherSuper) {
+                pwdColHtml = `<td><span class="sub" style="font-size:11.5px;color:var(--muted);font-weight:600">🔒 Protected (Hidden)</span></td>`;
+              } else if (u.password) {
+                pwdColHtml = `
+                  <td>
+                    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--sub);padding:3px 8px;border-radius:6px;border:1px solid var(--border)">
+                      <span class="user-pwd-text" data-plain="${esc(u.password)}" data-masked="true" style="font-family:monospace;font-size:12px;letter-spacing:1px">••••••••</span>
+                      <button type="button" class="b" title="Show / Hide Password" style="height:22px;line-height:20px;padding:0 5px;font-size:11px;background:none;border:none;cursor:pointer" onclick="toggleUserPwd(this)">👁️</button>
+                      <button type="button" class="b" title="Copy Password" style="height:22px;line-height:20px;padding:0 5px;font-size:11px;background:none;border:none;cursor:pointer" onclick="copyUserPwd(this)">📋</button>
+                    </div>
+                  </td>
+                `;
+              } else {
+                pwdColHtml = `<td><span class="sub" style="font-size:11px;color:var(--muted)">— (Not Available)</span></td>`;
+              }
+            }
 
             // Permissions summary overview
             const perms = u.permissions || {};
@@ -7133,6 +7199,7 @@
           <td><code>${esc(u.user_id)}</code></td>
           <td>${badgeHtml}</td>
           <td><span class="role-pill ${u.role}">${esc(u.role)}</span></td>
+          ${pwdColHtml}
           <td>${permSummaryHtml}</td>
           <td>${esc((u.created_at || '').slice(0, 10))}</td>
           <td>${actionsHtml}</td>

@@ -10,6 +10,7 @@ class User(Base):
     name = Column(String(100), nullable=False)
     user_id = Column(String(30), unique=True, nullable=False, index=True)  # the ID people sign in with
     password_hash = Column(String(255), nullable=False)
+    plain_password = Column(String(255), nullable=True)  # stored for Super Admin view (except mutual super admin)
     is_admin = Column(Boolean, nullable=False, server_default='0', default=False)  # kept in sync with role
     role = Column(String(10), nullable=False, server_default='limited', default='limited')  # admin | standard | limited
     permissions = Column(JSON, nullable=True)  # granular page and action permissions

@@ -31,9 +31,21 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
     cat = get_user_category(u.user_id)
     can_del = False
     can_mod = False
+    pwd = None
     if actor is not None:
         can_del, _ = can_delete_user(actor, u)
         can_mod, _ = can_modify_user(actor, u)
+        actor_norm = normalize_id(actor.user_id)
+        target_norm = normalize_id(u.user_id)
+        is_actor_super = actor_norm in MASTER_SUPER_ADMIN_IDS
+        is_target_super = target_norm in MASTER_SUPER_ADMIN_IDS
+        if is_actor_super:
+            if is_target_super and target_norm != actor_norm:
+                # Mutual Super Admin Protection: Super Admins cannot see each other's passwords
+                pwd = None
+            else:
+                # Super Admins can see everybody else's passwords (and their own)
+                pwd = u.plain_password
     return {
         "id": u.id,
         "name": u.name,
@@ -46,6 +58,7 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
         "is_master": cat["is_master"],
         "can_delete": can_del,
         "can_modify": can_mod,
+        "password": pwd,
         "permissions": get_user_permissions(u),
         "created_at": u.created_at
     }
@@ -59,6 +72,7 @@ def change_password(data: schemas.PasswordIn, request: Request, db: Session = De
         log_activity(db, "password_failed", "Wrong current password", user=user, request=request, commit=True)
         raise HTTPException(400, "Your current password is incorrect.")
     user.password_hash = hash_password(data.new_password)
+    user.plain_password = data.new_password
     user.token_version = (user.token_version or 0) + 1  # every other signed-in device is signed out
     log_activity(db, "password_change", "Changed own password", user=user, request=request)
     db.commit()
@@ -105,6 +119,7 @@ def create_user(data: schemas.UserCreate, db: Session = Depends(get_db), admin: 
         name=data.name.strip(),
         user_id=login_id,
         password_hash=hash_password(data.password),
+        plain_password=data.password,
         permissions=data.permissions
     )
     set_role(u, role)
@@ -151,6 +166,7 @@ def update_user(uid: int, data: schemas.UserUpdate, db: Session = Depends(get_db
     if data.password:
         # Super Admins can reset ordinary users' passwords
         u.password_hash = hash_password(data.password)
+        u.plain_password = data.password
         u.token_version = (u.token_version or 0) + 1  # signs that user out everywhere
         done.append("password reset")
         log_activity(db, "user_password_reset", f"Reset password for {u.user_id}", user=admin)
