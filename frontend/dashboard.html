@@ -2332,29 +2332,8 @@
                 <select id="colMapMsisdn2" style="font-size:13px;width:100%;margin-top:4px"></select>
               </div>
               <div class="sim-map-card">
-                <label for="simTargetCustSelect" style="font-size:12px;font-weight:600">📁 Customer for New Inserts</label>
-                <select id="simTargetCustSelect" style="font-size:13px;width:100%;margin-top:4px"></select>
-              </div>
-            </div>
-
-            <!-- Select Additional Columns to Add to Database & Website -->
-            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-                <div>
-                  <h4 style="margin:0 0 2px;font-size:13.5px;display:flex;align-items:center;gap:6px">
-                    <span>📋</span> <span>Select Columns to Add / Update in Database & Website</span>
-                  </h4>
-                  <p class="sub" style="margin:0;font-size:11.5px">
-                    Choose which columns from this file to store in the database and customer tables on the website:
-                  </p>
-                </div>
-                <div style="display:flex;gap:8px">
-                  <button type="button" class="b" id="btnSimSelectAllCols" style="height:26px;font-size:11px;padding:0 10px">Select All Columns</button>
-                  <button type="button" class="b" id="btnSimClearCols" style="height:26px;font-size:11px;padding:0 10px">Reset to Defaults</button>
-                </div>
-              </div>
-              <div id="simExtraColumnsList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:10px;min-height:48px">
-                <span style="font-size:12px;color:var(--muted)">Upload a SIM file above to view and select available columns.</span>
+                <label for="colMapSimProvider" style="font-size:12px;font-weight:600">📡 SIM Provider Column</label>
+                <select id="colMapSimProvider" style="font-size:13px;width:100%;margin-top:4px"></select>
               </div>
             </div>
 
@@ -2366,7 +2345,7 @@
                   <span>🔍</span> <span>Step 2: Validate Rows against Database</span>
                 </div>
                 <div style="font-size:12.5px;color:var(--muted);margin-top:4px">
-                  File upload complete and columns mapped. Click <b>Validate Rows against Database</b> to check matching records and find differences.
+                  File upload complete and columns mapped. Click <b>Validate Rows against Database</b> to check matching customer records and find differences.
                 </div>
               </div>
               <button type="button" class="b p" id="btnRunSimCompare"
@@ -2410,7 +2389,7 @@
             </div>
             <div class="card stat" style="border-left:4px solid #38bdf8;padding:14px">
               <b id="kpiSimMatched" style="font-size:22px">0</b>
-              <span style="font-size:12px;color:var(--muted)">Records Matched</span>
+              <span style="font-size:12px;color:var(--muted)">Found in Customers</span>
             </div>
             <div class="card stat" style="border-left:4px solid var(--warn);padding:14px">
               <b id="kpiSimToUpdate" style="font-size:22px">0</b>
@@ -2420,9 +2399,11 @@
               <b id="kpiSimAlreadySame" style="font-size:22px">0</b>
               <span style="font-size:12px;color:var(--ok);font-weight:700">Already Identical (Keep)</span>
             </div>
-            <div class="card stat" style="border-left:4px solid #10b981;background:rgba(16,185,129,0.06);padding:14px">
-              <b id="kpiSimCanInsert" style="font-size:24px;color:#059669">0</b>
-              <span style="font-size:12px;color:#059669;font-weight:800">✨ Can Insert (New Records)</span>
+            <div class="card stat" style="border-left:4px solid #ef4444;background:rgba(239,68,68,0.06);padding:14px">
+              <b id="kpiSimNotFound" style="font-size:24px;color:#dc2626">0</b>
+              <span style="font-size:12px;color:#dc2626;font-weight:800">⚠️ ICCID Not Found (Will NOT Upload)</span>
+              <!-- backward compatibility hidden span -->
+              <span id="kpiSimCanInsert" style="display:none">0</span>
             </div>
           </div>
 
@@ -2431,70 +2412,31 @@
             style="background:var(--card-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:14px 0;font-size:12.5px"
             hidden></div>
 
-          <!-- Interactive Action Selection & Apply Box -->
+          <!-- Upload Execution Box (Strictly updates matching records; never uploads unknown ICCIDs) -->
           <div id="simActionSelectCard" style="background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0">
-            <div style="font-size:13.5px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-              <div style="display:flex;align-items:center;gap:8px">
-                <span>🎯</span> <span>Select Desired Action to Apply to Database & Website:</span>
-              </div>
-              <span id="simPushMsg" style="font-size:12.5px;color:var(--muted);font-weight:600"></span>
-            </div>
-
             <!-- Smart Sync explanation banner -->
-            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:10px">
-              <span style="font-size:16px">🟢</span>
-              <span><b>Smart Sync:</b> Already same / identical values in the database are <b>automatically ignored and preserved untouched</b>. Only differing values are replaced, and new records are inserted.</span>
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:12px">
+              <span style="font-size:22px">🛡️</span>
+              <div>
+                <b style="font-size:13.5px">Customer Verification Rule:</b>
+                <div style="margin-top:2px;color:var(--muted);font-size:12px;line-height:1.4">
+                  Only rows where the ICCID is found in an existing customer will be updated. Differing values will be replaced, and identical values will remain untouched. <b>Any ICCID not found in customer accounts will NOT be uploaded.</b>
+                </div>
+              </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px">
-              <!-- Option 1: Replace Differing Records Only -->
-              <label class="sim-action-opt" id="optWrapReplace" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
-                <div style="display:flex;align-items:center;gap:8px">
-                  <input type="radio" name="simActionChoice" id="simOptReplace" value="update_only" style="cursor:pointer" />
-                  <span style="font-weight:700;font-size:13px;color:var(--ink)">🚀 Replace Differing Only</span>
-                </div>
-                <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
-                  Updates <b id="optCountReplace" style="color:var(--warn)">0</b> differing records. Identical values are ignored.
-                </span>
-              </label>
-
-              <!-- Option 2: Insert New Entries Only -->
-              <label class="sim-action-opt" id="optWrapInsert" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
-                <div style="display:flex;align-items:center;gap:8px">
-                  <input type="radio" name="simActionChoice" id="simOptInsert" value="insert_only" style="cursor:pointer" />
-                  <span style="font-weight:700;font-size:13px;color:var(--ok)">➕ Insert New Records Only</span>
-                </div>
-                <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
-                  Inserts <b id="optCountInsert" style="color:var(--ok)">0</b> new entries that do not exist into customer table.
-                </span>
-              </label>
-
-              <!-- Option 3: Both Replace & Insert -->
-              <label class="sim-action-opt" id="optWrapBoth" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--primary);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
-                <div style="display:flex;align-items:center;gap:8px">
-                  <input type="radio" name="simActionChoice" id="simOptBoth" value="both" checked style="cursor:pointer" />
-                  <span style="font-weight:700;font-size:13px;color:var(--primary)">⚡ Upload & Push All (Ignore Same Values)</span>
-                </div>
-                <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
-                  Replaces <b id="optCountBothReplace" style="color:var(--warn)">0</b> differing & inserts <b id="optCountBothInsert" style="color:var(--ok)">0</b> new records. <b>Same values are ignored.</b>
-                </span>
-              </label>
-            </div>
-
-            <!-- Target Customer and Execution Button -->
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);flex-wrap:wrap;gap:12px">
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-                <span style="font-size:12.5px;font-weight:700;color:var(--ink)">Target Customer:</span>
-                <select id="simTargetCustSelect" style="font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:600;min-width:200px"></select>
-                <span style="font-size:11.5px;color:var(--muted)">New entries will be saved under this customer table.</span>
+            <!-- Execution Action Bar -->
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+              <div>
+                <span id="simPushMsg" style="font-size:13px;font-weight:700;color:var(--ink)"></span>
               </div>
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                 <button class="b p" id="btnExecuteSelectedAction" type="button"
-                  style="font-size:13.5px;padding:0 22px;height:42px;font-weight:800;display:inline-flex;align-items:center;gap:8px;background:var(--ok);border-color:var(--ok)">
-                  <span id="btnExecuteIcon">➕</span> <span id="btnExecuteSelectedActionText">Insert New Records & Update Database</span>
+                  style="font-size:13.5px;padding:0 24px;height:42px;font-weight:800;display:inline-flex;align-items:center;gap:8px;background:var(--ok);border-color:var(--ok)">
+                  <span id="btnExecuteIcon">🚀</span> <span id="btnExecuteSelectedActionText">Upload & Update SIM Data (Matched Records)</span>
                 </button>
                 <button class="b" id="btnSimDlNotFound" type="button" style="height:42px;display:inline-flex;align-items:center;gap:6px">
-                  <span>📥</span> <span>Download NOT FOUND (Excel)</span>
+                  <span>📥</span> <span>Download NOT FOUND ICCIDs (Excel)</span>
                 </button>
               </div>
             </div>
@@ -2520,35 +2462,143 @@
             </div>
           </div>
 
-          <!-- Live Comparison & Diff Viewer Table -->
-          <div class="card" style="padding:16px;border:1px solid var(--line);border-radius:12px;margin:16px 0">
-            <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+          <!-- Step 2 Before-Upload Comparison Tabs & Viewer -->
+          <div class="card" id="simBeforeUploadCard" style="padding:16px;border:1px solid var(--line);border-radius:12px;margin:16px 0">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--line);padding-bottom:12px">
               <div>
                 <h4 style="margin:0;display:flex;align-items:center;gap:6px;font-size:15px">
-                  <span>🔍</span> <span>Field Comparison & Live Diff Inspector</span>
+                  <span>🔍</span> <span>Comparison Before Uploading SIM Data</span>
                 </h4>
-                <span class="sub" style="font-size:12px">Comparing Activation Date, Expiry Date, MSISDN1, and MSISDN2. Identical values remain unchanged; differing values will be replaced.</span>
+                <span class="sub" style="font-size:12px">Review matched customer records and verify differing values before applying changes to the database.</span>
               </div>
-              <div style="display:flex;gap:6px;background:var(--bg);padding:4px;border-radius:8px;border:1px solid var(--line)">
-                <button type="button" class="b on" id="btnDiffFilterAll" style="padding:5px 12px;font-size:12px;border-radius:6px">
-                  All Records (<span id="cntDiffFilterAll">0</span>)
+              <div class="subtabs" style="display:inline-flex;background:var(--bg);padding:4px;border-radius:8px;border:1px solid var(--line);gap:4px">
+                <button type="button" class="subtab on" id="tabSimCompMatched" style="padding:6px 14px;font-size:12px;font-weight:700">
+                  Matched in Customers (<span id="cntCompMatchedTab">0</span>)
                 </button>
-                <button type="button" class="b" id="btnDiffFilterUpd" style="padding:5px 12px;font-size:12px;border-radius:6px;color:var(--warn)">
-                  ⚡ Differing (<span id="cntDiffFilterUpd">0</span>)
+                <button type="button" class="subtab" id="tabSimCompNotFound" style="padding:6px 14px;font-size:12px;font-weight:700;color:var(--danger)">
+                  ⚠️ ICCIDs Not Found (<span id="cntCompNotFoundTab">0</span>)
                 </button>
-                <button type="button" class="b" id="btnDiffFilterSame" style="padding:5px 12px;font-size:12px;border-radius:6px;color:var(--ok)">
-                  🟢 Identical (<span id="cntDiffFilterSame">0</span>)
+                <button type="button" class="subtab" id="tabSimCompBreakdown" style="padding:6px 14px;font-size:12px;font-weight:700">
+                  🏢 Customer Breakdown
                 </button>
               </div>
             </div>
-            <div id="simComparisonTableWrap" style="max-height:440px;overflow:auto"></div>
+
+            <!-- Sub-view 1: Matched in Customers -->
+            <div id="viewSimCompMatched">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+                <span style="font-size:12px;color:var(--muted)">Comparing Activation Date, Expiry Date, MSISDN1, MSISDN2, and SIM Provider.</span>
+                <div style="display:flex;gap:6px">
+                  <button type="button" class="b on" id="btnDiffFilterAll" style="padding:4px 10px;font-size:11.5px">All Matched (<span id="cntDiffFilterAll">0</span>)</button>
+                  <button type="button" class="b" id="btnDiffFilterUpd" style="padding:4px 10px;font-size:11.5px;color:var(--warn)">⚡ Differing (<span id="cntDiffFilterUpd">0</span>)</button>
+                  <button type="button" class="b" id="btnDiffFilterSame" style="padding:4px 10px;font-size:11.5px;color:var(--ok)">🟢 Identical (<span id="cntDiffFilterSame">0</span>)</button>
+                </div>
+              </div>
+              <div id="simComparisonTableWrap" style="max-height:440px;overflow:auto"></div>
+            </div>
+
+            <!-- Sub-view 2: ICCIDs Not Found -->
+            <div id="viewSimCompNotFound" hidden>
+              <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:20px">⚠️</span>
+                  <span style="font-size:12.5px;color:var(--danger);font-weight:600">
+                    The following <b id="cntNotFoundBanner">0</b> ICCIDs were <b>NOT found in any customer</b>. They will <b>NOT be uploaded</b> to the database or customer tables.
+                  </span>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <button type="button" class="b" id="btnCopyNotFoundIccids" style="height:30px;font-size:12px">📋 Copy Not Found ICCIDs</button>
+                  <button type="button" class="b" id="btnDlNotFoundView" style="height:30px;font-size:12px">📥 Download (Excel)</button>
+                </div>
+              </div>
+              <div id="simNotFoundTableWrap" style="max-height:440px;overflow:auto"></div>
+            </div>
+
+            <!-- Sub-view 3: Customer Impact Breakdown -->
+            <div id="viewSimCompBreakdown" hidden>
+              <div id="simCustomerTableWrap" style="max-height:360px;overflow:auto"></div>
+            </div>
           </div>
 
-          <!-- Customer Breakdown Table -->
-          <div class="card" style="padding:16px;border:1px solid var(--line);border-radius:12px;margin:16px 0">
-            <h4 style="margin:0 0 4px">Customer Impact Breakdown</h4>
-            <span class="sub" style="font-size:12px;display:block;margin-bottom:10px">Matches and pending field changes per customer database table.</span>
-            <div id="simCustomerTableWrap" style="max-height:280px;overflow:auto"></div>
+          <!-- =========================================================================
+               STEP 3: POST-UPLOAD COMPARISON & RESULTS (After Uploading SIM Data)
+               ========================================================================= -->
+          <div id="simPostUploadResults" class="card" style="padding:20px;border:2px solid var(--ok);border-radius:14px;margin:20px 0;background:var(--card)" hidden>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:14px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span style="font-size:26px">🎉</span>
+                <div>
+                  <h3 style="margin:0;font-size:17px;color:var(--ok)">SIM Data Upload Complete & Comparison Verified</h3>
+                  <p class="sub" style="margin:2px 0 0;font-size:12.5px" id="simPostUploadSub">
+                    Changes have been successfully committed to the database and mirrored to customer website tables.
+                  </p>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button type="button" class="b p" id="btnDownloadPostUploadReport"
+                  style="background:var(--ok);border-color:var(--ok);height:38px;padding:0 18px;font-weight:700;display:inline-flex;align-items:center;gap:6px">
+                  <span>📥</span> <span>Download Post-Upload Comparison (Excel)</span>
+                </button>
+                <button type="button" class="b" id="btnSimUploadAnother" style="height:38px;padding:0 16px">
+                  <span>🔄</span> <span>Upload Another File</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4 Post-Upload KPI Counters -->
+            <div class="stats" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:16px">
+              <div class="card stat" style="border-left:4px solid var(--primary);padding:14px">
+                <b id="kpiPostTotalRows" style="font-size:22px">0</b>
+                <span style="font-size:12px;color:var(--muted)">File Rows Processed</span>
+              </div>
+              <div class="card stat" style="border-left:4px solid var(--ok);background:rgba(16,185,129,0.06);padding:14px">
+                <b id="kpiPostUpdated" style="font-size:24px;color:var(--ok)">0</b>
+                <span style="font-size:12px;color:var(--ok);font-weight:800">✅ Updated in Database</span>
+              </div>
+              <div class="card stat" style="border-left:4px solid #38bdf8;padding:14px">
+                <b id="kpiPostAlreadySame" style="font-size:22px">0</b>
+                <span style="font-size:12px;color:var(--muted)">🟢 Kept Identical</span>
+              </div>
+              <div class="card stat" style="border-left:4px solid #ef4444;background:rgba(239,68,68,0.06);padding:14px">
+                <b id="kpiPostNotFound" style="font-size:24px;color:#dc2626">0</b>
+                <span style="font-size:12px;color:#dc2626;font-weight:800">⚠️ Skipped (Not Found)</span>
+              </div>
+            </div>
+
+            <!-- Post-Upload View Switcher Tabs -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+              <div class="subtabs" style="display:inline-flex;background:var(--bg);padding:4px;border-radius:8px;border:1px solid var(--line);gap:4px">
+                <button type="button" class="subtab on" id="tabPostDiffUpdated" style="padding:6px 14px;font-size:12px;font-weight:700">
+                  📊 After-Upload Comparison (<span id="cntPostUpdatedTab">0</span>)
+                </button>
+                <button type="button" class="subtab" id="tabPostDiffNotFound" style="padding:6px 14px;font-size:12px;font-weight:700;color:var(--danger)">
+                  ⚠️ Skipped - Not Found ICCIDs (<span id="cntPostNotFoundTab">0</span>)
+                </button>
+                <button type="button" class="subtab" id="tabPostDiffBefore" style="padding:6px 14px;font-size:12px;font-weight:700">
+                  🔍 Before-Upload Preview
+                </button>
+              </div>
+              <div id="postDiffFilterGroup" style="display:flex;gap:6px">
+                <button type="button" class="b on" id="btnPostFilterAll" style="padding:4px 10px;font-size:11.5px">All Matched (<span id="cntPostFilterAll">0</span>)</button>
+                <button type="button" class="b" id="btnPostFilterUpd" style="padding:4px 10px;font-size:11.5px;color:var(--ok)">✅ Differing Updated (<span id="cntPostFilterUpd">0</span>)</button>
+                <button type="button" class="b" id="btnPostFilterSame" style="padding:4px 10px;font-size:11.5px;color:var(--muted)">🟢 Kept Same (<span id="cntPostFilterSame">0</span>)</button>
+              </div>
+            </div>
+
+            <!-- Post-Upload Tab 1: Comparison Table -->
+            <div id="viewPostDiffUpdated">
+              <div id="simPostComparisonTableWrap" style="max-height:480px;overflow:auto"></div>
+            </div>
+
+            <!-- Post-Upload Tab 2: Skipped Not Found Table -->
+            <div id="viewPostDiffNotFound" hidden>
+              <div id="simPostNotFoundTableWrap" style="max-height:480px;overflow:auto"></div>
+            </div>
+
+            <!-- Post-Upload Tab 3: Before Upload Copy -->
+            <div id="viewPostDiffBefore" hidden>
+              <div id="simPostBeforeTableWrap" style="max-height:480px;overflow:auto"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -5634,6 +5684,8 @@
       let simDebounceTimer = null; // Debounce timer for auto-check (~250ms)
       let currentSimMatchMode = 'iccid'; // 'iccid' | 'imei'
       let simDiffFilterMode = 'all'; // 'all' | 'updated' | 'same'
+      let simPostFilterMode = 'all'; // 'all' | 'updated' | 'same'
+      let simLastPostUploadResult = null; // Stored results after upload for post-upload filtering/export
 
       function initSimDataContainer() {
         if ($('simRoleAlert')) $('simRoleAlert').hidden = true;
@@ -5671,61 +5723,30 @@
             simRawFileRows = [];
             simDetectedHeaders = [];
             simActiveCheckResult = null;
+            simLastPostUploadResult = null;
             if ($('simConfigCard')) $('simConfigCard').hidden = true;
             if ($('simCheckResults')) $('simCheckResults').hidden = true;
+            if ($('simPostUploadResults')) $('simPostUploadResults').hidden = true;
             if ($('simDropzone')) $('simDropzone').hidden = false;
             if ($('simFileInput')) $('simFileInput').value = '';
           };
         }
 
-        // Populate target customer selector for new SIM inserts
-        const populateSimTargetCust = () => {
-          const sel = $('simTargetCustSelect');
-          if (!sel) return;
-          const cur = sel.value;
-          const opts = (CU || []).map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
-          sel.innerHTML = `<option value="General_Customer">General_Customer (Default)</option>` + opts;
-          if (cur) sel.value = cur;
-        };
-        populateSimTargetCust();
-        window.refreshSimTargetCustDropdown = populateSimTargetCust;
-
         // Trigger auto-check whenever user changes options or mappings
-        ['colMapKey', 'colMapActDate', 'colMapExpDate', 'colMapMsisdn1', 'colMapMsisdn2', 'simProviderSelect', 'simTargetCustSelect'].forEach(id => {
+        ['colMapKey', 'colMapActDate', 'colMapExpDate', 'colMapMsisdn1', 'colMapMsisdn2', 'colMapSimProvider', 'simProviderSelect'].forEach(id => {
           const el = $(id);
-          if (el) el.onchange = () => {
-            if (typeof renderSimExtraColumnsCheckboxes === 'function' && simDetectedHeaders.length) {
-              renderSimExtraColumnsCheckboxes(simDetectedHeaders);
-            }
-            scheduleSimAutoCheck();
-          };
+          if (el) el.onchange = () => scheduleSimAutoCheck();
         });
         if ($('simOverwriteChk')) {
           $('simOverwriteChk').onchange = () => scheduleSimAutoCheck();
         }
 
-        // Column selection helper buttons
-        if ($('btnSimSelectAllCols')) {
-          $('btnSimSelectAllCols').onclick = () => {
-            (simDetectedHeaders || []).forEach(h => simSelectedExtraCols.add(h));
-            renderSimExtraColumnsCheckboxes(simDetectedHeaders);
-            scheduleSimAutoCheck(100);
-          };
-        }
-        if ($('btnSimClearCols')) {
-          $('btnSimClearCols').onclick = () => {
-            simSelectedExtraCols.clear();
-            renderSimExtraColumnsCheckboxes(simDetectedHeaders);
-            scheduleSimAutoCheck(100);
-          };
-        }
-
-        // Compare & Validate Records Button
+        // Compare & Validate Records Button (Step 2)
         if ($('btnRunSimCompare')) {
           $('btnRunSimCompare').onclick = () => runSimAutoCheck(true);
         }
 
-        // Comparison Filter Pills
+        // Comparison Filter Pills (Before Upload)
         if ($('btnDiffFilterAll')) {
           $('btnDiffFilterAll').onclick = () => setSimDiffFilter('all');
         }
@@ -5736,105 +5757,102 @@
           $('btnDiffFilterSame').onclick = () => setSimDiffFilter('same');
         }
 
-        // Action Choice Selector and Execute button wiring
-        const syncActionChoiceUI = () => {
-          const rReplace = $('simOptReplace');
-          const rInsert = $('simOptInsert');
-          const rBoth = $('simOptBoth');
-          const wReplace = $('optWrapReplace');
-          const wInsert = $('optWrapInsert');
-          const wBoth = $('optWrapBoth');
-          const btn = $('btnExecuteSelectedAction');
-          const btnText = $('btnExecuteSelectedActionText');
-          const btnIcon = $('btnExecuteIcon');
-
-          const choice = (rInsert && rInsert.checked) ? 'insert_only' : ((rReplace && rReplace.checked) ? 'update_only' : 'both');
-
-          if (wReplace) {
-            wReplace.style.borderColor = (choice === 'update_only') ? 'var(--warn)' : 'var(--line)';
-            wReplace.style.background = (choice === 'update_only') ? 'rgba(217,119,6,0.06)' : 'var(--card)';
-          }
-          if (wInsert) {
-            wInsert.style.borderColor = (choice === 'insert_only') ? 'var(--ok)' : 'var(--line)';
-            wInsert.style.background = (choice === 'insert_only') ? 'rgba(16,185,129,0.06)' : 'var(--card)';
-          }
-          if (wBoth) {
-            wBoth.style.borderColor = (choice === 'both') ? 'var(--primary)' : 'var(--line)';
-            wBoth.style.background = (choice === 'both') ? 'rgba(37,99,235,0.06)' : 'var(--card)';
-          }
-
-          if (btn && btnText && btnIcon) {
-            const notFound = (simActiveCheckResult ? (simActiveCheckResult.can_insert_count != null ? simActiveCheckResult.can_insert_count : (simActiveCheckResult.not_found_keys_count || 0)) : 0);
-            const toUpdate = (simActiveCheckResult ? (simActiveCheckResult.records_to_update || 0) : 0);
-            const targetCust = ($('simTargetCustSelect') && $('simTargetCustSelect').value) ? $('simTargetCustSelect').value : 'General_Customer';
-
-            if (choice === 'insert_only') {
-              btnIcon.textContent = '➕';
-              btnText.textContent = `Insert ${notFound.toLocaleString()} New Records into "${targetCust}"`;
-              btn.style.background = 'var(--ok)';
-              btn.style.borderColor = 'var(--ok)';
-              btn.disabled = (notFound === 0);
-            } else if (choice === 'update_only') {
-              btnIcon.textContent = '🚀';
-              btnText.textContent = `Replace ${toUpdate.toLocaleString()} Differing Records in Database`;
-              btn.style.background = 'var(--primary)';
-              btn.style.borderColor = 'var(--primary)';
-              btn.disabled = (toUpdate === 0);
-            } else {
-              btnIcon.textContent = '⚡';
-              btnText.textContent = `Replace Differing (${toUpdate}) & Insert New (${notFound})`;
-              btn.style.background = 'linear-gradient(135deg, #2563eb, #8b5cf6)';
-              btn.style.borderColor = '#2563eb';
-              btn.disabled = (toUpdate === 0 && notFound === 0);
-            }
-          }
+        // Step 2 Before-Upload Sub-tab Switcher
+        const switchSimCompTab = (tab) => {
+          ['tabSimCompMatched', 'tabSimCompNotFound', 'tabSimCompBreakdown'].forEach(id => {
+            if ($(id)) $(id).classList.toggle('on', id === tab);
+          });
+          if ($('viewSimCompMatched')) $('viewSimCompMatched').hidden = (tab !== 'tabSimCompMatched');
+          if ($('viewSimCompNotFound')) $('viewSimCompNotFound').hidden = (tab !== 'tabSimCompNotFound');
+          if ($('viewSimCompBreakdown')) $('viewSimCompBreakdown').hidden = (tab !== 'tabSimCompBreakdown');
         };
-        window.syncSimActionChoiceUI = syncActionChoiceUI;
+        if ($('tabSimCompMatched')) $('tabSimCompMatched').onclick = () => switchSimCompTab('tabSimCompMatched');
+        if ($('tabSimCompNotFound')) $('tabSimCompNotFound').onclick = () => switchSimCompTab('tabSimCompNotFound');
+        if ($('tabSimCompBreakdown')) $('tabSimCompBreakdown').onclick = () => switchSimCompTab('tabSimCompBreakdown');
 
-        ['simOptReplace', 'simOptInsert', 'simOptBoth'].forEach(id => {
-          const el = $(id);
-          if (el) el.onchange = syncActionChoiceUI;
-        });
-        ['optWrapReplace', 'optWrapInsert', 'optWrapBoth'].forEach(id => {
-          const el = $(id);
-          if (el) el.onclick = () => {
-            const radioId = id === 'optWrapReplace' ? 'simOptReplace' : (id === 'optWrapInsert' ? 'simOptInsert' : 'simOptBoth');
-            const r = $(radioId);
-            if (r) { r.checked = true; syncActionChoiceUI(); }
-          };
-        });
-        if ($('simTargetCustSelect')) {
-          $('simTargetCustSelect').onchange = syncActionChoiceUI;
+        // Step 3 Post-Upload Sub-tab Switcher
+        const switchPostUploadTab = (tab) => {
+          ['tabPostDiffUpdated', 'tabPostDiffNotFound', 'tabPostDiffBefore'].forEach(id => {
+            if ($(id)) $(id).classList.toggle('on', id === tab);
+          });
+          if ($('viewPostDiffUpdated')) $('viewPostDiffUpdated').hidden = (tab !== 'tabPostDiffUpdated');
+          if ($('viewPostDiffNotFound')) $('viewPostDiffNotFound').hidden = (tab !== 'tabPostDiffNotFound');
+          if ($('viewPostDiffBefore')) $('viewPostDiffBefore').hidden = (tab !== 'tabPostDiffBefore');
+          if ($('postDiffFilterGroup')) $('postDiffFilterGroup').style.display = (tab === 'tabPostDiffUpdated') ? 'flex' : 'none';
+        };
+        if ($('tabPostDiffUpdated')) $('tabPostDiffUpdated').onclick = () => switchPostUploadTab('tabPostDiffUpdated');
+        if ($('tabPostDiffNotFound')) $('tabPostDiffNotFound').onclick = () => switchPostUploadTab('tabPostDiffNotFound');
+        if ($('tabPostDiffBefore')) $('tabPostDiffBefore').onclick = () => switchPostUploadTab('tabPostDiffBefore');
+
+        // Post-Upload Filter Pills
+        if ($('btnPostFilterAll')) {
+          $('btnPostFilterAll').onclick = () => setSimPostFilter('all');
+        }
+        if ($('btnPostFilterUpd')) {
+          $('btnPostFilterUpd').onclick = () => setSimPostFilter('updated');
+        }
+        if ($('btnPostFilterSame')) {
+          $('btnPostFilterSame').onclick = () => setSimPostFilter('same');
         }
 
+        // Action Execution button
         if ($('btnExecuteSelectedAction')) {
-          $('btnExecuteSelectedAction').onclick = () => {
-            const rInsert = $('simOptInsert');
-            const rReplace = $('simOptReplace');
-            const choice = (rInsert && rInsert.checked) ? 'insert_only' : ((rReplace && rReplace.checked) ? 'update_only' : 'both');
-            executeSimPush(choice);
-          };
+          $('btnExecuteSelectedAction').onclick = () => executeSimPush();
         }
 
-        // Push / Insert action buttons (legacy / fallback)
-        if ($('btnSimPush')) {
-          $('btnSimPush').onclick = () => executeSimPush('update_only');
-        }
-        if ($('btnSimInsertNew')) {
-          $('btnSimInsertNew').onclick = () => executeSimPush('insert_only');
-        }
-        if ($('btnSimApplyBoth')) {
-          $('btnSimApplyBoth').onclick = () => executeSimPush('both');
-        }
+        // Download Not Found buttons
+        const downloadNotFoundExcel = () => {
+          if (!simActiveCheckResult || !simActiveCheckResult.not_found_records || !simActiveCheckResult.not_found_records.length) {
+            toast('No unmatched / not-found entries to download.');
+            return;
+          }
+          const headers = ['ICCID / CCID', 'MSISDN 1', 'MSISDN 2', 'Activation Date', 'Expiry Date', 'SIM Provider', 'Status'];
+          const rows = simActiveCheckResult.not_found_records.map(r => [
+            r.iccid, r.msisdn1 || '', r.msisdn2 || '', r.act_date || '', r.expiry_date || '', r.sim_provider || '', r.status || 'Not Found in Any Customer (Will NOT be uploaded)'
+          ]);
+          exportExcel('Not_Found_ICCIDs_SIM_Upload', headers, rows);
+        };
+        if ($('btnSimDlNotFound')) $('btnSimDlNotFound').onclick = downloadNotFoundExcel;
+        if ($('btnDlNotFoundView')) $('btnDlNotFoundView').onclick = downloadNotFoundExcel;
 
-        // Download Not Found button
-        if ($('btnSimDlNotFound')) {
-          $('btnSimDlNotFound').onclick = () => {
-            if (!simActiveCheckResult || !simActiveCheckResult.not_found_keys.length) {
-              toast('No unmatched entries to download.');
+        // Copy Not Found ICCIDs button
+        if ($('btnCopyNotFoundIccids')) {
+          $('btnCopyNotFoundIccids').onclick = () => {
+            const list = simActiveCheckResult && simActiveCheckResult.not_found_keys ? simActiveCheckResult.not_found_keys : [];
+            if (!list.length) {
+              toast('No not-found ICCIDs to copy.');
               return;
             }
-            exportExcel('Not_Found_SIM_Upload_Entries', ['NOT FOUND ICCID'], simActiveCheckResult.not_found_keys.map(i => [i]));
+            const text = list.join('\n');
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(text).then(() => {
+                toast(`Copied ${list.length.toLocaleString()} not-found ICCIDs to clipboard.`);
+              }).catch(() => {
+                prompt('Copy not-found ICCIDs:', text);
+              });
+            } else {
+              prompt('Copy not-found ICCIDs:', text);
+            }
+          };
+        }
+
+        // Download Post-Upload Comparison Report (Excel)
+        if ($('btnDownloadPostUploadReport')) {
+          $('btnDownloadPostUploadReport').onclick = () => {
+            if (!simLastPostUploadResult) {
+              toast('No post-upload data available.');
+              return;
+            }
+            exportSimPostUploadReportExcel(simLastPostUploadResult);
+          };
+        }
+
+        // Upload Another File button
+        if ($('btnSimUploadAnother')) {
+          $('btnSimUploadAnother').onclick = () => {
+            if ($('simResetFileBtn')) $('simResetFileBtn').click();
+            if ($('simPostUploadResults')) $('simPostUploadResults').hidden = true;
+            if ($('simDropzone')) $('simDropzone').scrollIntoView({ behavior: 'smooth' });
           };
         }
       }
@@ -5866,6 +5884,17 @@
 
         if (simActiveCheckResult && simActiveCheckResult.detailed_comparison) {
           renderSimComparisonTable(simActiveCheckResult.detailed_comparison, simDiffFilterMode);
+        }
+      }
+
+      function setSimPostFilter(filter) {
+        simPostFilterMode = filter;
+        if ($('btnPostFilterAll')) $('btnPostFilterAll').classList.toggle('on', filter === 'all');
+        if ($('btnPostFilterUpd')) $('btnPostFilterUpd').classList.toggle('on', filter === 'updated');
+        if ($('btnPostFilterSame')) $('btnPostFilterSame').classList.toggle('on', filter === 'same');
+
+        if (simLastPostUploadResult && simLastPostUploadResult.applied_comparison) {
+          renderSimPostComparisonTable(simLastPostUploadResult.applied_comparison, simPostFilterMode);
         }
       }
 
@@ -6015,7 +6044,6 @@
           setSimMatchMode('iccid');
 
           populateSimColumnDropdowns(simDetectedHeaders);
-          populateSimExtraColumns(simDetectedHeaders);
 
           $('simFileName').textContent = file.name;
           $('simFileSize').textContent = Math.round(file.size / 1024) + ' KB';
@@ -6131,79 +6159,20 @@
         return arranged;
       }
 
-      let simSelectedExtraCols = new Set();
-
-      function populateSimExtraColumns(headers) {
-        simSelectedExtraCols.clear();
-        const keyCol = $('colMapKey') ? $('colMapKey').value : '';
-        const m1 = $('colMapMsisdn1') ? $('colMapMsisdn1').value : '';
-        const m2 = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
-        const act = $('colMapActDate') ? $('colMapActDate').value : '';
-        const exp = $('colMapExpDate') ? $('colMapExpDate').value : '';
-        const standardCols = new Set([keyCol, m1, m2, act, exp].filter(Boolean));
-
-        (headers || []).forEach(h => {
-          if (h && !standardCols.has(h)) {
-            simSelectedExtraCols.add(h);
-          }
-        });
-
-        renderSimExtraColumnsCheckboxes(headers);
-      }
-
-      function renderSimExtraColumnsCheckboxes(headers) {
-        const wrap = $('simExtraColumnsList');
-        if (!wrap) return;
-        const keyCol = $('colMapKey') ? $('colMapKey').value : '';
-        const m1 = $('colMapMsisdn1') ? $('colMapMsisdn1').value : '';
-        const m2 = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
-        const act = $('colMapActDate') ? $('colMapActDate').value : '';
-        const exp = $('colMapExpDate') ? $('colMapExpDate').value : '';
-        const standardCols = new Set([keyCol, m1, m2, act, exp].filter(Boolean));
-
-        if (!headers || !headers.length) {
-          wrap.innerHTML = '<span style="font-size:12px;color:var(--muted)">No columns detected yet.</span>';
-          return;
-        }
-
-        wrap.innerHTML = headers.map(h => {
-          const isKey = (h === keyCol);
-          const isStandard = standardCols.has(h);
-          const isChecked = isKey || isStandard || simSelectedExtraCols.has(h);
-          const disabled = isKey ? 'disabled' : '';
-          const tag = isKey ? '<span style="color:var(--danger);font-weight:700"> (Key: ICCID/CCID)</span>' : (isStandard ? '<span style="color:var(--primary);font-weight:600"> (Standard Field)</span>' : '<span style="color:var(--ok);font-weight:600"> (Custom Column)</span>');
-
-          return `
-            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;background:var(--card);padding:6px 12px;border:1px solid ${isChecked ? 'var(--primary)' : 'var(--line)'};border-radius:20px;cursor:pointer;user-select:none">
-              <input type="checkbox" class="sim-col-chk" data-col="${esc(h)}" ${isChecked ? 'checked' : ''} ${disabled} style="margin:0;cursor:pointer" />
-              <span><b>${esc(h)}</b>${tag}</span>
-            </label>
-          `;
-        }).join('');
-
-        wrap.querySelectorAll('.sim-col-chk:not(:disabled)').forEach(chk => {
-          chk.onchange = () => {
-            const col = chk.dataset.col;
-            if (chk.checked) simSelectedExtraCols.add(col);
-            else simSelectedExtraCols.delete(col);
-            scheduleSimAutoCheck(150);
-          };
-        });
-      }
-
       function populateSimColumnDropdowns(headers) {
         const fields = [
           { id: 'colMapKey', fieldKey: 'key', required: true },
           { id: 'colMapActDate', fieldKey: 'act_date' },
           { id: 'colMapExpDate', fieldKey: 'exp_date' },
           { id: 'colMapMsisdn1', fieldKey: 'msisdn1' },
-          { id: 'colMapMsisdn2', fieldKey: 'msisdn2' }
+          { id: 'colMapMsisdn2', fieldKey: 'msisdn2' },
+          { id: 'colMapSimProvider', fieldKey: 'sim_provider' }
         ];
 
         fields.forEach(f => {
           const sel = $(f.id);
           if (!sel) return;
-          sel.innerHTML = `<option value="">-- None --</option>` + headers.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('');
+          sel.innerHTML = `<option value="">-- None (Do not update) --</option>` + headers.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('');
 
           let matchedCol = '';
           for (const h of headers) {
@@ -6329,6 +6298,7 @@
         const msisdn2Col = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
         const actDateCol = $('colMapActDate') ? $('colMapActDate').value : '';
         const expDateCol = $('colMapExpDate') ? $('colMapExpDate').value : '';
+        const providerCol = $('colMapSimProvider') ? $('colMapSimProvider').value : '';
         const chosenProvider = $('simProviderSelect') ? $('simProviderSelect').value : '';
         const overwrite = $('simOverwriteChk') ? $('simOverwriteChk').checked : true;
 
@@ -6368,7 +6338,6 @@
           if (progressCounts) progressCounts.textContent = `0 / ${simRawFileRows.length.toLocaleString()} rows`;
         }
 
-        const standardCols = new Set([keyCol, msisdn1Col, msisdn2Col, actDateCol, expDateCol].filter(Boolean));
         const payloadRows = [];
         let unreadableDatesCount = 0;
         let convertedDatesCount = 0;
@@ -6388,6 +6357,7 @@
           const m2 = msisdn2Col ? (rawObj[msisdn2Col] || '').trim() : '';
           const rawAct = actDateCol ? rawObj[actDateCol] : '';
           const rawExp = expDateCol ? rawObj[expDateCol] : '';
+          const rowProv = providerCol ? (rawObj[providerCol] || '').trim() : '';
 
           const actParsed = rawAct ? convertDateToStandardFormat(rawAct) : null;
           const expParsed = rawExp ? convertDateToStandardFormat(rawExp) : null;
@@ -6401,28 +6371,19 @@
             else unreadableDatesCount++;
           }
 
-          const extra = {};
-          (simSelectedExtraCols || []).forEach(col => {
-            if (!standardCols.has(col) && col !== keyCol) {
-              const v = rawObj[col] != null ? String(rawObj[col]).trim() : '';
-              if (v) extra[col] = v;
-            }
-          });
-
           payloadRows.push({
             iccid: rawKey,
             msisdn1: m1 || null,
             msisdn2: m2 || null,
             act_date: actParsed || null,
             expiry_date: expParsed || null,
-            sim_provider: chosenProvider || null,
-            extra: Object.keys(extra).length ? extra : null
+            sim_provider: rowProv || chosenProvider || null
           });
         });
 
         if (progressBar) progressBar.style.width = '25%';
         if (progressPct) progressPct.textContent = '25%';
-        if (progressDetail) progressDetail.textContent = 'Querying database to validate ICCID/CCID keys and compare records…';
+        if (progressDetail) progressDetail.textContent = 'Querying database to validate ICCID/CCID keys against customer records…';
 
         try {
           let aggregatedRes = null;
@@ -6432,6 +6393,7 @@
             let totalMatched = 0, totalToUpdate = 0, totalAlreadySame = 0, totalSkipped = 0, totalRepeated = 0;
             const notFoundSet = new Set();
             const allDetailed = [];
+            const allNotFoundRecords = [];
             const custBreakdownMap = {};
 
             for (let i = 0; i < payloadRows.length; i += chunkSize) {
@@ -6439,7 +6401,7 @@
               const pct = Math.min(94, Math.round(25 + ((i + chunk.length) / payloadRows.length) * 70));
               if (progressBar) progressBar.style.width = pct + '%';
               if (progressPct) progressPct.textContent = pct + '%';
-              if (progressDetail) progressDetail.textContent = `Comparing rows ${i + 1} to ${Math.min(i + chunkSize, payloadRows.length)} of ${payloadRows.length.toLocaleString()} against database (${pct}% complete)…`;
+              if (progressDetail) progressDetail.textContent = `Comparing rows ${i + 1} to ${Math.min(i + chunkSize, payloadRows.length)} of ${payloadRows.length.toLocaleString()} against customer database (${pct}% complete)…`;
               if (progressCounts) progressCounts.textContent = `${Math.min(i + chunkSize, payloadRows.length).toLocaleString()} / ${payloadRows.length.toLocaleString()} rows`;
 
               const chunkRes = await api('/api/simdata/check', {
@@ -6459,9 +6421,8 @@
               totalRepeated += (chunkRes.repeated_keys_count || 0);
 
               (chunkRes.not_found_keys || []).forEach(k => notFoundSet.add(k));
-              if (allDetailed.length < 500 && chunkRes.detailed_comparison) {
-                allDetailed.push(...chunkRes.detailed_comparison.slice(0, 500 - allDetailed.length));
-              }
+              if (chunkRes.not_found_records) allNotFoundRecords.push(...chunkRes.not_found_records);
+              if (chunkRes.detailed_comparison) allDetailed.push(...chunkRes.detailed_comparison);
 
               (chunkRes.customer_breakdown || []).forEach(cb => {
                 if (!custBreakdownMap[cb.customer_id]) {
@@ -6489,8 +6450,8 @@
               skipped_rows: totalSkipped,
               repeated_keys_count: totalRepeated,
               not_found_keys_count: notFoundSet.size,
-              can_insert_count: notFoundSet.size,
               not_found_keys: Array.from(notFoundSet),
+              not_found_records: allNotFoundRecords,
               customer_breakdown: Object.values(custBreakdownMap),
               detailed_comparison: allDetailed
             };
@@ -6513,12 +6474,12 @@
           const res = aggregatedRes;
           simActiveCheckResult = res;
 
-          const notFoundCount = (res.can_insert_count != null ? res.can_insert_count : (res.not_found_keys_count || 0));
+          const notFoundCount = (res.not_found_keys_count != null ? res.not_found_keys_count : (res.not_found_keys ? res.not_found_keys.length : 0));
 
           if (progressBar) progressBar.style.width = '100%';
           if (progressPct) progressPct.textContent = '100%';
           if (progressTitle) progressTitle.textContent = '✅ Step 2 Complete: Checked & Compared Against Database (100%)';
-          if (progressDetail) progressDetail.textContent = `Comparison complete: ${res.records_matched.toLocaleString()} matched in DB, ${res.records_to_update.toLocaleString()} differing to replace, ${notFoundCount.toLocaleString()} can be inserted into customer database.`;
+          if (progressDetail) progressDetail.textContent = `Comparison complete: ${res.records_matched.toLocaleString()} found in customers (${res.records_to_update.toLocaleString()} differing to replace, ${res.records_already_same.toLocaleString()} already identical). ${notFoundCount.toLocaleString()} ICCIDs not found (will NOT be uploaded).`;
           if (progressCounts) progressCounts.textContent = `${res.file_rows_count.toLocaleString()} / ${res.file_rows_count.toLocaleString()} rows checked (100%)`;
 
           $('kpiSimFileRows').textContent = res.file_rows_count.toLocaleString();
@@ -6526,35 +6487,30 @@
           $('kpiSimMatched').textContent = res.records_matched.toLocaleString();
           $('kpiSimToUpdate').textContent = res.records_to_update.toLocaleString();
           $('kpiSimAlreadySame').textContent = res.records_already_same.toLocaleString();
+          if ($('kpiSimNotFound')) $('kpiSimNotFound').textContent = notFoundCount.toLocaleString();
           if ($('kpiSimCanInsert')) $('kpiSimCanInsert').textContent = notFoundCount.toLocaleString();
 
-          // Populate Option Counts
-          if ($('optCountReplace')) $('optCountReplace').textContent = res.records_to_update.toLocaleString();
-          if ($('optCountInsert')) $('optCountInsert').textContent = notFoundCount.toLocaleString();
-          if ($('optCountBothReplace')) $('optCountBothReplace').textContent = res.records_to_update.toLocaleString();
-          if ($('optCountBothInsert')) $('optCountBothInsert').textContent = notFoundCount.toLocaleString();
+          // Button and message updates
+          if ($('btnExecuteSelectedActionText')) {
+            $('btnExecuteSelectedActionText').textContent = `Upload & Update SIM Data (${res.records_matched.toLocaleString()} Matched Records)`;
+          }
+          if ($('btnExecuteSelectedAction')) {
+            $('btnExecuteSelectedAction').disabled = (res.records_matched === 0);
+          }
 
-          // Auto-select the most appropriate action option based on comparison results
-          if (notFoundCount > 0 && res.records_to_update > 0) {
-            if ($('simOptBoth')) $('simOptBoth').checked = true;
-          } else if (notFoundCount > 0) {
-            if ($('simOptInsert')) $('simOptInsert').checked = true;
-          } else {
-            if ($('simOptReplace')) $('simOptReplace').checked = true;
-          }
-          if (typeof window.syncSimActionChoiceUI === 'function') {
-            window.syncSimActionChoiceUI();
-          }
+          if ($('cntCompMatchedTab')) $('cntCompMatchedTab').textContent = res.records_matched.toLocaleString();
+          if ($('cntCompNotFoundTab')) $('cntCompNotFoundTab').textContent = notFoundCount.toLocaleString();
+          if ($('cntNotFoundBanner')) $('cntNotFoundBanner').textContent = notFoundCount.toLocaleString();
 
           const notes = [];
           if (res.skipped_rows > 0) {
             notes.push(`• <b>${res.skipped_rows} rows skipped:</b> ${keyLabel} was missing or too short.`);
           }
           if (res.repeated_keys_count > 0) {
-            notes.push(`• <b>${res.repeated_keys_count} duplicate ${keyLabel}s in file:</b> earlier rows were preserved; duplicates will not be inserted twice.`);
+            notes.push(`• <b>${res.repeated_keys_count} duplicate ${keyLabel}s in file:</b> earlier rows were preserved; duplicates will not be processed twice.`);
           }
           if (notFoundCount > 0) {
-            notes.push(`• ✨ <b>${notFoundCount.toLocaleString()} new ${keyLabel}s can be inserted:</b> ready to be added into customer database & website tables.`);
+            notes.push(`• ⚠️ <b>${notFoundCount.toLocaleString()} ICCIDs NOT found:</b> these do not belong to any customer and will <b>NOT</b> be uploaded.`);
           }
           if (convertedDatesCount > 0) {
             notes.push(`• <b>${convertedDatesCount} dates successfully converted</b> into standard YYYY-MM-DD format.`);
@@ -6569,12 +6525,12 @@
             $('simNotesBox').hidden = true;
           }
 
-          if (res.records_to_update > 0 || notFoundCount > 0) {
-            $('simPushMsg').textContent = `${res.records_to_update.toLocaleString()} records differ; ${notFoundCount.toLocaleString()} ready to insert.`;
-            $('simPushMsg').style.color = 'var(--ok)';
+          if (res.records_matched > 0) {
+            $('simPushMsg').innerHTML = `<b>${res.records_matched.toLocaleString()}</b> matched in customers (<b>${res.records_to_update.toLocaleString()}</b> will update, <b>${res.records_already_same.toLocaleString()}</b> already identical). <b>${notFoundCount.toLocaleString()}</b> not found (skipped).`;
+            $('simPushMsg').style.color = 'var(--ink)';
           } else {
-            $('simPushMsg').textContent = `All ${res.records_matched.toLocaleString()} matched records already have identical values in database.`;
-            $('simPushMsg').style.color = 'var(--muted)';
+            $('simPushMsg').innerHTML = `⚠️ None of the ${res.file_rows_count.toLocaleString()} ICCIDs in the file were found in any customer account. Nothing will be uploaded.`;
+            $('simPushMsg').style.color = 'var(--danger)';
           }
 
           if ($('btnSimDlNotFound')) $('btnSimDlNotFound').disabled = (notFoundCount === 0);
@@ -6586,6 +6542,7 @@
           if ($('cntDiffFilterSame')) $('cntDiffFilterSame').textContent = compList.filter(c => c.status === 'same').length;
 
           renderSimComparisonTable(compList, simDiffFilterMode);
+          renderSimNotFoundTable(res.not_found_records || [], 'simNotFoundTableWrap');
           renderSimCustomerBreakdown(res.customer_breakdown || []);
 
           $('simCheckResults').hidden = false;
@@ -6600,15 +6557,14 @@
 
           showEventPopup({
             type: 'uploading',
-            title: 'Rows Validated Against Database (Step 2)',
-            message: `Validation complete: ${res.records_matched.toLocaleString()} matching records found in our database (${res.records_to_update.toLocaleString()} differing to update, ${res.records_already_same.toLocaleString()} already identical/same value). ${notFoundCount.toLocaleString()} new records ready to insert.`,
+            title: 'Rows Validated Against Customer Records (Step 2)',
+            message: `Validation complete: ${res.records_matched.toLocaleString()} customer records matched (${res.records_to_update.toLocaleString()} differing to update, ${res.records_already_same.toLocaleString()} already identical). ${notFoundCount.toLocaleString()} ICCIDs were NOT found in any customer and will NOT be uploaded.`,
             meta: {
               'Total File Rows': res.file_rows_count,
-              'Matched in DB': res.records_matched,
+              'Found in Customers': res.records_matched,
               'Differing (To Update)': res.records_to_update,
-              'Already Same (Ignored)': res.records_already_same,
-              'Can Insert into DB': notFoundCount,
-              'Columns Selected': (simSelectedExtraCols.size + 1)
+              'Already Identical (Kept)': res.records_already_same,
+              'ICCIDs Not Found (Will NOT Upload)': notFoundCount
             },
             progress: '100% Validated'
           });
@@ -6660,13 +6616,14 @@
 
           return `
             <tr style="${isUpd ? 'background:rgba(217,119,6,0.03)' : ''}">
+              <td><span style="font-size:12px;font-weight:700;color:var(--ink)">${esc(r.customer_name || '—')}</span></td>
               <td><b>${esc(r.imei || '—')}</b></td>
-              <td>${esc(r.iccid || '—')}</td>
-              <td><span style="font-size:12px;font-weight:600;color:var(--ink)">${esc(r.customer_name)}</span></td>
+              <td><code>${esc(r.iccid || '—')}</code></td>
               <td>${formatCell(r.act_date)}</td>
               <td>${formatCell(r.expiry_date)}</td>
               <td>${formatCell(r.msisdn1)}</td>
               <td>${formatCell(r.msisdn2)}</td>
+              <td>${formatCell(r.sim_provider)}</td>
               <td>${statusBadge}</td>
             </tr>
           `;
@@ -6676,14 +6633,58 @@
           <table class="data-table" style="font-size:12px">
             <thead>
               <tr>
+                <th>Customer Name</th>
                 <th>IMEI</th>
                 <th>ICCID</th>
-                <th>Customer Name</th>
                 <th>Activation Date</th>
                 <th>Expiry Date</th>
                 <th>MSISDN 1</th>
                 <th>MSISDN 2</th>
+                <th>SIM Provider</th>
                 <th>Comparison Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function renderSimNotFoundTable(records, targetElementId = 'simNotFoundTableWrap') {
+        const wrap = $(targetElementId);
+        if (!wrap) return;
+
+        if (!records || !records.length) {
+          wrap.innerHTML = '<div class="empty" style="color:var(--ok);font-weight:700">✅ All ICCIDs in the uploaded file were found in existing customer accounts!</div>';
+          return;
+        }
+
+        const rows = records.map((r, idx) => `
+          <tr style="background:rgba(239,68,68,0.02)">
+            <td style="color:var(--muted);font-size:11px">${idx + 1}</td>
+            <td><b style="color:var(--danger);font-family:monospace">${esc(r.iccid || '—')}</b></td>
+            <td>${esc(r.msisdn1 || '—')}</td>
+            <td>${esc(r.msisdn2 || '—')}</td>
+            <td>${esc(r.act_date || '—')}</td>
+            <td>${esc(r.expiry_date || '—')}</td>
+            <td>${esc(r.sim_provider || '—')}</td>
+            <td><span class="badge" style="background:rgba(239,68,68,0.1);color:var(--danger);font-weight:700">❌ Not Found in Any Customer (Will NOT Upload)</span></td>
+          </tr>
+        `).join('');
+
+        wrap.innerHTML = `
+          <table class="data-table" style="font-size:12px">
+            <thead>
+              <tr>
+                <th style="width:40px">#</th>
+                <th>ICCID / CCID (Not Found)</th>
+                <th>MSISDN 1</th>
+                <th>MSISDN 2</th>
+                <th>Activation Date</th>
+                <th>Expiry Date</th>
+                <th>SIM Provider</th>
+                <th>Upload Status</th>
               </tr>
             </thead>
             <tbody>
@@ -6751,7 +6752,7 @@
         `;
       }
 
-      async function executeSimPush(action = 'update_only') {
+      async function executeSimPush() {
         if (!simActiveCheckResult) return;
 
         const keyCol = $('colMapKey') ? $('colMapKey').value : '';
@@ -6759,28 +6760,25 @@
         const msisdn2Col = $('colMapMsisdn2') ? $('colMapMsisdn2').value : '';
         const actDateCol = $('colMapActDate') ? $('colMapActDate').value : '';
         const expDateCol = $('colMapExpDate') ? $('colMapExpDate').value : '';
-        const altCol = $('colMapIccidAlt') ? $('colMapIccidAlt').value : '';
+        const providerCol = $('colMapSimProvider') ? $('colMapSimProvider').value : '';
         const chosenProvider = $('simProviderSelect') ? $('simProviderSelect').value : '';
         const overwrite = $('simOverwriteChk') ? $('simOverwriteChk').checked : true;
-        const targetCust = $('simTargetCustSelect') ? ($('simTargetCustSelect').value || 'General_Customer') : 'General_Customer';
 
-        const canInsert = simActiveCheckResult.can_insert_count != null ? simActiveCheckResult.can_insert_count : (simActiveCheckResult.not_found_keys_count || 0);
+        const matchedCount = simActiveCheckResult.records_matched || 0;
         const toUpdate = simActiveCheckResult.records_to_update || 0;
+        const notFoundCount = simActiveCheckResult.not_found_keys_count || 0;
 
-        let confirmMsg = '';
-        if (action === 'insert_only') {
-          confirmMsg = `Insert approximately ${canInsert.toLocaleString()} new SIM records into customer "${targetCust}"?`;
-        } else if (action === 'both') {
-          confirmMsg = `Replace ${toUpdate.toLocaleString()} differing records in database AND insert ${canInsert.toLocaleString()} new SIM records into customer "${targetCust}"?`;
-        } else {
-          confirmMsg = `Apply SIM details to database? This will update approximately ${toUpdate.toLocaleString()} customer records.`;
+        if (matchedCount === 0) {
+          toast('⚠️ No matching customer records found for these ICCIDs. Nothing to upload.');
+          return;
         }
+
+        const confirmMsg = `Apply SIM data to database?\n\n• ${matchedCount.toLocaleString()} matching customer records will be processed (${toUpdate.toLocaleString()} differing will be replaced, identical values preserved).\n• ${notFoundCount.toLocaleString()} ICCIDs NOT found in any customer will NOT be uploaded.\n\nProceed with upload?`;
 
         if (!confirm(confirmMsg)) {
           return;
         }
 
-        const standardCols = new Set([keyCol, msisdn1Col, msisdn2Col, actDateCol, expDateCol].filter(Boolean));
         const fullPayload = [];
         simRawFileRows.forEach(rawObj => {
           let rawKey = rawObj[keyCol] != null ? String(rawObj[keyCol]).trim() : '';
@@ -6791,38 +6789,18 @@
               if (!isNaN(num) && Number.isFinite(num)) rawKey = BigInt(Math.round(num)).toString();
             } catch { }
           }
-          rawKey = rawKey.replace(/[\s\-_]+/g, '');
-          if (currentSimMatchMode === 'iccid') rawKey = rawKey.toUpperCase();
+          rawKey = rawKey.replace(/[\s\-_]+/g, '').toUpperCase();
           if (!rawKey || rawKey.length < 5) return;
 
-          let altVal = altCol ? (rawObj[altCol] != null ? String(rawObj[altCol]).trim() : '') : '';
-          if (altVal.endsWith('.0') && /^\d+\.0$/.test(altVal)) altVal = altVal.slice(0, -2);
-          if (/[eE]\+?/.test(altVal)) {
-            try {
-              const num = Number(altVal);
-              if (!isNaN(num) && Number.isFinite(num)) altVal = BigInt(Math.round(num)).toString();
-            } catch { }
-          }
-          altVal = altVal.replace(/[\s\-_]+/g, '');
-          if (currentSimMatchMode === 'imei') altVal = altVal.toUpperCase();
-
-          const extra = {};
-          (simSelectedExtraCols || []).forEach(col => {
-            if (!standardCols.has(col) && col !== keyCol) {
-              const v = rawObj[col] != null ? String(rawObj[col]).trim() : '';
-              if (v) extra[col] = v;
-            }
-          });
+          const rowProv = providerCol ? (rawObj[providerCol] || '').trim() : '';
 
           fullPayload.push({
-            imei: currentSimMatchMode === 'imei' ? rawKey : (altVal || null),
-            iccid: currentSimMatchMode === 'iccid' ? rawKey : (altVal || ''),
+            iccid: rawKey,
             msisdn1: msisdn1Col ? (rawObj[msisdn1Col] || '').trim() || null : null,
             msisdn2: msisdn2Col ? (rawObj[msisdn2Col] || '').trim() || null : null,
             act_date: actDateCol ? convertDateToStandardFormat(rawObj[actDateCol]) : null,
             expiry_date: expDateCol ? convertDateToStandardFormat(rawObj[expDateCol]) : null,
-            sim_provider: chosenProvider || null,
-            extra: Object.keys(extra).length ? extra : null
+            sim_provider: rowProv || chosenProvider || null
           });
         });
 
@@ -6834,18 +6812,15 @@
         const logsEl = $('simPushLogs');
 
         progressWrap.hidden = false;
-        if ($('btnSimPush')) $('btnSimPush').disabled = true;
-        if ($('btnSimInsertNew')) $('btnSimInsertNew').disabled = true;
-        if ($('btnSimApplyBoth')) $('btnSimApplyBoth').disabled = true;
         if ($('btnExecuteSelectedAction')) $('btnExecuteSelectedAction').disabled = true;
         logsEl.innerHTML = '';
 
         const chunkSize = 1000;
         let runningUpdated = 0;
-        let runningInserted = 0;
         let runningAlreadySame = 0;
         let runningUnmatched = 0;
-        const allUnmatchedList = [];
+        const allAppliedComparison = [];
+        const allNotFoundRecords = [];
 
         try {
           for (let i = 0; i < fullPayload.length; i += chunkSize) {
@@ -6856,7 +6831,7 @@
 
             progressBar.style.width = pct + '%';
             progressPct.textContent = pct + '%';
-            progressStatus.textContent = `Uploading & pushing batch ${partNum} of ${totalParts} (${pct}% complete)…`;
+            progressStatus.textContent = `Uploading & applying batch ${partNum} of ${totalParts} (${pct}% complete)…`;
 
             const res = await api('/api/simdata/apply', {
               method: 'POST',
@@ -6865,43 +6840,53 @@
                 overwrite: overwrite,
                 match_by: currentSimMatchMode,
                 sim_provider: chosenProvider || null,
-                insert_new: (action === 'insert_only' || action === 'both'),
-                action: action,
-                target_customer: targetCust
+                insert_new: false,
+                action: 'update_only'
               })
             });
 
             runningUpdated += (res.updated || 0);
-            runningInserted += (res.inserted || 0);
             runningAlreadySame += (res.already_same || res.ignored_identical || 0);
             runningUnmatched += (res.unmatched_count || 0);
-            if (res.unmatched_keys) allUnmatchedList.push(...res.unmatched_keys);
 
-            liveCount.textContent = `${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted, ${runningAlreadySame.toLocaleString()} identical kept…`;
+            if (res.applied_comparison) allAppliedComparison.push(...res.applied_comparison);
+            if (res.not_found_records) allNotFoundRecords.push(...res.not_found_records);
+
+            liveCount.textContent = `${runningUpdated.toLocaleString()} updated, ${runningAlreadySame.toLocaleString()} identical kept, ${runningUnmatched.toLocaleString()} not found skipped…`;
             const logLine = document.createElement('div');
-            logLine.textContent = `[Part ${partNum}/${totalParts}] Differing updated: ${res.updated || 0}, Inserted: ${res.inserted || 0}, Same/Ignored: ${res.already_same || 0}.`;
+            logLine.textContent = `[Part ${partNum}/${totalParts}] Differing updated: ${res.updated || 0}, Identical kept: ${res.already_same || 0}, Not found skipped: ${res.unmatched_count || 0}.`;
             logsEl.appendChild(logLine);
             logsEl.scrollTop = logsEl.scrollHeight;
           }
 
           progressBar.style.width = '100%';
           progressPct.textContent = '100%';
-          progressStatus.textContent = `✅ Process Complete (100%): ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted (${runningAlreadySame.toLocaleString()} already identical ignored).`;
-          if (runningInserted > 0) {
-            toast(`Complete! ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} new records inserted into "${targetCust}".`);
-          } else {
-            toast(`Push complete! ${runningUpdated.toLocaleString()} records updated.`);
-          }
+          progressStatus.textContent = `✅ Process Complete (100%): ${runningUpdated.toLocaleString()} updated in database (${runningAlreadySame.toLocaleString()} already identical preserved, ${notFoundCount.toLocaleString()} not found skipped).`;
+
+          toast(`Upload complete! ${runningUpdated.toLocaleString()} customer records updated in database.`);
+
+          // Render Post-Upload Comparison & Results View
+          const postResult = {
+            total_file_rows: fullPayload.length,
+            updated: runningUpdated,
+            already_same: runningAlreadySame,
+            not_found_count: notFoundCount,
+            applied_comparison: allAppliedComparison,
+            not_found_records: allNotFoundRecords.length ? allNotFoundRecords : (simActiveCheckResult.not_found_records || []),
+            before_comparison: (simActiveCheckResult.detailed_comparison || [])
+          };
+          simLastPostUploadResult = postResult;
+          renderSimPostUploadResults(postResult);
+
           showEventPopup({
-            type: (action === 'insert_only' || action === 'both') ? 'inserting' : 'uploading',
-            title: 'SIM Data Successfully Pushed to Database (Step 3)',
-            message: `SIM Data Upload Complete: ${runningUpdated.toLocaleString()} differing records updated, ${runningInserted.toLocaleString()} inserted into database & website customer tables. ${runningAlreadySame.toLocaleString()} identical records were ignored and preserved.`,
+            type: 'uploading',
+            title: 'SIM Data Successfully Applied to Customer Records (Step 3)',
+            message: `SIM Data Upload Complete: ${runningUpdated.toLocaleString()} differing records updated in database and mirrored to website tables. ${runningAlreadySame.toLocaleString()} identical records preserved. ${notFoundCount.toLocaleString()} ICCIDs not found were NOT uploaded.`,
             meta: {
-              'Differing Records Updated': runningUpdated,
-              'New Records Inserted': runningInserted,
-              'Already Identical (Ignored)': runningAlreadySame,
-              'Target Customer': targetCust || 'Existing Customers',
-              'Columns Stored': simSelectedExtraCols.size + 1
+              'Records Updated in DB': runningUpdated,
+              'Already Identical (Kept)': runningAlreadySame,
+              'ICCIDs Not Found (Skipped)': notFoundCount,
+              'Total Rows Processed': fullPayload.length
             },
             progress: '100% Complete'
           });
@@ -6913,18 +6898,244 @@
           if (typeof loadTableForCustomer === 'function' && typeof activeCid !== 'undefined' && activeCid) {
             loadTableForCustomer(activeCid);
           }
-
-          setTimeout(() => {
-            runSimAutoCheck();
-          }, 600);
         } catch (err) {
           fail(err);
           progressStatus.textContent = `⚠️ Push failed partway: ${err.message}.`;
-          if ($('btnSimPush')) $('btnSimPush').disabled = false;
-          if ($('btnSimInsertNew')) $('btnSimInsertNew').disabled = false;
-          if ($('btnSimApplyBoth')) $('btnSimApplyBoth').disabled = false;
+        } finally {
           if ($('btnExecuteSelectedAction')) $('btnExecuteSelectedAction').disabled = false;
         }
+      }
+
+      function renderSimPostUploadResults(data) {
+        const wrap = $('simPostUploadResults');
+        if (!wrap) return;
+
+        wrap.hidden = false;
+
+        $('kpiPostTotalRows').textContent = (data.total_file_rows || 0).toLocaleString();
+        $('kpiPostUpdated').textContent = (data.updated || 0).toLocaleString();
+        $('kpiPostAlreadySame').textContent = (data.already_same || 0).toLocaleString();
+        $('kpiPostNotFound').textContent = (data.not_found_count || 0).toLocaleString();
+
+        const compList = data.applied_comparison || [];
+        const notFoundList = data.not_found_records || [];
+
+        if ($('cntPostUpdatedTab')) $('cntPostUpdatedTab').textContent = compList.length.toLocaleString();
+        if ($('cntPostNotFoundTab')) $('cntPostNotFoundTab').textContent = notFoundList.length.toLocaleString();
+
+        if ($('cntPostFilterAll')) $('cntPostFilterAll').textContent = compList.length;
+        if ($('cntPostFilterUpd')) $('cntPostFilterUpd').textContent = compList.filter(c => c.status === 'updated').length;
+        if ($('cntPostFilterSame')) $('cntPostFilterSame').textContent = compList.filter(c => c.status === 'same').length;
+
+        renderSimPostComparisonTable(compList, simPostFilterMode);
+        renderSimNotFoundTable(notFoundList, 'simPostNotFoundTableWrap');
+
+        // Populate Before-Upload copy
+        const beforeWrap = $('simPostBeforeTableWrap');
+        if (beforeWrap && data.before_comparison) {
+          renderSimComparisonTableDirect(data.before_comparison, beforeWrap);
+        }
+
+        setTimeout(() => {
+          wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+
+      function renderSimPostComparisonTable(list, filter = 'all') {
+        const wrap = $('simPostComparisonTableWrap');
+        if (!wrap) return;
+
+        const filtered = list.filter(r => {
+          if (filter === 'updated') return r.status === 'updated';
+          if (filter === 'same') return r.status === 'same';
+          return true;
+        });
+
+        if (!filtered.length) {
+          wrap.innerHTML = `<div class="empty">No records found matching filter "${filter}".</div>`;
+          return;
+        }
+
+        const formatCell = (item) => {
+          if (!item) return '<span style="color:var(--muted)">—</span>';
+          if (item.changed) {
+            return `<span class="diff-chip diff-changed"><span class="diff-old">${esc(item.old)}</span> <span class="diff-arrow">➔</span> <span class="diff-new">${esc(item.new)}</span></span>`;
+          }
+          if (item.old && item.old !== '—') {
+            return `<span class="diff-chip"><span class="diff-new">${esc(item.old)}</span> <span style="color:var(--ok);font-weight:800">✓</span></span>`;
+          }
+          return '<span style="color:var(--muted)">—</span>';
+        };
+
+        const rows = filtered.map(r => {
+          const isUpd = r.status === 'updated';
+          const statusBadge = isUpd
+            ? `<span class="diff-badge-diff" style="background:rgba(16,185,129,0.1);color:var(--ok);border-color:rgba(16,185,129,0.3)">✅ Updated in DB</span>`
+            : `<span class="diff-badge-same">🟢 Kept Same (Identical)</span>`;
+
+          return `
+            <tr style="${isUpd ? 'background:rgba(16,185,129,0.03)' : ''}">
+              <td><span style="font-size:12px;font-weight:700;color:var(--ink)">${esc(r.customer_name || '—')}</span></td>
+              <td><b>${esc(r.imei || '—')}</b></td>
+              <td><code>${esc(r.iccid || '—')}</code></td>
+              <td>${formatCell(r.act_date)}</td>
+              <td>${formatCell(r.expiry_date)}</td>
+              <td>${formatCell(r.msisdn1)}</td>
+              <td>${formatCell(r.msisdn2)}</td>
+              <td>${formatCell(r.sim_provider)}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        }).join('');
+
+        wrap.innerHTML = `
+          <table class="data-table" style="font-size:12px">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>IMEI</th>
+                <th>ICCID</th>
+                <th>Activation Date (Before ➔ After)</th>
+                <th>Expiry Date (Before ➔ After)</th>
+                <th>MSISDN 1 (Before ➔ After)</th>
+                <th>MSISDN 2 (Before ➔ After)</th>
+                <th>SIM Provider (Before ➔ After)</th>
+                <th>Post-Upload Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function renderSimComparisonTableDirect(list, wrap) {
+        if (!wrap) return;
+        if (!list || !list.length) {
+          wrap.innerHTML = '<div class="empty">No before-upload records available.</div>';
+          return;
+        }
+        const formatCell = (item) => {
+          if (!item) return '<span style="color:var(--muted)">—</span>';
+          if (item.changed) {
+            return `<span class="diff-chip diff-changed"><span class="diff-old">${esc(item.old)}</span> <span class="diff-arrow">➔</span> <span class="diff-new">${esc(item.new)}</span></span>`;
+          }
+          if (item.old && item.old !== '—') {
+            return `<span class="diff-chip"><span class="diff-new">${esc(item.old)}</span> <span style="color:var(--ok);font-weight:800">✓</span></span>`;
+          }
+          return '<span style="color:var(--muted)">—</span>';
+        };
+
+        const rows = list.map(r => {
+          const isUpd = r.status === 'different';
+          const statusBadge = isUpd
+            ? `<span class="diff-badge-diff">⚡ Differing</span>`
+            : `<span class="diff-badge-same">🟢 Identical</span>`;
+
+          return `
+            <tr style="${isUpd ? 'background:rgba(217,119,6,0.03)' : ''}">
+              <td><span style="font-size:12px;font-weight:700;color:var(--ink)">${esc(r.customer_name || '—')}</span></td>
+              <td><b>${esc(r.imei || '—')}</b></td>
+              <td><code>${esc(r.iccid || '—')}</code></td>
+              <td>${formatCell(r.act_date)}</td>
+              <td>${formatCell(r.expiry_date)}</td>
+              <td>${formatCell(r.msisdn1)}</td>
+              <td>${formatCell(r.msisdn2)}</td>
+              <td>${formatCell(r.sim_provider)}</td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        }).join('');
+
+        wrap.innerHTML = `
+          <table class="data-table" style="font-size:12px">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>IMEI</th>
+                <th>ICCID</th>
+                <th>Activation Date</th>
+                <th>Expiry Date</th>
+                <th>MSISDN 1</th>
+                <th>MSISDN 2</th>
+                <th>SIM Provider</th>
+                <th>Before Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        `;
+      }
+
+      function exportSimPostUploadReportExcel(data) {
+        if (!data) return;
+        const compList = data.applied_comparison || [];
+        const notFoundList = data.not_found_records || [];
+
+        if (typeof XLSX === 'undefined') {
+          toast('⚠️ XLSX library not available for export.');
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // Sheet 1: Matched & Updated Records
+        const headers1 = [
+          'Customer Name', 'IMEI', 'ICCID',
+          'Activation Date (Before)', 'Activation Date (After)',
+          'Expiry Date (Before)', 'Expiry Date (After)',
+          'MSISDN 1 (Before)', 'MSISDN 1 (After)',
+          'MSISDN 2 (Before)', 'MSISDN 2 (After)',
+          'SIM Provider (Before)', 'SIM Provider (After)',
+          'Update Status'
+        ];
+        const rows1 = [headers1];
+        compList.forEach(r => {
+          rows1.push([
+            r.customer_name || '',
+            r.imei || '',
+            r.iccid || '',
+            (r.act_date && r.act_date.old !== '—') ? r.act_date.old : '',
+            (r.act_date && r.act_date.new !== '—') ? r.act_date.new : '',
+            (r.expiry_date && r.expiry_date.old !== '—') ? r.expiry_date.old : '',
+            (r.expiry_date && r.expiry_date.new !== '—') ? r.expiry_date.new : '',
+            (r.msisdn1 && r.msisdn1.old !== '—') ? r.msisdn1.old : '',
+            (r.msisdn1 && r.msisdn1.new !== '—') ? r.msisdn1.new : '',
+            (r.msisdn2 && r.msisdn2.old !== '—') ? r.msisdn2.old : '',
+            (r.msisdn2 && r.msisdn2.new !== '—') ? r.msisdn2.new : '',
+            (r.sim_provider && r.sim_provider.old !== '—') ? r.sim_provider.old : '',
+            (r.sim_provider && r.sim_provider.new !== '—') ? r.sim_provider.new : '',
+            r.status === 'updated' ? 'Successfully Updated in DB' : 'Kept Same (Identical)'
+          ]);
+        });
+        const ws1 = XLSX.utils.aoa_to_sheet(rows1);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Matched & Updated Records');
+
+        // Sheet 2: Not Found ICCIDs
+        if (notFoundList.length) {
+          const headers2 = ['ICCID / CCID', 'MSISDN 1', 'MSISDN 2', 'Activation Date', 'Expiry Date', 'SIM Provider', 'Reason'];
+          const rows2 = [headers2];
+          notFoundList.forEach(r => {
+            rows2.push([
+              r.iccid || '',
+              (r.msisdn1 && r.msisdn1 !== '—') ? r.msisdn1 : '',
+              (r.msisdn2 && r.msisdn2 !== '—') ? r.msisdn2 : '',
+              (r.act_date && r.act_date !== '—') ? r.act_date : '',
+              (r.expiry_date && r.expiry_date !== '—') ? r.expiry_date : '',
+              (r.sim_provider && r.sim_provider !== '—') ? r.sim_provider : '',
+              'ICCID Not Found in Any Customer - NOT Uploaded'
+            ]);
+          });
+          const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+          XLSX.utils.book_append_sheet(wb, ws2, 'Not Found (Not Uploaded)');
+        }
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `SIM_Upload_Comparison_Report_${dateStr}.xlsx`);
+        toast('Post-upload comparison report downloaded successfully.');
       }
 
       /* =========================================================================
