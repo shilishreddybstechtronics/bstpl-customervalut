@@ -256,6 +256,8 @@ class SimDataApplyIn(BaseModel):
     overwrite: bool = True
     sim_provider: Optional[str] = None
     insert_new: bool = False
+    action: Optional[str] = "both"  # "update_only", "insert_only", "both"
+    update_matched: Optional[bool] = True
     target_customer: Optional[str] = "General_Customer"
 
     @field_validator("match_by", mode="before")

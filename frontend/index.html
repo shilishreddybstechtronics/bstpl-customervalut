@@ -2341,16 +2341,35 @@
 
             <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
               <div style="font-size:12px;color:var(--muted)">
-                💡 <b>Step 1:</b> Select column names above for matching & replacing. <b>Step 2:</b> Click <b>Compare & Check Records</b> to validate date formats, detect duplicates, and preview differences.
+                💡 <b>Step 1:</b> Verify or choose column names above. <b>Step 2:</b> Click <b>Compare & Check Records</b> to check date formats, detect duplicates, and see exactly how many records can be updated or inserted.
               </div>
-              <button type="button" class="b p" id="btnRunSimCompare" style="padding:10px 22px;font-weight:800;font-size:13.5px;display:inline-flex;align-items:center;gap:6px">
-                <span>🔍</span> <span>Compare & Check Records</span>
+              <button type="button" class="b p" id="btnRunSimCompare" style="padding:10px 24px;font-weight:800;font-size:13.5px;display:inline-flex;align-items:center;gap:8px">
+                <span id="btnRunSimCompareIcon">🔍</span> <span id="btnRunSimCompareText">Compare & Check Records (Step 2)</span>
               </button>
+            </div>
+
+            <!-- Step 2 Checking & Comparing Live Progress Bar with Percentage -->
+            <div id="simCheckProgressWrap" hidden
+              style="margin-top:14px;background:var(--card);padding:16px;border:1px solid var(--primary);border-radius:12px;box-shadow:0 4px 14px rgba(37,99,235,0.08)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span id="simCheckSpinIcon" class="spin" style="font-size:16px">⏳</span>
+                  <b id="simCheckProgressTitle" style="font-size:13.5px;color:var(--ink)">Step 2: Checking & Comparing Records against Database…</b>
+                </div>
+                <span id="simCheckProgressPct" style="font-size:15px;font-weight:800;color:var(--primary)">0%</span>
+              </div>
+              <div class="progress-bar" style="height:12px;margin:8px 0;background:var(--card-subtle);border-radius:6px;overflow:hidden">
+                <div class="progress-fill" id="simCheckProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg, #2563eb, #38bdf8);transition:width 0.25s ease"></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-top:6px">
+                <span id="simCheckProgressDetail">Analyzing columns and comparing ICCID/CCID keys with database records…</span>
+                <span id="simCheckProgressCounts">0 / 0 rows processed</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Pre-check Results & Stats (Automatic check ~250ms debounced) -->
+        <!-- Pre-check Results & Stats (Step 2 Comparison & Validation) -->
         <div id="simCheckResults" hidden>
           <!-- 6 KPI Counters -->
           <div class="stats" style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px">
@@ -2374,9 +2393,9 @@
               <b id="kpiSimAlreadySame" style="font-size:22px">0</b>
               <span style="font-size:12px;color:var(--ok);font-weight:700">Already Identical (Keep)</span>
             </div>
-            <div class="card stat" style="border-left:4px solid #8b5cf6;padding:14px">
-              <b id="kpiSimCanInsert" style="font-size:22px">0</b>
-              <span style="font-size:12px;color:#8b5cf6;font-weight:700">Can Insert (Not in DB)</span>
+            <div class="card stat" style="border-left:4px solid #10b981;background:rgba(16,185,129,0.06);padding:14px">
+              <b id="kpiSimCanInsert" style="font-size:24px;color:#059669">0</b>
+              <span style="font-size:12px;color:#059669;font-weight:800">✨ Can Insert (New Records)</span>
             </div>
           </div>
 
@@ -2385,27 +2404,74 @@
             style="background:var(--card-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:14px 0;font-size:12.5px"
             hidden></div>
 
-          <!-- Action Bar: Push buttons & Download Not Found -->
-          <div class="row"
-            style="align-items:center;justify-content:space-between;margin:16px 0;flex-wrap:wrap;gap:12px">
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <button class="b p" id="btnSimPush" type="button"
-                style="font-size:13.5px;padding:0 20px;height:42px;font-weight:800;display:inline-flex;align-items:center;gap:8px">
-                <span>🚀</span> <span>Replace Differing Values in Database</span>
-              </button>
-              <button class="b" id="btnSimInsertNew" type="button"
-                style="display:none;font-size:13.5px;padding:0 20px;height:42px;font-weight:800;background:var(--ok);color:#fff;border-color:var(--ok);align-items:center;gap:8px">
-                <span>➕</span> <span>Insert New Records into Customer</span>
-              </button>
-              <button class="b" id="btnSimApplyBoth" type="button"
-                style="display:none;font-size:13.5px;padding:0 20px;height:42px;font-weight:800;background:linear-gradient(135deg, #2563eb, #8b5cf6);color:#fff;align-items:center;gap:8px">
-                <span>⚡</span> <span>Replace & Insert All</span>
-              </button>
-              <span id="simPushMsg" style="font-size:13px;color:var(--muted);font-weight:600"></span>
+          <!-- Interactive Action Selection & Apply Box -->
+          <div id="simActionSelectCard" style="background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0">
+            <div style="font-size:13.5px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span>🎯</span> <span>Select Desired Action to Apply to Database & Website:</span>
+              </div>
+              <span id="simPushMsg" style="font-size:12.5px;color:var(--muted);font-weight:600"></span>
             </div>
-            <button class="b" id="btnSimDlNotFound" type="button" style="height:38px;display:inline-flex;align-items:center;gap:6px">
-              <span>📥</span> <span>Download NOT FOUND Entries (Excel)</span>
-            </button>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px">
+              <!-- Option 1: Replace Differing Records Only -->
+              <label class="sim-action-opt" id="optWrapReplace" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="radio" name="simActionChoice" id="simOptReplace" value="update_only" style="cursor:pointer" />
+                  <span style="font-weight:700;font-size:13px;color:var(--ink)">🚀 Replace Differing Only</span>
+                </div>
+                <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
+                  Updates <b id="optCountReplace" style="color:var(--warn)">0</b> differing records in existing database.
+                </span>
+              </label>
+
+              <!-- Option 2: Insert New Entries Only -->
+              <label class="sim-action-opt" id="optWrapInsert" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="radio" name="simActionChoice" id="simOptInsert" value="insert_only" style="cursor:pointer" />
+                  <span style="font-weight:700;font-size:13px;color:var(--ok)">➕ Insert New Records Only</span>
+                </div>
+                <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
+                  Inserts <b id="optCountInsert" style="color:var(--ok)">0</b> new entries that do not exist into customer table.
+                </span>
+              </label>
+
+              <!-- Option 3: Both Replace & Insert -->
+              <label class="sim-action-opt" id="optWrapBoth" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--primary);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <input type="radio" name="simActionChoice" id="simOptBoth" value="both" checked style="cursor:pointer" />
+                  <span style="font-weight:700;font-size:13px;color:var(--primary)">⚡ Replace & Insert All</span>
+                </div>
+                <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
+                  Replaces <b id="optCountBothReplace" style="color:var(--warn)">0</b> differing & inserts <b id="optCountBothInsert" style="color:var(--ok)">0</b> new records into database & website.
+                </span>
+              </label>
+            </div>
+
+            <!-- Target Customer and Execution Button -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);flex-wrap:wrap;gap:12px">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <span style="font-size:12.5px;font-weight:700;color:var(--ink)">Target Customer:</span>
+                <select id="simTargetCustSelect" style="font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:600;min-width:200px"></select>
+                <span style="font-size:11.5px;color:var(--muted)">New entries will be saved under this customer table.</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <button class="b p" id="btnExecuteSelectedAction" type="button"
+                  style="font-size:13.5px;padding:0 22px;height:42px;font-weight:800;display:inline-flex;align-items:center;gap:8px;background:var(--ok);border-color:var(--ok)">
+                  <span id="btnExecuteIcon">➕</span> <span id="btnExecuteSelectedActionText">Insert New Records & Update Database</span>
+                </button>
+                <button class="b" id="btnSimDlNotFound" type="button" style="height:42px;display:inline-flex;align-items:center;gap:6px">
+                  <span>📥</span> <span>Download NOT FOUND (Excel)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Legacy fallback buttons (hidden, kept for safety) -->
+            <div style="display:none">
+              <button id="btnSimPush" type="button"></button>
+              <button id="btnSimInsertNew" type="button"></button>
+              <button id="btnSimApplyBoth" type="button"></button>
+            </div>
           </div>
 
           <!-- Live Progress Container (Pushing in parts of 1,000) -->
@@ -5637,7 +5703,87 @@
           $('btnDiffFilterSame').onclick = () => setSimDiffFilter('same');
         }
 
-        // Push / Insert action buttons
+        // Action Choice Selector and Execute button wiring
+        const syncActionChoiceUI = () => {
+          const rReplace = $('simOptReplace');
+          const rInsert = $('simOptInsert');
+          const rBoth = $('simOptBoth');
+          const wReplace = $('optWrapReplace');
+          const wInsert = $('optWrapInsert');
+          const wBoth = $('optWrapBoth');
+          const btn = $('btnExecuteSelectedAction');
+          const btnText = $('btnExecuteSelectedActionText');
+          const btnIcon = $('btnExecuteIcon');
+
+          const choice = (rInsert && rInsert.checked) ? 'insert_only' : ((rReplace && rReplace.checked) ? 'update_only' : 'both');
+
+          if (wReplace) {
+            wReplace.style.borderColor = (choice === 'update_only') ? 'var(--warn)' : 'var(--line)';
+            wReplace.style.background = (choice === 'update_only') ? 'rgba(217,119,6,0.06)' : 'var(--card)';
+          }
+          if (wInsert) {
+            wInsert.style.borderColor = (choice === 'insert_only') ? 'var(--ok)' : 'var(--line)';
+            wInsert.style.background = (choice === 'insert_only') ? 'rgba(16,185,129,0.06)' : 'var(--card)';
+          }
+          if (wBoth) {
+            wBoth.style.borderColor = (choice === 'both') ? 'var(--primary)' : 'var(--line)';
+            wBoth.style.background = (choice === 'both') ? 'rgba(37,99,235,0.06)' : 'var(--card)';
+          }
+
+          if (btn && btnText && btnIcon) {
+            const notFound = (simActiveCheckResult ? (simActiveCheckResult.can_insert_count != null ? simActiveCheckResult.can_insert_count : (simActiveCheckResult.not_found_keys_count || 0)) : 0);
+            const toUpdate = (simActiveCheckResult ? (simActiveCheckResult.records_to_update || 0) : 0);
+            const targetCust = ($('simTargetCustSelect') && $('simTargetCustSelect').value) ? $('simTargetCustSelect').value : 'General_Customer';
+
+            if (choice === 'insert_only') {
+              btnIcon.textContent = '➕';
+              btnText.textContent = `Insert ${notFound.toLocaleString()} New Records into "${targetCust}"`;
+              btn.style.background = 'var(--ok)';
+              btn.style.borderColor = 'var(--ok)';
+              btn.disabled = (notFound === 0);
+            } else if (choice === 'update_only') {
+              btnIcon.textContent = '🚀';
+              btnText.textContent = `Replace ${toUpdate.toLocaleString()} Differing Records in Database`;
+              btn.style.background = 'var(--primary)';
+              btn.style.borderColor = 'var(--primary)';
+              btn.disabled = (toUpdate === 0);
+            } else {
+              btnIcon.textContent = '⚡';
+              btnText.textContent = `Replace Differing (${toUpdate}) & Insert New (${notFound})`;
+              btn.style.background = 'linear-gradient(135deg, #2563eb, #8b5cf6)';
+              btn.style.borderColor = '#2563eb';
+              btn.disabled = (toUpdate === 0 && notFound === 0);
+            }
+          }
+        };
+        window.syncSimActionChoiceUI = syncActionChoiceUI;
+
+        ['simOptReplace', 'simOptInsert', 'simOptBoth'].forEach(id => {
+          const el = $(id);
+          if (el) el.onchange = syncActionChoiceUI;
+        });
+        ['optWrapReplace', 'optWrapInsert', 'optWrapBoth'].forEach(id => {
+          const el = $(id);
+          if (el) el.onclick = () => {
+            const radioId = id === 'optWrapReplace' ? 'simOptReplace' : (id === 'optWrapInsert' ? 'simOptInsert' : 'simOptBoth');
+            const r = $(radioId);
+            if (r) { r.checked = true; syncActionChoiceUI(); }
+          };
+        });
+        if ($('simTargetCustSelect')) {
+          $('simTargetCustSelect').onchange = syncActionChoiceUI;
+        }
+
+        if ($('btnExecuteSelectedAction')) {
+          $('btnExecuteSelectedAction').onclick = () => {
+            const rInsert = $('simOptInsert');
+            const rReplace = $('simOptReplace');
+            const choice = (rInsert && rInsert.checked) ? 'insert_only' : ((rReplace && rReplace.checked) ? 'update_only' : 'both');
+            executeSimPush(choice);
+          };
+        }
+
+        // Push / Insert action buttons (legacy / fallback)
         if ($('btnSimPush')) {
           $('btnSimPush').onclick = () => executeSimPush('update_only');
         }
@@ -5721,13 +5867,24 @@
             sheetData = chosenSheet;
           }
 
+          function isSimIdHeaderCandidate(str) {
+            if (!str) return false;
+            const c = String(str).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (!c) return false;
+            if (c.includes('iccid') || c.includes('ccid')) return true;
+            if (c.includes('imei')) return true;
+            if (c.startsWith('sim') && (c.includes('no') || c.includes('num') || c.includes('card') || c === 'sim' || c === 'simid')) return true;
+            if (c.includes('msisdn') || c.includes('mobileno') || c.includes('phoneno') || c.includes('mobile')) return true;
+            if (c.includes('actdate') || c.includes('activation') || c.includes('expdate') || c.includes('expiry') || c.includes('validity')) return true;
+            return false;
+          }
+
           let headerRowIdx = -1;
-          const maxSearch = Math.min(15, sheetData.length);
-          const idPatterns = /^(imei|device\s*imei|imei\s*no|imeino|device_imei|iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|iccid\s*no|iccid\s*number)$/i;
+          const maxSearch = Math.min(25, sheetData.length);
 
           for (let r = 0; r < maxSearch; r++) {
             const row = sheetData[r] || [];
-            const hasIdHeader = row.some(cell => idPatterns.test(String(cell || '').trim()));
+            const hasIdHeader = row.some(cell => isSimIdHeaderCandidate(cell));
             if (hasIdHeader) {
               headerRowIdx = r;
               break;
@@ -5749,15 +5906,18 @@
             return;
           }
 
-          const headerRow = (sheetData[headerRowIdx] || []).map(h => String(h || '').trim());
-          simDetectedHeaders = headerRow.filter((h, idx) => h || idx < 30);
+          const rawHeaderRow = (sheetData[headerRowIdx] || []).map(h => String(h || '').trim());
+          const validHeaders = rawHeaderRow.filter((h, idx) => h || idx < 30);
+          
+          // Arrange headers according to our standard database schema order regardless of CAPITAL or small letters!
+          simDetectedHeaders = classifyAndArrangeHeaders(validHeaders);
           const rawRows = sheetData.slice(headerRowIdx + 1);
 
           simRawFileRows = [];
           rawRows.forEach(rowArr => {
             if (!rowArr || !rowArr.some(c => String(c || '').trim() !== '')) return;
             const obj = {};
-            simDetectedHeaders.forEach((h, idx) => {
+            validHeaders.forEach((h, idx) => {
               const val = rowArr[idx] != null ? String(rowArr[idx]).trim() : '';
               obj[h || `Column_${idx + 1}`] = val;
             });
@@ -5799,6 +5959,91 @@
         } catch (err) {
           fail(err);
         }
+      }
+
+      function matchColumnToField(header, fieldKey) {
+        if (!header) return false;
+        const clean = String(header).toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!clean) return false;
+
+        if (fieldKey === 'key') {
+          // ICCID / CCID / SIM NO
+          if (clean.includes('iccid') || clean.includes('ccid')) return true;
+          if (clean.startsWith('sim') && (clean.includes('no') || clean.includes('num') || clean.includes('card') || clean === 'sim' || clean === 'simid')) return true;
+          if (clean === 'cardno' || clean === 'cardnumber' || clean === 'simcardno') return true;
+          return false;
+        }
+        if (fieldKey === 'act_date') {
+          if (clean.includes('act') || clean.includes('activat')) {
+            if (clean.includes('date') || clean.includes('dt') || clean.includes('on') || clean.includes('time') || clean === 'actdate' || clean === 'activationdate' || clean === 'activated') return true;
+          }
+          return false;
+        }
+        if (fieldKey === 'exp_date') {
+          if (clean.includes('exp') || clean.includes('valid')) {
+            if (clean.includes('date') || clean.includes('dt') || clean.includes('on') || clean.includes('till') || clean.includes('upto') || clean === 'expdate' || clean === 'expirydate' || clean === 'validity' || clean === 'validupto') return true;
+          }
+          return false;
+        }
+        if (fieldKey === 'msisdn1') {
+          if (clean.includes('msisdn1') || clean.includes('mobile1') || clean.includes('phone1') || clean.includes('sim1')) return true;
+          if (clean.includes('primary') && (clean.includes('mobile') || clean.includes('phone') || clean.includes('number') || clean.includes('no') || clean.includes('msisdn'))) return true;
+          if (clean === 'msisdn' || clean === 'mobile' || clean === 'mobileno' || clean === 'mobilenumber' || clean === 'phone' || clean === 'phoneno') return true;
+          return false;
+        }
+        if (fieldKey === 'msisdn2') {
+          if (clean.includes('msisdn2') || clean.includes('mobile2') || clean.includes('phone2') || clean.includes('sim2')) return true;
+          if (clean.includes('secondary') && (clean.includes('mobile') || clean.includes('phone') || clean.includes('number') || clean.includes('no') || clean.includes('msisdn'))) return true;
+          return false;
+        }
+        if (fieldKey === 'sim_provider') {
+          if (clean.includes('provider') || clean.includes('operator') || clean.includes('carrier') || clean.includes('telecom') || clean === 'simprovider') return true;
+          return false;
+        }
+        return false;
+      }
+
+      function classifyAndArrangeHeaders(headers) {
+        if (!headers || !headers.length) return [];
+
+        // Schema order: 1. ICCID/CCID, 2. MSISDN 1, 3. MSISDN 2, 4. Act Date, 5. Exp Date, 6. SIM Provider, 7. Other standard cols, 8. Extras
+        const schemaPriorities = [
+          { key: 'key', test: h => matchColumnToField(h, 'key') },
+          { key: 'msisdn1', test: h => matchColumnToField(h, 'msisdn1') },
+          { key: 'msisdn2', test: h => matchColumnToField(h, 'msisdn2') },
+          { key: 'act_date', test: h => matchColumnToField(h, 'act_date') },
+          { key: 'exp_date', test: h => matchColumnToField(h, 'exp_date') },
+          { key: 'sim_provider', test: h => matchColumnToField(h, 'sim_provider') },
+          { key: 'imei', test: h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '').includes('imei') },
+          { key: 'device_sr_no', test: h => { const c = String(h).toLowerCase().replace(/[^a-z0-9]/g, ''); return c.includes('srno') || c.includes('serial') || c.includes('devicesr'); } },
+          { key: 'model', test: h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '').includes('model') },
+          { key: 'firmware', test: h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '').includes('firmware') },
+          { key: 'flash', test: h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '').includes('flash') },
+          { key: 'plan', test: h => String(h).toLowerCase().replace(/[^a-z0-9]/g, '').includes('plan') },
+          { key: 'sim_type', test: h => { const c = String(h).toLowerCase().replace(/[^a-z0-9]/g, ''); return c.includes('simtype') || c === 'type'; } }
+        ];
+
+        const matched = new Set();
+        const arranged = [];
+
+        schemaPriorities.forEach(p => {
+          for (const h of headers) {
+            if (!matched.has(h) && p.test(h)) {
+              arranged.push(h);
+              matched.add(h);
+              break;
+            }
+          }
+        });
+
+        headers.forEach(h => {
+          if (!matched.has(h)) {
+            arranged.push(h);
+            matched.add(h);
+          }
+        });
+
+        return arranged;
       }
 
       let simSelectedExtraCols = new Set();
@@ -5863,32 +6108,11 @@
 
       function populateSimColumnDropdowns(headers) {
         const fields = [
-          {
-            id: 'colMapKey',
-            patterns: /^(iccid|ccidno|ccid|sim\s*no|sim\s*number|simno|sim_no|sim\s*iccid|sim\s*ccid|iccid\s*no|iccid\s*number|ccid\s*no|ccid\s*number|ccidnum|iccidnum)$/i,
-            fuzzy: ['iccid', 'ccid', 'sim'],
-            required: true
-          },
-          {
-            id: 'colMapActDate',
-            patterns: /^(act\s*date|activation\s*date|activated\s*on|activation\s*dt|act\s*dt|activated\s*date|act_date|activationdate|activated)$/i,
-            fuzzy: ['act', 'activat']
-          },
-          {
-            id: 'colMapExpDate',
-            patterns: /^(exp\s*date|expiry\s*date|expired\s*on|expiry\s*dt|exp\s*dt|expiry\s*on|validity\s*date|expiry_date|expirydate|valid_till|valid_upto|validupto)$/i,
-            fuzzy: ['exp', 'valid']
-          },
-          {
-            id: 'colMapMsisdn1',
-            patterns: /^(msisdn1|msisdn\s*1|msisdn|mobile1|mobile\s*1|mobile|phone1|phone\s*1|phone|sim1|sim\s*1|primary\s*mobile|primary\s*number)$/i,
-            fuzzy: ['msisdn', 'mobile1', 'sim1']
-          },
-          {
-            id: 'colMapMsisdn2',
-            patterns: /^(msisdn2|msisdn\s*2|mobile2|mobile\s*2|phone2|phone\s*2|sim2|sim\s*2|secondary\s*mobile|secondary\s*number)$/i,
-            fuzzy: ['mobile2', 'msisdn2', 'sim2']
-          }
+          { id: 'colMapKey', fieldKey: 'key', required: true },
+          { id: 'colMapActDate', fieldKey: 'act_date' },
+          { id: 'colMapExpDate', fieldKey: 'exp_date' },
+          { id: 'colMapMsisdn1', fieldKey: 'msisdn1' },
+          { id: 'colMapMsisdn2', fieldKey: 'msisdn2' }
         ];
 
         fields.forEach(f => {
@@ -5898,18 +6122,9 @@
 
           let matchedCol = '';
           for (const h of headers) {
-            if (f.patterns.test(h)) {
+            if (matchColumnToField(h, f.fieldKey)) {
               matchedCol = h;
               break;
-            }
-          }
-          if (!matchedCol && f.fuzzy) {
-            for (const h of headers) {
-              const clean = h.toLowerCase().replace(/[^a-z0-9]/g, '');
-              if (f.fuzzy.some(k => clean.includes(k))) {
-                matchedCol = h;
-                break;
-              }
             }
           }
 
@@ -6033,21 +6248,39 @@
         const overwrite = $('simOverwriteChk') ? $('simOverwriteChk').checked : true;
 
         if (!keyCol) {
+          if ($('simCheckProgressWrap')) $('simCheckProgressWrap').hidden = true;
           $('simCheckResults').hidden = false;
           $('kpiSimFileRows').textContent = simRawFileRows.length.toLocaleString();
           $('simNotesBox').hidden = false;
           $('simNotesBox').innerHTML = '⚠️ <b>ICCID / CCID Column Required:</b> Please select which column in your file represents the ICCID / CCID in the dropdown above.';
-          $('btnSimPush').style.display = 'none';
-          if ($('btnSimInsertNew')) $('btnSimInsertNew').style.display = 'none';
-          if ($('btnSimApplyBoth')) $('btnSimApplyBoth').style.display = 'none';
           $('simPushMsg').textContent = 'Please select the ICCID / CCID column to continue.';
           return;
         }
 
         const compareBtn = $('btnRunSimCompare');
+        const compareIcon = $('btnRunSimCompareIcon');
+        const compareText = $('btnRunSimCompareText');
+
         if (compareBtn) {
           compareBtn.disabled = true;
-          compareBtn.innerHTML = '<span>⏳</span> <span>Comparing & Checking Records…</span>';
+          if (compareIcon) compareIcon.textContent = '⏳';
+          if (compareText) compareText.textContent = 'Comparing & Checking Records…';
+        }
+
+        const progressWrap = $('simCheckProgressWrap');
+        const progressBar = $('simCheckProgressBar');
+        const progressPct = $('simCheckProgressPct');
+        const progressTitle = $('simCheckProgressTitle');
+        const progressDetail = $('simCheckProgressDetail');
+        const progressCounts = $('simCheckProgressCounts');
+
+        if (progressWrap) {
+          progressWrap.hidden = false;
+          if (progressBar) progressBar.style.width = '10%';
+          if (progressPct) progressPct.textContent = '10%';
+          if (progressTitle) progressTitle.textContent = 'Step 2: Checking & Comparing Records against Database…';
+          if (progressDetail) progressDetail.textContent = 'Reading and normalizing file rows & date formats…';
+          if (progressCounts) progressCounts.textContent = `0 / ${simRawFileRows.length.toLocaleString()} rows`;
         }
 
         const standardCols = new Set([keyCol, msisdn1Col, msisdn2Col, actDateCol, expDateCol].filter(Boolean));
@@ -6102,22 +6335,106 @@
           });
         });
 
-        const hasDataCol = !!(msisdn1Col || msisdn2Col || actDateCol || expDateCol || (simSelectedExtraCols && simSelectedExtraCols.size));
+        if (progressBar) progressBar.style.width = '25%';
+        if (progressPct) progressPct.textContent = '25%';
+        if (progressDetail) progressDetail.textContent = 'Querying database to validate ICCID/CCID keys and compare records…';
 
         try {
-          const res = await api('/api/simdata/check', {
-            method: 'POST',
-            body: JSON.stringify({
-              rows: payloadRows,
-              overwrite: overwrite,
-              match_by: currentSimMatchMode,
-              sim_provider: chosenProvider || null
-            })
-          });
+          let aggregatedRes = null;
+          const chunkSize = 1500;
 
+          if (payloadRows.length > chunkSize) {
+            let totalMatched = 0, totalToUpdate = 0, totalAlreadySame = 0, totalSkipped = 0, totalRepeated = 0;
+            const notFoundSet = new Set();
+            const allDetailed = [];
+            const custBreakdownMap = {};
+
+            for (let i = 0; i < payloadRows.length; i += chunkSize) {
+              const chunk = payloadRows.slice(i, i + chunkSize);
+              const pct = Math.min(94, Math.round(25 + ((i + chunk.length) / payloadRows.length) * 70));
+              if (progressBar) progressBar.style.width = pct + '%';
+              if (progressPct) progressPct.textContent = pct + '%';
+              if (progressDetail) progressDetail.textContent = `Comparing rows ${i + 1} to ${Math.min(i + chunkSize, payloadRows.length)} of ${payloadRows.length.toLocaleString()} against database (${pct}% complete)…`;
+              if (progressCounts) progressCounts.textContent = `${Math.min(i + chunkSize, payloadRows.length).toLocaleString()} / ${payloadRows.length.toLocaleString()} rows`;
+
+              const chunkRes = await api('/api/simdata/check', {
+                method: 'POST',
+                body: JSON.stringify({
+                  rows: chunk,
+                  overwrite: overwrite,
+                  match_by: currentSimMatchMode,
+                  sim_provider: chosenProvider || null
+                })
+              });
+
+              totalMatched += (chunkRes.records_matched || 0);
+              totalToUpdate += (chunkRes.records_to_update || 0);
+              totalAlreadySame += (chunkRes.records_already_same || 0);
+              totalSkipped += (chunkRes.skipped_rows || 0);
+              totalRepeated += (chunkRes.repeated_keys_count || 0);
+
+              (chunkRes.not_found_keys || []).forEach(k => notFoundSet.add(k));
+              if (allDetailed.length < 500 && chunkRes.detailed_comparison) {
+                allDetailed.push(...chunkRes.detailed_comparison.slice(0, 500 - allDetailed.length));
+              }
+
+              (chunkRes.customer_breakdown || []).forEach(cb => {
+                if (!custBreakdownMap[cb.customer_id]) {
+                  custBreakdownMap[cb.customer_id] = { ...cb };
+                } else {
+                  const target = custBreakdownMap[cb.customer_id];
+                  target.matched_count += cb.matched_count;
+                  target.to_update_count += cb.to_update_count;
+                  target.already_same_count += cb.already_same_count;
+                  target.msisdn1_changes += cb.msisdn1_changes || 0;
+                  target.msisdn2_changes += cb.msisdn2_changes || 0;
+                  target.act_date_changes += cb.act_date_changes || 0;
+                  target.expiry_date_changes += cb.expiry_date_changes || 0;
+                  target.sim_provider_changes += cb.sim_provider_changes || 0;
+                }
+              });
+            }
+
+            aggregatedRes = {
+              file_rows_count: payloadRows.length,
+              match_by: currentSimMatchMode,
+              records_matched: totalMatched,
+              records_to_update: totalToUpdate,
+              records_already_same: totalAlreadySame,
+              skipped_rows: totalSkipped,
+              repeated_keys_count: totalRepeated,
+              not_found_keys_count: notFoundSet.size,
+              can_insert_count: notFoundSet.size,
+              not_found_keys: Array.from(notFoundSet),
+              customer_breakdown: Object.values(custBreakdownMap),
+              detailed_comparison: allDetailed
+            };
+          } else {
+            if (progressBar) progressBar.style.width = '50%';
+            if (progressPct) progressPct.textContent = '50%';
+            if (progressDetail) progressDetail.textContent = `Comparing ${payloadRows.length.toLocaleString()} records against database…`;
+
+            aggregatedRes = await api('/api/simdata/check', {
+              method: 'POST',
+              body: JSON.stringify({
+                rows: payloadRows,
+                overwrite: overwrite,
+                match_by: currentSimMatchMode,
+                sim_provider: chosenProvider || null
+              })
+            });
+          }
+
+          const res = aggregatedRes;
           simActiveCheckResult = res;
 
           const notFoundCount = (res.can_insert_count != null ? res.can_insert_count : (res.not_found_keys_count || 0));
+
+          if (progressBar) progressBar.style.width = '100%';
+          if (progressPct) progressPct.textContent = '100%';
+          if (progressTitle) progressTitle.textContent = '✅ Step 2 Complete: Checked & Compared Against Database (100%)';
+          if (progressDetail) progressDetail.textContent = `Comparison complete: ${res.records_matched.toLocaleString()} matched in DB, ${res.records_to_update.toLocaleString()} differing to replace, ${notFoundCount.toLocaleString()} can be inserted into customer database.`;
+          if (progressCounts) progressCounts.textContent = `${res.file_rows_count.toLocaleString()} / ${res.file_rows_count.toLocaleString()} rows checked (100%)`;
 
           $('kpiSimFileRows').textContent = res.file_rows_count.toLocaleString();
           if ($('kpiSimDuplicates')) $('kpiSimDuplicates').textContent = (res.repeated_keys_count || 0).toLocaleString();
@@ -6125,7 +6442,24 @@
           $('kpiSimToUpdate').textContent = res.records_to_update.toLocaleString();
           $('kpiSimAlreadySame').textContent = res.records_already_same.toLocaleString();
           if ($('kpiSimCanInsert')) $('kpiSimCanInsert').textContent = notFoundCount.toLocaleString();
-          else if ($('kpiSimNotFound')) $('kpiSimNotFound').textContent = notFoundCount.toLocaleString();
+
+          // Populate Option Counts
+          if ($('optCountReplace')) $('optCountReplace').textContent = res.records_to_update.toLocaleString();
+          if ($('optCountInsert')) $('optCountInsert').textContent = notFoundCount.toLocaleString();
+          if ($('optCountBothReplace')) $('optCountBothReplace').textContent = res.records_to_update.toLocaleString();
+          if ($('optCountBothInsert')) $('optCountBothInsert').textContent = notFoundCount.toLocaleString();
+
+          // Auto-select the most appropriate action option based on comparison results
+          if (notFoundCount > 0 && res.records_to_update > 0) {
+            if ($('simOptBoth')) $('simOptBoth').checked = true;
+          } else if (notFoundCount > 0) {
+            if ($('simOptInsert')) $('simOptInsert').checked = true;
+          } else {
+            if ($('simOptReplace')) $('simOptReplace').checked = true;
+          }
+          if (typeof window.syncSimActionChoiceUI === 'function') {
+            window.syncSimActionChoiceUI();
+          }
 
           const notes = [];
           if (res.skipped_rows > 0) {
@@ -6135,7 +6469,7 @@
             notes.push(`• <b>${res.repeated_keys_count} duplicate ${keyLabel}s in file:</b> earlier rows were preserved; duplicates will not be inserted twice.`);
           }
           if (notFoundCount > 0) {
-            notes.push(`• <b>${notFoundCount.toLocaleString()} new ${keyLabel}s found (not in database):</b> ready to be inserted into customer database.`);
+            notes.push(`• ✨ <b>${notFoundCount.toLocaleString()} new ${keyLabel}s can be inserted:</b> ready to be added into customer database & website tables.`);
           }
           if (convertedDatesCount > 0) {
             notes.push(`• <b>${convertedDatesCount} dates successfully converted</b> into standard YYYY-MM-DD format.`);
@@ -6150,44 +6484,15 @@
             $('simNotesBox').hidden = true;
           }
 
-          // Button states
-          if (res.records_to_update > 0) {
-            $('btnSimPush').style.display = 'inline-block';
-            $('btnSimPush').disabled = false;
-            $('btnSimPush').textContent = `🚀 Replace ${res.records_to_update.toLocaleString()} Differing Records`;
-          } else {
-            $('btnSimPush').style.display = 'none';
-          }
-
-          if ($('btnSimInsertNew')) {
-            if (notFoundCount > 0) {
-              $('btnSimInsertNew').style.display = 'inline-block';
-              $('btnSimInsertNew').disabled = false;
-              $('btnSimInsertNew').textContent = `➕ Insert ${notFoundCount.toLocaleString()} New Records into Customer`;
-            } else {
-              $('btnSimInsertNew').style.display = 'none';
-            }
-          }
-
-          if ($('btnSimApplyBoth')) {
-            if (res.records_to_update > 0 && notFoundCount > 0) {
-              $('btnSimApplyBoth').style.display = 'inline-block';
-              $('btnSimApplyBoth').disabled = false;
-              $('btnSimApplyBoth').textContent = `⚡ Replace Differing (${res.records_to_update}) & Insert New (${notFoundCount})`;
-            } else {
-              $('btnSimApplyBoth').style.display = 'none';
-            }
-          }
-
           if (res.records_to_update > 0 || notFoundCount > 0) {
-            $('simPushMsg').textContent = `${res.records_to_update.toLocaleString()} records differ; ${notFoundCount.toLocaleString()} can be inserted as new.`;
+            $('simPushMsg').textContent = `${res.records_to_update.toLocaleString()} records differ; ${notFoundCount.toLocaleString()} ready to insert.`;
             $('simPushMsg').style.color = 'var(--ok)';
           } else {
             $('simPushMsg').textContent = `All ${res.records_matched.toLocaleString()} matched records already have identical values in database.`;
             $('simPushMsg').style.color = 'var(--muted)';
           }
 
-          $('btnSimDlNotFound').disabled = (notFoundCount === 0);
+          if ($('btnSimDlNotFound')) $('btnSimDlNotFound').disabled = (notFoundCount === 0);
 
           // Update filter pill counts
           const compList = res.detailed_comparison || [];
@@ -6210,8 +6515,8 @@
 
           showEventPopup({
             type: 'uploading',
-            title: 'SIM Data Compared & Fetched',
-            message: `Comparison complete: ${res.records_matched.toLocaleString()} records matched in database, ${res.records_to_update.toLocaleString()} differing to replace, ${notFoundCount.toLocaleString()} ready to insert.`,
+            title: 'SIM Data Compared & Checked (Step 2)',
+            message: `Comparison 100% complete: ${res.records_matched.toLocaleString()} records matched in database, ${res.records_to_update.toLocaleString()} differing to replace, ${notFoundCount.toLocaleString()} new entries can be inserted into customer database.`,
             meta: {
               'Total File Rows': res.file_rows_count,
               'Matched in DB': res.records_matched,
@@ -6222,11 +6527,15 @@
             progress: '50% Checked & Fetched'
           });
         } catch (err) {
+          if (progressBar) progressBar.style.width = '0%';
+          if (progressPct) progressPct.textContent = 'Error';
+          if (progressDetail) progressDetail.textContent = '⚠️ Check failed: ' + (err.message || err);
           fail(err);
         } finally {
           if (compareBtn) {
             compareBtn.disabled = false;
-            compareBtn.innerHTML = '<span>🔍</span> <span>Compare & Check Records</span>';
+            if (compareIcon) compareIcon.textContent = '🔍';
+            if (compareText) compareText.textContent = 'Compare & Check Records (Step 2)';
           }
         }
       }
@@ -6442,6 +6751,7 @@
         if ($('btnSimPush')) $('btnSimPush').disabled = true;
         if ($('btnSimInsertNew')) $('btnSimInsertNew').disabled = true;
         if ($('btnSimApplyBoth')) $('btnSimApplyBoth').disabled = true;
+        if ($('btnExecuteSelectedAction')) $('btnExecuteSelectedAction').disabled = true;
         logsEl.innerHTML = '';
 
         const chunkSize = 1000;
@@ -6469,6 +6779,7 @@
                 match_by: currentSimMatchMode,
                 sim_provider: chosenProvider || null,
                 insert_new: (action === 'insert_only' || action === 'both'),
+                action: action,
                 target_customer: targetCust
               })
             });
@@ -6509,6 +6820,10 @@
           await loadCU(); await updateChrome();
           if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
           if (typeof loadCustomerFilesContainer === 'function') loadCustomerFilesContainer();
+          if (typeof loadStats === 'function') loadStats();
+          if (typeof loadTableForCustomer === 'function' && typeof activeCid !== 'undefined' && activeCid) {
+            loadTableForCustomer(activeCid);
+          }
 
           setTimeout(() => {
             runSimAutoCheck();
@@ -6519,6 +6834,7 @@
           if ($('btnSimPush')) $('btnSimPush').disabled = false;
           if ($('btnSimInsertNew')) $('btnSimInsertNew').disabled = false;
           if ($('btnSimApplyBoth')) $('btnSimApplyBoth').disabled = false;
+          if ($('btnExecuteSelectedAction')) $('btnExecuteSelectedAction').disabled = false;
         }
       }
 

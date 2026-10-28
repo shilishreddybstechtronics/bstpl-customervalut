@@ -1138,13 +1138,22 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     updated_count = 0
     matched_keys = set()
     mirror_items = []
+    action_type = (getattr(data, "action", "") or "").strip().lower()
+    if not action_type:
+        action_type = "both" if getattr(data, "insert_new", False) else "update_only"
 
-    for key, frow in file_sims.items():
-        dev_list = devs_by_key.get(key, [])
-        if not dev_list:
-            continue
+    if action_type == "insert_only":
+        for key in devs_by_key.keys():
+            frow = file_sims.get(key)
+            if frow:
+                matched_keys.add(frow["raw_key"])
+    else:
+        for key, frow in file_sims.items():
+            dev_list = devs_by_key.get(key, [])
+            if not dev_list:
+                continue
 
-        matched_keys.add(frow["raw_key"])
+            matched_keys.add(frow["raw_key"])
 
         for d in dev_list:
             changed = False
@@ -1226,7 +1235,8 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     unmatched_keys = [frow["raw_key"] for key, frow in file_sims.items() if frow["raw_key"] not in matched_keys]
 
     inserted_count = 0
-    if getattr(data, "insert_new", False) and unmatched_keys:
+    should_insert = (action_type in ("insert_only", "both")) or getattr(data, "insert_new", False)
+    if should_insert and unmatched_keys:
         target_cust_name = str(getattr(data, "target_customer", "") or "").strip() or "General_Customer"
         target_cust = customer_by_name(db, target_cust_name)
         new_dev_rows = []
