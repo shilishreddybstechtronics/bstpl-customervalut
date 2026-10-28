@@ -9305,18 +9305,20 @@
       $('btnMoveAllErrorsCart').onclick = async () => {
         if (!cachedErrors.length) { toast('No errored entries to move.'); return; }
         const totalToMove = cachedErrors.length;
-        if (!confirm(`Move all ${totalToMove} errored entries to Cart?`)) return;
+        if (!confirm(`Move all ${totalToMove} errored entries to Cart?\n\nYou will see a live status showing how many entries are being inserted into the Cart and the percentage of completion.`)) return;
 
         let totalMoved = 0;
+        const startTime = Date.now();
         await runProgressAction({
-          title: 'Moving Errored Entries to Cart…',
-          tag: '🗑️ Deletion to Cart Progress',
+          title: `Moving ${totalToMove} Errored Entries to Cart…`,
+          tag: '🗑️ Moving to Cart – Live Status',
           tagColor: '#ef4444',
           barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
-          subText: `Safely deleting and moving all ${totalToMove} errored records to Cart.`,
+          subText: `Inserting all ${totalToMove} errored records into Cart. Live status is shown below.`,
           total: totalToMove,
           workFn: async (updateProgress) => {
-            // Adaptive chunk size so that users always clearly observe the deletion percentage bar progression
+            updateProgress(0, totalToMove, `Preparing to move ${totalToMove} entries to Cart… (0% – 0 of ${totalToMove} inserted)`);
+            await new Promise(r => setTimeout(r, 100));
             const batchSize = Math.min(25, Math.max(1, Math.ceil(totalToMove / 10)));
             let remaining = totalToMove;
             while (remaining > 0) {
@@ -9325,7 +9327,8 @@
               totalMoved += batchMoved;
               remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchMoved);
               const pct = Math.min(100, Math.round((totalMoved / totalToMove) * 100));
-              updateProgress(totalMoved, totalToMove, `Moving errored entries to Cart: ${totalMoved} of ${totalToMove} (${pct}% deleted to Cart)`);
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+              updateProgress(totalMoved, totalToMove, `Inserting into Cart: ${totalMoved} of ${totalToMove} entries moved (${pct}% complete) – ${remaining} remaining – ${elapsed}s elapsed`);
               if ($('cartCountBadge')) {
                 const curCart = parseInt($('cartCountBadge').textContent || '0', 10) || 0;
                 $('cartCountBadge').textContent = (curCart + batchMoved).toString();
@@ -9339,14 +9342,16 @@
           }
         });
 
-        toast(`Moved ${totalMoved || totalToMove} entries to Cart.`);
+        const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        toast(`✓ Moved ${totalMoved || totalToMove} of ${totalToMove} entries to Cart (100%).`);
         showEventPopup({
           type: 'deletion',
           title: 'All Errored Entries Moved to Cart',
-          message: `Successfully moved all ${totalMoved || totalToMove} errored entries to Cart.`,
+          message: `Successfully moved ${totalMoved || totalToMove} of ${totalToMove} errored entries into the Cart.`,
           meta: {
-            'Total Entries': totalMoved || totalToMove,
-            'Percentage of Deletion': '100% Complete',
+            'Total Entries Moved': `${totalMoved || totalToMove} of ${totalToMove}`,
+            'Percentage Completed': '100%',
+            'Time Elapsed': `${totalElapsed}s`,
             'Status': 'In Cart (Recoverable)'
           },
           progress: '100% Complete'
@@ -9594,40 +9599,47 @@
       `, 'Empty Cart Permanently', async () => {
               const totalItems = totalCart || parseInt($('cartCountBadge')?.textContent || '0', 10) || 1;
               let totalPurged = 0;
+              const purgeStart = Date.now();
               await runProgressAction({
-                title: 'Permanently Deleting Cart Items…',
-                tag: '🗑️ Permanent Purge Progress',
+                title: `Permanently Deleting ${totalItems} Cart Items…`,
+                tag: '🗑️ Permanent Purge – Live Status',
                 tagColor: '#dc2626',
                 barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
-                subText: `Permanently purging all ${totalItems} items forever from database and TiDB Cloud.`,
+                subText: `Permanently deleting all ${totalItems} items from database and TiDB Cloud. Live deletion status is shown below.`,
                 total: totalItems,
                 workFn: async (updateProgress) => {
+                  updateProgress(0, totalItems, `Preparing to delete ${totalItems} Cart items… (0% – 0 of ${totalItems} deleted)`);
+                  await new Promise(r => setTimeout(r, 100));
                   const batchSize = Math.min(25, Math.max(1, Math.ceil(totalItems / 10)));
                   let remaining = totalItems;
                   while (remaining > 0) {
                     const res = await api(`/api/bin?limit=${batchSize}`, { method: 'DELETE' });
                     const batchPurged = res.deleted_forever || res.deleted_count || 0;
-                    totalPurged += batchPurged;
-                    remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchPurged);
+                    const custsPurged = res.customers_purged || 0;
+                    totalPurged += batchPurged + custsPurged;
+                    remaining = typeof res.remaining_count === 'number' ? Math.max(0, res.remaining_count - custsPurged) : Math.max(0, remaining - batchPurged - custsPurged);
                     const pct = Math.min(100, Math.round((totalPurged / totalItems) * 100));
-                    updateProgress(totalPurged, totalItems, `Permanently deleting Cart items: ${totalPurged} of ${totalItems} (${pct}% deleted forever)...`);
+                    const elapsed = ((Date.now() - purgeStart) / 1000).toFixed(1);
+                    updateProgress(totalPurged, totalItems, `Deleting Cart items: ${totalPurged} of ${totalItems} permanently deleted (${pct}% complete) – ${remaining} remaining – ${elapsed}s elapsed`);
                     if ($('cartCountBadge')) {
                       $('cartCountBadge').textContent = Math.max(0, totalItems - totalPurged).toString();
                     }
-                    if (batchPurged === 0 || remaining === 0) break;
+                    if (batchPurged === 0 && custsPurged === 0 || remaining === 0) break;
                     await new Promise(r => setTimeout(r, 120));
                   }
                 }
               });
-              toast('Permanently deleted: Cart emptied and all records erased forever.');
+              const totalElapsed = ((Date.now() - purgeStart) / 1000).toFixed(1);
+              toast(`✓ Permanently deleted ${totalPurged || totalItems} of ${totalItems} Cart items (100%).`);
               showEventPopup({
                 type: 'deletion',
                 title: 'Cart Permanently Emptied',
-                message: `All ${totalPurged || totalItems} deleted records and customer tables were permanently purged forever from database and TiDB Cloud.`,
+                message: `All ${totalPurged || totalItems} of ${totalItems} Cart items have been permanently deleted from the database and TiDB Cloud.`,
                 meta: {
-                  'Total Items Purged': totalPurged || totalItems,
-                  'Percentage of Deletion': '100% Complete',
-                  'Status': 'Permanently Erased from Database'
+                  'Total Items Deleted': `${totalPurged || totalItems} of ${totalItems}`,
+                  'Percentage Completed': '100%',
+                  'Time Elapsed': `${totalElapsed}s`,
+                  'Status': 'Permanently Erased from Database & Cloud'
                 },
                 progress: '100% Complete'
               });
