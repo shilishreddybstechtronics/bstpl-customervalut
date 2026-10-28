@@ -460,10 +460,10 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
     sr_nos = [(r.device_sr_no or "").strip() for r in data.rows if (r.device_sr_no or "").strip()]
     iccids = [(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
 
-    existing_imeis = set()
+    existing_devices_map = {}
     for i in range(0, len(imeis), 2000):
-        for (v,) in db.query(Device.imei).filter(Device.imei.in_(imeis[i:i + 2000]), ACTIVE):
-            existing_imeis.add(v)
+        for d in db.query(Device).filter(Device.imei.in_(imeis[i:i + 2000]), ACTIVE):
+            existing_devices_map[d.imei] = d
 
     existing_sr_nos = {}
     for i in range(0, len(sr_nos), 2000):
@@ -479,10 +479,12 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
 
     known_custs = {c.name.lower() for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
     known_custs_norm = {c.name.lower().replace('_', ' ') for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
+    known_cust_map = {c.id: c.name for c in db.query(Customer.id, Customer.name).filter(Customer.deleted_at.is_(None))}
     known_cols = {n.lower() for (n,) in db.query(models.ColumnRegistry.name)}
     known_cols.update(c.lower() for c in BASE_COLUMNS)
 
     seen_imeis, seen_sr_nos, seen_iccids = set(), set(), set()
+    new_entries, updated_entries, existing_entries = [], [], []
     valid, duplicates, invalids = [], [], []
     new_customers = set()
     new_columns = set()
@@ -553,35 +555,73 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         row_dict["sim_type"] = stype
         row_dict["row_num"] = idx
 
+        mode = getattr(data, "mode", "skip") or "skip"
+
+        # Check Duplicate Conflicts
         is_dup = False
         dup_reason = ""
-        mode = getattr(data, "mode", "skip") or "skip"
         if r.imei and r.imei in seen_imeis:
             is_dup = True
             dup_reason = "Duplicate IMEI repeats earlier in this file"
-        elif r.imei and r.imei in existing_imeis and mode == "skip":
-            is_dup = True
-            dup_reason = "IMEI already exists under a customer in database"
         elif r.device_sr_no and r.device_sr_no in seen_sr_nos:
             is_dup = True
             dup_reason = "Duplicate Device Sr No repeats earlier in this file"
-        elif r.device_sr_no and r.device_sr_no in existing_sr_nos and (existing_sr_nos.get(r.device_sr_no) != r.imei or mode == "skip"):
+        elif r.device_sr_no and r.device_sr_no in existing_sr_nos and (existing_sr_nos.get(r.device_sr_no) != r.imei):
             is_dup = True
-            dup_reason = "Device Sr No already exists under a customer in database"
+            dup_reason = f"Device Sr No '{r.device_sr_no}' already belongs to another IMEI in database"
         elif r.iccid and r.iccid in seen_iccids:
             is_dup = True
             dup_reason = "Duplicate ICCID repeats earlier in this file"
-        elif r.iccid and r.iccid in existing_iccids and (existing_iccids.get(r.iccid) != r.imei or mode == "skip"):
+        elif r.iccid and r.iccid in existing_iccids and (existing_iccids.get(r.iccid) != r.imei):
             is_dup = True
-            dup_reason = "ICCID already exists under a customer in database"
+            dup_reason = f"ICCID '{r.iccid}' already belongs to another IMEI in database"
 
         if is_dup:
+            row_dict["entry_type"] = "Duplicate"
             row_dict["status"] = "Duplicate"
             row_dict["reason"] = dup_reason
             duplicates.append(row_dict)
+        elif r.imei and r.imei in existing_devices_map:
+            # Existing Device in database -> Check if updated or existing
+            d = existing_devices_map[r.imei]
+            differing = []
+            for f in ["device_sr_no", "iccid", "msisdn1", "msisdn2", "model", "sim_provider", "activation_plan", "firmware", "flash", "sim_type"]:
+                val = getattr(r, f, None)
+                if val is not None and str(val).strip() != "":
+                    old_val = getattr(d, f, None)
+                    if str(val).strip() != str(old_val or "").strip():
+                        differing.append(f)
+            for f in ["act_date", "expiry_date", "dispatched_date"]:
+                val = getattr(r, f, None)
+                if val is not None:
+                    old_val = getattr(d, f, None)
+                    if val != old_val:
+                        differing.append(f)
+            if cname and d.customer_id in known_cust_map:
+                existing_cname = known_cust_map[d.customer_id]
+                if cname.lower().replace("_", " ") != existing_cname.lower().replace("_", " "):
+                    differing.append("customer_name")
+
+            if differing:
+                row_dict["entry_type"] = "Updated"
+                row_dict["status"] = "Updated"
+                row_dict["reason"] = f"Existing in database — will update {len(differing)} field(s): {', '.join(differing)}"
+                row_dict["differing_fields"] = differing
+                updated_entries.append(row_dict)
+                valid.append(row_dict)
+            else:
+                row_dict["entry_type"] = "Existing"
+                row_dict["status"] = "Existing"
+                row_dict["reason"] = "Already exists in database with identical values (No change needed)"
+                existing_entries.append(row_dict)
+                if mode == "replace":
+                    valid.append(row_dict)
         else:
-            row_dict["status"] = "Valid"
-            row_dict["reason"] = "Ready to insert into customer data"
+            # Completely New Entry!
+            row_dict["entry_type"] = "New"
+            row_dict["status"] = "New"
+            row_dict["reason"] = "New entry — ready to add to database and customer table"
+            new_entries.append(row_dict)
             valid.append(row_dict)
 
         if r.imei:
@@ -591,22 +631,30 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         if r.iccid:
             seen_iccids.add(r.iccid)
 
-    all_rows = valid + duplicates + invalids
+    all_rows = new_entries + updated_entries + existing_entries + duplicates + invalids
     all_rows.sort(key=lambda x: x.get("row_num", 0))
 
     return {
         "valid_count": len(valid),
+        "new_count": len(new_entries),
+        "updated_count": len(updated_entries),
+        "existing_count": len(existing_entries),
         "duplicate_count": len(duplicates),
         "invalid_count": len(invalids),
+        "total_count": len(data.rows),
         "esim_count": esim_count,
         "plastic_count": plastic_count,
         "new_customers": sorted(list(new_customers)),
         "new_columns": sorted(list(new_columns)),
         "missing_columns_warning": list(missing_columns),
-        "valid_sample": valid[:200],
-        "duplicates": duplicates[:200],
-        "invalids": invalids[:200],
-        "all_sample": all_rows[:200]
+        "new_sample": new_entries[:300],
+        "updated_sample": updated_entries[:300],
+        "existing_sample": existing_entries[:300],
+        "valid_sample": valid[:300],
+        "duplicates": duplicates[:300],
+        "invalids": invalids[:300],
+        "all_sample": all_rows[:300],
+        "new_imeis": [r.get("imei") for r in new_entries if r.get("imei")]
     }
 
 

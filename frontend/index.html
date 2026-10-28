@@ -1993,6 +1993,18 @@
               </div>
             </div>
             <div id="sheetList" style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0"></div>
+
+            <!-- Validate Button to check tables and segregate entries -->
+            <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+              <div>
+                <div style="font-weight:700;font-size:13.5px;color:var(--ink)">🔍 Sheet & Table Scan Ready</div>
+                <div class="sub" style="font-size:12px;margin-top:2px">Click the Validate button to scan database tables, check existing values, and segregate entries into New, Updated, and Existing records.</div>
+              </div>
+              <button class="b p" id="btnValidateFile" type="button"
+                style="font-size:14px;font-weight:700;padding:10px 24px;border-radius:8px;background:linear-gradient(135deg, #2563eb, #1d4ed8);color:#fff;display:inline-flex;align-items:center;gap:8px;box-shadow:0 3px 12px rgba(37,99,235,0.25);cursor:pointer">
+                <span>🔍</span> <span>Validate File & Check Entries</span>
+              </button>
+            </div>
           </div>
 
           <!-- Optional Values Saved into Every Record -->
@@ -2109,28 +2121,32 @@
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
               <div>
                 <h4 style="margin:0;font-size:15px;display:flex;align-items:center;gap:6px">
-                  <span>📋</span> <span>Exact File Review & Validation</span>
+                  <span>📊</span> <span>Entry Segregation & Validation Review</span>
                 </h4>
                 <div class="sub" style="font-size:12px;margin-top:2px">
-                  Review exact rows from the uploaded file. Only duplicate IMEI, ICCID, and Device Sr No are held as error entries; all other rows are inserted to their customer data.
+                  Entries segregated by <b>New Entries</b>, <b>Updated Entries</b>, <b>Existing (Unchanged)</b>, and <b>Duplicate Errors</b>.
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <input type="search" id="valReviewSearch" placeholder="🔍 Search in file review..."
+                <input type="search" id="valReviewSearch" placeholder="🔍 Search in segregated entries…"
                   style="font-size:12.5px;padding:6px 12px;border-radius:6px;min-width:220px;border:1px solid var(--line)" />
-                <div style="display:flex;gap:6px" id="valFilterBtns">
+                <div style="display:flex;gap:6px;flex-wrap:wrap" id="valFilterBtns">
                   <button class="b on" data-valfilter="all" type="button" id="btnFilterAll">All (<span id="vAllCount">0</span>)</button>
-                  <button class="b" data-valfilter="valid" type="button" id="btnFilterValid">Ready to Insert (<span id="vValidCount">0</span>)</button>
-                  <button class="b" data-valfilter="duplicate" type="button" id="btnFilterDup">Duplicate Errors (<span id="vDupCount">0</span>)</button>
+                  <button class="b" data-valfilter="new" type="button" id="btnFilterNew" style="font-weight:700;color:var(--ok)">✨ New (<span id="vNewCount">0</span>)</button>
+                  <button class="b" data-valfilter="updated" type="button" id="btnFilterUpdated" style="font-weight:700;color:#0284c7">🔄 Updated (<span id="vUpdatedCount">0</span>)</button>
+                  <button class="b" data-valfilter="existing" type="button" id="btnFilterExisting">📋 Existing (<span id="vExistingCount">0</span>)</button>
+                  <button class="b" data-valfilter="duplicate" type="button" id="btnFilterDup">⚠️ Duplicates (<span id="vDupCount">0</span>)</button>
                 </div>
               </div>
             </div>
 
-            <div class="stats" style="margin-top:10px">
-              <div class="card stat" style="border-left-color:var(--ok)"><b id="vValid">0</b><span>Ready to Insert</span></div>
-              <div class="card stat" style="border-left-color:var(--warn)"><b id="vDup">0</b><span>Duplicate Errors</span></div>
-              <div class="card stat" style="border-left-color:#38bdf8"><b id="vEsim">0</b><span>E-SIM Total</span></div>
-              <div class="card stat" style="border-left-color:#a855f7"><b id="vPlastic">0</b><span>Plastic SIM Total</span></div>
+            <!-- Segregation Metric Cards -->
+            <div class="stats" style="margin-top:10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px">
+              <div class="card stat" style="border-left-color:var(--ok);padding:10px 14px"><b id="vNew">0</b><span>✨ New Entries (Add to DB)</span></div>
+              <div class="card stat" style="border-left-color:#38bdf8;padding:10px 14px"><b id="vUpdated">0</b><span>🔄 Updated Entries</span></div>
+              <div class="card stat" style="border-left-color:#94a3b8;padding:10px 14px"><b id="vExisting">0</b><span>📋 Existing (Unchanged)</span></div>
+              <div class="card stat" style="border-left-color:var(--warn);padding:10px 14px"><b id="vDup">0</b><span>⚠️ Duplicate Conflicts</span></div>
+              <div class="card stat" style="border-left-color:var(--primary);padding:10px 14px"><b id="vTotalScanned">0</b><span>Total Scanned</span></div>
             </div>
 
             <div id="valMetaBadges" style="margin:10px 0;display:flex;gap:12px;flex-wrap:wrap;font-size:13px"></div>
@@ -2184,13 +2200,30 @@
               <div class="card stat" style="padding:10px 14px"><b id="progTotalCount" style="font-size:16px">0</b><span>Total Data</span></div>
               <div class="card stat" style="padding:10px 14px;border-left-color:var(--primary)"><b id="progUploadedCount" style="font-size:16px">0</b><span>Uploaded</span></div>
               <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="progRemainCount" style="font-size:16px">0</b><span>Remaining</span></div>
-              <div class="card stat" style="padding:10px 14px;border-left-color:var(--ok)"><b id="progAddedCount" style="font-size:16px">0</b><span>Added to DB</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--ok)"><b id="progAddedCount" style="font-size:16px">0</b><span>Added New to DB</span></div>
               <div class="card stat" style="padding:10px 14px;border-left-color:#38bdf8"><b id="progUpdatedCount" style="font-size:16px">0</b><span>Updated</span></div>
               <div class="card stat" style="padding:10px 14px;border-left-color:var(--warn)"><b id="progDupCount" style="font-size:16px">0</b><span>Duplicate Errors</span></div>
             </div>
 
+            <!-- ONLY Show New Entries While Loading -->
+            <div id="progNewEntriesWrap" style="margin:14px 0;background:var(--card-subtle);border:1.5px solid rgba(16,185,129,0.35);border-radius:10px;padding:14px 16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+                <div style="font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:6px;color:var(--ok)">
+                  <span>✨</span> <span>Newly Added Entries (Live Stream While Loading)</span>
+                </div>
+                <div style="font-size:12px;color:var(--muted)">
+                  Showing only new entries added to database: <b id="progNewEntriesCount" style="color:var(--ok);font-size:13px">0</b> records
+                </div>
+              </div>
+              <div id="progNewEntriesTable" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;background:var(--bg)">
+                <div style="padding:16px;text-align:center;font-size:12px;color:var(--muted)">
+                  ⏳ New entries will appear here as they are inserted into database…
+                </div>
+              </div>
+            </div>
+
             <!-- Live Sheet & Batch Status Box -->
-            <div id="progLiveDetailBox" style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:12px;max-height:130px;overflow-y:auto;font-family:monospace;margin-top:10px">
+            <div id="progLiveDetailBox" style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:12px;max-height:110px;overflow-y:auto;font-family:monospace;margin-top:10px">
               <div style="color:var(--muted)">[Ready] Waiting to start upload…</div>
             </div>
 
@@ -3851,7 +3884,7 @@
           const pct = Math.min(100, Math.round((c / t) * 100));
           if ($('actProgPct')) $('actProgPct').textContent = `${pct}%`;
           if ($('actProgBar')) $('actProgBar').style.width = `${pct}%`;
-          if ($('actProgCount')) $('actProgCount').textContent = `${c.toLocaleString()} / ${t.toLocaleString()}`;
+          if ($('actProgCount')) $('actProgCount').textContent = `${Math.min(t, Math.round(c)).toLocaleString()} / ${t.toLocaleString()}`;
           if (statusTxt && $('actProgStatus')) $('actProgStatus').textContent = statusTxt;
         };
 
@@ -5588,6 +5621,7 @@
               if (!selected.length) {
                 parsedRows = [];
                 $('valSummaryWrap').hidden = true;
+                toast('⚠️ Please select at least one worksheet.');
                 return;
               }
 
@@ -5655,12 +5689,12 @@
                 $('valTargetCustBanner').innerHTML = `
                   <div style="background:var(--card-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px">
                     <div style="font-weight:700;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                      <span>📊 Total Data to Upload: <b>${allRows.length.toLocaleString()} records</b> from <b>${selected.length} sheet(s)</b></span>
-                      <span style="font-size:12px;color:var(--muted)">Sheet Names in DB &rarr; Push to Customer | Not in DB &rarr; Create Customer</span>
+                      <span>📊 Total Data Scanned: <b>${allRows.length.toLocaleString()} records</b> from <b>${selected.length} sheet(s)</b></span>
+                      <span style="font-size:12px;color:var(--muted)">Sheet Names in DB &rarr; Push to Existing Table | Not in DB &rarr; Create New Table</span>
                     </div>
                     <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">
-                      ${existingList.map(s => `<span class="badge" style="background:rgba(37,99,235,0.12);color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:4px 10px;border-radius:6px">✓ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Push to Existing)</span>`).join('')}
-                      ${newList.map(s => `<span class="badge" style="background:rgba(16,185,129,0.12);color:var(--ok);border:1px solid var(--ok);font-size:12px;padding:4px 10px;border-radius:6px">✨ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Create New Customer)</span>`).join('')}
+                      ${existingList.map(s => `<span class="badge" style="background:rgba(37,99,235,0.12);color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:4px 10px;border-radius:6px">✓ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Existing Table)</span>`).join('')}
+                      ${newList.map(s => `<span class="badge" style="background:rgba(16,185,129,0.12);color:var(--ok);border:1px solid var(--ok);font-size:12px;padding:4px 10px;border-radius:6px">✨ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Create New Customer & Table)</span>`).join('')}
                     </div>
                   </div>
                 `;
@@ -5671,8 +5705,14 @@
             };
 
             window._processSheets = processSheets;
-            document.querySelectorAll('.sheet-chk').forEach(c => c.onchange = processSheets);
-            processSheets();
+            if ($('btnValidateFile')) {
+              $('btnValidateFile').onclick = () => {
+                toast('🔍 Validating sheets against database…');
+                processSheets();
+              };
+            }
+            $('valSummaryWrap').hidden = true;
+            toast('Worksheets scanned! Click "Validate File & Check Entries" to verify database tables and segregate entries.');
           } catch (err) { fail(err); }
         };
 
@@ -5680,13 +5720,13 @@
         if ($('btnSheetSelectAll')) {
           $('btnSheetSelectAll').onclick = () => {
             document.querySelectorAll('.sheet-chk').forEach(c => c.checked = true);
-            if (window._processSheets) window._processSheets();
+            if (window._processSheets && !$('valSummaryWrap').hidden) window._processSheets();
           };
         }
         if ($('btnSheetClear')) {
           $('btnSheetClear').onclick = () => {
             document.querySelectorAll('.sheet-chk').forEach(c => c.checked = false);
-            if (window._processSheets) window._processSheets();
+            if (window._processSheets && !$('valSummaryWrap').hidden) window._processSheets();
           };
         }
 
@@ -5726,15 +5766,15 @@
 
         function renderValidationTable(sampleRows) {
           if (!sampleRows || !sampleRows.length) {
-            return '<div class="empty">No records in this category.</div>';
+            return '<div class="empty">No records in this segregation category.</div>';
           }
           return `
       <table class="data-table" style="font-size:12px">
         <thead>
           <tr>
             <th>#</th>
-            <th>Status</th>
-            <th>Reason</th>
+            <th>Segregation Status</th>
+            <th>Reason & Changed Fields</th>
             <th>Customer</th>
             <th>Device Sr No</th>
             <th>IMEI</th>
@@ -5752,14 +5792,28 @@
         </thead>
         <tbody>
           ${sampleRows.map(r => {
-            const st = r.status || 'Valid';
-            const badgeStyle = st === 'Valid' ? 'background:var(--ok);color:#fff' : (st === 'Duplicate' ? 'background:var(--warn);color:#111' : 'background:var(--danger);color:#fff');
+            const st = r.entry_type || r.status || 'New';
+            let badgeBg = 'var(--ok)';
+            let badgeText = '✨ New Entry';
+            if (st === 'Updated') {
+              badgeBg = '#0284c7';
+              badgeText = '🔄 Updated';
+            } else if (st === 'Existing') {
+              badgeBg = '#64748b';
+              badgeText = '📋 Existing';
+            } else if (st === 'Duplicate') {
+              badgeBg = 'var(--warn)';
+              badgeText = '⚠️ Duplicate';
+            } else if (st === 'Invalid') {
+              badgeBg = 'var(--danger)';
+              badgeText = '❌ Invalid';
+            }
             const extraStr = r.extra ? Object.entries(r.extra).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join(', ') : '—';
             return `
               <tr>
                 <td>${r.row_num || '—'}</td>
-                <td><span class="badge" style="${badgeStyle};font-weight:700;padding:2px 8px;border-radius:4px">${esc(st)}</span></td>
-                <td style="color:${st === 'Invalid' ? 'var(--danger)' : (st === 'Duplicate' ? 'var(--warn)' : 'var(--ok)')}">${esc(r.reason || '')}</td>
+                <td><span class="badge" style="background:${badgeBg};color:${st === 'Duplicate' ? '#111' : '#fff'};font-weight:700;padding:3px 8px;border-radius:4px">${badgeText}</span></td>
+                <td style="color:${st === 'Invalid' ? 'var(--danger)' : (st === 'Duplicate' ? 'var(--warn)' : (st === 'Updated' ? '#0284c7' : (st === 'Existing' ? 'var(--muted)' : 'var(--ok)')))}">${esc(r.reason || '')}</td>
                 <td><b>${esc(r.customer_name || '—')}</b></td>
                 <td><code>${esc(r.device_sr_no || '—')}</code></td>
                 <td><b><code>${esc(r.imei || '—')}</code></b></td>
@@ -5788,7 +5842,9 @@
           });
           if (!activeValResult) return;
           let list = [];
-          if (activeValFilter === 'valid') list = activeValResult.valid_sample || [];
+          if (activeValFilter === 'new') list = activeValResult.new_sample || [];
+          else if (activeValFilter === 'updated') list = activeValResult.updated_sample || [];
+          else if (activeValFilter === 'existing') list = activeValResult.existing_sample || [];
           else if (activeValFilter === 'duplicate') list = activeValResult.duplicates || [];
           else list = activeValResult.all_sample || [];
 
@@ -5837,9 +5893,9 @@
             $('valSummaryWrap').hidden = true;
             return;
           }
-          toast('Validating rows against database…');
+          toast('Validating rows and segregating entries…');
           $('valSummaryWrap').hidden = false;
-          $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and cloud tables…</div>';
+          $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and segregating into New, Updated, and Existing records…</div>';
 
           try {
             const valResult = await api('/api/devices/bulk/validate', {
@@ -5848,15 +5904,23 @@
             });
             activeValResult = valResult;
 
-            $('vValid').textContent = valResult.valid_count.toLocaleString();
-            $('vDup').textContent = valResult.duplicate_count.toLocaleString();
-            $('vEsim').textContent = (valResult.esim_count || 0).toLocaleString();
-            $('vPlastic').textContent = (valResult.plastic_count || 0).toLocaleString();
+            const newCnt = valResult.new_count || 0;
+            const updatedCnt = valResult.updated_count || 0;
+            const existingCnt = valResult.existing_count || 0;
+            const dupCnt = valResult.duplicate_count || 0;
+            const totalCnt = valResult.total_count || rows.length;
 
-            const totalCount = valResult.valid_count + valResult.duplicate_count;
-            $('vAllCount').textContent = totalCount.toLocaleString();
-            $('vValidCount').textContent = valResult.valid_count.toLocaleString();
-            $('vDupCount').textContent = valResult.duplicate_count.toLocaleString();
+            if ($('vNew')) $('vNew').textContent = newCnt.toLocaleString();
+            if ($('vUpdated')) $('vUpdated').textContent = updatedCnt.toLocaleString();
+            if ($('vExisting')) $('vExisting').textContent = existingCnt.toLocaleString();
+            if ($('vDup')) $('vDup').textContent = dupCnt.toLocaleString();
+            if ($('vTotalScanned')) $('vTotalScanned').textContent = totalCnt.toLocaleString();
+
+            if ($('vAllCount')) $('vAllCount').textContent = totalCnt.toLocaleString();
+            if ($('vNewCount')) $('vNewCount').textContent = newCnt.toLocaleString();
+            if ($('vUpdatedCount')) $('vUpdatedCount').textContent = updatedCnt.toLocaleString();
+            if ($('vExistingCount')) $('vExistingCount').textContent = existingCnt.toLocaleString();
+            if ($('vDupCount')) $('vDupCount').textContent = dupCnt.toLocaleString();
 
             $('valColWarnings').hidden = true;
 
@@ -5873,12 +5937,22 @@
             applyPreviewFilter(activeValFilter || 'all');
 
             const dupMode = $('dupMode').value;
-            $('btnConfirmUpload').disabled = (valResult.valid_count === 0 && (dupMode !== 'replace' || valResult.duplicate_count === 0));
-            $('btnDlSkipped').hidden = (valResult.duplicate_count === 0);
+            const canUpload = newCnt > 0 || (dupMode === 'replace' && updatedCnt > 0);
+            $('btnConfirmUpload').disabled = !canUpload;
+            if (newCnt > 0 && updatedCnt > 0 && dupMode === 'replace') {
+              $('btnConfirmUpload').textContent = `Confirm & Upload: Add ${newCnt.toLocaleString()} New + Update ${updatedCnt.toLocaleString()} Existing`;
+            } else if (newCnt > 0) {
+              $('btnConfirmUpload').textContent = `Confirm & Add ${newCnt.toLocaleString()} New Entries to Database`;
+            } else if (updatedCnt > 0 && dupMode === 'replace') {
+              $('btnConfirmUpload').textContent = `Confirm & Update ${updatedCnt.toLocaleString()} Existing Entries in Database`;
+            } else {
+              $('btnConfirmUpload').textContent = `No New or Updated Entries to Add`;
+            }
 
+            $('btnDlSkipped').hidden = (dupCnt === 0);
             $('btnDlSkipped').onclick = () => {
               const headers = ['Row', 'Customer Name', 'Status', 'IMEI', 'Device Sr No', 'ICCID', 'Reason'];
-              const skipRows = valResult.duplicates.map(d => [d.row_num || '—', d.customer_name, 'Duplicate Error', d.imei, d.device_sr_no, d.iccid, d.reason]);
+              const skipRows = (valResult.duplicates || []).map(d => [d.row_num || '—', d.customer_name, 'Duplicate Error', d.imei, d.device_sr_no, d.iccid, d.reason]);
               exportExcel('Duplicate_Error_Records', headers, skipRows);
             };
           } catch (err) {
@@ -5901,6 +5975,9 @@
           const dbExistingImeis = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('IMEI already exists')).map(d => String(d.imei).toLowerCase()) : []));
           const dbExistingSrs = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('Device Sr No already exists')).map(d => String(d.device_sr_no).toLowerCase()) : []));
           const dbExistingIccids = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('ICCID already exists')).map(d => String(d.iccid).toLowerCase()) : []));
+
+          // Set of all new IMEIs identified during validation
+          const newImeisSet = new Set((activeValResult && activeValResult.new_imeis ? activeValResult.new_imeis : (activeValResult && activeValResult.new_sample ? activeValResult.new_sample.map(d => d.imei) : [])).filter(Boolean).map(x => String(x).toLowerCase()));
 
           const seenImeis = new Set();
           const seenSrs = new Set();
@@ -5978,7 +6055,7 @@
             if (rawSr) seenSrs.add(rawSr.toLowerCase());
             if (rawIccid) seenIccids.add(rawIccid.toLowerCase());
 
-            // All other rows are inserted into customer data!
+            // All other rows are prepared for upload
             const rowCopy = Object.assign({}, r);
             if (!rowCopy.customer_name || !String(rowCopy.customer_name).trim()) {
               rowCopy.customer_name = 'General_Customer';
@@ -6015,6 +6092,32 @@
           if ($('progPct')) $('progPct').textContent = '0%';
           if ($('progRowsCount')) $('progRowsCount').textContent = `0 / ${validRowsToUpload.length.toLocaleString()} records`;
 
+          // Setup Live New Entries Table: ONLY show new entries while loading!
+          const newEntriesTableBox = $('progNewEntriesTable');
+          let newEntriesRenderedCount = 0;
+          if (newEntriesTableBox) {
+            newEntriesTableBox.innerHTML = `
+              <table class="data-table" style="font-size:12px;margin:0;width:100%">
+                <thead>
+                  <tr style="background:var(--card-subtle)">
+                    <th style="width:45px">#</th>
+                    <th style="width:110px">Status</th>
+                    <th>Customer Name</th>
+                    <th>IMEI</th>
+                    <th>Device Sr No</th>
+                    <th>ICCID</th>
+                    <th>SIM Type</th>
+                    <th>Model</th>
+                  </tr>
+                </thead>
+                <tbody id="progNewTbody"></tbody>
+              </table>
+            `;
+          }
+          if ($('progNewEntriesCount')) {
+            $('progNewEntriesCount').textContent = `0 / ${newImeisSet.size.toLocaleString()} new records`;
+          }
+
           const logBox = $('progLiveDetailBox');
           const addLog = msg => {
             if (!logBox) return;
@@ -6025,7 +6128,7 @@
             logBox.scrollTop = logBox.scrollHeight;
           };
           if (logBox) logBox.innerHTML = '';
-          addLog(`Starting upload: ${validRowsToUpload.length.toLocaleString()} valid rows to process.`);
+          addLog(`Starting upload: Adding new records to customer tables (${newImeisSet.size.toLocaleString()} new entries to insert)…`);
 
           // Stage duplicate error entries to Errored Entries container
           if (duplicatesToStage.length > 0) {
@@ -6056,16 +6159,46 @@
               if ($('progRowsCount')) $('progRowsCount').textContent = `${i.toLocaleString()} / ${validRowsToUpload.length.toLocaleString()} records`;
               if ($('progUploadedCount')) $('progUploadedCount').textContent = i.toLocaleString();
               if ($('progRemainCount')) $('progRemainCount').textContent = Math.max(0, validRowsToUpload.length - i).toLocaleString();
-              if ($('progStatus')) $('progStatus').textContent = `Uploading batch ${chunkNum} of ${totalChunks} (records ${i + 1} to ${Math.min(i + chunkSize, validRowsToUpload.length)})…`;
-
-              addLog(`Batch ${chunkNum}/${totalChunks}: Uploading ${chunk.length} records…`);
+              if ($('progStatus')) $('progStatus').textContent = `Processing batch ${chunkNum} of ${totalChunks}…`;
 
               try {
                 const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode: mode }) });
                 addedTotal += (r.added || 0);
                 updatedTotal += (r.updated || 0);
                 skippedTotal += (r.skipped_duplicates || 0);
-                addLog(`Batch ${chunkNum} complete: +${r.added || 0} added to DB, +${r.updated || 0} updated.`);
+
+                // Stream ONLY NEW ENTRIES into the live loading display table!
+                const newRowsInChunk = chunk.filter(r => newImeisSet.has(String(r.imei || '').toLowerCase()));
+                const tbody = $('progNewTbody');
+                if (tbody && newRowsInChunk.length > 0) {
+                  newRowsInChunk.forEach(r => {
+                    newEntriesRenderedCount++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                      <td>${newEntriesRenderedCount}</td>
+                      <td><span class="badge" style="background:var(--ok);color:#fff;font-weight:700;padding:2px 7px;border-radius:4px">✨ Added New</span></td>
+                      <td><b>${esc(r.customer_name || '—')}</b></td>
+                      <td><code><b>${esc(r.imei || '—')}</b></code></td>
+                      <td><code>${esc(r.device_sr_no || '—')}</code></td>
+                      <td><code>${esc(r.iccid || '—')}</code></td>
+                      <td><span class="badge" style="background:${r.sim_type === 'E-SIM' ? '#38bdf8' : '#a855f7'};color:#fff">${esc(r.sim_type || '—')}</span></td>
+                      <td>${esc(r.model || '—')}</td>
+                    `;
+                    tbody.appendChild(tr);
+                  });
+                  if (newEntriesTableBox) {
+                    newEntriesTableBox.scrollTop = newEntriesTableBox.scrollHeight;
+                  }
+                  if ($('progNewEntriesCount')) {
+                    $('progNewEntriesCount').textContent = `${newEntriesRenderedCount.toLocaleString()} / ${newImeisSet.size.toLocaleString()}`;
+                  }
+                }
+
+                if (newRowsInChunk.length > 0) {
+                  addLog(`✨ Added ${newRowsInChunk.length} new entries to database (e.g. IMEI: ${newRowsInChunk[0].imei})`);
+                } else {
+                  addLog(`Batch ${chunkNum}/${totalChunks} processed (+${r.updated || 0} updated).`);
+                }
               } catch (chunkErr) {
                 console.warn('Batch encountered error, falling back to sub-batches:', chunkErr);
                 addLog(`⚠️ Batch ${chunkNum} retry with smaller chunks (${chunkErr.message})…`);
@@ -6077,6 +6210,28 @@
                     addedTotal += (r.added || 0);
                     updatedTotal += (r.updated || 0);
                     skippedTotal += (r.skipped_duplicates || 0);
+
+                    const subNew = sub.filter(r => newImeisSet.has(String(r.imei || '').toLowerCase()));
+                    const tbody = $('progNewTbody');
+                    if (tbody && subNew.length > 0) {
+                      subNew.forEach(r => {
+                        newEntriesRenderedCount++;
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                          <td>${newEntriesRenderedCount}</td>
+                          <td><span class="badge" style="background:var(--ok);color:#fff;font-weight:700;padding:2px 7px;border-radius:4px">✨ Added New</span></td>
+                          <td><b>${esc(r.customer_name || '—')}</b></td>
+                          <td><code><b>${esc(r.imei || '—')}</b></code></td>
+                          <td><code>${esc(r.device_sr_no || '—')}</code></td>
+                          <td><code>${esc(r.iccid || '—')}</code></td>
+                          <td><span class="badge" style="background:${r.sim_type === 'E-SIM' ? '#38bdf8' : '#a855f7'};color:#fff">${esc(r.sim_type || '—')}</span></td>
+                          <td>${esc(r.model || '—')}</td>
+                        `;
+                        tbody.appendChild(tr);
+                      });
+                      if (newEntriesTableBox) newEntriesTableBox.scrollTop = newEntriesTableBox.scrollHeight;
+                      if ($('progNewEntriesCount')) $('progNewEntriesCount').textContent = `${newEntriesRenderedCount.toLocaleString()} / ${newImeisSet.size.toLocaleString()}`;
+                    }
                   } catch (subErr) {
                     console.warn('Ignored problematic sub-batch:', subErr);
                     addLog(`Skipped problematic row in sub-batch: ${subErr.message}`);
@@ -6097,8 +6252,8 @@
             if ($('progRemainCount')) $('progRemainCount').textContent = '0';
             if ($('progAddedCount')) $('progAddedCount').textContent = addedTotal.toLocaleString();
             if ($('progUpdatedCount')) $('progUpdatedCount').textContent = updatedTotal.toLocaleString();
-            if ($('progStatus')) $('progStatus').textContent = `Complete: ${addedTotal} added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`;
-            addLog(`✅ All records uploaded successfully! ${addedTotal} added, ${updatedTotal} updated.`);
+            if ($('progStatus')) $('progStatus').textContent = `Complete: ${addedTotal} new records added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`;
+            addLog(`✅ All records uploaded successfully! ${addedTotal} new entries added to database, ${updatedTotal} updated.`);
 
             // Compute customer breakdown for complete banner
             const custBreakdown = {};
@@ -6116,20 +6271,20 @@
               $('progCompleteBanner').hidden = false;
               if ($('progCompleteSummary')) {
                 $('progCompleteSummary').innerHTML = `
-                  <div>Processed <b>${validRowsToUpload.length.toLocaleString()}</b> records: <b>${addedTotal.toLocaleString()}</b> added to database, <b>${updatedTotal.toLocaleString()}</b> updated, <b>${duplicatesToStage.length.toLocaleString()}</b> duplicate errors held.</div>
+                  <div>Processed <b>${validRowsToUpload.length.toLocaleString()}</b> records: <b>${addedTotal.toLocaleString()}</b> new records added to database, <b>${updatedTotal.toLocaleString()}</b> updated, <b>${duplicatesToStage.length.toLocaleString()}</b> duplicate errors held.</div>
                   <ul style="margin:8px 0 0;padding-left:20px;font-size:12.5px">${breakdownHtml}</ul>
                 `;
               }
             }
 
-            toast(`Upload finished! ${addedTotal} added to customer data, ${updatedTotal} updated, ${duplicatesToStage.length} duplicates held.`);
+            toast(`Upload finished! ${addedTotal} new entries added to customer data, ${updatedTotal} updated, ${duplicatesToStage.length} duplicates held.`);
             showEventPopup({
               type: 'uploading',
               title: 'Bulk File Upload Completed',
-              message: `Bulk spreadsheet processed successfully: ${addedTotal} records added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`,
+              message: `Bulk spreadsheet processed successfully: ${addedTotal} new records added to database, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`,
               meta: {
                 'Total Processed': validRowsToUpload.length + duplicatesToStage.length,
-                'Records Added': addedTotal,
+                'New Records Added': addedTotal,
                 'Records Updated': updatedTotal,
                 'Duplicate Errors Held': duplicatesToStage.length,
                 'Upload Mode': mode
@@ -6145,7 +6300,7 @@
             if (duplicatesToStage.length > 0) {
               $('dlgUploadErrorsAlertBody').innerHTML = `
           <div style="background:var(--ok-bg);border:1px solid var(--ok);padding:12px;border-radius:8px;margin-bottom:12px">
-            <b>${addedTotal + updatedTotal}</b> records were successfully inserted/updated into customer data.
+            <b>${addedTotal + updatedTotal}</b> records were successfully inserted/updated into customer data (${addedTotal} new records added).
           </div>
           <p><b>${duplicatesToStage.length}</b> duplicate records (duplicate IMEI, ICCID, or Device Sr No) were held and saved into the <b>Errored / Invalid Entries</b> container.</p>
           <p class="sub" style="margin:0">All remaining records have been safely inserted to their customer tables.</p>
@@ -8560,13 +8715,33 @@
               $('dl').onclick = async () => {
                 if (!confirm(`Move device ${d.imei} to Cart?`)) return;
                 try {
-                  await api('/api/devices/by-imei/' + encodeURIComponent(d.imei), { method: 'DELETE' });
+                  await runProgressAction({
+                    title: `Moving Device ${d.imei} to Cart…`,
+                    tag: '🗑️ Deletion to Cart Progress',
+                    tagColor: '#ef4444',
+                    barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
+                    subText: `Safely moving device ${d.imei} to Cart.`,
+                    total: 1,
+                    workFn: async (updateProgress) => {
+                      updateProgress(0, 1, `Initiating deletion & move to Cart (0%)…`);
+                      await new Promise(r => setTimeout(r, 120));
+                      updateProgress(0.5, 1, `Moving ${d.imei} to Cart (50% deleted)…`);
+                      await api('/api/devices/by-imei/' + encodeURIComponent(d.imei), { method: 'DELETE' });
+                      updateProgress(1, 1, `Device ${d.imei} moved to Cart (100% deleted to Cart)!`);
+                      await new Promise(r => setTimeout(r, 220));
+                    }
+                  });
                   toast('Record moved to Cart');
                   showEventPopup({
                     type: 'deletion',
                     title: 'Device Record Moved to Cart',
                     message: `Device record ${d.imei} was deleted from active inventory and moved to Cart.`,
-                    meta: { 'IMEI': d.imei, 'Customer': d.customer_name || '—', 'Status': 'In Cart' },
+                    meta: {
+                      'IMEI': d.imei,
+                      'Customer': d.customer_name || '—',
+                      'Percentage of Deletion': '100% Complete',
+                      'Status': 'In Cart'
+                    },
                     progress: '100% Complete'
                   });
                   showContainer('box-bin');
@@ -8854,15 +9029,34 @@
         const delBtn = e.target.closest('[data-errdel]');
         if (delBtn) {
           const id = +delBtn.dataset.errdel;
-          if (!confirm('Move this errored entry to Cart? It will remain recoverable in Cart.')) return;
+          if (!confirm(`Move errored entry #${id} to Cart? It will remain recoverable in Cart.`)) return;
           try {
-            await api('/api/errors/' + id, { method: 'DELETE' });
+            await runProgressAction({
+              title: `Moving Errored Entry #${id} to Cart…`,
+              tag: '🗑️ Deletion to Cart Progress',
+              tagColor: '#ef4444',
+              barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
+              subText: `Safely moving errored record #${id} to Cart.`,
+              total: 1,
+              workFn: async (updateProgress) => {
+                updateProgress(0, 1, `Preparing deletion of entry #${id} to Cart (0% deleted)…`);
+                await new Promise(r => setTimeout(r, 120));
+                updateProgress(0.5, 1, `Moving entry #${id} to Cart (50% deleted)…`);
+                await api('/api/errors/' + id, { method: 'DELETE' });
+                updateProgress(1, 1, `Entry #${id} moved to Cart (100% deleted to Cart)!`);
+                await new Promise(r => setTimeout(r, 220));
+              }
+            });
             toast('Entry moved to Cart');
             showEventPopup({
               type: 'deletion',
               title: 'Errored Entry Moved to Cart',
-              message: `Errored entry #${id} was moved to Cart.`,
-              meta: { 'Error ID': id, 'Status': 'In Cart (Recoverable)' },
+              message: `Errored entry #${id} was safely deleted from active staging and moved to Cart.`,
+              meta: {
+                'Error ID': id,
+                'Percentage of Deletion': '100% Complete',
+                'Status': 'In Cart (Recoverable)'
+              },
               progress: '100% Complete'
             });
             await loadErrorsContainer();
@@ -9047,22 +9241,31 @@
         let totalMoved = 0;
         await runProgressAction({
           title: 'Moving Errored Entries to Cart…',
-          tag: '🗑️ Errored Entries Clean-up',
+          tag: '🗑️ Deletion to Cart Progress',
           tagColor: '#ef4444',
           barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
-          subText: 'Safely moving errored records to Cart. Please wait…',
+          subText: `Safely deleting and moving all ${totalToMove} errored records to Cart.`,
           total: totalToMove,
           workFn: async (updateProgress) => {
-            const batchSize = 50;
+            // Adaptive chunk size so that users always clearly observe the deletion percentage bar progression
+            const batchSize = Math.min(25, Math.max(1, Math.ceil(totalToMove / 10)));
             let remaining = totalToMove;
             while (remaining > 0) {
               const res = await api(`/api/errors/empty?limit=${batchSize}`, { method: 'POST' });
               const batchMoved = res.moved_count || res.batch_moved || res.moved_all_to_cart || 0;
               totalMoved += batchMoved;
               remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchMoved);
-              updateProgress(totalMoved, totalToMove, `Moved ${totalMoved} of ${totalToMove} records to Cart…`);
+              const pct = Math.min(100, Math.round((totalMoved / totalToMove) * 100));
+              updateProgress(totalMoved, totalToMove, `Moving errored entries to Cart: ${totalMoved} of ${totalToMove} (${pct}% deleted to Cart)`);
+              if ($('cartCountBadge')) {
+                const curCart = parseInt($('cartCountBadge').textContent || '0', 10) || 0;
+                $('cartCountBadge').textContent = (curCart + batchMoved).toString();
+              }
+              if ($('errorsCountBadge')) {
+                $('errorsCountBadge').textContent = Math.max(0, totalToMove - totalMoved).toString();
+              }
               if (batchMoved === 0 || remaining === 0) break;
-              await new Promise(r => setTimeout(r, 60));
+              await new Promise(r => setTimeout(r, 120));
             }
           }
         });
@@ -9072,7 +9275,11 @@
           type: 'deletion',
           title: 'All Errored Entries Moved to Cart',
           message: `Successfully moved all ${totalMoved || totalToMove} errored entries to Cart.`,
-          meta: { 'Total Entries': totalMoved || totalToMove, 'Status': 'In Cart' },
+          meta: {
+            'Total Entries': totalMoved || totalToMove,
+            'Percentage of Deletion': '100% Complete',
+            'Status': 'In Cart (Recoverable)'
+          },
           progress: '100% Complete'
         });
         await loadErrorsContainer();
@@ -9100,6 +9307,58 @@
           $('btnEmptyCart').hidden = !adm || (!l.length && !dc.length);
 
           let html = '';
+          const totalCart = l.length + dc.length;
+          const errCount = l.filter(d => (d.delete_reason || '').toLowerCase().includes('errored')).length;
+          const devCount = l.length - errCount;
+          const custCount = dc.length;
+
+          let errPct = 0, devPct = 0, custPct = 0;
+          if (totalCart > 0) {
+            errPct = Math.round((errCount / totalCart) * 100);
+            devPct = Math.round((devCount / totalCart) * 100);
+            custPct = Math.max(0, 100 - errPct - devPct);
+
+            html += `
+        <div class="card" style="padding:18px 20px;border:1px solid var(--line);margin-bottom:20px;background:var(--card);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:10px;background:var(--card-subtle);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;padding:4px;flex-shrink:0">
+                <img src="logo.svg" alt="Company Logo" style="width:28px;height:28px;object-fit:contain" />
+              </div>
+              <div>
+                <h3 style="margin:0;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px">
+                  <span>Cart Deletion Summary & Breakdown</span>
+                  <span class="tag" style="background:var(--primary-bg, #eff6ff);color:var(--primary);font-weight:700">${totalCart} Total Deleted</span>
+                </h3>
+                <p class="sub" style="margin:2px 0 0;font-size:12px">Live composition and percentage of deletion for items currently held in Cart.</p>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="tag bad" style="font-size:12px;padding:3px 10px;font-weight:700">⚠️ Errored Entries in Cart: ${errCount} (${errPct}%)</span>
+              <span class="tag" style="background:#2563eb18;color:#2563eb;border-color:#2563eb40;font-size:12px;padding:3px 10px;font-weight:700">📱 Deleted Devices: ${devCount} (${devPct}%)</span>
+              <span class="tag mut" style="font-size:12px;padding:3px 10px;font-weight:700">🏢 Customer Tables: ${custCount} (${custPct}%)</span>
+            </div>
+          </div>
+
+          <!-- Animated Multi-Segment Percentage Bar -->
+          <div style="position:relative;margin:12px 0 8px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;font-weight:700">
+              <span style="color:var(--danger)">Errored Entries Deletion in Cart: ${errPct}%</span>
+              <span style="color:var(--muted)">Total Deletions in Cart: ${totalCart} Items (100%)</span>
+            </div>
+            <div style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;display:flex;border:1px solid var(--line);box-shadow:inset 0 1px 3px rgba(0,0,0,0.1)">
+              ${errPct > 0 ? `<div style="width:${errPct}%;background:linear-gradient(90deg, #ef4444, #f97316);transition:width 0.3s ease" title="Errored Entries in Cart: ${errCount} (${errPct}%)"></div>` : ''}
+              ${devPct > 0 ? `<div style="width:${devPct}%;background:linear-gradient(90deg, #2563eb, #3b82f6);transition:width 0.3s ease" title="Deleted Inventory Records: ${devCount} (${devPct}%)"></div>` : ''}
+              ${custPct > 0 ? `<div style="width:${custPct}%;background:linear-gradient(90deg, #64748b, #94a3b8);transition:width 0.3s ease" title="Deleted Customer Tables: ${custCount} (${custPct}%)"></div>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted);margin-top:6px">
+            <span>Items in Cart remain recoverable and can be restored anytime before permanent purging.</span>
+            <span><b>${errCount}</b> errored records safely staged in Cart (${errPct}% of all deleted items)</span>
+          </div>
+        </div>`;
+          }
+
           if (dc.length) {
             html += `
         <h4>Deleted Customers (${dc.length})</h4>
@@ -9717,13 +9976,32 @@
           </p>
         </div>
       `, 'Move to Cart', async () => {
-              await api('/api/devices/' + devId, { method: 'DELETE' });
+              await runProgressAction({
+                title: `Moving Device #${devId} to Cart…`,
+                tag: '🗑️ Deletion to Cart Progress',
+                tagColor: '#ef4444',
+                barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
+                subText: `Safely moving device record #${devId} to Cart.`,
+                total: 1,
+                workFn: async (updateProgress) => {
+                  updateProgress(0, 1, `Initiating deletion & move to Cart (0%)…`);
+                  await new Promise(r => setTimeout(r, 120));
+                  updateProgress(0.5, 1, `Moving device #${devId} to Cart (50% deleted)…`);
+                  await api('/api/devices/' + devId, { method: 'DELETE' });
+                  updateProgress(1, 1, `Device #${devId} moved to Cart (100% deleted to Cart)!`);
+                  await new Promise(r => setTimeout(r, 220));
+                }
+              });
               toast('Device deleted and moved to Cart');
               showEventPopup({
                 type: 'deletion',
                 title: 'Device Deleted & Moved to Cart',
                 message: `Device record #${devId} was deleted from active inventory and moved to Cart.`,
-                meta: { 'Device ID': devId, 'Status': 'In Cart (Recoverable)' },
+                meta: {
+                  'Device ID': devId,
+                  'Percentage of Deletion': '100% Complete',
+                  'Status': 'In Cart (Recoverable)'
+                },
                 progress: '100% Complete'
               });
               await updateChrome();
