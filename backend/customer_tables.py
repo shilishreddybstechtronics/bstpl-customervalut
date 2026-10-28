@@ -72,10 +72,13 @@ def ensure_table(conn, cid: int, name: str, extra_keys=()) -> str:
     if not t:
         t = table_name(cid, name)
         cols = ",\n  ".join(f"`{c}` {ddl} NULL" for c, ddl in BASE_COLS)
+        updated_at_clause = "`updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        if getattr(conn.dialect, "name", "") in ("mysql", "mariadb"):
+            updated_at_clause += " ON UPDATE CURRENT_TIMESTAMP"
         conn.execute(text(
             f"CREATE TABLE IF NOT EXISTS `{t}` (\n"
             f"  `imei` VARCHAR(20) NOT NULL PRIMARY KEY,\n  {cols},\n"
-            f"  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n)"))
+            f"  {updated_at_clause}\n)"))
     have = {c["name"] for c in inspect(conn).get_columns(t)}
     for col_name, ddl in BASE_COLS:
         if col_name not in have:
@@ -103,8 +106,12 @@ def mirror_rows(items):
             cols = ["imei"] + BASE_NAMES + [extra_col(k) for k in keys]
             col_sql = ",".join(f"`{c}`" for c in cols)
             val_sql = ",".join(f":p{i}" for i in range(len(cols)))
-            upd_sql = ",".join(f"`{c}`=VALUES(`{c}`)" for c in cols[1:])
-            sql = text(f"INSERT INTO `{t}` ({col_sql}) VALUES ({val_sql}) ON DUPLICATE KEY UPDATE {upd_sql}")
+            if getattr(conn.dialect, "name", "") in ("mysql", "mariadb"):
+                upd_sql = ",".join(f"`{c}`=VALUES(`{c}`)" for c in cols[1:])
+                sql = text(f"INSERT INTO `{t}` ({col_sql}) VALUES ({val_sql}) ON DUPLICATE KEY UPDATE {upd_sql}")
+            else:
+                upd_sql = ",".join(f"`{c}`=excluded.`{c}`" for c in cols[1:])
+                sql = text(f"INSERT INTO `{t}` ({col_sql}) VALUES ({val_sql}) ON CONFLICT(`imei`) DO UPDATE SET {upd_sql}")
             for i in range(0, len(rows), CHUNK):
                 batch = []
                 for r in rows[i:i + CHUNK]:
@@ -128,7 +135,10 @@ def rename_table(cid: int, new_name: str, old_name: str = ""):
         old = find_table(conn, cid, old_name)
         new = table_name(cid, new_name)
         if old and old != new:
-            conn.execute(text(f"RENAME TABLE `{old}` TO `{new}`"))
+            if getattr(conn.dialect, "name", "") in ("mysql", "mariadb"):
+                conn.execute(text(f"RENAME TABLE `{old}` TO `{new}`"))
+            else:
+                conn.execute(text(f"ALTER TABLE `{old}` RENAME TO `{new}`"))
             t_name = new
         elif old:
             t_name = old
