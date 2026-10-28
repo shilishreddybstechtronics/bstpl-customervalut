@@ -2159,12 +2159,48 @@
           </div>
 
           <!-- Progress Container -->
-          <div id="uploadProgressWrap" hidden style="margin:16px 0">
-            <div class="dist-item"><b id="progStatus">Uploading batch…</b><span id="progPct">0%</span></div>
-            <div class="progress-bar">
-              <div class="progress-fill" id="progBar" style="width:0%"></div>
+          <div id="uploadProgressWrap" hidden style="margin:18px 0;background:var(--card);padding:20px;border:1.5px solid var(--primary);border-radius:12px;box-shadow:0 6px 20px rgba(37,99,235,0.08)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span id="progSpinIcon" class="spin" style="font-size:22px">⏳</span>
+                <div>
+                  <b id="progTitle" style="font-size:15px;color:var(--ink)">Uploading Data to Customers…</b>
+                  <div id="progStatus" style="font-size:12.5px;color:var(--muted);margin-top:2px">Preparing batches…</div>
+                </div>
+              </div>
+              <div style="text-align:right">
+                <span id="progPct" style="font-size:20px;font-weight:800;color:var(--primary)">0%</span>
+                <div id="progRowsCount" style="font-size:12px;font-weight:600;color:var(--muted)">0 / 0 records</div>
+              </div>
             </div>
-            <div style="margin-top:14px;display:flex;gap:10px">
+
+            <!-- Animated Progress Bar -->
+            <div class="progress-bar" style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;margin:10px 0">
+              <div class="progress-fill" id="progBar" style="width:0%;height:100%;background:linear-gradient(90deg, #2563eb, #38bdf8);transition:width 0.2s ease"></div>
+            </div>
+
+            <!-- Live Metric Counters -->
+            <div class="stats" style="margin:14px 0 10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px">
+              <div class="card stat" style="padding:10px 14px"><b id="progTotalCount" style="font-size:16px">0</b><span>Total Data</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--primary)"><b id="progUploadedCount" style="font-size:16px">0</b><span>Uploaded</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="progRemainCount" style="font-size:16px">0</b><span>Remaining</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--ok)"><b id="progAddedCount" style="font-size:16px">0</b><span>Added to DB</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:#38bdf8"><b id="progUpdatedCount" style="font-size:16px">0</b><span>Updated</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--warn)"><b id="progDupCount" style="font-size:16px">0</b><span>Duplicate Errors</span></div>
+            </div>
+
+            <!-- Live Sheet & Batch Status Box -->
+            <div id="progLiveDetailBox" style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:12px;max-height:130px;overflow-y:auto;font-family:monospace;margin-top:10px">
+              <div style="color:var(--muted)">[Ready] Waiting to start upload…</div>
+            </div>
+
+            <!-- Completion Banner -->
+            <div id="progCompleteBanner" hidden style="margin-top:14px;background:var(--ok-bg);border:1px solid var(--ok);border-radius:10px;padding:14px;color:var(--ink)">
+              <div style="font-weight:700;font-size:14px;color:var(--ok);margin-bottom:4px">✅ Bulk Upload Successfully Completed!</div>
+              <div id="progCompleteSummary" style="font-size:13px"></div>
+            </div>
+
+            <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
               <button class="b p" id="btnViewUploadedInInv" type="button">📋 View Records in Inventory Table</button>
               <button class="b" id="btnViewCustAfterUpload" type="button">📁 View Customer Portfolios</button>
             </div>
@@ -3520,25 +3556,62 @@
       </div>
     </dialog>
 
-    <!-- Event Notification Popup Dialog -->
-    <dialog id="dlgEventPopup" class="modal-card" style="width:min(500px, 92vw); padding:0; border-radius:16px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.45); overflow:hidden; z-index:999999">
-      <div id="dlgEventPopupHeader" style="padding:18px 24px; display:flex; align-items:center; gap:14px; background:var(--card-subtle); border-bottom:1px solid var(--line)">
-        <span id="dlgEventPopupIcon" style="font-size:32px; line-height:1">✅</span>
-        <div style="flex:1">
+    <!-- Event Notification Popup Dialog with Prominent Company Logo -->
+    <dialog id="dlgEventPopup" class="modal-card" style="width:min(520px, 92vw); padding:0; border-radius:16px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.45); overflow:hidden; z-index:999999">
+      <div id="dlgEventPopupHeader" style="padding:16px 20px; display:flex; align-items:center; gap:14px; background:var(--card-subtle); border-bottom:1px solid var(--line)">
+        <div style="width:50px;height:50px;border-radius:12px;background:var(--card);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;padding:5px;box-shadow:0 3px 10px rgba(0,0,0,0.06);flex-shrink:0;position:relative">
+          <img src="logo.svg" alt="Company Logo" style="width:38px;height:38px;object-fit:contain" />
+          <span id="dlgEventPopupIcon" style="position:absolute;bottom:-5px;right:-5px;font-size:15px;background:var(--card);border:1px solid var(--line);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 2px 4px rgba(0,0,0,0.12)">✅</span>
+        </div>
+        <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
             <span id="dlgEventPopupTag" style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px">Event Notification</span>
             <span id="dlgEventPopupProgress" style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; background:var(--card); border:1px solid var(--line); color:var(--ok)">100% Complete</span>
           </div>
-          <h3 id="dlgEventPopupTitle" style="margin:0; font-size:17px; font-weight:700">Action Completed</h3>
+          <h3 id="dlgEventPopupTitle" style="margin:0; font-size:16px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">Action Completed</h3>
         </div>
         <button class="b ghost" type="button" id="closeDlgEventPopup" style="font-size:20px; padding:4px 8px; cursor:pointer">✕</button>
       </div>
-      <div style="padding:20px 24px">
+      <div style="padding:18px 22px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--line);font-size:12px;color:var(--muted)">
+          <span style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px">
+            <img src="logo.svg" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle" /> CustomerVault Telemetry
+          </span>
+          <span>•</span>
+          <span id="dlgEventPopupTime">Just now</span>
+        </div>
         <p id="dlgEventPopupMessage" style="margin:0 0 14px; font-size:14px; line-height:1.55; color:var(--text)"></p>
         <div id="dlgEventPopupMeta" style="background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:12px; line-height:1.7; margin-bottom:18px" hidden></div>
         <div class="row" style="justify-content:flex-end">
           <button class="b p" id="btnOkEventPopup" style="min-width:90px">OK</button>
         </div>
+      </div>
+    </dialog>
+
+    <!-- Reusable Action / Deletion Progress Modal with Live Percentage Bar -->
+    <dialog id="dlgActionProgress" class="modal-card" style="width:min(480px, 92vw); padding:0; border-radius:16px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.45); overflow:hidden; z-index:999999">
+      <div style="padding:16px 20px; display:flex; align-items:center; gap:14px; background:var(--card-subtle); border-bottom:1px solid var(--line)">
+        <div style="width:46px;height:46px;border-radius:12px;background:var(--card);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;padding:5px;flex-shrink:0">
+          <img src="logo.svg" alt="Company Logo" style="width:34px;height:34px;object-fit:contain" />
+        </div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+            <span id="actProgTag" style="font-size:11px;font-weight:700;color:var(--danger);text-transform:uppercase;letter-spacing:0.5px">Data Action Progress</span>
+            <span id="actProgPct" style="font-size:15px;font-weight:800;color:var(--danger)">0%</span>
+          </div>
+          <h3 id="actProgTitle" style="margin:0;font-size:16px;font-weight:700">Processing Data…</h3>
+        </div>
+      </div>
+      <div style="padding:20px 22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:13px">
+          <span id="actProgStatus" style="color:var(--text);font-weight:600">Processing records…</span>
+          <span id="actProgCount" style="color:var(--muted);font-weight:700">0 / 0</span>
+        </div>
+        <!-- Animated Percentage Bar -->
+        <div class="progress-bar" style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;margin:10px 0 16px">
+          <div class="progress-fill" id="actProgBar" style="width:0%;height:100%;background:linear-gradient(90deg, #ef4444, #f97316);transition:width 0.2s ease"></div>
+        </div>
+        <p id="actProgSub" style="margin:0;font-size:12px;color:var(--muted)">Moving selected data to Cart. Please do not close this window.</p>
       </div>
     </dialog>
 
@@ -3611,6 +3684,22 @@
         if (!dlg) { toast(title + ': ' + message); return; }
 
         const typeConfig = {
+          auth: {
+            tag: '🔐 Authentication Event',
+            tagColor: '#3b82f6',
+            icon: '🔐',
+            headerBg: 'rgba(59, 130, 246, 0.12)',
+            border: 'rgba(59, 130, 246, 0.35)',
+            progressColor: '#3b82f6'
+          },
+          download: {
+            tag: '📥 Download Complete',
+            tagColor: '#06b6d4',
+            icon: '📥',
+            headerBg: 'rgba(6, 182, 212, 0.12)',
+            border: 'rgba(6, 182, 212, 0.35)',
+            progressColor: '#06b6d4'
+          },
           deletion: {
             tag: '🗑️ Deletion Event',
             tagColor: '#ef4444',
@@ -3618,6 +3707,14 @@
             headerBg: 'rgba(239, 68, 68, 0.12)',
             border: 'rgba(239, 68, 68, 0.35)',
             progressColor: '#ef4444'
+          },
+          cart: {
+            tag: '🛒 Cart Movement Event',
+            tagColor: '#f59e0b',
+            icon: '🛒',
+            headerBg: 'rgba(245, 158, 11, 0.12)',
+            border: 'rgba(245, 158, 11, 0.35)',
+            progressColor: '#f59e0b'
           },
           inserting: {
             tag: '➕ Insertion Event',
@@ -3642,6 +3739,14 @@
             headerBg: 'rgba(244, 63, 94, 0.12)',
             border: 'rgba(244, 63, 94, 0.35)',
             progressColor: '#f43f5e'
+          },
+          success: {
+            tag: '✅ Operation Success',
+            tagColor: '#10b981',
+            icon: '✅',
+            headerBg: 'rgba(16, 185, 129, 0.12)',
+            border: 'rgba(16, 185, 129, 0.35)',
+            progressColor: '#10b981'
           },
           info: {
             tag: 'ℹ️ System Notification',
@@ -3670,6 +3775,11 @@
         }
         if ($('dlgEventPopupTitle')) $('dlgEventPopupTitle').textContent = title || 'Event Notification';
         if ($('dlgEventPopupMessage')) $('dlgEventPopupMessage').textContent = message;
+
+        if ($('dlgEventPopupTime')) {
+          const now = new Date();
+          $('dlgEventPopupTime').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' (' + now.toLocaleDateString() + ')';
+        }
 
         if ($('dlgEventPopupMeta')) {
           if (meta && typeof meta === 'object' && Object.keys(meta).length) {
@@ -3701,6 +3811,60 @@
 
       if ($('closeDlgEventPopup')) $('closeDlgEventPopup').onclick = () => $('dlgEventPopup').close();
       if ($('btnOkEventPopup')) $('btnOkEventPopup').onclick = () => $('dlgEventPopup').close();
+
+      /* ---------- Reusable Action Progress Dialog with Percentage Bar ---------- */
+      async function runProgressAction({
+        title = 'Processing Data…',
+        tag = 'Data Action Progress',
+        tagColor = 'var(--danger)',
+        barGradient = 'linear-gradient(90deg, #ef4444, #f97316)',
+        subText = 'Please wait while records are processed.',
+        total = 0,
+        workFn = null
+      }) {
+        const dlg = $('dlgActionProgress');
+        if (!dlg) {
+          if (typeof workFn === 'function') await workFn(() => {});
+          return;
+        }
+        if ($('actProgTitle')) $('actProgTitle').textContent = title;
+        if ($('actProgTag')) {
+          $('actProgTag').textContent = tag;
+          $('actProgTag').style.color = tagColor;
+        }
+        if ($('actProgPct')) {
+          $('actProgPct').textContent = '0%';
+          $('actProgPct').style.color = tagColor;
+        }
+        if ($('actProgBar')) {
+          $('actProgBar').style.background = barGradient;
+          $('actProgBar').style.width = '0%';
+        }
+        if ($('actProgSub')) $('actProgSub').textContent = subText;
+        if ($('actProgStatus')) $('actProgStatus').textContent = 'Starting…';
+        if ($('actProgCount')) $('actProgCount').textContent = `0 / ${Number(total || 0).toLocaleString()}`;
+        try { if (typeof dlg.showModal === 'function' && !dlg.open) dlg.showModal(); } catch (_) { }
+
+        const update = (current, tot, statusTxt) => {
+          const t = Math.max(tot || total || 1, 1);
+          const c = Math.min(Math.max(current, 0), t);
+          const pct = Math.min(100, Math.round((c / t) * 100));
+          if ($('actProgPct')) $('actProgPct').textContent = `${pct}%`;
+          if ($('actProgBar')) $('actProgBar').style.width = `${pct}%`;
+          if ($('actProgCount')) $('actProgCount').textContent = `${c.toLocaleString()} / ${t.toLocaleString()}`;
+          if (statusTxt && $('actProgStatus')) $('actProgStatus').textContent = statusTxt;
+        };
+
+        try {
+          if (typeof workFn === 'function') {
+            await workFn(update);
+          }
+          update(total, total, 'Complete!');
+          await new Promise(r => setTimeout(r, 350));
+        } finally {
+          try { if (dlg.open) dlg.close(); } catch (_) { }
+        }
+      }
 
       /* ---------- API Client ---------- */
       let API_BASE = (window.API_URL || localStorage.getItem('API_URL') || '').replace(/\/+$/, '');
@@ -3743,6 +3907,13 @@
           a.remove();
           window.URL.revokeObjectURL(url);
           toast('Excel downloaded successfully');
+          showEventPopup({
+            type: 'download',
+            title: 'Download Complete',
+            message: `Excel report "${title}" (${rows ? rows.length : 0} records) has been downloaded successfully.`,
+            meta: { 'Report Name': title, 'Total Rows': rows ? rows.length : 0, 'Format': 'Excel (.xlsx)' },
+            progress: '100% Downloaded'
+          });
         } catch (err) { fail(err); }
       }
 
@@ -4145,6 +4316,13 @@
 
           toast('Signed in successfully');
           switchView(true);
+          showEventPopup({
+            type: 'auth',
+            title: 'Login Successful',
+            message: `Welcome, ${data.user?.name || userId}! Signed in to BSTPL CustomerVault.`,
+            meta: { 'User Name': data.user?.name || userId, 'Login ID': userId, 'Role': data.user?.role || (data.user?.is_admin ? 'Admin' : 'Standard') },
+            progress: '100% Authenticated'
+          });
         } catch (err) {
           $('authErr').textContent = err.message;
           $('authCard').classList.remove('shake');
@@ -4167,6 +4345,15 @@
         localStorage.removeItem('user');
         switchView(false);
         toast('Signed out');
+        if (manual) {
+          showEventPopup({
+            type: 'auth',
+            title: 'Logged Out',
+            message: 'You have been safely signed out of your session.',
+            meta: { 'Session Status': 'Logged Out' },
+            progress: '100% Complete'
+          });
+        }
       }
 
       function switchView(signedIn) {
@@ -4829,18 +5016,28 @@
          ========================================================================= */
       let wbData = null, parsedRows = [], activeValResult = null, activeValFilter = 'all';
 
+      function isBlankDateCell(val) {
+        if (val === null || val === undefined) return true;
+        const s = String(val).trim().toLowerCase();
+        return !s || ['nan', 'nat', 'null', 'undefined', 'none', 'nil', '-', '--', '---', '—', '–', '#n/a', 'n/a', 'na', 'blank', '0', '0000-00-00', '00/00/0000', '0.0'].includes(s);
+      }
+
       function convertDateToStandardFormat(val) {
-        if (val === null || val === undefined) return null;
-        if (val instanceof Date && !isNaN(val.getTime())) {
+        if (isBlankDateCell(val)) return null;
+        if (val instanceof Date) {
+          if (isNaN(val.getTime())) return null;
           return val.toISOString().slice(0, 10);
         }
         let str = String(val).trim();
-        if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined' || str === '-' || str === '--') return null;
 
-        // Strip time portion if present (e.g. " 00:00:00", "T00:00:00", " 10:30:15 AM")
-        str = str.replace(/[T\s]\d{1,2}:\d{2}(:\d{2})?.*$/i, '').trim();
+        // 1. Strip time portion if present (e.g. ' 00:00:00', 'T00:00:00', ' 10:30:15 AM', ' 02:30 PM', '.000Z')
+        str = str.replace(/[T\s]\d{1,2}:\d{2}(:\d{2})?(\.\d+)?(\s*[APap][Mm])?.*$/i, '').trim();
 
-        // 1. Excel serial number: e.g. 44561 or 44561.5
+        // Remove wrapping quotes, brackets, or leading/trailing separators
+        str = str.replace(/^["'\[\(\s\-_/.]+|["'\]\)\s\-_/.]+$/g, '').trim();
+        if (!str || isBlankDateCell(str)) return null;
+
+        // 2. Excel serial number: e.g. 44561 or 44561.5 or '44561.0'
         if (/^\d{4,6}(\.\d+)?$/.test(str)) {
           try {
             const num = parseFloat(str);
@@ -4855,49 +5052,63 @@
               }
               const excelEpoch = new Date(Date.UTC(1899, 11, 30));
               const dateObj = new Date(excelEpoch.getTime() + num * 86400000);
-              if (!isNaN(dateObj)) {
+              if (!isNaN(dateObj.getTime())) {
                 return dateObj.toISOString().slice(0, 10);
               }
             }
           } catch (_) { }
         }
 
-        // 2. Format YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
-        const ym = str.match(/^(\d{4})[-/. ](\d{1,2})[-/. ](\d{1,2})$/);
-        if (ym) {
-          return `${ym[1]}-${ym[2].padStart(2, '0')}-${ym[3].padStart(2, '0')}`;
-        }
-
-        // 3. Format DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
-        const dm = str.match(/^(\d{1,2})[-/. ](\d{1,2})[-/. ](\d{4})$/);
-        if (dm) {
-          const p1 = parseInt(dm[1], 10);
-          const p2 = parseInt(dm[2], 10);
-          if (p2 > 12 && p1 <= 12) {
-            return `${dm[3]}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
+        // 3. Compact 8-digit date: YYYYMMDD (e.g. 20240518) or DDMMYYYY (e.g. 18052024)
+        if (/^\d{8}$/.test(str)) {
+          const y1 = parseInt(str.slice(0, 4), 10);
+          const m1 = parseInt(str.slice(4, 6), 10);
+          const d1 = parseInt(str.slice(6, 8), 10);
+          if (y1 >= 1990 && y1 <= 2099 && m1 >= 1 && m1 <= 12 && d1 >= 1 && d1 <= 31) {
+            return `${y1}-${String(m1).padStart(2, '0')}-${String(d1).padStart(2, '0')}`;
           }
-          return `${dm[3]}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+          const d2 = parseInt(str.slice(0, 2), 10);
+          const m2 = parseInt(str.slice(2, 4), 10);
+          const y2 = parseInt(str.slice(4, 8), 10);
+          if (y2 >= 1990 && y2 <= 2099 && m2 >= 1 && m2 <= 12 && d2 >= 1 && d2 <= 31) {
+            return `${y2}-${String(m2).padStart(2, '0')}-${String(d2).padStart(2, '0')}`;
+          }
         }
 
-        // 4. Month name formats: e.g. "12-Jan-2024", "12 Jan 2024", "Jan 12, 2024", "12-January-2024"
+        // 4. Compact 6-digit date: YYMMDD (e.g. 240518) or DDMMYY (e.g. 180524)
+        if (/^\d{6}$/.test(str)) {
+          const c0 = parseInt(str.slice(0, 2), 10);
+          const c1 = parseInt(str.slice(2, 4), 10);
+          const c2 = parseInt(str.slice(4, 6), 10);
+          if (c0 >= 20 && c0 <= 50 && c1 >= 1 && c1 <= 12 && c2 >= 1 && c2 <= 31) {
+            return `20${c0}-${String(c1).padStart(2, '0')}-${String(c2).padStart(2, '0')}`;
+          }
+          if (c2 >= 20 && c2 <= 50 && c1 >= 1 && c1 <= 12 && c0 >= 1 && c0 <= 31) {
+            return `20${c2}-${String(c1).padStart(2, '0')}-${String(c0).padStart(2, '0')}`;
+          }
+        }
+
+        // 5. Month name formats (e.g. '18-May-2024', '18-May-24', '18 May 2024', 'May 18, 2024', '18-January-2024', 'Jan 18, 2024')
         const months = {
           jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
           jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
         };
         const monthRegex = /(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i;
-
         if (monthRegex.test(str)) {
           const mMatch = str.match(monthRegex);
           const monKey = mMatch[1].toLowerCase().slice(0, 3);
           const mm = months[monKey];
-          const parts = str.replace(monthRegex, ' ').trim().split(/[-/. ,]+/);
+          const stripped = str.replace(monthRegex, ' ').trim();
+          const parts = stripped.split(/[-/. ,\\]+/).filter(Boolean);
           const nums = parts.filter(p => /^\d+$/.test(p)).map(n => parseInt(n, 10));
           if (nums.length >= 2 && mm) {
-            let year = nums.find(n => n > 1900 && n < 2100);
+            let year = nums.find(n => (n >= 1990 && n <= 2099));
             let day = nums.find(n => n !== year && n >= 1 && n <= 31);
-            if (!year && nums.length === 2) {
-              year = nums[1] < 100 ? 2000 + nums[1] : nums[1];
-              day = nums[0];
+            if (!year && nums.length >= 2) {
+              const potentialYear = nums.find(n => n !== day);
+              if (potentialYear != null) {
+                year = potentialYear < 70 ? 2000 + potentialYear : (potentialYear < 100 ? 1900 + potentialYear : potentialYear);
+              }
             }
             if (year && day) {
               return `${year}-${mm}-${String(day).padStart(2, '0')}`;
@@ -4905,11 +5116,53 @@
           }
         }
 
-        // 5. Try native Date parse
+        // 6. Delimited numeric dates: with separators -, /, ., space, or backslash
+        const parts = str.split(/[-/. ,\\]+/).filter(Boolean);
+        if (parts.length === 3 && parts.every(p => /^\d+$/.test(p))) {
+          let p0 = parseInt(parts[0], 10);
+          let p1 = parseInt(parts[1], 10);
+          let p2 = parseInt(parts[2], 10);
+
+          // Case A: Year first (YYYY-MM-DD or YY-MM-DD)
+          if (p0 >= 1990 && p0 <= 2099 && p1 >= 1 && p1 <= 12 && p2 >= 1 && p2 <= 31) {
+            return `${p0}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
+          }
+          if (parts[0].length === 2 && p0 >= 20 && p0 <= 50 && p1 >= 1 && p1 <= 12 && p2 >= 1 && p2 <= 31) {
+            return `20${p0}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
+          }
+
+          // Case B: Year last (DD-MM-YYYY, MM-DD-YYYY, DD-MM-YY, MM-DD-YY)
+          let year = p2;
+          if (parts[2].length === 2) {
+            year = p2 < 70 ? 2000 + p2 : 1900 + p2;
+          }
+          if (year >= 1990 && year <= 2099) {
+            // Decide p0 (day/month) and p1 (month/day)
+            if (p1 > 12 && p0 <= 12) {
+              // MM-DD-YYYY
+              return `${year}-${String(p0).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+            }
+            if (p0 > 12 && p1 <= 12) {
+              // DD-MM-YYYY
+              return `${year}-${String(p1).padStart(2, '0')}-${String(p0).padStart(2, '0')}`;
+            }
+            // Standard telecom default (Day first): DD-MM-YYYY
+            if (p0 >= 1 && p0 <= 31 && p1 >= 1 && p1 <= 12) {
+              return `${year}-${String(p1).padStart(2, '0')}-${String(p0).padStart(2, '0')}`;
+            }
+          }
+        }
+
+        // 7. Native Date parse fallback
         const parsed = Date.parse(str);
         if (!isNaN(parsed)) {
           const d = new Date(parsed);
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          if (!isNaN(d.getTime())) {
+            const yr = d.getFullYear();
+            if (yr >= 1990 && yr <= 2099) {
+              return `${yr}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+          }
         }
 
         return null;
@@ -5062,6 +5315,13 @@
         XLSX.utils.book_append_sheet(wb, ws, 'Sample_Customer');
         XLSX.writeFile(wb, 'CustomerVault_Bulk_Upload_Template.xlsx');
         toast('📥 Excel upload format template downloaded successfully!');
+        showEventPopup({
+          type: 'download',
+          title: 'Template Download Complete',
+          message: 'CustomerVault Bulk Upload Format template (.xlsx) has been downloaded successfully.',
+          meta: { 'File Name': 'CustomerVault_Bulk_Upload_Template.xlsx', 'Format': 'Excel Spreadsheet (.xlsx)' },
+          progress: '100% Downloaded'
+        });
       }
       window.downloadBulkUploadTemplate = downloadBulkUploadTemplate;
 
@@ -5191,25 +5451,68 @@
           }
         });
 
-        const getSheetCustomerName = (sheetName, fileName) => {
-          const isGeneric = /^(sheet\s*\d+|page\s*\d+|tab\s*\d+|worksheet\s*\d+)$/i.test(sheetName.trim());
-          if (isGeneric) {
-            const base = fileName.replace(/\.[^/.]+$/, '').trim();
-            return base || sheetName.trim();
+        const resolveSheetCustomer = (sheetName, fileName) => {
+          const s = (sheetName || '').trim();
+          const baseFile = (fileName || '').replace(/\.[^/.]+$/, '').trim();
+
+          // 1. If user explicitly chose "Pick Existing Customer"
+          if ($('choiceCustExisting') && $('choiceCustExisting').checked) {
+            const picked = $('uploadExistingCustSel') ? $('uploadExistingCustSel').value.trim() : '';
+            if (picked) return { name: picked, isExisting: true, isManual: true, originalSheet: s };
           }
-          return sheetName.trim();
+
+          // 2. If user explicitly chose "Type New Customer"
+          if ($('choiceCustNew') && $('choiceCustNew').checked) {
+            const typed = $('uploadNewCustName') ? $('uploadNewCustName').value.trim() : '';
+            if (typed) {
+              const m = (CU || []).find(c => (c.name || '').toLowerCase() === typed.toLowerCase());
+              return { name: m ? m.name : typed, isExisting: !!m, isManual: true, originalSheet: s };
+            }
+          }
+
+          // 3. Automatic Mode: Check if sheet name is in our database!
+          const findInCU = name => {
+            if (!name) return null;
+            const lower = name.toLowerCase();
+            const clean = lower.replace(/[^a-z0-9]/g, '');
+            // Case-insensitive exact match
+            let found = (CU || []).find(c => (c.name || '').trim().toLowerCase() === lower);
+            if (found) return found;
+            // Normalized match (ignoring spaces, underscores, symbols)
+            found = (CU || []).find(c => (c.name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '') === clean);
+            if (found) return found;
+            return null;
+          };
+
+          // Check if sheet name exists in database
+          let match = findInCU(s);
+          if (match) {
+            // Sheet name IS in database -> push those records into that existing customer!
+            return { name: match.name, isExisting: true, originalSheet: s, matchedBy: 'sheet_db' };
+          }
+
+          // If sheet name is a generic placeholder like "Sheet1", check if base fileName is in DB
+          const isGeneric = /^(sheet\s*\d+|page\s*\d+|tab\s*\d+|worksheet\s*\d+)$/i.test(s);
+          if (isGeneric && baseFile) {
+            const fileMatch = findInCU(baseFile);
+            if (fileMatch) {
+              return { name: fileMatch.name, isExisting: true, originalSheet: s, matchedBy: 'file_db' };
+            }
+          }
+
+          // Sheet name is not in database: create a new customer with this sheet name and add records
+          let target = s;
+          if (isGeneric && baseFile) target = baseFile;
+          const cleanNew = target.replace(/[^a-zA-Z0-9_\s-]/g, '').trim().replace(/\s+/g, '_') || target;
+          return { name: cleanNew, isExisting: false, originalSheet: s, matchedBy: 'new' };
+        };
+
+        const getSheetCustomerName = (sheetName, fileName) => {
+          return resolveSheetCustomer(sheetName, fileName).name;
         };
 
         const getEffectiveCustomer = (sheetName, fileName) => {
-          if ($('choiceCustExisting') && $('choiceCustExisting').checked) {
-            return $('uploadExistingCustSel') ? $('uploadExistingCustSel').value.trim() : '';
-          }
-          if ($('choiceCustNew') && $('choiceCustNew').checked) {
-            const typed = $('uploadNewCustName') ? $('uploadNewCustName').value.trim() : '';
-            const match = (CU || []).find(c => c.name.toLowerCase() === typed.toLowerCase());
-            return match ? match.name : typed;
-          }
-          return getSheetCustomerName(sheetName, fileName);
+          return resolveSheetCustomer(sheetName, fileName).name;
         };
 
         const reprocessCurrentFile = () => {
@@ -5227,6 +5530,7 @@
 
           toast('Reading workbook…');
           try {
+            await loadCU(); // ensure customer database cache is up-to-date
             const buf = await file.arrayBuffer();
             wbData = XLSX.read(new Uint8Array(buf), { type: 'array' });
             const sheets = wbData.SheetNames;
@@ -5239,7 +5543,10 @@
               const rows2D = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
               const nonEmptyRows = rows2D.filter(r => Array.isArray(r) && r.some(c => c !== null && c !== undefined && String(c).trim() !== ''));
               if (nonEmptyRows.length >= 2) {
-                validSheets.push(sName);
+                validSheets.push({
+                  sheetName: sName,
+                  rowCount: nonEmptyRows.length - 1
+                });
               }
             });
 
@@ -5251,12 +5558,28 @@
             }
 
             $('sheetSelectWrap').hidden = false;
-            $('sheetList').innerHTML = validSheets.map(s => {
-              const custName = getSheetCustomerName(s, file.name);
+            $('sheetList').innerHTML = validSheets.map(item => {
+              const s = item.sheetName;
+              const count = item.rowCount;
+              const custInfo = resolveSheetCustomer(s, file.name);
               return `
-          <label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;background:var(--card-subtle);padding:8px 14px;border:1px solid var(--line);border-radius:8px;cursor:pointer">
-            <input type="checkbox" class="sheet-chk" value="${esc(s)}" checked style="width:auto;height:auto;margin:0" />
-            <span><b>${esc(s)}</b> ${s !== custName ? `&rarr; <i>${esc(custName)}</i>` : ''}</span>
+          <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;background:var(--card);padding:10px 14px;border:1.5px solid ${custInfo.isExisting ? 'var(--primary)' : 'var(--ok)'};border-radius:10px;cursor:pointer;flex:1;min-width:280px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" class="sheet-chk" value="${esc(s)}" checked style="width:16px;height:16px;margin:0;accent-color:var(--primary)" />
+              <div>
+                <div style="font-weight:700;font-size:13.5px;color:var(--ink)">
+                  📄 <b>${esc(s)}</b> <span style="font-size:12px;font-weight:normal;color:var(--muted)">(${count.toLocaleString()} data rows)</span>
+                </div>
+                <div style="font-size:12px;margin-top:2px">
+                  ${custInfo.isExisting 
+                    ? `<span style="color:var(--primary);font-weight:700">✓ In Database:</span> Push records to customer <b>${esc(custInfo.name)}</b>` 
+                    : `<span style="color:var(--ok);font-weight:700">✨ Not in Database:</span> Create new customer <b>${esc(custInfo.name)}</b> and add records`}
+                </div>
+              </div>
+            </div>
+            <span class="badge" style="background:${custInfo.isExisting ? 'var(--primary)' : 'var(--ok)'};color:#fff;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap">
+              ${custInfo.isExisting ? 'Existing Customer' : '+ New Customer'}
+            </span>
           </label>`;
             }).join('');
 
@@ -5277,10 +5600,13 @@
               const optSimProvider = $('optSimProvider') ? $('optSimProvider').value.trim() : '';
 
               const allRows = [];
+              const sheetCustSummaries = [];
+
               selected.forEach(sName => {
                 const sheet = wbData.Sheets[sName];
                 const raw = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-                const assignedCust = getEffectiveCustomer(sName, file.name);
+                const custInfo = resolveSheetCustomer(sName, file.name);
+                const assignedCust = custInfo.name;
 
                 // Detect if sheet has any non-empty ICCID
                 let sheetHasIccid = false;
@@ -5293,6 +5619,13 @@
                     sheetHasIccid = true;
                   }
                   preRows.push(dev);
+                });
+
+                sheetCustSummaries.push({
+                  sheetName: sName,
+                  customerName: assignedCust,
+                  isExisting: custInfo.isExisting,
+                  rowCount: preRows.length
                 });
 
                 // Automatic SIM Type: ICCID present = E-SIM, otherwise Plastic SIM
@@ -5314,6 +5647,24 @@
                   allRows.push(dev);
                 });
               });
+
+              // Render Target Customer Banner
+              if ($('valTargetCustBanner')) {
+                const existingList = sheetCustSummaries.filter(s => s.isExisting);
+                const newList = sheetCustSummaries.filter(s => !s.isExisting);
+                $('valTargetCustBanner').innerHTML = `
+                  <div style="background:var(--card-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px">
+                    <div style="font-weight:700;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                      <span>📊 Total Data to Upload: <b>${allRows.length.toLocaleString()} records</b> from <b>${selected.length} sheet(s)</b></span>
+                      <span style="font-size:12px;color:var(--muted)">Sheet Names in DB &rarr; Push to Customer | Not in DB &rarr; Create Customer</span>
+                    </div>
+                    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">
+                      ${existingList.map(s => `<span class="badge" style="background:rgba(37,99,235,0.12);color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:4px 10px;border-radius:6px">✓ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Push to Existing)</span>`).join('')}
+                      ${newList.map(s => `<span class="badge" style="background:rgba(16,185,129,0.12);color:var(--ok);border:1px solid var(--ok);font-size:12px;padding:4px 10px;border-radius:6px">✨ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Create New Customer)</span>`).join('')}
+                    </div>
+                  </div>
+                `;
+              }
 
               parsedRows = allRows;
               validateAndPreview(parsedRows);
@@ -5650,37 +6001,74 @@
           }
 
           $('uploadProgressWrap').hidden = false;
+          if ($('progCompleteBanner')) $('progCompleteBanner').hidden = true;
           if ($('btnConfirmUpload')) $('btnConfirmUpload').disabled = true;
+
+          const totalDataCount = validRowsToUpload.length + duplicatesToStage.length;
+          if ($('progTotalCount')) $('progTotalCount').textContent = totalDataCount.toLocaleString();
+          if ($('progUploadedCount')) $('progUploadedCount').textContent = '0';
+          if ($('progRemainCount')) $('progRemainCount').textContent = validRowsToUpload.length.toLocaleString();
+          if ($('progAddedCount')) $('progAddedCount').textContent = '0';
+          if ($('progUpdatedCount')) $('progUpdatedCount').textContent = '0';
+          if ($('progDupCount')) $('progDupCount').textContent = duplicatesToStage.length.toLocaleString();
+          if ($('progBar')) $('progBar').style.width = '0%';
+          if ($('progPct')) $('progPct').textContent = '0%';
+          if ($('progRowsCount')) $('progRowsCount').textContent = `0 / ${validRowsToUpload.length.toLocaleString()} records`;
+
+          const logBox = $('progLiveDetailBox');
+          const addLog = msg => {
+            if (!logBox) return;
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.textContent = `[${time}] ${msg}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+          };
+          if (logBox) logBox.innerHTML = '';
+          addLog(`Starting upload: ${validRowsToUpload.length.toLocaleString()} valid rows to process.`);
 
           // Stage duplicate error entries to Errored Entries container
           if (duplicatesToStage.length > 0) {
+            addLog(`Staging ${duplicatesToStage.length.toLocaleString()} duplicate records to Errored Entries container…`);
             try {
               await api('/api/errors', {
                 method: 'POST',
                 body: JSON.stringify({ records: duplicatesToStage })
               });
+              addLog(`Duplicate records staged successfully.`);
             } catch (errPost) {
               console.warn('Could not stage duplicate errored records:', errPost);
+              addLog(`Notice: Duplicate staging: ${errPost.message}`);
             }
           }
 
           let addedTotal = 0, updatedTotal = 0, skippedTotal = duplicateRecordsSkipped;
-          const chunkSize = 2000;
+          const chunkSize = 500;
           try {
             for (let i = 0; i < validRowsToUpload.length; i += chunkSize) {
               const chunk = validRowsToUpload.slice(i, i + chunkSize);
+              const chunkNum = Math.floor(i / chunkSize) + 1;
+              const totalChunks = Math.ceil(validRowsToUpload.length / chunkSize);
               const pct = Math.round((i / (validRowsToUpload.length || 1)) * 100);
-              $('progBar').style.width = pct + '%';
-              $('progPct').textContent = pct + '%';
-              $('progStatus').textContent = `Uploading records ${i + 1} to ${Math.min(i + chunkSize, validRowsToUpload.length)}…`;
+
+              if ($('progBar')) $('progBar').style.width = pct + '%';
+              if ($('progPct')) $('progPct').textContent = pct + '%';
+              if ($('progRowsCount')) $('progRowsCount').textContent = `${i.toLocaleString()} / ${validRowsToUpload.length.toLocaleString()} records`;
+              if ($('progUploadedCount')) $('progUploadedCount').textContent = i.toLocaleString();
+              if ($('progRemainCount')) $('progRemainCount').textContent = Math.max(0, validRowsToUpload.length - i).toLocaleString();
+              if ($('progStatus')) $('progStatus').textContent = `Uploading batch ${chunkNum} of ${totalChunks} (records ${i + 1} to ${Math.min(i + chunkSize, validRowsToUpload.length)})…`;
+
+              addLog(`Batch ${chunkNum}/${totalChunks}: Uploading ${chunk.length} records…`);
 
               try {
                 const r = await api('/api/devices/bulk', { method: 'POST', body: JSON.stringify({ rows: chunk, mode: mode }) });
                 addedTotal += (r.added || 0);
                 updatedTotal += (r.updated || 0);
                 skippedTotal += (r.skipped_duplicates || 0);
+                addLog(`Batch ${chunkNum} complete: +${r.added || 0} added to DB, +${r.updated || 0} updated.`);
               } catch (chunkErr) {
                 console.warn('Batch encountered error, falling back to sub-batches:', chunkErr);
+                addLog(`⚠️ Batch ${chunkNum} retry with smaller chunks (${chunkErr.message})…`);
                 const subSize = 100;
                 for (let j = 0; j < chunk.length; j += subSize) {
                   const sub = chunk.slice(j, j + subSize);
@@ -5691,14 +6079,49 @@
                     skippedTotal += (r.skipped_duplicates || 0);
                   } catch (subErr) {
                     console.warn('Ignored problematic sub-batch:', subErr);
+                    addLog(`Skipped problematic row in sub-batch: ${subErr.message}`);
                     skippedTotal += sub.length;
                   }
                 }
               }
+
+              if ($('progAddedCount')) $('progAddedCount').textContent = addedTotal.toLocaleString();
+              if ($('progUpdatedCount')) $('progUpdatedCount').textContent = updatedTotal.toLocaleString();
+              await new Promise(r => setTimeout(r, 40));
             }
-            $('progBar').style.width = '100%';
-            $('progPct').textContent = '100%';
-            $('progStatus').textContent = `Complete: ${addedTotal} added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`;
+
+            if ($('progBar')) $('progBar').style.width = '100%';
+            if ($('progPct')) $('progPct').textContent = '100%';
+            if ($('progRowsCount')) $('progRowsCount').textContent = `${validRowsToUpload.length.toLocaleString()} / ${validRowsToUpload.length.toLocaleString()} records`;
+            if ($('progUploadedCount')) $('progUploadedCount').textContent = validRowsToUpload.length.toLocaleString();
+            if ($('progRemainCount')) $('progRemainCount').textContent = '0';
+            if ($('progAddedCount')) $('progAddedCount').textContent = addedTotal.toLocaleString();
+            if ($('progUpdatedCount')) $('progUpdatedCount').textContent = updatedTotal.toLocaleString();
+            if ($('progStatus')) $('progStatus').textContent = `Complete: ${addedTotal} added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`;
+            addLog(`✅ All records uploaded successfully! ${addedTotal} added, ${updatedTotal} updated.`);
+
+            // Compute customer breakdown for complete banner
+            const custBreakdown = {};
+            validRowsToUpload.forEach(r => {
+              const cn = r.customer_name || 'General_Customer';
+              custBreakdown[cn] = (custBreakdown[cn] || 0) + 1;
+            });
+
+            const breakdownHtml = Object.entries(custBreakdown).map(([cname, cnt]) => {
+              const isEx = (CU || []).some(c => (c.name || '').toLowerCase() === cname.toLowerCase());
+              return `<li><b>${esc(cname)}</b>: ${cnt.toLocaleString()} records ${isEx ? '(Pushed to existing customer)' : '(New customer created & added)'}</li>`;
+            }).join('');
+
+            if ($('progCompleteBanner')) {
+              $('progCompleteBanner').hidden = false;
+              if ($('progCompleteSummary')) {
+                $('progCompleteSummary').innerHTML = `
+                  <div>Processed <b>${validRowsToUpload.length.toLocaleString()}</b> records: <b>${addedTotal.toLocaleString()}</b> added to database, <b>${updatedTotal.toLocaleString()}</b> updated, <b>${duplicatesToStage.length.toLocaleString()}</b> duplicate errors held.</div>
+                  <ul style="margin:8px 0 0;padding-left:20px;font-size:12.5px">${breakdownHtml}</ul>
+                `;
+              }
+            }
+
             toast(`Upload finished! ${addedTotal} added to customer data, ${updatedTotal} updated, ${duplicatesToStage.length} duplicates held.`);
             showEventPopup({
               type: 'uploading',
@@ -6303,94 +6726,6 @@
         }, delayMs);
       }
 
-      function convertDateToStandardFormat(val) {
-        if (val === null || val === undefined) return null;
-        if (val instanceof Date && !isNaN(val)) {
-          return val.toISOString().slice(0, 10);
-        }
-        let str = String(val).trim();
-        if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined' || str === '-' || str === '--') return null;
-
-        // Strip time portion if present (e.g. " 00:00:00", "T00:00:00", " 10:30:15 AM")
-        str = str.replace(/[T\s]\d{1,2}:\d{2}(:\d{2})?.*$/i, '').trim();
-
-        // 1. Excel serial number: e.g. 44561 or 44561.5
-        if (/^\d{4,6}(\.\d+)?$/.test(str)) {
-          try {
-            const num = parseFloat(str);
-            if (num > 20000 && num < 80000) {
-              if (typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
-                const d = XLSX.SSF.parse_date_code(Math.floor(num));
-                if (d && d.y) {
-                  const mm = String(d.m).padStart(2, '0');
-                  const dd = String(d.d).padStart(2, '0');
-                  return `${d.y}-${mm}-${dd}`;
-                }
-              }
-              const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-              const dateObj = new Date(excelEpoch.getTime() + num * 86400000);
-              if (!isNaN(dateObj)) {
-                return dateObj.toISOString().slice(0, 10);
-              }
-            }
-          } catch (_) { }
-        }
-
-        // 2. Format YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
-        const ym = str.match(/^(\d{4})[-/. ](\d{1,2})[-/. ](\d{1,2})$/);
-        if (ym) {
-          return `${ym[1]}-${ym[2].padStart(2, '0')}-${ym[3].padStart(2, '0')}`;
-        }
-
-        // 3. Format DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
-        const dm = str.match(/^(\d{1,2})[-/. ](\d{1,2})[-/. ](\d{4})$/);
-        if (dm) {
-          const p1 = parseInt(dm[1], 10);
-          const p2 = parseInt(dm[2], 10);
-          // If p2 > 12, it's definitely MM-DD-YYYY
-          if (p2 > 12 && p1 <= 12) {
-            return `${dm[3]}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
-          }
-          // In telecom / Indian formats, day comes first (DD-MM-YYYY)
-          return `${dm[3]}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
-        }
-
-        // 4. Month name formats: e.g. "12-Jan-2024", "12 Jan 2024", "Jan 12, 2024", "12-January-2024"
-        const months = {
-          jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
-          jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
-        };
-        const monthRegex = /(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i;
-
-        if (monthRegex.test(str)) {
-          const mMatch = str.match(monthRegex);
-          const monKey = mMatch[1].toLowerCase().slice(0, 3);
-          const mm = months[monKey];
-          const parts = str.replace(monthRegex, ' ').trim().split(/[-/. ,]+/);
-          const nums = parts.filter(p => /^\d+$/.test(p)).map(n => parseInt(n, 10));
-          if (nums.length >= 2 && mm) {
-            let year = nums.find(n => n > 1900 && n < 2100);
-            let day = nums.find(n => n !== year && n >= 1 && n <= 31);
-            if (!year && nums.length === 2) {
-              year = nums[1] < 100 ? 2000 + nums[1] : nums[1];
-              day = nums[0];
-            }
-            if (year && day) {
-              return `${year}-${mm}-${String(day).padStart(2, '0')}`;
-            }
-          }
-        }
-
-        // 5. Try native Date parse
-        const parsed = Date.parse(str);
-        if (!isNaN(parsed)) {
-          const d = new Date(parsed);
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
-
-        return null;
-      }
-
       function parseDateCell(val) {
         return convertDateToStandardFormat(val);
       }
@@ -6468,14 +6803,17 @@
           const rawExp = expDateCol ? rawObj[expDateCol] : '';
           const rowProv = providerCol ? (rawObj[providerCol] || '').trim() : '';
 
-          const actParsed = rawAct ? convertDateToStandardFormat(rawAct) : null;
-          const expParsed = rawExp ? convertDateToStandardFormat(rawExp) : null;
+          const hasAct = !isBlankDateCell(rawAct);
+          const hasExp = !isBlankDateCell(rawExp);
 
-          if (rawAct) {
+          const actParsed = hasAct ? convertDateToStandardFormat(rawAct) : null;
+          const expParsed = hasExp ? convertDateToStandardFormat(rawExp) : null;
+
+          if (hasAct) {
             if (actParsed) convertedDatesCount++;
             else unreadableDatesCount++;
           }
-          if (rawExp) {
+          if (hasExp) {
             if (expParsed) convertedDatesCount++;
             else unreadableDatesCount++;
           }
@@ -8550,17 +8888,32 @@
 
         try {
           if (id === 'all') {
-            const res = await api('/api/errors/bulk-push', {
-              method: 'POST',
-              body: JSON.stringify({ customer_name: targetCust })
-            });
+            const totalCount = cachedErrors.length;
             $('dlgPushError').close();
-            toast(`✓ Successfully pushed ${res.pushed_count} entries into customer "${targetCust}"!`);
+            let pushedRes = null;
+            await runProgressAction({
+              title: `Pushing Errored Entries to "${targetCust}"…`,
+              tag: '➕ Bulk Error Push',
+              tagColor: '#10b981',
+              barGradient: 'linear-gradient(90deg, #10b981, #059669)',
+              subText: `Inserting all ${totalCount} errored entries into customer "${targetCust}". Please wait…`,
+              total: totalCount,
+              workFn: async (updateProgress) => {
+                updateProgress(Math.floor(totalCount * 0.4), totalCount, 'Preparing records and verifying target table…');
+                pushedRes = await api('/api/errors/bulk-push', {
+                  method: 'POST',
+                  body: JSON.stringify({ customer_name: targetCust })
+                });
+                updateProgress(totalCount, totalCount, 'Entries pushed successfully!');
+              }
+            });
+            const pushedCount = pushedRes?.pushed_count || totalCount;
+            toast(`✓ Successfully pushed ${pushedCount} entries into customer "${targetCust}"!`);
             showEventPopup({
               type: 'inserting',
               title: 'Bulk Error Entries Inserted',
-              message: `Successfully pushed and inserted ${res.pushed_count} entries into customer "${targetCust}".`,
-              meta: { 'Entries Pushed': res.pushed_count, 'Target Customer': targetCust, 'Status': 'Inserted' },
+              message: `Successfully pushed and inserted ${pushedCount} entries into customer "${targetCust}".`,
+              meta: { 'Entries Pushed': pushedCount, 'Target Customer': targetCust, 'Status': 'Inserted' },
               progress: '100% Complete'
             });
           } else {
@@ -8688,21 +9041,42 @@
 
       $('btnMoveAllErrorsCart').onclick = async () => {
         if (!cachedErrors.length) { toast('No errored entries to move.'); return; }
-        if (!confirm(`Move all ${cachedErrors.length} errored entries to Cart?`)) return;
-        try {
-          const res = await api('/api/errors/empty', { method: 'POST' });
-          const count = res.moved_all_to_cart || cachedErrors.length;
-          toast(`Moved ${count} entries to Cart.`);
-          showEventPopup({
-            type: 'deletion',
-            title: 'All Errored Entries Moved to Cart',
-            message: `Successfully moved all ${count} errored entries to Cart.`,
-            meta: { 'Total Entries': count, 'Status': 'In Cart' },
-            progress: '100% Complete'
-          });
-          await loadErrorsContainer();
-          await updateChrome();
-        } catch (err) { fail(err); }
+        const totalToMove = cachedErrors.length;
+        if (!confirm(`Move all ${totalToMove} errored entries to Cart?`)) return;
+
+        let totalMoved = 0;
+        await runProgressAction({
+          title: 'Moving Errored Entries to Cart…',
+          tag: '🗑️ Errored Entries Clean-up',
+          tagColor: '#ef4444',
+          barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
+          subText: 'Safely moving errored records to Cart. Please wait…',
+          total: totalToMove,
+          workFn: async (updateProgress) => {
+            const batchSize = 50;
+            let remaining = totalToMove;
+            while (remaining > 0) {
+              const res = await api(`/api/errors/empty?limit=${batchSize}`, { method: 'POST' });
+              const batchMoved = res.moved_count || res.batch_moved || res.moved_all_to_cart || 0;
+              totalMoved += batchMoved;
+              remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchMoved);
+              updateProgress(totalMoved, totalToMove, `Moved ${totalMoved} of ${totalToMove} records to Cart…`);
+              if (batchMoved === 0 || remaining === 0) break;
+              await new Promise(r => setTimeout(r, 60));
+            }
+          }
+        });
+
+        toast(`Moved ${totalMoved || totalToMove} entries to Cart.`);
+        showEventPopup({
+          type: 'deletion',
+          title: 'All Errored Entries Moved to Cart',
+          message: `Successfully moved all ${totalMoved || totalToMove} errored entries to Cart.`,
+          meta: { 'Total Entries': totalMoved || totalToMove, 'Status': 'In Cart' },
+          progress: '100% Complete'
+        });
+        await loadErrorsContainer();
+        await updateChrome();
       };
 
       $('btnExportErrors').onclick = () => {
@@ -8777,7 +9151,22 @@
           </p>
         </div>
       `, 'Empty Cart Permanently', async () => {
-              await api('/api/bin', { method: 'DELETE' });
+              const totalItems = parseInt($('cartCountBadge')?.textContent || '0', 10) || 1;
+              await runProgressAction({
+                title: 'Permanently Deleting Cart Items…',
+                tag: '🗑️ Permanent Purge',
+                tagColor: '#ef4444',
+                barGradient: 'linear-gradient(90deg, #dc2626, #ef4444)',
+                subText: 'Permanently purging deleted records and customer tables. Please wait…',
+                total: totalItems,
+                workFn: async (updateProgress) => {
+                  updateProgress(Math.floor(totalItems * 0.3), totalItems, 'Purging customer records from recycle bin…');
+                  await new Promise(r => setTimeout(r, 120));
+                  updateProgress(Math.floor(totalItems * 0.7), totalItems, 'Purging deleted customer tables from TiDB Cloud…');
+                  await api('/api/bin', { method: 'DELETE' });
+                  updateProgress(totalItems, totalItems, 'Purge complete!');
+                }
+              });
               toast('Permanently deleted: Cart emptied and all records erased forever.');
               showEventPopup({
                 type: 'deletion',
@@ -9235,7 +9624,20 @@
           </p>
         </div>
       `, 'Delete & Move to Cart', async () => {
-              await api('/api/customers/' + c.id, { method: 'DELETE' });
+              const devCount = c.devices || 1;
+              await runProgressAction({
+                title: `Moving "${c.name}" to Cart…`,
+                tag: '🗑️ Customer Deletion',
+                tagColor: '#ef4444',
+                barGradient: 'linear-gradient(90deg, #ef4444, #f43f5e)',
+                subText: `Safely moving customer table and ${devCount} records to Cart…`,
+                total: devCount,
+                workFn: async (updateProgress) => {
+                  updateProgress(Math.floor(devCount * 0.4), devCount, `Archiving customer table "${c.name}"…`);
+                  await api('/api/customers/' + c.id, { method: 'DELETE' });
+                  updateProgress(devCount, devCount, 'Moved to Cart successfully!');
+                }
+              });
               toast(`Customer "${c.name}" deleted and moved to Cart`);
               showEventPopup({
                 type: 'file_delete',
@@ -9690,6 +10092,13 @@
             a.remove();
             window.URL.revokeObjectURL(url);
             toast('All customer data downloaded successfully');
+            showEventPopup({
+              type: 'download',
+              title: 'Download Complete',
+              message: 'All Customer Data spreadsheet has been exported and downloaded successfully.',
+              meta: { 'Report': 'All_Customer_Data.xlsx', 'Status': 'Downloaded' },
+              progress: '100% Downloaded'
+            });
           } catch (err) { fail(err); }
         };
       }

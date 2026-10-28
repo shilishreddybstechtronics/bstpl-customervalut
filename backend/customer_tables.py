@@ -49,6 +49,9 @@ def extra_col(key: str) -> str:
     return "x_" + slug(key, 50).lower()
 
 
+_VERIFIED_TABLES = set()
+
+
 def find_table(conn, cid: int, name: str = ""):
     all_tables = inspect(conn).get_table_names()
     if name:
@@ -57,6 +60,12 @@ def find_table(conn, cid: int, name: str = ""):
             return target
         for t in all_tables:
             if t.lower() == target.lower():
+                return t
+        clean_target = slug(name).lower()
+        for t in all_tables:
+            if t.lower() == clean_target:
+                return t
+            if re.sub(r"[^a-zA-Z0-9]", "", t).lower() == re.sub(r"[^a-zA-Z0-9]", "", target).lower():
                 return t
     # Fallback to old format c<cid>_ if present
     prefix = f"c{cid}_"
@@ -67,18 +76,32 @@ def find_table(conn, cid: int, name: str = ""):
 
 
 def ensure_table(conn, cid: int, name: str, extra_keys=()) -> str:
-    """Creates the customer's table if missing, and adds any new extra columns. Returns the table name."""
+    """Creates the customer's table if missing. If the table already exists with existing data
+    and updated values, preserves it and never creates the same table again."""
     t = find_table(conn, cid, name)
-    if not t:
-        t = table_name(cid, name)
-        cols = ",\n  ".join(f"`{c}` {ddl} NULL" for c, ddl in BASE_COLS)
-        updated_at_clause = "`updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
-        if getattr(conn.dialect, "name", "") in ("mysql", "mariadb"):
-            updated_at_clause += " ON UPDATE CURRENT_TIMESTAMP"
-        conn.execute(text(
-            f"CREATE TABLE IF NOT EXISTS `{t}` (\n"
-            f"  `imei` VARCHAR(20) NOT NULL PRIMARY KEY,\n  {cols},\n"
-            f"  {updated_at_clause}\n)"))
+    if t:
+        # Table already exists with its updated values: do NOT create it again!
+        if t in _VERIFIED_TABLES and not extra_keys:
+            return t
+        if extra_keys:
+            have = {c["name"] for c in inspect(conn).get_columns(t)}
+            for k in extra_keys:
+                col = extra_col(k)
+                if col not in have:
+                    conn.execute(text(f"ALTER TABLE `{t}` ADD COLUMN `{col}` VARCHAR(500) NULL"))
+                    have.add(col)
+        _VERIFIED_TABLES.add(t)
+        return t
+
+    t = table_name(cid, name)
+    cols = ",\n  ".join(f"`{c}` {ddl} NULL" for c, ddl in BASE_COLS)
+    updated_at_clause = "`updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+    if getattr(conn.dialect, "name", "") in ("mysql", "mariadb"):
+        updated_at_clause += " ON UPDATE CURRENT_TIMESTAMP"
+    conn.execute(text(
+        f"CREATE TABLE IF NOT EXISTS `{t}` (\n"
+        f"  `imei` VARCHAR(20) NOT NULL PRIMARY KEY,\n  {cols},\n"
+        f"  {updated_at_clause}\n)"))
     have = {c["name"] for c in inspect(conn).get_columns(t)}
     for col_name, ddl in BASE_COLS:
         if col_name not in have:
@@ -89,6 +112,7 @@ def ensure_table(conn, cid: int, name: str, extra_keys=()) -> str:
         if col not in have:
             conn.execute(text(f"ALTER TABLE `{t}` ADD COLUMN `{col}` VARCHAR(500) NULL"))
             have.add(col)
+    _VERIFIED_TABLES.add(t)
     return t
 
 

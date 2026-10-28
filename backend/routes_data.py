@@ -32,6 +32,21 @@ BASE_COLUMNS = ["customer_name", "device_sr_no", "imei", "iccid", "msisdn1", "ms
 TEXT_FIELDS = ["device_sr_no", "iccid", "msisdn1", "msisdn2", "model", "sim_provider", "activation_plan",
                "firmware", "flash"]
 
+FIELD_MAX_LEN = {
+    "imei": 20,
+    "device_sr_no": 50,
+    "iccid": 30,
+    "msisdn1": 20,
+    "msisdn2": 20,
+    "model": 100,
+    "sim_provider": 100,
+    "activation_plan": 100,
+    "firmware": 100,
+    "flash": 100,
+    "sim_type": 20,
+    "customer_name": 150
+}
+
 
 def clean_str(val) -> Optional[str]:
     if val is None:
@@ -123,13 +138,37 @@ def out(d: Device) -> dict:
 def customer_by_name(db: Session, name: str) -> Customer:
     raw = (name or "").strip()
     clean_name = re.sub(r"[^a-zA-Z0-9_]+", "_", raw).strip("_") or raw
-    c = db.query(Customer).filter(func.lower(Customer.name) == clean_name.lower()).first()
+    
+    # 1. Check if customer exists by exact name, clean name, or normalized name (ignoring spaces/underscores)
+    c = db.query(Customer).filter(
+        or_(
+            func.lower(Customer.name) == raw.lower(),
+            func.lower(Customer.name) == clean_name.lower(),
+            func.replace(func.lower(Customer.name), '_', ' ') == func.replace(raw.lower(), '_', ' '),
+            func.replace(func.lower(Customer.name), '_', ' ') == func.replace(clean_name.lower(), '_', ' ')
+        )
+    ).first()
+    
     if c and c.deleted_at:  # adding devices to a deleted customer's name brings the customer back
         c.deleted_at = c.deleted_by = None
+        
     if not c:
-        c = Customer(name=clean_name)
-        db.add(c)
-        db.flush()
+        try:
+            c = Customer(name=clean_name[:150])
+            db.add(c)
+            db.flush()
+        except Exception:
+            db.rollback()
+            c = db.query(Customer).filter(
+                or_(
+                    func.lower(Customer.name) == raw.lower(),
+                    func.lower(Customer.name) == clean_name.lower(),
+                    func.replace(func.lower(Customer.name), '_', ' ') == func.replace(raw.lower(), '_', ' '),
+                    func.replace(func.lower(Customer.name), '_', ' ') == func.replace(clean_name.lower(), '_', ' ')
+                )
+            ).first()
+            if not c:
+                raise
         try:
             if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
                 customer_tables.ensure_table(db.connection(), c.id, c.name)
@@ -417,9 +456,9 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
 
 @router.post("/devices/bulk/validate", dependencies=[Depends(require_permission("upload"))])
 def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
-    imeis = [r.imei.strip() for r in data.rows if r.imei]
-    sr_nos = [r.device_sr_no.strip() for r in data.rows if r.device_sr_no]
-    iccids = [r.iccid.strip() for r in data.rows if r.iccid]
+    imeis = [(r.imei or "").strip() for r in data.rows if (r.imei or "").strip()]
+    sr_nos = [(r.device_sr_no or "").strip() for r in data.rows if (r.device_sr_no or "").strip()]
+    iccids = [(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
 
     existing_imeis = set()
     for i in range(0, len(imeis), 2000):
@@ -439,6 +478,7 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
                 existing_iccids[v] = dev_imei
 
     known_custs = {c.name.lower() for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
+    known_custs_norm = {c.name.lower().replace('_', ' ') for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
     known_cols = {n.lower() for (n,) in db.query(models.ColumnRegistry.name)}
     known_cols.update(c.lower() for c in BASE_COLUMNS)
 
@@ -464,7 +504,7 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
             errs.append("Missing or bad Customer Name")
         elif len(cname) > 100 or re.search(r"[;\`\'\"]", cname):
             errs.append("Customer name contains invalid characters or exceeds 100 characters")
-        elif cname.lower() not in known_custs:
+        elif cname.lower() not in known_custs and cname.lower().replace('_', ' ') not in known_custs_norm:
             new_customers.add(cname)
 
         if not r.imei:
@@ -602,9 +642,9 @@ def insert_chunk(db: Session, rows: list):
 @router.post("/devices/bulk", dependencies=[Depends(require_permission("upload"))])
 def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
              user: models.User = Depends(get_current_user)):
-    imeis = [r.imei.strip() for r in data.rows if r.imei]
-    sr_nos = [r.device_sr_no.strip() for r in data.rows if r.device_sr_no]
-    iccids = [r.iccid.strip() for r in data.rows if r.iccid]
+    imeis = [(r.imei or "").strip() for r in data.rows if (r.imei or "").strip()]
+    sr_nos = [(r.device_sr_no or "").strip() for r in data.rows if (r.device_sr_no or "").strip()]
+    iccids = [(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
     mode = getattr(data, "mode", "skip") or "skip"
 
     existing_devices = {}
@@ -651,6 +691,7 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                     imei = alt[:20]
                 else:
                     imei = f"INV_{uuid.uuid4().hex[:10].upper()}"
+            imei = imei[:20]
 
             # Duplicates must NEVER be inserted
             if imei in seen_in_batch:
@@ -658,7 +699,7 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                 continue
             seen_in_batch.add(imei)
 
-            sr_no = str(r.device_sr_no or "").strip()
+            sr_no = str(r.device_sr_no or "").strip()[:50]
             if sr_no:
                 sr_owner = existing_sr_nos.get(sr_no)
                 if sr_no in seen_sr_nos or (sr_owner and sr_owner != imei and mode == "skip"):
@@ -666,7 +707,7 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                     continue
                 seen_sr_nos.add(sr_no)
 
-            iccid_val = str(r.iccid or "").strip()
+            iccid_val = str(r.iccid or "").strip()[:30]
             if iccid_val:
                 iccid_owner = existing_iccids.get(iccid_val)
                 if iccid_val in seen_iccids or (iccid_owner and iccid_owner != imei and mode == "skip"):
@@ -674,13 +715,13 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                     continue
                 seen_iccids.add(iccid_val)
 
-            key = cust_name.lower()
+            key = cust_name.lower().replace("_", " ")
             if key not in cache:
                 cache[key] = customer_by_name(db, cust_name)
             cust = cache[key]
 
             exp = r.expiry_date or (r.act_date + timedelta(days=365) if r.act_date else None)
-            stype = r.sim_type or classify_sim_type(r.iccid)
+            stype = (r.sim_type or classify_sim_type(r.iccid))[:20]
             extra = clean_extra(r.extra)
             names.update(extra)
 
@@ -695,8 +736,9 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                     d.sim_type = stype or d.sim_type
                     for f in TEXT_FIELDS:
                         val = getattr(r, f, None)
-                        if val is not None and val != "":
-                            setattr(d, f, str(val)[:150])
+                        if val is not None and str(val).strip() != "":
+                            max_len = FIELD_MAX_LEN.get(f, 100)
+                            setattr(d, f, str(val).strip()[:max_len])
                     if extra:
                         non_blank = {k: v for k, v in extra.items() if v is not None and str(v).strip() != ""}
                         merged = {**(d.extra or {}), **non_blank}
@@ -710,7 +752,14 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                 else:
                     skipped.append(imei)
             else:
-                row_vals = {f: (str(getattr(r, f))[:150] if getattr(r, f, None) is not None and str(getattr(r, f)).strip() != "" else None) for f in TEXT_FIELDS}
+                row_vals = {}
+                for f in TEXT_FIELDS:
+                    val = getattr(r, f, None)
+                    if val is not None and str(val).strip() != "":
+                        max_len = FIELD_MAX_LEN.get(f, 100)
+                        row_vals[f] = str(val).strip()[:max_len]
+                    else:
+                        row_vals[f] = None
                 new_rows.append(dict(
                     customer_id=cust.id, imei=imei, act_date=r.act_date, expiry_date=exp,
                     dispatched_date=r.dispatched_date, sim_type=stype, extra=extra or None,
@@ -2354,8 +2403,13 @@ def move_error_to_cart(error_id: int, db: Session = Depends(get_db),
 
 
 @router.post("/errors/empty", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
-def move_all_errors_to_cart(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    errors = db.query(models.ErroredRecord).all()
+def move_all_errors_to_cart(limit: int = 0, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    total_remaining = db.query(models.ErroredRecord).count()
+    query = db.query(models.ErroredRecord)
+    if limit > 0:
+        errors = query.limit(limit).all()
+    else:
+        errors = query.all()
     count = 0
     cust = customer_by_name(db, "Unassigned Errors")
     for err in errors:
@@ -2366,20 +2420,20 @@ def move_all_errors_to_cart(db: Session = Depends(get_db), user: models.User = D
             imei_val = f"ERR-{err.id}-{int(time.time())}"
         dev = Device(
             customer_id=c.id,
-            imei=imei_val,
-            device_sr_no=err.device_sr_no,
-            iccid=err.iccid,
-            msisdn1=err.msisdn1,
-            msisdn2=err.msisdn2,
+            imei=imei_val[:20],
+            device_sr_no=str(err.device_sr_no or "")[:50] if err.device_sr_no else None,
+            iccid=str(err.iccid or "")[:30] if err.iccid else None,
+            msisdn1=str(err.msisdn1 or "")[:20] if err.msisdn1 else None,
+            msisdn2=str(err.msisdn2 or "")[:20] if err.msisdn2 else None,
             act_date=err.act_date,
             expiry_date=err.expiry_date,
             dispatched_date=err.dispatched_date,
-            model=err.model,
-            sim_provider=err.sim_provider,
-            activation_plan=err.activation_plan,
-            firmware=err.firmware,
-            flash=err.flash,
-            sim_type=err.sim_type,
+            model=str(err.model or "")[:100] if err.model else None,
+            sim_provider=str(err.sim_provider or "")[:100] if err.sim_provider else None,
+            activation_plan=str(err.activation_plan or "")[:100] if err.activation_plan else None,
+            firmware=str(err.firmware or "")[:100] if err.firmware else None,
+            flash=str(err.flash or "")[:100] if err.flash else None,
+            sim_type=str(err.sim_type or "")[:20] if err.sim_type else None,
             extra=err.extra,
             added_by=user.id,
             deleted_at=datetime.utcnow(),
@@ -2390,5 +2444,6 @@ def move_all_errors_to_cart(db: Session = Depends(get_db), user: models.User = D
         db.delete(err)
         count += 1
     db.commit()
+    remaining = max(0, total_remaining - count)
     log_activity(db, "errors_trash_all", f"Moved {count} errored entries to Cart", user=user)
-    return {"moved_all_to_cart": count}
+    return {"moved_count": count, "remaining_count": remaining, "moved_all_to_cart": count}

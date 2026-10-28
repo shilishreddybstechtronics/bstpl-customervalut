@@ -10,15 +10,21 @@ ID_PATTERN = r"^[A-Za-z0-9_.-]{3,30}$"
 Role = Literal["admin", "standard", "limited"]
 
 
-_DATE_FORMATS = ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y", "%Y/%m/%d", "%Y.%m.%d",
-                 "%m/%d/%Y", "%m-%d-%Y", "%m.%d.%Y",
-                 "%d-%b-%Y", "%d %b %Y", "%d-%b-%y", "%d/%m/%y", "%d-%m-%y", "%b %d, %Y", "%b %d %Y",
-                 "%d-%B-%Y", "%d-%B-%y", "%d %B %Y", "%B %d, %Y")
+_DATE_FORMATS = (
+    "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y", "%Y/%m/%d", "%Y.%m.%d",
+    "%d-%m-%y", "%d/%m/%y", "%d.%m.%y",
+    "%m/%d/%Y", "%m-%d-%Y", "%m.%d.%Y", "%m/%d/%y", "%m-%d-%y", "%m.%d.%y",
+    "%d-%b-%Y", "%d %b %Y", "%d-%b-%y", "%d %b %y", "%d/%b/%y", "%d.%b.%y", "%d/%b/%Y", "%d.%b.%Y",
+    "%b %d, %Y", "%b %d %Y", "%b %d, %y", "%b %d %y",
+    "%d-%B-%Y", "%d-%B-%y", "%d %B %Y", "%d %B %y", "%B %d, %Y", "%B %d, %y",
+    "%Y%m%d", "%d%m%Y", "%d%m%y"
+)
 
 
 def _to_date(v):
-    """Accepts what real spreadsheets contain: blanks, Excel serial numbers, 2025-03-01 05:30:00, 01-03-2025 (day first).
-    If a date cannot be parsed, safely ignore that particular value and return None instead of raising an error."""
+    """Accepts all date formats from uploaded data as inbuilt format:
+    Blanks, Excel serials, DD-MM-YYYY, DD/MM/YYYY, YYYY-MM-DD, 2-digit years (DD-MM-YY, MM/DD/YY),
+    month names, compact digits (YYYYMMDD, DDMMYYYY), and timestamps."""
     if v is None:
         return None
     if isinstance(v, datetime):
@@ -26,7 +32,7 @@ def _to_date(v):
     if isinstance(v, date):
         return v
     s = str(v).strip()
-    if not s or s.lower() in ("nan", "nat", "none", "null", "-", "--", "#n/a", "n/a", "na", "nil", "undefined"):
+    if not s or s.lower() in ("nan", "nat", "none", "null", "-", "--", "---", "—", "–", "#n/a", "n/a", "na", "nil", "undefined", "blank", "0", "0000-00-00", "00/00/0000"):
         return None
     try:
         n = float(s)
@@ -37,14 +43,45 @@ def _to_date(v):
             return None
         if 20000 < n < 80000:  # Excel serial day number
             return date(1899, 12, 30) + timedelta(days=int(n))
+        if 19900101 <= n <= 20991231:
+            s = str(int(n))
+        elif 1011990 <= n <= 31122099:
+            s = str(int(n)).zfill(8)
+
+    # Drop time part including AM/PM
+    s = re.sub(r"[T\s]\d{1,2}:\d{2}(:\d{2})?(\.\d+)?(\s*[APap][Mm])?.*$", "", s).strip()
+    s = re.sub(r"^[\"\'\s\-_/.]+|[\"\'\s\-_/.]+$", "", s)
+    if not s:
         return None
-    s = re.split(r"[T ]\d{1,2}:\d{2}", s)[0].strip()  # drop any time part
-    s = re.sub(r"\s*([/\-.])\s*", r"\1", s)
+
+    # Delimited format check
     for fmt in _DATE_FORMATS:
         try:
-            return datetime.strptime(s, fmt).date()
+            d = datetime.strptime(s, fmt).date()
+            if 1950 <= d.year <= 2099:
+                return d
         except ValueError:
             pass
+
+    # Delimited numbers fallback: e.g. 24-05-18 or 18/05/24 or 18.05.24
+    parts = [p for p in re.split(r"[-/. ,\\]+", s) if p and p.isdigit()]
+    if len(parts) == 3:
+        p0, p1, p2 = int(parts[0]), int(parts[1]), int(parts[2])
+        # Case A: Year first e.g. 24-05-18 or 2024-05-18
+        if 1990 <= p0 <= 2099 and 1 <= p1 <= 12 and 1 <= p2 <= 31:
+            return date(p0, p1, p2)
+        if len(parts[0]) == 2 and 20 <= p0 <= 50 and 1 <= p1 <= 12 and 1 <= p2 <= 31:
+            return date(2000 + p0, p1, p2)
+        # Case B: Year last e.g. 18-05-24 or 18/05/2024
+        yr = p2
+        if len(parts[2]) == 2:
+            yr = 2000 + p2 if p2 < 70 else 1900 + p2
+        if 1990 <= yr <= 2099:
+            if p1 > 12 and 1 <= p0 <= 12 and 1 <= p1 <= 31:
+                return date(yr, p0, p1)
+            elif 1 <= p0 <= 31 and 1 <= p1 <= 12:
+                return date(yr, p1, p0)
+
     return None
 
 
@@ -61,6 +98,11 @@ def _clean_str_val(v):
     s = str(v).strip()
     if s.lower() in ("nan", "none", "null", "undefined"):
         return None
+    if re.search(r"e\+", s, re.I):
+        try:
+            s = str(int(float(s)))
+        except Exception:
+            pass
     if s.endswith(".0") and s[:-2].isdigit():
         s = s[:-2]
     return s
@@ -126,8 +168,8 @@ class TokenOut(BaseModel):
 # ---- customers and devices ----
 class DeviceIn(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
-    customer_name: str = Field("", max_length=255)
-    imei: str = Field("", max_length=100)
+    customer_name: Optional[str] = Field("", max_length=255)
+    imei: Optional[str] = Field("", max_length=100)
     device_sr_no: Optional[str] = Field(None, max_length=150)
     iccid: Optional[str] = Field(None, validation_alias=AliasChoices("iccid", "ccid", "ICCID", "CCID", "Iccid", "Ccid"), max_length=100)
     msisdn1: Optional[str] = Field(None, max_length=100)
@@ -151,8 +193,22 @@ class DeviceIn(BaseModel):
     @field_validator("customer_name", "imei", "device_sr_no", "msisdn1", "msisdn2",
                      "model", "sim_provider", "activation_plan", "firmware", "flash", "sim_type", mode="before")
     @classmethod
-    def _clean_str(cls, v):
-        return _clean_str_val(v) or "" if cls == "customer_name" or cls == "imei" else _clean_str_val(v)
+    def _clean_str(cls, v, info):
+        val = _clean_str_val(v)
+        if info.field_name in ("customer_name", "imei"):
+            return val or ""
+        return val
+
+    @field_validator("extra", mode="before")
+    @classmethod
+    def _clean_extra(cls, v):
+        if not v or not isinstance(v, dict):
+            return None
+        cleaned = {}
+        for k, val in v.items():
+            if val is not None and str(val).strip() != "":
+                cleaned[str(k)[:64]] = str(val)[:255]
+        return cleaned or None
 
     @field_validator("act_date", "expiry_date", "dispatched_date", mode="before")
     @classmethod
@@ -196,7 +252,7 @@ class DeviceUpdate(BaseModel):
 
 
 class BulkIn(BaseModel):
-    rows: list[DeviceIn] = Field(max_length=20000)  # the page sends 1,000-2,000 at a time; this is only a safety ceiling
+    rows: list[DeviceIn] = Field(max_length=100000)  # ceiling for large workbooks
     mode: Optional[Literal["skip", "replace"]] = "skip"
     direct_empty: Optional[bool] = False
 
