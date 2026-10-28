@@ -3018,7 +3018,9 @@
           <button class="b p" id="btnPushAllErrorsCustomer" style="background:#2563eb;color:#fff" title="Push all errored entries into a specified customer">🚀 Push All to Customer</button>
           <button class="b" id="btnRefreshErrors">🔄 Refresh</button>
           <button class="b" id="btnExportErrors">📥 Export Errored Records</button>
-          <button class="b d" id="btnMoveAllErrorsCart">🗑️ Move All to Cart</button>
+          <button class="b d" id="btnMoveAllErrorsCart" title="Move all errored entries to Cart with percentage progress">🗑️ Move All to Cart</button>
+          <button class="b d" id="btnDirectDeleteSelectedErrors" style="background:#dc2626;color:#fff;border-color:#b91c1c;font-weight:700" title="Directly and completely delete selected records from database and website" hidden>🗑️ Direct Delete Selected (<span id="errSelectedCount">0</span>)</button>
+          <button class="b d" id="btnDirectDeleteAllErrors" style="background:#b91c1c;color:#fff;border-color:#991b1b;font-weight:700" title="Directly delete all errored entries completely from database and website forever">⚡ Direct Delete All (Complete)</button>
         </div>
       </div>
 
@@ -8913,6 +8915,7 @@
         <table>
           <thead>
             <tr>
+              <th style="width:38px;text-align:center"><input type="checkbox" id="chkSelectAllErrors" title="Select all errored records" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></th>
               <th>ID</th>
               <th>Flagged Error Reason</th>
               <th>Target Customer</th>
@@ -8922,12 +8925,13 @@
               <th>MSISDN 1</th>
               <th>Activation Date</th>
               <th>Expiry Date</th>
-              <th style="min-width:180px">Action</th>
+              <th style="min-width:200px">Action</th>
             </tr>
           </thead>
           <tbody>
             ${cachedErrors.map(err => `
               <tr>
+                <td style="text-align:center"><input type="checkbox" class="err-row-chk" data-chkerr="${err.id}" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></td>
                 <td><b>#${err.id}</b></td>
                 <td><span class="tag bad" style="display:inline-block;max-width:240px;white-space:normal;line-height:1.3;font-size:12px">⚠️ ${esc(err.error_reason)}</span></td>
                 <td><b>${esc(err.customer_name || '—')}</b></td>
@@ -8941,7 +8945,8 @@
                   <div style="display:flex;gap:6px;flex-wrap:wrap">
                     <button class="b p" data-errpush="${err.id}" style="height:28px;padding:0 8px;font-size:12px;background:#2563eb;color:#fff" title="Push this entry into the specified customer even with error">🚀 Push to Customer</button>
                     <button class="b" data-erredit="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit fields and upload to customer">✏️ Edit & Upload</button>
-                    <button class="b d" data-errdel="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move this entry to Cart">🗑️ Move to Cart</button>
+                    <button class="b d" data-errdel="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move this entry to Cart with percentage progress">🗑️ Move to Cart</button>
+                    <button class="b d" data-errpurge="${err.id}" style="height:28px;padding:0 10px;font-size:12px;background:#dc2626;color:#fff;font-weight:700" title="Directly and completely delete from database and website">❌ Direct Delete</button>
                   </div>
                 </td>
               </tr>
@@ -8951,6 +8956,30 @@
       </div>
     `;
           $('errorsTableWrap').innerHTML = html;
+
+          const updateErrSelection = () => {
+            const chks = Array.from(document.querySelectorAll('.err-row-chk:checked'));
+            const count = chks.length;
+            if ($('errSelectedCount')) $('errSelectedCount').textContent = count.toString();
+            if ($('btnDirectDeleteSelectedErrors')) $('btnDirectDeleteSelectedErrors').hidden = (count === 0);
+            if ($('chkSelectAllErrors')) {
+              const allChks = document.querySelectorAll('.err-row-chk');
+              $('chkSelectAllErrors').checked = allChks.length > 0 && chks.length === allChks.length;
+            }
+          };
+
+          if ($('chkSelectAllErrors')) {
+            $('chkSelectAllErrors').onchange = (e) => {
+              const val = e.target.checked;
+              document.querySelectorAll('.err-row-chk').forEach(c => c.checked = val);
+              updateErrSelection();
+            };
+          }
+
+          document.querySelectorAll('.err-row-chk').forEach(c => {
+            c.onchange = updateErrSelection;
+          });
+          updateErrSelection();
         } catch (err) {
           $('errorsTableWrap').innerHTML = `<div class="empty err">${esc(err.message)}</div>`;
         }
@@ -9059,6 +9088,46 @@
               },
               progress: '100% Complete'
             });
+            cachedErrors = cachedErrors.filter(e => e.id !== id);
+            await loadErrorsContainer();
+            await updateChrome();
+          } catch (err) { fail(err); }
+        }
+
+        const purgeBtn = e.target.closest('[data-errpurge]');
+        if (purgeBtn) {
+          const id = +purgeBtn.dataset.errpurge;
+          if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently delete errored entry #${id} directly from the database forever.\n\nIt CANNOT be recovered or restored from Cart. Are you sure you want to proceed?`)) return;
+          try {
+            await runProgressAction({
+              title: `Permanently Deleting Errored Entry #${id}…`,
+              tag: '⚡ Permanent Database Deletion',
+              tagColor: '#dc2626',
+              barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
+              subText: `Permanently deleting errored record #${id} directly from database.`,
+              total: 1,
+              workFn: async (updateProgress) => {
+                updateProgress(0, 1, `Initiating permanent deletion of entry #${id} (0% deleted)…`);
+                await new Promise(r => setTimeout(r, 120));
+                updateProgress(0.5, 1, `Permanently erasing record #${id} from database (50% deleted)…`);
+                await api(`/api/errors/${id}/permanent`, { method: 'DELETE' });
+                updateProgress(1, 1, `Entry #${id} permanently erased from database (100% complete)!`);
+                await new Promise(r => setTimeout(r, 220));
+              }
+            });
+            toast(`Errored entry #${id} permanently deleted.`);
+            showEventPopup({
+              type: 'deletion',
+              title: 'Errored Entry Permanently Erased',
+              message: `Errored entry #${id} was permanently erased directly from the database forever.`,
+              meta: {
+                'Error ID': id,
+                'Percentage of Deletion': '100% Complete',
+                'Status': 'Permanently Erased from Database'
+              },
+              progress: '100% Complete'
+            });
+            cachedErrors = cachedErrors.filter(e => e.id !== id);
             await loadErrorsContainer();
             await updateChrome();
           } catch (err) { fail(err); }
@@ -9282,9 +9351,122 @@
           },
           progress: '100% Complete'
         });
+        cachedErrors = [];
         await loadErrorsContainer();
         await updateChrome();
       };
+
+      if ($('btnDirectDeleteAllErrors')) {
+        $('btnDirectDeleteAllErrors').onclick = async () => {
+          if (!cachedErrors.length) { toast('No errored entries to delete.'); return; }
+          const totalToDelete = cachedErrors.length;
+          if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently delete all ${totalToDelete} errored entries directly from the database and website forever.\n\nThey CANNOT be recovered or restored from the Cart.\n\nAre you sure you want to permanently erase them?`)) return;
+
+          let totalDeleted = 0;
+          await runProgressAction({
+            title: 'Permanently Deleting Errored Entries…',
+            tag: '⚡ Permanent Database Deletion',
+            tagColor: '#dc2626',
+            barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
+            subText: `Permanently deleting all ${totalToDelete} errored records directly from database.`,
+            total: totalToDelete,
+            workFn: async (updateProgress) => {
+              const batchSize = Math.min(25, Math.max(1, Math.ceil(totalToDelete / 10)));
+              let remaining = totalToDelete;
+              while (remaining > 0) {
+                const res = await api(`/api/errors/permanent?limit=${batchSize}`, { method: 'DELETE' });
+                const batchDeleted = res.deleted_count || res.deleted_forever || 0;
+                totalDeleted += batchDeleted;
+                remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchDeleted);
+                const pct = Math.min(100, Math.round((totalDeleted / totalToDelete) * 100));
+                updateProgress(totalDeleted, totalToDelete, `Permanently deleting: ${totalDeleted} of ${totalToDelete} records (${pct}% deleted forever)...`);
+                if ($('errorsCountBadge')) {
+                  $('errorsCountBadge').textContent = Math.max(0, totalToDelete - totalDeleted).toString();
+                }
+                if (batchDeleted === 0 || remaining === 0) break;
+                await new Promise(r => setTimeout(r, 120));
+              }
+            }
+          });
+
+          toast(`Permanently deleted ${totalDeleted || totalToDelete} errored entries from database.`);
+          showEventPopup({
+            type: 'deletion',
+            title: 'Errored Entries Permanently Erased',
+            message: `Successfully and permanently deleted all ${totalDeleted || totalToDelete} errored entries directly from the database and website forever.`,
+            meta: {
+              'Total Erased': totalDeleted || totalToDelete,
+              'Percentage Completed': '100%',
+              'Status': 'Permanently Erased from Database'
+            },
+            progress: '100% Complete'
+          });
+          cachedErrors = [];
+          await loadErrorsContainer();
+          await updateChrome();
+        };
+      }
+
+      if ($('btnDirectDeleteSelectedErrors')) {
+        $('btnDirectDeleteSelectedErrors').onclick = async () => {
+          const checkedBoxes = Array.from(document.querySelectorAll('.err-row-chk:checked'));
+          const selectedIds = checkedBoxes.map(c => parseInt(c.dataset.chkerr, 10)).filter(Boolean);
+          if (!selectedIds.length) { toast('No errored entries selected.'); return; }
+          const totalToDelete = selectedIds.length;
+          if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently delete ${totalToDelete} selected errored record(s) directly from the database and website forever.\n\nThey CANNOT be recovered or restored from the Cart.\n\nAre you sure you want to permanently erase them?`)) return;
+
+          let totalDeleted = 0;
+          const chunkSize = 25;
+          const chunks = [];
+          for (let i = 0; i < selectedIds.length; i += chunkSize) {
+            chunks.push(selectedIds.slice(i, i + chunkSize));
+          }
+
+          await runProgressAction({
+            title: 'Permanently Deleting Selected Errored Entries…',
+            tag: '⚡ Permanent Database Deletion',
+            tagColor: '#dc2626',
+            barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
+            subText: `Permanently deleting ${totalToDelete} selected errored record(s) directly from database.`,
+            total: totalToDelete,
+            workFn: async (updateProgress) => {
+              for (let cIdx = 0; cIdx < chunks.length; cIdx++) {
+                const chunk = chunks[cIdx];
+                const res = await api('/api/errors/batch-delete', {
+                  method: 'POST',
+                  body: JSON.stringify({ error_ids: chunk })
+                });
+                const batchDeleted = res.deleted_count || chunk.length;
+                totalDeleted += batchDeleted;
+                const pct = Math.min(100, Math.round((totalDeleted / totalToDelete) * 100));
+                updateProgress(totalDeleted, totalToDelete, `Permanently deleting: ${totalDeleted} of ${totalToDelete} records (${pct}% deleted forever)...`);
+                if ($('errorsCountBadge')) {
+                  const curBadge = parseInt($('errorsCountBadge').textContent || '0', 10) || cachedErrors.length;
+                  $('errorsCountBadge').textContent = Math.max(0, curBadge - batchDeleted).toString();
+                }
+                await new Promise(r => setTimeout(r, 120));
+              }
+            }
+          });
+
+          toast(`Permanently deleted ${totalDeleted || totalToDelete} selected errored entries from database.`);
+          showEventPopup({
+            type: 'deletion',
+            title: 'Selected Errored Entries Permanently Erased',
+            message: `Successfully and permanently deleted ${totalDeleted || totalToDelete} selected errored record(s) directly from the database and website forever.`,
+            meta: {
+              'Total Erased': totalDeleted || totalToDelete,
+              'Percentage Completed': '100%',
+              'Status': 'Permanently Erased from Database'
+            },
+            progress: '100% Complete'
+          });
+          const selectedSet = new Set(selectedIds);
+          cachedErrors = cachedErrors.filter(e => !selectedSet.has(e.id));
+          await loadErrorsContainer();
+          await updateChrome();
+        };
+      }
 
       $('btnExportErrors').onclick = () => {
         if (!cachedErrors.length) { toast('No errored entries to export.'); return; }
@@ -9410,28 +9592,43 @@
           </p>
         </div>
       `, 'Empty Cart Permanently', async () => {
-              const totalItems = parseInt($('cartCountBadge')?.textContent || '0', 10) || 1;
+              const totalItems = totalCart || parseInt($('cartCountBadge')?.textContent || '0', 10) || 1;
+              let totalPurged = 0;
               await runProgressAction({
                 title: 'Permanently Deleting Cart Items…',
-                tag: '🗑️ Permanent Purge',
-                tagColor: '#ef4444',
-                barGradient: 'linear-gradient(90deg, #dc2626, #ef4444)',
-                subText: 'Permanently purging deleted records and customer tables. Please wait…',
+                tag: '🗑️ Permanent Purge Progress',
+                tagColor: '#dc2626',
+                barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
+                subText: `Permanently purging all ${totalItems} items forever from database and TiDB Cloud.`,
                 total: totalItems,
                 workFn: async (updateProgress) => {
-                  updateProgress(Math.floor(totalItems * 0.3), totalItems, 'Purging customer records from recycle bin…');
-                  await new Promise(r => setTimeout(r, 120));
-                  updateProgress(Math.floor(totalItems * 0.7), totalItems, 'Purging deleted customer tables from TiDB Cloud…');
-                  await api('/api/bin', { method: 'DELETE' });
-                  updateProgress(totalItems, totalItems, 'Purge complete!');
+                  const batchSize = Math.min(25, Math.max(1, Math.ceil(totalItems / 10)));
+                  let remaining = totalItems;
+                  while (remaining > 0) {
+                    const res = await api(`/api/bin?limit=${batchSize}`, { method: 'DELETE' });
+                    const batchPurged = res.deleted_forever || res.deleted_count || 0;
+                    totalPurged += batchPurged;
+                    remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchPurged);
+                    const pct = Math.min(100, Math.round((totalPurged / totalItems) * 100));
+                    updateProgress(totalPurged, totalItems, `Permanently deleting Cart items: ${totalPurged} of ${totalItems} (${pct}% deleted forever)...`);
+                    if ($('cartCountBadge')) {
+                      $('cartCountBadge').textContent = Math.max(0, totalItems - totalPurged).toString();
+                    }
+                    if (batchPurged === 0 || remaining === 0) break;
+                    await new Promise(r => setTimeout(r, 120));
+                  }
                 }
               });
               toast('Permanently deleted: Cart emptied and all records erased forever.');
               showEventPopup({
                 type: 'deletion',
                 title: 'Cart Permanently Emptied',
-                message: 'All deleted records and customer tables were permanently purged forever from database and TiDB Cloud.',
-                meta: { 'Action': 'Purge All Cart Items', 'Status': 'Permanently Erased' },
+                message: `All ${totalPurged || totalItems} deleted records and customer tables were permanently purged forever from database and TiDB Cloud.`,
+                meta: {
+                  'Total Items Purged': totalPurged || totalItems,
+                  'Percentage of Deletion': '100% Complete',
+                  'Status': 'Permanently Erased from Database'
+                },
                 progress: '100% Complete'
               });
               await updateChrome();
@@ -9848,13 +10045,38 @@
         <select id="mTarget">${others.map(o => `<option value="${o.id}">${esc(o.name)} (${o.devices} devices)</option>`).join('')}</select>
       `, 'Merge Customers', async () => {
               const targetId = $('mTarget').value;
-              await api(`/api/customers/${c.id}/merge`, { method: 'POST', body: JSON.stringify({ target_id: +targetId, target_customer_id: +targetId }) });
-              toast(`✓ Successfully merged "${c.name}" into target customer!`);
+              const targetCust = others.find(x => String(x.id) === String(targetId));
+              const targetName = targetCust?.name || `Customer #${targetId}`;
+              const devCount = c.devices || 1;
+
+              await runProgressAction({
+                title: `Merging "${c.name}" into "${targetName}"…`,
+                tag: '🔄 Customer Merge & Cloud Sync',
+                tagColor: '#2563eb',
+                barGradient: 'linear-gradient(90deg, #2563eb, #3b82f6)',
+                subText: `Merging customer details in database website and TiDB Cloud server.`,
+                total: devCount,
+                workFn: async (updateProgress) => {
+                  updateProgress(Math.floor(devCount * 0.2), devCount, `Initiating customer merge in database and cloud server (20%)…`);
+                  await new Promise(r => setTimeout(r, 120));
+                  updateProgress(Math.floor(devCount * 0.6), devCount, `Reassigning ${devCount} records to "${targetName}" and syncing cloud table (60%)…`);
+                  await api(`/api/customers/${c.id}/merge`, { method: 'POST', body: JSON.stringify({ target_id: +targetId, target_customer_id: +targetId }) });
+                  updateProgress(devCount, devCount, `Customer merge & cloud table sync complete (100%)!`);
+                  await new Promise(r => setTimeout(r, 220));
+                }
+              });
+
+              toast(`✓ Successfully merged "${c.name}" into "${targetName}"!`);
               showEventPopup({
                 type: 'file_delete',
-                title: 'Customer Merged & Old File Removed',
-                message: `Successfully merged customer file "${c.name}" (${c.devices} records) into target customer! Source file deleted and data synchronized.`,
-                meta: { 'Source Customer': c.name, 'Target Customer ID': targetId, 'Records Merged': c.devices },
+                title: 'Customer Merged in Database & Cloud Server',
+                message: `Successfully merged customer file "${c.name}" (${c.devices} records) into "${targetName}"! Details, devices, and tables are fully synchronized across database website and cloud server.`,
+                meta: {
+                  'Source Customer': c.name,
+                  'Target Customer': targetName,
+                  'Records Merged': c.devices,
+                  'Sync Status': 'Synchronized in Database & Cloud'
+                },
                 progress: '100% Complete'
               });
               await loadCU(); await updateChrome(); loadCustomerFilesContainer();
@@ -9946,13 +10168,32 @@
           </p>
         </div>
       `, 'Permanently Delete Forever', async () => {
-              await api(`/api/customers/${cid}/purge`, { method: 'DELETE' });
+              await runProgressAction({
+                title: `Permanently Deleting Customer #${cid}…`,
+                tag: '🗑️ Permanent Customer Table Deletion',
+                tagColor: '#dc2626',
+                barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
+                subText: `Permanently dropping table and customer #${cid} from TiDB Cloud.`,
+                total: 1,
+                workFn: async (updateProgress) => {
+                  updateProgress(0, 1, `Initiating permanent customer table drop (0%)…`);
+                  await new Promise(r => setTimeout(r, 120));
+                  updateProgress(0.5, 1, `Dropping customer table #${cid} from TiDB Cloud (50% deleted)…`);
+                  await api(`/api/customers/${cid}/purge`, { method: 'DELETE' });
+                  updateProgress(1, 1, `Customer table #${cid} permanently dropped (100% complete)!`);
+                  await new Promise(r => setTimeout(r, 220));
+                }
+              });
               toast('Customer permanently deleted from Cart and database forever.');
               showEventPopup({
                 type: 'file_delete',
                 title: 'Customer Permanently Purged',
                 message: `Customer file #${cid} has been permanently purged forever from database and TiDB Cloud.`,
-                meta: { 'Customer ID': cid, 'Status': 'Permanently Deleted' },
+                meta: {
+                  'Customer ID': cid,
+                  'Percentage of Deletion': '100% Complete',
+                  'Status': 'Permanently Deleted Forever'
+                },
                 progress: '100% Complete'
               });
               await updateChrome();
@@ -10042,13 +10283,32 @@
           </p>
         </div>
       `, 'Permanently Delete Forever', async () => {
-              await api('/api/bin/' + devId, { method: 'DELETE' });
+              await runProgressAction({
+                title: `Permanently Deleting Record #${devId}…`,
+                tag: '🗑️ Permanent Record Deletion',
+                tagColor: '#dc2626',
+                barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
+                subText: `Permanently erasing record #${devId} from database and TiDB Cloud.`,
+                total: 1,
+                workFn: async (updateProgress) => {
+                  updateProgress(0, 1, `Initiating permanent deletion of record #${devId} (0%)…`);
+                  await new Promise(r => setTimeout(r, 120));
+                  updateProgress(0.5, 1, `Erasing record #${devId} from database & TiDB table (50% deleted)…`);
+                  await api('/api/bin/' + devId, { method: 'DELETE' });
+                  updateProgress(1, 1, `Record #${devId} permanently erased from database (100% complete)!`);
+                  await new Promise(r => setTimeout(r, 220));
+                }
+              });
               toast('Record permanently deleted from Cart and database forever.');
               showEventPopup({
                 type: 'deletion',
                 title: 'Device Record Permanently Deleted',
                 message: `Device record #${devId} was permanently purged from Cart and TiDB Cloud.`,
-                meta: { 'Device ID': devId, 'Status': 'Permanently Deleted' },
+                meta: {
+                  'Device ID': devId,
+                  'Percentage of Deletion': '100% Complete',
+                  'Status': 'Permanently Deleted Forever'
+                },
                 progress: '100% Complete'
               });
               await updateChrome();

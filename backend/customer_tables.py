@@ -186,6 +186,7 @@ def drop_table(cid: int, name: str = ""):
         t = find_table(conn, cid, name)
         if t:
             conn.execute(text(f"DROP TABLE IF EXISTS `{t}`"))
+            _VERIFIED_TABLES.discard(t)
 
 
 def merge_tables(src_cid: int, src_name: str, dst_cid: int, dst_name: str):
@@ -200,7 +201,7 @@ def merge_tables(src_cid: int, src_name: str, dst_cid: int, dst_name: str):
         src_cols = {c["name"]: str(c["type"]) for c in insp.get_columns(src_t)}
         dst_cols = {c["name"] for c in insp.get_columns(dst_t)}
 
-        # Add any missing columns from src into dst
+        # Add any missing columns from src into dst in cloud table
         for col, col_type in src_cols.items():
             if col not in dst_cols and col not in ("updated_at",):
                 try:
@@ -220,21 +221,30 @@ def merge_tables(src_cid: int, src_name: str, dst_cid: int, dst_name: str):
                 else:
                     select_cols.append(f"`{c}`")
             select_cols_sql = ", ".join(select_cols)
-            update_sql = ", ".join(f"`{c}`=VALUES(`{c}`)" for c in common_cols if c != "imei")
 
-            insert_sql = text(f"""
-                INSERT INTO `{dst_t}` ({col_list_sql})
-                SELECT {select_cols_sql} FROM `{src_t}`
-                ON DUPLICATE KEY UPDATE {update_sql}
-            """)
+            is_mysql = getattr(conn.dialect, "name", "") in ("mysql", "mariadb")
+            non_imei_cols = [c for c in common_cols if c != "imei"]
+            if is_mysql:
+                update_sql = ", ".join(f"`{c}`=VALUES(`{c}`)" for c in non_imei_cols) if non_imei_cols else "`imei`=`imei`"
+                insert_sql = text(f"""
+                    INSERT INTO `{dst_t}` ({col_list_sql})
+                    SELECT {select_cols_sql} FROM `{src_t}`
+                    ON DUPLICATE KEY UPDATE {update_sql}
+                """)
+            else:
+                insert_sql = text(f"""
+                    INSERT OR REPLACE INTO `{dst_t}` ({col_list_sql})
+                    SELECT {select_cols_sql} FROM `{src_t}`
+                """)
             try:
                 conn.execute(insert_sql, {"dst_name": dst_name})
             except Exception as e:
                 print(f"Error copying rows from `{src_t}` to `{dst_t}`: {e}")
 
-        # Drop the old src table
+        # Drop the old src table and remove from cache
         try:
             conn.execute(text(f"DROP TABLE IF EXISTS `{src_t}`"))
+            _VERIFIED_TABLES.discard(src_t)
         except Exception as e:
             print(f"Error dropping merged table `{src_t}`: {e}")
 

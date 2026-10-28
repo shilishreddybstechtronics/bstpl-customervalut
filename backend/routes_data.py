@@ -2040,6 +2040,11 @@ def bin_restore(device_id: int, db: Session = Depends(get_db),
         d.customer.deleted_at = d.customer.deleted_by = None
     log_activity(db, "device_restore", f"IMEI {d.imei} restored", user=user)
     db.commit()
+    try:
+        cname = d.customer.name if d.customer else ""
+        customer_tables.mirror_single_device(d.customer_id, cname, out(d))
+    except Exception as e:
+        print(f"Customer table mirror single device on restore failed: {e}")
     return {"restored": d.id}
 
 
@@ -2061,19 +2066,56 @@ def bin_purge(device_id: int, db: Session = Depends(get_db), admin: models.User 
 
 
 @router.delete("/bin", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
-def bin_empty(db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
-    # Drop tables for deleted customers permanently
+def bin_empty(limit: int = 0, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
+    total_remaining_devices = db.query(Device).filter(Device.deleted_at.isnot(None)).count()
     deleted_custs = db.query(Customer).filter(Customer.deleted_at.isnot(None)).all()
-    for c in deleted_custs:
-        try:
-            customer_tables.drop_table(c.id, c.name)
-        except Exception as e:
-            print(f"Drop table on empty cart failed: {e}")
-        db.delete(c)
-    n = db.query(Device).filter(Device.deleted_at.isnot(None)).delete(synchronize_session=False)
-    log_activity(db, "bin_empty", f"Emptied the bin ({n} records and {len(deleted_custs)} customers deleted forever)", user=admin)
-    db.commit()
-    return {"deleted_forever": n, "customers_purged": len(deleted_custs)}
+
+    if limit > 0:
+        dev_objs = db.query(Device).options(joinedload(Device.customer)).filter(Device.deleted_at.isnot(None)).limit(limit).all()
+        dev_ids = [d.id for d in dev_objs]
+        for d in dev_objs:
+            try:
+                cname = d.customer.name if d.customer else ""
+                customer_tables.delete_device_from_table(d.customer_id, d.imei, cname)
+            except Exception:
+                pass
+        if dev_ids:
+            n = db.query(Device).filter(Device.id.in_(dev_ids)).delete(synchronize_session=False)
+        else:
+            n = 0
+        db.commit()
+        remaining = max(0, total_remaining_devices - n)
+        cust_purged = 0
+        if remaining == 0 and deleted_custs:
+            for c in deleted_custs:
+                try:
+                    customer_tables.drop_table(c.id, c.name)
+                except Exception as e:
+                    print(f"Drop table on empty cart failed: {e}")
+                db.delete(c)
+            cust_purged = len(deleted_custs)
+            db.commit()
+        log_activity(db, "bin_empty_chunk", f"Permanently deleted {n} records from bin ({remaining} remaining)", user=admin)
+        return {"deleted_forever": n, "remaining_count": remaining, "customers_purged": cust_purged}
+    else:
+        # Drop tables for deleted customers permanently
+        for c in deleted_custs:
+            try:
+                customer_tables.drop_table(c.id, c.name)
+            except Exception as e:
+                print(f"Drop table on empty cart failed: {e}")
+            db.delete(c)
+        dev_objs = db.query(Device).options(joinedload(Device.customer)).filter(Device.deleted_at.isnot(None)).all()
+        for d in dev_objs:
+            try:
+                cname = d.customer.name if d.customer else ""
+                customer_tables.delete_device_from_table(d.customer_id, d.imei, cname)
+            except Exception:
+                pass
+        n = db.query(Device).filter(Device.deleted_at.isnot(None)).delete(synchronize_session=False)
+        log_activity(db, "bin_empty", f"Emptied the bin ({n} records and {len(deleted_custs)} customers deleted forever)", user=admin)
+        db.commit()
+        return {"deleted_forever": n, "remaining_count": 0, "customers_purged": len(deleted_custs)}
 
 
 # ---------- errored / invalid records staging ----------
@@ -2405,11 +2447,17 @@ def bulk_push_errors_to_customer(data: schemas.BulkPushErrorsIn, db: Session = D
 
 
 @router.delete("/errors/{error_id}", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
-def move_error_to_cart(error_id: int, db: Session = Depends(get_db),
+def move_error_to_cart(error_id: int, permanent: bool = False, db: Session = Depends(get_db),
                        user: models.User = Depends(get_current_user)):
     err = db.query(models.ErroredRecord).filter(models.ErroredRecord.id == error_id).first()
     if not err:
         raise HTTPException(404, "Errored record not found.")
+
+    if permanent:
+        db.delete(err)
+        db.commit()
+        log_activity(db, "error_permanent_delete", f"Permanently deleted errored entry #{error_id} from database", user=user)
+        return {"deleted_forever": error_id, "permanent": True}
 
     # Find or create customer for this record so it can be held in Cart
     cname = (err.customer_name or "").strip() or "Unassigned Errors"
@@ -2495,3 +2543,48 @@ def move_all_errors_to_cart(limit: int = 0, db: Session = Depends(get_db), user:
     remaining = max(0, total_remaining - count)
     log_activity(db, "errors_trash_all", f"Moved {count} errored entries to Cart", user=user)
     return {"moved_count": count, "remaining_count": remaining, "moved_all_to_cart": count}
+
+
+@router.delete("/errors/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+def direct_delete_all_errors_permanent(limit: int = 0, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Directly and permanently deletes errored entries from the database forever."""
+    total_remaining = db.query(models.ErroredRecord).count()
+    if limit > 0:
+        err_ids = [r.id for r in db.query(models.ErroredRecord.id).order_by(models.ErroredRecord.id.asc()).limit(limit).all()]
+        if err_ids:
+            count = db.query(models.ErroredRecord).filter(models.ErroredRecord.id.in_(err_ids)).delete(synchronize_session=False)
+        else:
+            count = 0
+        db.commit()
+        remaining = max(0, total_remaining - count)
+        log_activity(db, "errors_permanent_purge", f"Permanently deleted {count} errored entries from database", user=user)
+        return {"deleted_count": count, "remaining_count": remaining, "deleted_forever": count}
+    else:
+        count = db.query(models.ErroredRecord).delete(synchronize_session=False)
+        db.commit()
+        log_activity(db, "errors_permanent_purge", f"Permanently deleted all {count} errored entries from database", user=user)
+        return {"deleted_count": count, "remaining_count": 0, "deleted_forever": count}
+
+
+@router.delete("/errors/{error_id}/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+def direct_delete_single_error_permanent(error_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Directly and permanently deletes a single errored entry from the database forever."""
+    err = db.query(models.ErroredRecord).filter(models.ErroredRecord.id == error_id).first()
+    if not err:
+        raise HTTPException(404, "Errored record not found.")
+    db.delete(err)
+    db.commit()
+    log_activity(db, "error_permanent_delete", f"Permanently deleted errored entry #{error_id} from database", user=user)
+    return {"deleted_forever": error_id}
+
+
+@router.post("/errors/batch-delete", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+def direct_delete_batch_errors(data: schemas.BatchDeleteErrorsIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Directly and permanently deletes specific errored records by ID from the database forever."""
+    if not data.error_ids:
+        return {"deleted_count": 0, "deleted_forever": 0}
+    count = db.query(models.ErroredRecord).filter(models.ErroredRecord.id.in_(data.error_ids)).delete(synchronize_session=False)
+    db.commit()
+    log_activity(db, "errors_batch_delete", f"Permanently deleted {count} errored entries from database", user=user)
+    return {"deleted_count": count, "deleted_forever": count}
+

@@ -480,3 +480,9 @@ class BulkPushErrorsIn(BaseModel):
     error_ids: Optional[list[int]] = None
     customer_name: Optional[str] = None
 
+
+class BatchDeleteErrorsIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    error_ids: list[int] = Field(default_factory=list)
+
+
