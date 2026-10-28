@@ -1142,6 +1142,7 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     if not action_type:
         action_type = "both" if getattr(data, "insert_new", False) else "update_only"
 
+    already_same_count = 0
     if action_type == "insert_only":
         for key in devs_by_key.keys():
             frow = file_sims.get(key)
@@ -1155,82 +1156,83 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
 
             matched_keys.add(frow["raw_key"])
 
-        for d in dev_list:
-            changed = False
-            for field in ("msisdn1", "msisdn2", "act_date", "expiry_date", "sim_provider"):
-                val = frow.get(field)
-                if val is not None and val != "":
-                    curr = getattr(d, field)
-                    curr_cmp = curr.isoformat() if isinstance(curr, date) else str(curr or "").strip()
-                    val_cmp = val.isoformat() if isinstance(val, date) else str(val or "").strip()
-                    if overwrite:
-                        if curr_cmp != val_cmp:
-                            setattr(d, field, val)
-                            changed = True
-                    else:
-                        if not curr_cmp and val_cmp:
-                            setattr(d, field, val)
-                            changed = True
+            for d in dev_list:
+                changed = False
+                for field in ("msisdn1", "msisdn2", "act_date", "expiry_date", "sim_provider"):
+                    val = frow.get(field)
+                    if val is not None and val != "":
+                        curr = getattr(d, field)
+                        curr_cmp = curr.isoformat() if isinstance(curr, date) else str(curr or "").strip()
+                        val_cmp = val.isoformat() if isinstance(val, date) else str(val or "").strip()
+                        if overwrite:
+                            if curr_cmp != val_cmp:
+                                setattr(d, field, val)
+                                changed = True
+                        else:
+                            if not curr_cmp and val_cmp:
+                                setattr(d, field, val)
+                                changed = True
 
-            if frow.get("extra"):
-                cur_extra = dict(d.extra or {})
-                new_extra = {k: str(v).strip() for k, v in frow["extra"].items() if v is not None and str(v).strip()}
-                extra_changed = False
-                for ek, ev in new_extra.items():
-                    if overwrite:
-                        if cur_extra.get(ek) != ev:
-                            cur_extra[ek] = ev
-                            extra_changed = True
-                    else:
-                        if not cur_extra.get(ek):
-                            cur_extra[ek] = ev
-                            extra_changed = True
-                if extra_changed:
-                    d.extra = cur_extra
-                    changed = True
+                if frow.get("extra"):
+                    cur_extra = dict(d.extra or {})
+                    new_extra = {k: str(v).strip() for k, v in frow["extra"].items() if v is not None and str(v).strip()}
+                    extra_changed = False
+                    for ek, ev in new_extra.items():
+                        if overwrite:
+                            if cur_extra.get(ek) != ev:
+                                cur_extra[ek] = ev
+                                extra_changed = True
+                        else:
+                            if not cur_extra.get(ek):
+                                cur_extra[ek] = ev
+                                extra_changed = True
+                    if extra_changed:
+                        d.extra = cur_extra
+                        changed = True
 
-            if match_by == "iccid" and overwrite and frow.get("raw_iccid"):
-                curr_iccid = clean_iccid(d.iccid)
-                new_iccid = frow["raw_iccid"]
-                if curr_iccid != new_iccid and len(new_iccid) >= len(curr_iccid):
-                    d.iccid = new_iccid
-                    changed = True
-            elif match_by == "imei" and frow.get("raw_iccid"):
-                curr_iccid = clean_iccid(d.iccid)
-                new_iccid = frow["raw_iccid"]
-                if overwrite:
-                    if curr_iccid != new_iccid:
+                if match_by == "iccid" and overwrite and frow.get("raw_iccid"):
+                    curr_iccid = clean_iccid(d.iccid)
+                    new_iccid = frow["raw_iccid"]
+                    if curr_iccid != new_iccid and len(new_iccid) >= len(curr_iccid):
                         d.iccid = new_iccid
                         changed = True
+                elif match_by == "imei" and frow.get("raw_iccid"):
+                    curr_iccid = clean_iccid(d.iccid)
+                    new_iccid = frow["raw_iccid"]
+                    if overwrite:
+                        if curr_iccid != new_iccid:
+                            d.iccid = new_iccid
+                            changed = True
+                    else:
+                        if not curr_iccid and new_iccid:
+                            d.iccid = new_iccid
+                            changed = True
+
+                if changed:
+                    updated_count += 1
+                    cust_id = d.customer_id
+                    cust_name = d.customer.name if d.customer else ""
+                    row_mirror = {
+                        "imei": d.imei,
+                        "customer_name": cust_name,
+                        "device_sr_no": d.device_sr_no,
+                        "iccid": d.iccid,
+                        "msisdn1": d.msisdn1,
+                        "msisdn2": d.msisdn2,
+                        "act_date": d.act_date,
+                        "expiry_date": d.expiry_date,
+                        "dispatched_date": d.dispatched_date,
+                        "model": d.model,
+                        "sim_provider": d.sim_provider,
+                        "activation_plan": d.activation_plan,
+                        "firmware": d.firmware,
+                        "flash": d.flash,
+                        "sim_type": d.sim_type,
+                        "extra": d.extra or {}
+                    }
+                    mirror_items.append((cust_id, cust_name, row_mirror))
                 else:
-                    if not curr_iccid and new_iccid:
-                        d.iccid = new_iccid
-                        changed = True
-                        changed = True
-
-            if changed:
-                updated_count += 1
-                cust_id = d.customer_id
-                cust_name = d.customer.name if d.customer else ""
-                row_mirror = {
-                    "imei": d.imei,
-                    "customer_name": cust_name,
-                    "device_sr_no": d.device_sr_no,
-                    "iccid": d.iccid,
-                    "msisdn1": d.msisdn1,
-                    "msisdn2": d.msisdn2,
-                    "act_date": d.act_date,
-                    "expiry_date": d.expiry_date,
-                    "dispatched_date": d.dispatched_date,
-                    "model": d.model,
-                    "sim_provider": d.sim_provider,
-                    "activation_plan": d.activation_plan,
-                    "firmware": d.firmware,
-                    "flash": d.flash,
-                    "sim_type": d.sim_type,
-                    "extra": d.extra or {}
-                }
-                mirror_items.append((cust_id, cust_name, row_mirror))
+                    already_same_count += 1
 
     unmatched_keys = [frow["raw_key"] for key, frow in file_sims.items() if frow["raw_key"] not in matched_keys]
 
@@ -1315,6 +1317,8 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
     return {
         "updated": updated_count,
         "inserted": inserted_count,
+        "already_same": already_same_count,
+        "ignored_identical": already_same_count,
         "match_by": match_by,
         "unmatched_count": len(unmatched_keys) - inserted_count,
         "unmatched_keys": unmatched_keys,

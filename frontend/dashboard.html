@@ -2217,6 +2217,25 @@
           <input type="file" id="simFileInput" accept=".xlsx, .xls, .csv" hidden />
         </div>
 
+        <!-- Step 1 File Upload Progress with Live Percentage -->
+        <div id="simUploadProgressWrap" hidden
+          style="margin-top:14px;background:var(--card);padding:18px 20px;border:1px solid var(--primary);border-radius:12px;box-shadow:0 4px 14px rgba(37,99,235,0.08)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span id="simUploadSpinIcon" class="spin" style="font-size:18px">📂</span>
+              <b id="simUploadProgressTitle" style="font-size:14px;color:var(--ink)">Step 1: Uploading & Reading SIM File…</b>
+            </div>
+            <span id="simUploadProgressPct" style="font-size:16px;font-weight:800;color:var(--primary)">0%</span>
+          </div>
+          <div class="progress-bar" style="height:12px;margin:8px 0;background:var(--card-subtle);border-radius:6px;overflow:hidden">
+            <div class="progress-fill" id="simUploadProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg, #2563eb, #38bdf8);transition:width 0.2s ease"></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);margin-top:6px">
+            <span id="simUploadProgressDetail">Reading file into memory and parsing sheets…</span>
+            <span id="simUploadProgressRows">0 rows parsed</span>
+          </div>
+        </div>
+
         <!-- File Details & Configuration Bar -->
         <div id="simConfigCard" class="card"
           style="padding:16px;border:1px solid var(--line);border-radius:12px;margin:14px 0;background:var(--card-subtle)"
@@ -2339,12 +2358,20 @@
               </div>
             </div>
 
-            <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-              <div style="font-size:12px;color:var(--muted)">
-                💡 <b>Step 1:</b> Verify or choose column names above. <b>Step 2:</b> Click <b>Compare & Check Records</b> to check date formats, detect duplicates, and see exactly how many records can be updated or inserted.
+            <!-- Step 2 Validation Prompt Card -->
+            <div id="simValidationPromptCard"
+              style="margin-top:16px;padding:16px 20px;background:var(--card);border:2px dashed var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+              <div>
+                <div style="font-size:14.5px;font-weight:800;color:var(--primary);display:flex;align-items:center;gap:8px">
+                  <span>🔍</span> <span>Step 2: Validate Rows against Database</span>
+                </div>
+                <div style="font-size:12.5px;color:var(--muted);margin-top:4px">
+                  File upload complete and columns mapped. Click <b>Validate Rows against Database</b> to check matching records and find differences.
+                </div>
               </div>
-              <button type="button" class="b p" id="btnRunSimCompare" style="padding:10px 24px;font-weight:800;font-size:13.5px;display:inline-flex;align-items:center;gap:8px">
-                <span id="btnRunSimCompareIcon">🔍</span> <span id="btnRunSimCompareText">Compare & Check Records (Step 2)</span>
+              <button type="button" class="b p" id="btnRunSimCompare"
+                style="padding:12px 28px;font-weight:800;font-size:14px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(37,99,235,0.25)">
+                <span id="btnRunSimCompareIcon">🔍</span> <span id="btnRunSimCompareText">Validate Rows against Database (Step 2)</span>
               </button>
             </div>
 
@@ -2413,6 +2440,12 @@
               <span id="simPushMsg" style="font-size:12.5px;color:var(--muted);font-weight:600"></span>
             </div>
 
+            <!-- Smart Sync explanation banner -->
+            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:var(--ink);display:flex;align-items:center;gap:10px">
+              <span style="font-size:16px">🟢</span>
+              <span><b>Smart Sync:</b> Already same / identical values in the database are <b>automatically ignored and preserved untouched</b>. Only differing values are replaced, and new records are inserted.</span>
+            </div>
+
             <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px">
               <!-- Option 1: Replace Differing Records Only -->
               <label class="sim-action-opt" id="optWrapReplace" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
@@ -2421,7 +2454,7 @@
                   <span style="font-weight:700;font-size:13px;color:var(--ink)">🚀 Replace Differing Only</span>
                 </div>
                 <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
-                  Updates <b id="optCountReplace" style="color:var(--warn)">0</b> differing records in existing database.
+                  Updates <b id="optCountReplace" style="color:var(--warn)">0</b> differing records. Identical values are ignored.
                 </span>
               </label>
 
@@ -2440,10 +2473,10 @@
               <label class="sim-action-opt" id="optWrapBoth" style="display:flex;flex-direction:column;gap:6px;background:var(--card);border:2px solid var(--primary);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s">
                 <div style="display:flex;align-items:center;gap:8px">
                   <input type="radio" name="simActionChoice" id="simOptBoth" value="both" checked style="cursor:pointer" />
-                  <span style="font-weight:700;font-size:13px;color:var(--primary)">⚡ Replace & Insert All</span>
+                  <span style="font-weight:700;font-size:13px;color:var(--primary)">⚡ Upload & Push All (Ignore Same Values)</span>
                 </div>
                 <span style="font-size:11.5px;color:var(--muted);padding-left:24px">
-                  Replaces <b id="optCountBothReplace" style="color:var(--warn)">0</b> differing & inserts <b id="optCountBothInsert" style="color:var(--ok)">0</b> new records into database & website.
+                  Replaces <b id="optCountBothReplace" style="color:var(--warn)">0</b> differing & inserts <b id="optCountBothInsert" style="color:var(--ok)">0</b> new records. <b>Same values are ignored.</b>
                 </span>
               </label>
             </div>
@@ -5841,14 +5874,41 @@
           toast('⚠️ Please select an Excel (.xlsx, .xls) or CSV (.csv) file.');
           return;
         }
-        toast('Loading SIM provider file…');
+
+        const uploadWrap = $('simUploadProgressWrap');
+        const uploadBar = $('simUploadProgressBar');
+        const uploadPct = $('simUploadProgressPct');
+        const uploadTitle = $('simUploadProgressTitle');
+        const uploadDetail = $('simUploadProgressDetail');
+        const uploadRows = $('simUploadProgressRows');
+
+        if (uploadWrap) {
+          uploadWrap.hidden = false;
+          if (uploadBar) uploadBar.style.width = '15%';
+          if (uploadPct) uploadPct.textContent = '15%';
+          if (uploadTitle) uploadTitle.textContent = 'Step 1: Uploading & Reading SIM File…';
+          if (uploadDetail) uploadDetail.textContent = `Reading "${file.name}" (${Math.round(file.size / 1024)} KB) into memory…`;
+          if (uploadRows) uploadRows.textContent = 'Reading bytes…';
+        }
+        if ($('simDropzone')) $('simDropzone').hidden = true;
+        if ($('simConfigCard')) $('simConfigCard').hidden = true;
+        if ($('simCheckResults')) $('simCheckResults').hidden = true;
+        simActiveCheckResult = null;
 
         try {
+          await new Promise(r => setTimeout(r, 120));
+
           let sheetData = [];
           if (file.name.match(/\.csv$/i)) {
+            if (uploadBar) uploadBar.style.width = '35%';
+            if (uploadPct) uploadPct.textContent = '35%';
+            if (uploadDetail) uploadDetail.textContent = 'Parsing CSV rows…';
             const text = await file.text();
             sheetData = parseCSV(text);
           } else {
+            if (uploadBar) uploadBar.style.width = '35%';
+            if (uploadPct) uploadPct.textContent = '35%';
+            if (uploadDetail) uploadDetail.textContent = 'Parsing Excel spreadsheet sheets…';
             const buf = await file.arrayBuffer();
             const wb = XLSX.read(new Uint8Array(buf), { type: 'array', cellDates: false });
             let chosenSheet = null;
@@ -5862,10 +5922,16 @@
             }
             if (!chosenSheet) {
               toast('⚠️ No non-empty sheets found in this workbook.');
+              if (uploadWrap) uploadWrap.hidden = true;
+              if ($('simDropzone')) $('simDropzone').hidden = false;
               return;
             }
             sheetData = chosenSheet;
           }
+
+          if (uploadBar) uploadBar.style.width = '60%';
+          if (uploadPct) uploadPct.textContent = '60%';
+          if (uploadDetail) uploadDetail.textContent = `Analyzing ${sheetData.length.toLocaleString()} rows for header columns…`;
 
           function isSimIdHeaderCandidate(str) {
             if (!str) return false;
@@ -5903,12 +5969,18 @@
 
           if (headerRowIdx === -1) {
             toast('⚠️ Could not find a valid header row in the file.');
+            if (uploadWrap) uploadWrap.hidden = true;
+            if ($('simDropzone')) $('simDropzone').hidden = false;
             return;
           }
 
           const rawHeaderRow = (sheetData[headerRowIdx] || []).map(h => String(h || '').trim());
           const validHeaders = rawHeaderRow.filter((h, idx) => h || idx < 30);
           
+          if (uploadBar) uploadBar.style.width = '80%';
+          if (uploadPct) uploadPct.textContent = '80%';
+          if (uploadDetail) uploadDetail.textContent = 'Arranging headers according to database schema (ICCID/CCID, MSISDN, Dates)…';
+
           // Arrange headers according to our standard database schema order regardless of CAPITAL or small letters!
           simDetectedHeaders = classifyAndArrangeHeaders(validHeaders);
           const rawRows = sheetData.slice(headerRowIdx + 1);
@@ -5926,8 +5998,18 @@
 
           if (!simRawFileRows.length) {
             toast('⚠️ The file contains no data rows after the header row.');
+            if (uploadWrap) uploadWrap.hidden = true;
+            if ($('simDropzone')) $('simDropzone').hidden = false;
             return;
           }
+
+          if (uploadBar) uploadBar.style.width = '100%';
+          if (uploadPct) uploadPct.textContent = '100%';
+          if (uploadTitle) uploadTitle.textContent = '✅ File Upload & Reading Complete (100%)';
+          if (uploadDetail) uploadDetail.textContent = `Loaded ${simRawFileRows.length.toLocaleString()} rows and ${simDetectedHeaders.length} columns. Ready for Step 2 Validation.`;
+          if (uploadRows) uploadRows.textContent = `${simRawFileRows.length.toLocaleString()} rows parsed`;
+
+          await new Promise(r => setTimeout(r, 200));
 
           // Strictly match by ICCID for SIM data upload (handles CCID identically)
           setSimMatchMode('iccid');
@@ -5939,24 +6021,27 @@
           $('simFileSize').textContent = Math.round(file.size / 1024) + ' KB';
           $('simTotalRowsBadge').textContent = simRawFileRows.length.toLocaleString() + ' rows';
 
+          if (uploadWrap) uploadWrap.hidden = true;
           $('simDropzone').hidden = true;
           $('simConfigCard').hidden = false;
 
           showEventPopup({
             type: 'uploading',
-            title: 'SIM File Uploaded & Read',
-            message: `Parsed ${simRawFileRows.length.toLocaleString()} rows and ${simDetectedHeaders.length} columns from "${file.name}". ICCID / CCID column detected. Select columns below to add/update in database and website.`,
+            title: 'SIM File Uploaded (Step 1)',
+            message: `Uploaded and parsed ${simRawFileRows.length.toLocaleString()} rows and ${simDetectedHeaders.length} columns from "${file.name}". Please review column mappings below and click "Validate Rows against Database".`,
             meta: {
               'File Name': file.name,
               'Total Rows': simRawFileRows.length,
               'Columns Detected': simDetectedHeaders.length,
-              'ICCID / CCID': 'Identified & Matched'
+              'ICCID / CCID Column': 'Identified & Matched'
             },
-            progress: '25% Uploaded & Parsed'
+            progress: '100% Uploaded'
           });
 
-          scheduleSimAutoCheck(50);
+          // Wait for user to validate rows in Step 2; do not auto-check
         } catch (err) {
+          if (uploadWrap) uploadWrap.hidden = true;
+          if ($('simDropzone')) $('simDropzone').hidden = false;
           fail(err);
         }
       }
@@ -6515,16 +6600,17 @@
 
           showEventPopup({
             type: 'uploading',
-            title: 'SIM Data Compared & Checked (Step 2)',
-            message: `Comparison 100% complete: ${res.records_matched.toLocaleString()} records matched in database, ${res.records_to_update.toLocaleString()} differing to replace, ${notFoundCount.toLocaleString()} new entries can be inserted into customer database.`,
+            title: 'Rows Validated Against Database (Step 2)',
+            message: `Validation complete: ${res.records_matched.toLocaleString()} matching records found in our database (${res.records_to_update.toLocaleString()} differing to update, ${res.records_already_same.toLocaleString()} already identical/same value). ${notFoundCount.toLocaleString()} new records ready to insert.`,
             meta: {
               'Total File Rows': res.file_rows_count,
               'Matched in DB': res.records_matched,
-              'Differing to Replace': res.records_to_update,
+              'Differing (To Update)': res.records_to_update,
+              'Already Same (Ignored)': res.records_already_same,
               'Can Insert into DB': notFoundCount,
               'Columns Selected': (simSelectedExtraCols.size + 1)
             },
-            progress: '50% Checked & Fetched'
+            progress: '100% Validated'
           });
         } catch (err) {
           if (progressBar) progressBar.style.width = '0%';
@@ -6757,6 +6843,7 @@
         const chunkSize = 1000;
         let runningUpdated = 0;
         let runningInserted = 0;
+        let runningAlreadySame = 0;
         let runningUnmatched = 0;
         const allUnmatchedList = [];
 
@@ -6765,11 +6852,11 @@
             const partNum = Math.floor(i / chunkSize) + 1;
             const totalParts = Math.ceil(fullPayload.length / chunkSize);
             const chunk = fullPayload.slice(i, i + chunkSize);
-            const pct = Math.min(99, Math.round(50 + ((i + chunk.length) / (fullPayload.length || 1)) * 50));
+            const pct = Math.min(99, Math.round(((i + chunk.length) / (fullPayload.length || 1)) * 100));
 
             progressBar.style.width = pct + '%';
             progressPct.textContent = pct + '%';
-            progressStatus.textContent = `Uploading batch ${partNum} of ${totalParts} (${pct}% complete)…`;
+            progressStatus.textContent = `Uploading & pushing batch ${partNum} of ${totalParts} (${pct}% complete)…`;
 
             const res = await api('/api/simdata/apply', {
               method: 'POST',
@@ -6786,19 +6873,20 @@
 
             runningUpdated += (res.updated || 0);
             runningInserted += (res.inserted || 0);
+            runningAlreadySame += (res.already_same || res.ignored_identical || 0);
             runningUnmatched += (res.unmatched_count || 0);
             if (res.unmatched_keys) allUnmatchedList.push(...res.unmatched_keys);
 
-            liveCount.textContent = `${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted so far…`;
+            liveCount.textContent = `${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted, ${runningAlreadySame.toLocaleString()} identical kept…`;
             const logLine = document.createElement('div');
-            logLine.textContent = `[Part ${partNum}/${totalParts}] Updated ${res.updated || 0}, Inserted ${res.inserted || 0} (${res.unmatched_count || 0} remaining).`;
+            logLine.textContent = `[Part ${partNum}/${totalParts}] Differing updated: ${res.updated || 0}, Inserted: ${res.inserted || 0}, Same/Ignored: ${res.already_same || 0}.`;
             logsEl.appendChild(logLine);
             logsEl.scrollTop = logsEl.scrollHeight;
           }
 
           progressBar.style.width = '100%';
           progressPct.textContent = '100%';
-          progressStatus.textContent = `✅ Process Complete (100%): ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted.`;
+          progressStatus.textContent = `✅ Process Complete (100%): ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} inserted (${runningAlreadySame.toLocaleString()} already identical ignored).`;
           if (runningInserted > 0) {
             toast(`Complete! ${runningUpdated.toLocaleString()} updated, ${runningInserted.toLocaleString()} new records inserted into "${targetCust}".`);
           } else {
@@ -6806,11 +6894,12 @@
           }
           showEventPopup({
             type: (action === 'insert_only' || action === 'both') ? 'inserting' : 'uploading',
-            title: (action === 'insert_only' || action === 'both') ? 'SIM Records Inserted & Updated' : 'SIM File Upload Completed',
-            message: `SIM Data Upload Complete: ${runningUpdated.toLocaleString()} records updated, ${runningInserted.toLocaleString()} inserted into database & website customer tables!`,
+            title: 'SIM Data Successfully Pushed to Database (Step 3)',
+            message: `SIM Data Upload Complete: ${runningUpdated.toLocaleString()} differing records updated, ${runningInserted.toLocaleString()} inserted into database & website customer tables. ${runningAlreadySame.toLocaleString()} identical records were ignored and preserved.`,
             meta: {
-              'Updated in Database': runningUpdated,
-              'Inserted into Customer': runningInserted,
+              'Differing Records Updated': runningUpdated,
+              'New Records Inserted': runningInserted,
+              'Already Identical (Ignored)': runningAlreadySame,
               'Target Customer': targetCust || 'Existing Customers',
               'Columns Stored': simSelectedExtraCols.size + 1
             },
