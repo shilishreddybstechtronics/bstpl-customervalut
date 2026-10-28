@@ -92,7 +92,34 @@ def ensure_table(conn, cid: int, name: str, extra_keys=()) -> str:
     return t
 
 
-def mirror_rows(items):
+def _mirror_to_table(conn, cid, cname, rows, keys):
+    t = ensure_table(conn, cid, cname, keys)
+    cols = ["imei"] + BASE_NAMES + [extra_col(k) for k in keys]
+    col_sql = ",".join(f"`{c}`" for c in cols)
+    val_sql = ",".join(f":p{i}" for i in range(len(cols)))
+    if getattr(conn.dialect, "name", "") in ("mysql", "mariadb"):
+        upd_sql = ",".join(f"`{c}`=VALUES(`{c}`)" for c in cols[1:])
+        sql = text(f"INSERT INTO `{t}` ({col_sql}) VALUES ({val_sql}) ON DUPLICATE KEY UPDATE {upd_sql}")
+    else:
+        upd_sql = ",".join(f"`{c}`=excluded.`{c}`" for c in cols[1:])
+        sql = text(f"INSERT INTO `{t}` ({col_sql}) VALUES ({val_sql}) ON CONFLICT(`imei`) DO UPDATE SET {upd_sql}")
+    for i in range(0, len(rows), CHUNK):
+        batch = []
+        for r in rows[i:i + CHUNK]:
+            ex = r.get("extra") or {}
+            vals = [r.get("imei")] + [r.get(c) for c in BASE_NAMES] + [ex.get(k) for k in keys]
+            batch.append({f"p{j}": v for j, v in enumerate(vals)})
+        try:
+            conn.execute(sql, batch)
+        except Exception:
+            for b_row in batch:
+                try:
+                    conn.execute(sql, [b_row])
+                except Exception as row_err:
+                    print(f"Skipping bad mirror row: {row_err}")
+
+
+def mirror_rows(items, conn=None):
     """items: list of (customer_id, customer_name, row_dict). row_dict has imei, the BASE_NAMES, and 'extra' (dict).
     DDL in MySQL/TiDB commits by itself, so this runs on its own connection AFTER the main upload is committed."""
     by_cust = {}
@@ -101,32 +128,11 @@ def mirror_rows(items):
         by_cust.setdefault((cid, cname), []).append(row)
     for (cid, cname), rows in by_cust.items():
         keys = sorted({k for r in rows for k in (r.get("extra") or {})})
-        with engine.begin() as conn:
-            t = ensure_table(conn, cid, cname, keys)
-            cols = ["imei"] + BASE_NAMES + [extra_col(k) for k in keys]
-            col_sql = ",".join(f"`{c}`" for c in cols)
-            val_sql = ",".join(f":p{i}" for i in range(len(cols)))
-            if getattr(conn.dialect, "name", "") in ("mysql", "mariadb"):
-                upd_sql = ",".join(f"`{c}`=VALUES(`{c}`)" for c in cols[1:])
-                sql = text(f"INSERT INTO `{t}` ({col_sql}) VALUES ({val_sql}) ON DUPLICATE KEY UPDATE {upd_sql}")
-            else:
-                upd_sql = ",".join(f"`{c}`=excluded.`{c}`" for c in cols[1:])
-                sql = text(f"INSERT INTO `{t}` ({col_sql}) VALUES ({val_sql}) ON CONFLICT(`imei`) DO UPDATE SET {upd_sql}")
-            for i in range(0, len(rows), CHUNK):
-                batch = []
-                for r in rows[i:i + CHUNK]:
-                    ex = r.get("extra") or {}
-                    vals = [r.get("imei")] + [r.get(c) for c in BASE_NAMES] + [ex.get(k) for k in keys]
-                    batch.append({f"p{j}": v for j, v in enumerate(vals)})
-                try:
-                    conn.execute(sql, batch)
-                except Exception as be:
-                    # If batch insert fails due to a bad value, insert row-by-row to ignore the bad value and proceed
-                    for b_row in batch:
-                        try:
-                            conn.execute(sql, [b_row])
-                        except Exception as row_err:
-                            print(f"Skipping bad mirror row: {row_err}")
+        if conn is not None:
+            _mirror_to_table(conn, cid, cname, rows, keys)
+        else:
+            with engine.begin() as local_conn:
+                _mirror_to_table(local_conn, cid, cname, rows, keys)
 
 
 def rename_table(cid: int, new_name: str, old_name: str = ""):

@@ -131,8 +131,11 @@ def customer_by_name(db: Session, name: str) -> Customer:
         db.add(c)
         db.flush()
         try:
-            with customer_tables.engine.begin() as conn:
-                customer_tables.ensure_table(conn, c.id, c.name)
+            if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
+                customer_tables.ensure_table(db.connection(), c.id, c.name)
+            else:
+                with customer_tables.engine.begin() as conn:
+                    customer_tables.ensure_table(conn, c.id, c.name)
         except Exception as e:
             print(f"Customer table create failed for {c.name}: {e}")
     return c
@@ -252,8 +255,12 @@ def add_customer(data: schemas.CustomerIn, db: Session = Depends(get_db),
     log_activity(db, "customer_add", f"Customer {c.name}", user=user)
     db.commit()
     try:  # give the new customer its own (empty) table right away
-        with customer_tables.engine.begin() as conn:
-            customer_tables.ensure_table(conn, c.id, c.name)
+        if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
+            customer_tables.ensure_table(db.connection(), c.id, c.name)
+            db.commit()
+        else:
+            with customer_tables.engine.begin() as conn:
+                customer_tables.ensure_table(conn, c.id, c.name)
     except Exception as e:
         print(f"Customer table create failed: {e}")
     return {"id": c.id, "name": c.name}
@@ -751,7 +758,11 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
 
     try:  # per-customer tables; a failure here never breaks the upload itself
         db.commit()
-        customer_tables.mirror_rows(mirror)
+        if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
+            customer_tables.mirror_rows(mirror, conn=db.connection())
+            db.commit()
+        else:
+            customer_tables.mirror_rows(mirror)
     except Exception as e:
         print(f"Customer table sync failed: {e}")
     return {"added": added, "updated": updated, "skipped_duplicates": len(skipped), "skipped_imeis": skipped[:50]}
@@ -1287,7 +1298,11 @@ def apply_sim_data(data: schemas.SimDataApplyIn, db: Session = Depends(get_db),
 
     if mirror_items:
         try:
-            customer_tables.mirror_rows(mirror_items)
+            if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
+                customer_tables.mirror_rows(mirror_items, conn=db.connection())
+                db.commit()
+            else:
+                customer_tables.mirror_rows(mirror_items)
         except Exception as me:
             print(f"Mirroring SIM updates to customer tables warning: {me}")
 
@@ -2164,7 +2179,11 @@ def push_error_to_customer(error_id: int, data: Optional[schemas.PushErrorIn] = 
         "extra": dev.extra or {}
     }
     try:
-        customer_tables.mirror_rows([(cust.id, cust.name, row_mirror)])
+        if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
+            customer_tables.mirror_rows([(cust.id, cust.name, row_mirror)], conn=db.connection())
+            db.commit()
+        else:
+            customer_tables.mirror_rows([(cust.id, cust.name, row_mirror)])
     except Exception as me:
         print(f"Customer table mirror notice: {me}")
 
@@ -2274,7 +2293,11 @@ def bulk_push_errors_to_customer(data: schemas.BulkPushErrorsIn, db: Session = D
     db.commit()
     if mirror_items:
         try:
-            customer_tables.mirror_rows(mirror_items)
+            if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
+                customer_tables.mirror_rows(mirror_items, conn=db.connection())
+                db.commit()
+            else:
+                customer_tables.mirror_rows(mirror_items)
         except Exception as me:
             print(f"Customer table mirror notice: {me}")
 
