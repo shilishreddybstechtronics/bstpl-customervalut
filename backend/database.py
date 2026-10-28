@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 
 import certifi
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # Read .env if present (do not override already set system/Render environment variables)
@@ -32,18 +32,33 @@ else:
         f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
 
-# TiDB Cloud requires a secure (SSL) connection
-connect_args = {
-    "connect_timeout": 20,
-    "read_timeout": int(os.getenv("DB_READ_TIMEOUT", "180")),   # big uploads and a distant cloud database need more than 30 s
-    "write_timeout": int(os.getenv("DB_WRITE_TIMEOUT", "180")),
-}
-if os.getenv("DB_SSL", "true").lower() == "true" or "tidbcloud.com" in DB_HOST:
-    connect_args["ssl"] = {"ca": certifi.where()}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False, "timeout": 30}
+    engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
-# pool_pre_ping + pool_recycle: TiDB Cloud closes idle connections, so test them before use and renew them every 5 minutes
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=240, pool_size=5, max_overflow=5,
-                       pool_timeout=30, connect_args=connect_args)
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        try:
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.execute("PRAGMA busy_timeout=30000")
+            cursor.close()
+        except Exception:
+            pass
+else:
+    # TiDB Cloud requires a secure (SSL) connection
+    connect_args = {
+        "connect_timeout": 20,
+        "read_timeout": int(os.getenv("DB_READ_TIMEOUT", "180")),   # big uploads and a distant cloud database need more than 30 s
+        "write_timeout": int(os.getenv("DB_WRITE_TIMEOUT", "180")),
+    }
+    if os.getenv("DB_SSL", "true").lower() == "true" or ("tidbcloud.com" in (locals().get("DB_HOST") or "")):
+        connect_args["ssl"] = {"ca": certifi.where()}
+
+    # pool_pre_ping + pool_recycle: TiDB Cloud closes idle connections, so test them before use and renew them every 5 minutes
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=240, pool_size=5, max_overflow=5,
+                           pool_timeout=30, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

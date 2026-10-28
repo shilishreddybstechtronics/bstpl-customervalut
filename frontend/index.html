@@ -2435,6 +2435,9 @@
                   style="font-size:13.5px;padding:0 24px;height:42px;font-weight:800;display:inline-flex;align-items:center;gap:8px;background:var(--ok);border-color:var(--ok)">
                   <span id="btnExecuteIcon">🚀</span> <span id="btnExecuteSelectedActionText">Upload & Update SIM Data (Matched Records)</span>
                 </button>
+                <button class="b" id="btnSimDlPreUploadExcel" type="button" style="height:42px;display:inline-flex;align-items:center;gap:6px">
+                  <span>📥</span> <span>Download Before-Change Excel (Preview)</span>
+                </button>
                 <button class="b" id="btnSimDlNotFound" type="button" style="height:42px;display:inline-flex;align-items:center;gap:6px">
                   <span>📥</span> <span>Download NOT FOUND ICCIDs (Excel)</span>
                 </button>
@@ -2534,12 +2537,20 @@
                   </p>
                 </div>
               </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap">
-                <button type="button" class="b p" id="btnDownloadPostUploadReport"
-                  style="background:var(--ok);border-color:var(--ok);height:38px;padding:0 18px;font-weight:700;display:inline-flex;align-items:center;gap:6px">
-                  <span>📥</span> <span>Download Post-Upload Comparison (Excel)</span>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="b" id="btnDownloadPreUploadReport"
+                  style="height:38px;padding:0 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px">
+                  <span>📥</span> <span>Download Before-Change Excel</span>
                 </button>
-                <button type="button" class="b" id="btnSimUploadAnother" style="height:38px;padding:0 16px">
+                <button type="button" class="b p" id="btnDownloadPostUploadReport"
+                  style="background:var(--ok);border-color:var(--ok);height:38px;padding:0 16px;font-weight:700;display:inline-flex;align-items:center;gap:6px">
+                  <span>📥</span> <span>Download After-Change Excel</span>
+                </button>
+                <button type="button" class="b" id="btnDownloadBothReports"
+                  style="height:38px;padding:0 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;border-color:var(--primary);color:var(--primary)">
+                  <span>📦</span> <span>Download Both (Complete Report)</span>
+                </button>
+                <button type="button" class="b" id="btnSimUploadAnother" style="height:38px;padding:0 14px">
                   <span>🔄</span> <span>Upload Another File</span>
                 </button>
               </div>
@@ -4818,33 +4829,94 @@
          ========================================================================= */
       let wbData = null, parsedRows = [], activeValResult = null, activeValFilter = 'all';
 
-      function parseExcelDate(val) {
-        if (val === null || val === undefined || val === '') return null;
-        if (val instanceof Date) {
-          if (isNaN(val.getTime())) return null;
-          return val.toISOString().split('T')[0];
+      function convertDateToStandardFormat(val) {
+        if (val === null || val === undefined) return null;
+        if (val instanceof Date && !isNaN(val.getTime())) {
+          return val.toISOString().slice(0, 10);
         }
-        const s = String(val).trim();
-        if (!s) return null;
-        if (/^\d{4,6}(\.\d+)?$/.test(s)) {
-          const num = parseFloat(s);
-          if (num > 10000 && num < 90000) {
-            const utc_days = Math.floor(num - 25569);
-            const utc_value = utc_days * 86400;
-            const d = new Date(utc_value * 1000);
-            return d.toISOString().split('T')[0];
+        let str = String(val).trim();
+        if (!str || str.toLowerCase() === 'nan' || str.toLowerCase() === 'null' || str.toLowerCase() === 'undefined' || str === '-' || str === '--') return null;
+
+        // Strip time portion if present (e.g. " 00:00:00", "T00:00:00", " 10:30:15 AM")
+        str = str.replace(/[T\s]\d{1,2}:\d{2}(:\d{2})?.*$/i, '').trim();
+
+        // 1. Excel serial number: e.g. 44561 or 44561.5
+        if (/^\d{4,6}(\.\d+)?$/.test(str)) {
+          try {
+            const num = parseFloat(str);
+            if (num > 20000 && num < 80000) {
+              if (typeof XLSX !== 'undefined' && XLSX.SSF && XLSX.SSF.parse_date_code) {
+                const d = XLSX.SSF.parse_date_code(Math.floor(num));
+                if (d && d.y) {
+                  const mm = String(d.m).padStart(2, '0');
+                  const dd = String(d.d).padStart(2, '0');
+                  return `${d.y}-${mm}-${dd}`;
+                }
+              }
+              const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+              const dateObj = new Date(excelEpoch.getTime() + num * 86400000);
+              if (!isNaN(dateObj)) {
+                return dateObj.toISOString().slice(0, 10);
+              }
+            }
+          } catch (_) { }
+        }
+
+        // 2. Format YYYY-MM-DD or YYYY/MM/DD or YYYY.MM.DD
+        const ym = str.match(/^(\d{4})[-/. ](\d{1,2})[-/. ](\d{1,2})$/);
+        if (ym) {
+          return `${ym[1]}-${ym[2].padStart(2, '0')}-${ym[3].padStart(2, '0')}`;
+        }
+
+        // 3. Format DD-MM-YYYY or DD/MM/YYYY or DD.MM.YYYY
+        const dm = str.match(/^(\d{1,2})[-/. ](\d{1,2})[-/. ](\d{4})$/);
+        if (dm) {
+          const p1 = parseInt(dm[1], 10);
+          const p2 = parseInt(dm[2], 10);
+          if (p2 > 12 && p1 <= 12) {
+            return `${dm[3]}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
+          }
+          return `${dm[3]}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+        }
+
+        // 4. Month name formats: e.g. "12-Jan-2024", "12 Jan 2024", "Jan 12, 2024", "12-January-2024"
+        const months = {
+          jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+          jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        };
+        const monthRegex = /(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)/i;
+
+        if (monthRegex.test(str)) {
+          const mMatch = str.match(monthRegex);
+          const monKey = mMatch[1].toLowerCase().slice(0, 3);
+          const mm = months[monKey];
+          const parts = str.replace(monthRegex, ' ').trim().split(/[-/. ,]+/);
+          const nums = parts.filter(p => /^\d+$/.test(p)).map(n => parseInt(n, 10));
+          if (nums.length >= 2 && mm) {
+            let year = nums.find(n => n > 1900 && n < 2100);
+            let day = nums.find(n => n !== year && n >= 1 && n <= 31);
+            if (!year && nums.length === 2) {
+              year = nums[1] < 100 ? 2000 + nums[1] : nums[1];
+              day = nums[0];
+            }
+            if (year && day) {
+              return `${year}-${mm}-${String(day).padStart(2, '0')}`;
+            }
           }
         }
-        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-        const m1 = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
-        if (m1) {
-          return `${m1[3]}-${m1[2].padStart(2, '0')}-${m1[1].padStart(2, '0')}`;
+
+        // 5. Try native Date parse
+        const parsed = Date.parse(str);
+        if (!isNaN(parsed)) {
+          const d = new Date(parsed);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
-        const dt = new Date(s);
-        if (!isNaN(dt.getTime()) && dt.getFullYear() > 1990 && dt.getFullYear() < 2100) {
-          return dt.toISOString().split('T')[0];
-        }
-        return s;
+
+        return null;
+      }
+
+      function parseExcelDate(val) {
+        return convertDateToStandardFormat(val);
       }
 
       function normalizeExcelRow(r) {
@@ -5509,7 +5581,7 @@
               if (seenSrs.has(lowerSr)) {
                 isDup = true;
                 dupReason = 'Duplicate Device Sr No repeats earlier in this file';
-              } else if (dbExistingSrs.has(lowerSr)) {
+              } else if (mode === 'skip' && dbExistingSrs.has(lowerSr)) {
                 isDup = true;
                 dupReason = 'Device Sr No already exists under a customer in database';
               }
@@ -5521,7 +5593,7 @@
               if (seenIccids.has(lowerIccid)) {
                 isDup = true;
                 dupReason = 'Duplicate ICCID repeats earlier in this file';
-              } else if (dbExistingIccids.has(lowerIccid)) {
+              } else if (mode === 'skip' && dbExistingIccids.has(lowerIccid)) {
                 isDup = true;
                 dupReason = 'ICCID already exists under a customer in database';
               }
@@ -5633,7 +5705,7 @@
               title: 'Bulk File Upload Completed',
               message: `Bulk spreadsheet processed successfully: ${addedTotal} records added, ${updatedTotal} updated, ${duplicatesToStage.length} duplicate errors held.`,
               meta: {
-                'Total Processed': validRows.length + duplicatesToStage.length,
+                'Total Processed': validRowsToUpload.length + duplicatesToStage.length,
                 'Records Added': addedTotal,
                 'Records Updated': updatedTotal,
                 'Duplicate Errors Held': duplicatesToStage.length,
@@ -5814,6 +5886,43 @@
         };
         if ($('btnSimDlNotFound')) $('btnSimDlNotFound').onclick = downloadNotFoundExcel;
         if ($('btnDlNotFoundView')) $('btnDlNotFoundView').onclick = downloadNotFoundExcel;
+
+        // Download Before-Change Excel Preview (Step 2)
+        if ($('btnSimDlPreUploadExcel')) {
+          $('btnSimDlPreUploadExcel').onclick = () => {
+            if (!simActiveCheckResult || !simActiveCheckResult.detailed_comparison || !simActiveCheckResult.detailed_comparison.length) {
+              toast('No comparison preview data available to export.');
+              return;
+            }
+            exportSimPreUploadReportExcel(simActiveCheckResult);
+          };
+        }
+
+        // Download Before-Change Excel (Step 3)
+        if ($('btnDownloadPreUploadReport')) {
+          $('btnDownloadPreUploadReport').onclick = () => {
+            const dataToExport = simActiveCheckResult || (simLastPostUploadResult ? {
+              detailed_comparison: simLastPostUploadResult.before_comparison,
+              not_found_records: simLastPostUploadResult.not_found_records
+            } : null);
+            if (!dataToExport || !dataToExport.detailed_comparison || !dataToExport.detailed_comparison.length) {
+              toast('No before-change data available to export.');
+              return;
+            }
+            exportSimPreUploadReportExcel(dataToExport);
+          };
+        }
+
+        // Download Both Reports (Combined Excel - Step 3)
+        if ($('btnDownloadBothReports')) {
+          $('btnDownloadBothReports').onclick = () => {
+            if (!simLastPostUploadResult) {
+              toast('No post-upload data available.');
+              return;
+            }
+            exportSimBothReportsExcel(simLastPostUploadResult, simActiveCheckResult);
+          };
+        }
 
         // Copy Not Found ICCIDs button
         if ($('btnCopyNotFoundIccids')) {
@@ -7134,8 +7243,208 @@
         }
 
         const dateStr = new Date().toISOString().slice(0, 10);
-        XLSX.writeFile(wb, `SIM_Upload_Comparison_Report_${dateStr}.xlsx`);
-        toast('Post-upload comparison report downloaded successfully.');
+        XLSX.writeFile(wb, `SIM_Upload_After_Change_Report_${dateStr}.xlsx`);
+        toast('After-change comparison report downloaded successfully.');
+      }
+
+      function exportSimPreUploadReportExcel(data) {
+        if (!data) {
+          toast('⚠️ No data available to export.');
+          return;
+        }
+        const compList = data.detailed_comparison || data.before_comparison || [];
+        const notFoundList = data.not_found_records || [];
+        const breakdownList = data.customer_breakdown || [];
+
+        if (typeof XLSX === 'undefined') {
+          toast('⚠️ XLSX library not available for export.');
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // Sheet 1: Matched Records - Before Change Preview
+        const headers1 = [
+          'Customer Name', 'IMEI', 'ICCID',
+          'Current DB Activation Date', 'Incoming File Activation Date',
+          'Current DB Expiry Date', 'Incoming File Expiry Date',
+          'Current DB MSISDN 1', 'Incoming File MSISDN 1',
+          'Current DB MSISDN 2', 'Incoming File MSISDN 2',
+          'Current DB SIM Provider', 'Incoming File SIM Provider',
+          'Comparison Status', 'Changed Fields'
+        ];
+        const rows1 = [headers1];
+        compList.forEach(r => {
+          const changedFields = (r.changed_fields && r.changed_fields.length) ? r.changed_fields.join(', ') : 'None';
+          rows1.push([
+            r.customer_name || '',
+            r.imei || '',
+            r.iccid || '',
+            (r.act_date && r.act_date.old !== '—') ? r.act_date.old : '',
+            (r.act_date && r.act_date.new !== '—') ? r.act_date.new : '',
+            (r.expiry_date && r.expiry_date.old !== '—') ? r.expiry_date.old : '',
+            (r.expiry_date && r.expiry_date.new !== '—') ? r.expiry_date.new : '',
+            (r.msisdn1 && r.msisdn1.old !== '—') ? r.msisdn1.old : '',
+            (r.msisdn1 && r.msisdn1.new !== '—') ? r.msisdn1.new : '',
+            (r.msisdn2 && r.msisdn2.old !== '—') ? r.msisdn2.old : '',
+            (r.msisdn2 && r.msisdn2.new !== '—') ? r.msisdn2.new : '',
+            (r.sim_provider && r.sim_provider.old !== '—') ? r.sim_provider.old : '',
+            (r.sim_provider && r.sim_provider.new !== '—') ? r.sim_provider.new : '',
+            r.status === 'different' ? 'Will Update (Differing)' : 'Already Identical (Keep Existing)',
+            changedFields
+          ]);
+        });
+        const ws1 = XLSX.utils.aoa_to_sheet(rows1);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Matched - Before Change');
+
+        // Sheet 2: Not Found ICCIDs
+        if (notFoundList.length) {
+          const headers2 = ['ICCID / CCID', 'MSISDN 1', 'MSISDN 2', 'Activation Date', 'Expiry Date', 'SIM Provider', 'Action Status'];
+          const rows2 = [headers2];
+          notFoundList.forEach(r => {
+            rows2.push([
+              r.iccid || '',
+              (r.msisdn1 && r.msisdn1 !== '—') ? r.msisdn1 : '',
+              (r.msisdn2 && r.msisdn2 !== '—') ? r.msisdn2 : '',
+              (r.act_date && r.act_date !== '—') ? r.act_date : '',
+              (r.expiry_date && r.expiry_date !== '—') ? r.expiry_date : '',
+              (r.sim_provider && r.sim_provider !== '—') ? r.sim_provider : '',
+              'ICCID Not Found in Any Customer - Will NOT be uploaded'
+            ]);
+          });
+          const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+          XLSX.utils.book_append_sheet(wb, ws2, 'Not Found (Skipped)');
+        }
+
+        // Sheet 3: Customer Breakdown
+        if (breakdownList.length) {
+          const headers3 = ['Customer Name', 'Matched Device Count'];
+          const rows3 = [headers3];
+          breakdownList.forEach(b => {
+            rows3.push([b.customer_name || '', b.count || 0]);
+          });
+          const ws3 = XLSX.utils.aoa_to_sheet(rows3);
+          XLSX.utils.book_append_sheet(wb, ws3, 'Customer Breakdown');
+        }
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `SIM_Upload_Before_Change_Report_${dateStr}.xlsx`);
+        toast('Before-change Excel report downloaded successfully.');
+      }
+
+      function exportSimBothReportsExcel(postData, preData) {
+        if (!postData && !preData) {
+          toast('⚠️ No data available to export.');
+          return;
+        }
+        if (typeof XLSX === 'undefined') {
+          toast('⚠️ XLSX library not available for export.');
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // Sheet 1: After Changing - Applied Updates
+        const appliedList = (postData && postData.applied_comparison) ? postData.applied_comparison : [];
+        const headers1 = [
+          'Customer Name', 'IMEI', 'ICCID',
+          'Activation Date (Before)', 'Activation Date (After)',
+          'Expiry Date (Before)', 'Expiry Date (After)',
+          'MSISDN 1 (Before)', 'MSISDN 1 (After)',
+          'MSISDN 2 (Before)', 'MSISDN 2 (After)',
+          'SIM Provider (Before)', 'SIM Provider (After)',
+          'Upload Result'
+        ];
+        const rows1 = [headers1];
+        appliedList.forEach(r => {
+          rows1.push([
+            r.customer_name || '',
+            r.imei || '',
+            r.iccid || '',
+            (r.act_date && r.act_date.old !== '—') ? r.act_date.old : '',
+            (r.act_date && r.act_date.new !== '—') ? r.act_date.new : '',
+            (r.expiry_date && r.expiry_date.old !== '—') ? r.expiry_date.old : '',
+            (r.expiry_date && r.expiry_date.new !== '—') ? r.expiry_date.new : '',
+            (r.msisdn1 && r.msisdn1.old !== '—') ? r.msisdn1.old : '',
+            (r.msisdn1 && r.msisdn1.new !== '—') ? r.msisdn1.new : '',
+            (r.msisdn2 && r.msisdn2.old !== '—') ? r.msisdn2.old : '',
+            (r.msisdn2 && r.msisdn2.new !== '—') ? r.msisdn2.new : '',
+            (r.sim_provider && r.sim_provider.old !== '—') ? r.sim_provider.old : '',
+            (r.sim_provider && r.sim_provider.new !== '—') ? r.sim_provider.new : '',
+            r.status === 'updated' ? 'Successfully Updated in DB' : 'Kept Same (Identical)'
+          ]);
+        });
+        const ws1 = XLSX.utils.aoa_to_sheet(rows1);
+        XLSX.utils.book_append_sheet(wb, ws1, 'After Changing - Applied');
+
+        // Sheet 2: Before Changing - Preview
+        const beforeList = (postData && postData.before_comparison) ? postData.before_comparison : ((preData && preData.detailed_comparison) ? preData.detailed_comparison : []);
+        const headers2 = [
+          'Customer Name', 'IMEI', 'ICCID',
+          'Current DB Activation Date', 'Incoming File Activation Date',
+          'Current DB Expiry Date', 'Incoming File Expiry Date',
+          'Current DB MSISDN 1', 'Incoming File MSISDN 1',
+          'Current DB MSISDN 2', 'Incoming File MSISDN 2',
+          'Current DB SIM Provider', 'Incoming File SIM Provider',
+          'Comparison Status'
+        ];
+        const rows2 = [headers2];
+        beforeList.forEach(r => {
+          rows2.push([
+            r.customer_name || '',
+            r.imei || '',
+            r.iccid || '',
+            (r.act_date && r.act_date.old !== '—') ? r.act_date.old : '',
+            (r.act_date && r.act_date.new !== '—') ? r.act_date.new : '',
+            (r.expiry_date && r.expiry_date.old !== '—') ? r.expiry_date.old : '',
+            (r.expiry_date && r.expiry_date.new !== '—') ? r.expiry_date.new : '',
+            (r.msisdn1 && r.msisdn1.old !== '—') ? r.msisdn1.old : '',
+            (r.msisdn1 && r.msisdn1.new !== '—') ? r.msisdn1.new : '',
+            (r.msisdn2 && r.msisdn2.old !== '—') ? r.msisdn2.old : '',
+            (r.msisdn2 && r.msisdn2.new !== '—') ? r.msisdn2.new : '',
+            (r.sim_provider && r.sim_provider.old !== '—') ? r.sim_provider.old : '',
+            (r.sim_provider && r.sim_provider.new !== '—') ? r.sim_provider.new : '',
+            r.status === 'different' ? 'Will Update (Differing)' : 'Already Identical (Keep Existing)'
+          ]);
+        });
+        const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Before Changing - Preview');
+
+        // Sheet 3: ICCIDs Not Found
+        const notFoundList = (postData && postData.not_found_records) ? postData.not_found_records : ((preData && preData.not_found_records) ? preData.not_found_records : []);
+        if (notFoundList.length) {
+          const headers3 = ['ICCID / CCID', 'MSISDN 1', 'MSISDN 2', 'Activation Date', 'Expiry Date', 'SIM Provider', 'Action Status'];
+          const rows3 = [headers3];
+          notFoundList.forEach(r => {
+            rows3.push([
+              r.iccid || '',
+              (r.msisdn1 && r.msisdn1 !== '—') ? r.msisdn1 : '',
+              (r.msisdn2 && r.msisdn2 !== '—') ? r.msisdn2 : '',
+              (r.act_date && r.act_date !== '—') ? r.act_date : '',
+              (r.expiry_date && r.expiry_date !== '—') ? r.expiry_date : '',
+              (r.sim_provider && r.sim_provider !== '—') ? r.sim_provider : '',
+              'ICCID Not Found in Any Customer - NOT Uploaded'
+            ]);
+          });
+          const ws3 = XLSX.utils.aoa_to_sheet(rows3);
+          XLSX.utils.book_append_sheet(wb, ws3, 'Skipped - Not Found ICCIDs');
+        }
+
+        // Sheet 4: Customer Breakdown (if available)
+        const breakdownList = (preData && preData.customer_breakdown) ? preData.customer_breakdown : [];
+        if (breakdownList.length) {
+          const headers4 = ['Customer Name', 'Matched Device Count'];
+          const rows4 = [headers4];
+          breakdownList.forEach(b => {
+            rows4.push([b.customer_name || '', b.count || 0]);
+          });
+          const ws4 = XLSX.utils.aoa_to_sheet(rows4);
+          XLSX.utils.book_append_sheet(wb, ws4, 'Customer Breakdown');
+        }
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `SIM_Upload_Complete_Both_Reports_${dateStr}.xlsx`);
+        toast('Complete Before & After comparison Excel report downloaded successfully.');
       }
 
       /* =========================================================================

@@ -419,15 +419,17 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         for (v,) in db.query(Device.imei).filter(Device.imei.in_(imeis[i:i + 2000]), ACTIVE):
             existing_imeis.add(v)
 
-    existing_sr_nos = set()
+    existing_sr_nos = {}
     for i in range(0, len(sr_nos), 2000):
-        for (v,) in db.query(Device.device_sr_no).filter(Device.device_sr_no.in_(sr_nos[i:i + 2000]), ACTIVE):
-            existing_sr_nos.add(v)
+        for (v, dev_imei) in db.query(Device.device_sr_no, Device.imei).filter(Device.device_sr_no.in_(sr_nos[i:i + 2000]), ACTIVE):
+            if v:
+                existing_sr_nos[v] = dev_imei
 
-    existing_iccids = set()
+    existing_iccids = {}
     for i in range(0, len(iccids), 2000):
-        for (v,) in db.query(Device.iccid).filter(Device.iccid.in_(iccids[i:i + 2000]), ACTIVE):
-            existing_iccids.add(v)
+        for (v, dev_imei) in db.query(Device.iccid, Device.imei).filter(Device.iccid.in_(iccids[i:i + 2000]), ACTIVE):
+            if v:
+                existing_iccids[v] = dev_imei
 
     known_custs = {c.name.lower() for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
     known_cols = {n.lower() for (n,) in db.query(models.ColumnRegistry.name)}
@@ -506,22 +508,23 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
 
         is_dup = False
         dup_reason = ""
+        mode = getattr(data, "mode", "skip") or "skip"
         if r.imei and r.imei in seen_imeis:
             is_dup = True
             dup_reason = "Duplicate IMEI repeats earlier in this file"
-        elif r.imei and r.imei in existing_imeis:
+        elif r.imei and r.imei in existing_imeis and mode == "skip":
             is_dup = True
             dup_reason = "IMEI already exists under a customer in database"
         elif r.device_sr_no and r.device_sr_no in seen_sr_nos:
             is_dup = True
             dup_reason = "Duplicate Device Sr No repeats earlier in this file"
-        elif r.device_sr_no and r.device_sr_no in existing_sr_nos:
+        elif r.device_sr_no and r.device_sr_no in existing_sr_nos and (existing_sr_nos.get(r.device_sr_no) != r.imei or mode == "skip"):
             is_dup = True
             dup_reason = "Device Sr No already exists under a customer in database"
         elif r.iccid and r.iccid in seen_iccids:
             is_dup = True
             dup_reason = "Duplicate ICCID repeats earlier in this file"
-        elif r.iccid and r.iccid in existing_iccids:
+        elif r.iccid and r.iccid in existing_iccids and (existing_iccids.get(r.iccid) != r.imei or mode == "skip"):
             is_dup = True
             dup_reason = "ICCID already exists under a customer in database"
 
@@ -602,17 +605,17 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
         for d in db.query(Device).filter(Device.imei.in_(imeis[i:i + 2000])):
             existing_devices[d.imei] = d
 
-    existing_sr_nos = set()
+    existing_sr_nos = {}
     for i in range(0, len(sr_nos), 2000):
-        for (v,) in db.query(models.Device.device_sr_no).filter(models.Device.device_sr_no.in_(sr_nos[i:i + 2000]), models.Device.deleted_at.is_(None)):
+        for (v, dev_imei) in db.query(models.Device.device_sr_no, models.Device.imei).filter(models.Device.device_sr_no.in_(sr_nos[i:i + 2000]), models.Device.deleted_at.is_(None)):
             if v:
-                existing_sr_nos.add(v)
+                existing_sr_nos[v] = dev_imei
 
-    existing_iccids = set()
+    existing_iccids = {}
     for i in range(0, len(iccids), 2000):
-        for (v,) in db.query(models.Device.iccid).filter(models.Device.iccid.in_(iccids[i:i + 2000]), models.Device.deleted_at.is_(None)):
+        for (v, dev_imei) in db.query(models.Device.iccid, models.Device.imei).filter(models.Device.iccid.in_(iccids[i:i + 2000]), models.Device.deleted_at.is_(None)):
             if v:
-                existing_iccids.add(v)
+                existing_iccids[v] = dev_imei
 
     cache, added, updated, skipped, names = {}, 0, 0, [], set()
     seen_in_batch = set()
@@ -650,14 +653,16 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
 
             sr_no = str(r.device_sr_no or "").strip()
             if sr_no:
-                if sr_no in seen_sr_nos or sr_no in existing_sr_nos:
+                sr_owner = existing_sr_nos.get(sr_no)
+                if sr_no in seen_sr_nos or (sr_owner and sr_owner != imei and mode == "skip"):
                     skipped.append(sr_no)
                     continue
                 seen_sr_nos.add(sr_no)
 
             iccid_val = str(r.iccid or "").strip()
             if iccid_val:
-                if iccid_val in seen_iccids or iccid_val in existing_iccids:
+                iccid_owner = existing_iccids.get(iccid_val)
+                if iccid_val in seen_iccids or (iccid_owner and iccid_owner != imei and mode == "skip"):
                     skipped.append(iccid_val)
                     continue
                 seen_iccids.add(iccid_val)
@@ -731,6 +736,13 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
         else:
             log_activity(db, "device_upload", f"{saved} added, {updated} updated, {len(skipped)} duplicates skipped (batch of {len(data.rows)})", user=user)
         db.commit()
+
+        # Clean up any staged error records for successfully added or updated devices
+        if saved > 0 or updated > 0:
+            success_imeis = [r["imei"] for r in new_rows] + list(existing_devices.keys())
+            for i in range(0, len(success_imeis), 1000):
+                db.query(models.ErroredRecord).filter(models.ErroredRecord.imei.in_(success_imeis[i:i + 1000])).delete(synchronize_session=False)
+            db.commit()
     except OperationalError:
         db.rollback()
         raise HTTPException(503, f"The database did not answer in time. {saved} of {len(new_rows)} new records were saved. "
@@ -738,6 +750,7 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                                  "Then run  python customer_tables.py  once to fill the customer tables.")
 
     try:  # per-customer tables; a failure here never breaks the upload itself
+        db.commit()
         customer_tables.mirror_rows(mirror)
     except Exception as e:
         print(f"Customer table sync failed: {e}")
@@ -770,7 +783,7 @@ def clean_imei(val) -> str:
             return str(int(float(s)))
         except Exception:
             pass
-    s = re.sub(r"[^0-9A-Za-z]", "", s)
+    s = re.sub(r"[^0-9A-Za-z_-]", "", s)
     return s.strip()
 
 
@@ -2072,38 +2085,62 @@ def push_error_to_customer(error_id: int, data: Optional[schemas.PushErrorIn] = 
             raw_imei = f"INV_{uuid.uuid4().hex[:10].upper()}"
 
     final_imei = raw_imei[:20]
+    stype = err.sim_type or ("E-SIM" if err.iccid else "Plastic SIM")
     existing_dev = db.query(Device).filter(Device.imei == final_imei).first()
     if existing_dev:
-        if existing_dev.deleted_at:
-            existing_dev.deleted_at = existing_dev.deleted_by = existing_dev.delete_reason = None
-            existing_dev.customer_id = cust.id
-        else:
-            extra["original_imei"] = final_imei
-            suffix = f"_E{err.id}"
-            max_prefix = 20 - len(suffix)
-            final_imei = f"{final_imei[:max_prefix]}{suffix}"
-
-    stype = err.sim_type or ("E-SIM" if err.iccid else "Plastic SIM")
-    dev = Device(
-        customer_id=cust.id,
-        imei=final_imei,
-        device_sr_no=err.device_sr_no,
-        iccid=err.iccid,
-        msisdn1=err.msisdn1,
-        msisdn2=err.msisdn2,
-        act_date=err.act_date,
-        expiry_date=err.expiry_date,
-        dispatched_date=err.dispatched_date,
-        model=err.model,
-        sim_provider=err.sim_provider,
-        activation_plan=err.activation_plan,
-        firmware=err.firmware,
-        flash=err.flash,
-        sim_type=stype,
-        extra=extra or None,
-        added_by=user.id if user else None
-    )
-    db.add(dev)
+        dev = existing_dev
+        dev.customer_id = cust.id
+        if err.device_sr_no:
+            dev.device_sr_no = err.device_sr_no
+        if err.iccid:
+            dev.iccid = err.iccid
+        if err.msisdn1:
+            dev.msisdn1 = err.msisdn1
+        if err.msisdn2:
+            dev.msisdn2 = err.msisdn2
+        if err.act_date:
+            dev.act_date = err.act_date
+        if err.expiry_date:
+            dev.expiry_date = err.expiry_date
+        if err.dispatched_date:
+            dev.dispatched_date = err.dispatched_date
+        if err.model:
+            dev.model = err.model
+        if err.sim_provider:
+            dev.sim_provider = err.sim_provider
+        if err.activation_plan:
+            dev.activation_plan = err.activation_plan
+        if err.firmware:
+            dev.firmware = err.firmware
+        if err.flash:
+            dev.flash = err.flash
+        if stype:
+            dev.sim_type = stype
+        merged_extra = {**(dev.extra or {}), **extra}
+        dev.extra = merged_extra or None
+        if dev.deleted_at:
+            dev.deleted_at = dev.deleted_by = dev.delete_reason = None
+    else:
+        dev = Device(
+            customer_id=cust.id,
+            imei=final_imei,
+            device_sr_no=err.device_sr_no,
+            iccid=err.iccid,
+            msisdn1=err.msisdn1,
+            msisdn2=err.msisdn2,
+            act_date=err.act_date,
+            expiry_date=err.expiry_date,
+            dispatched_date=err.dispatched_date,
+            model=err.model,
+            sim_provider=err.sim_provider,
+            activation_plan=err.activation_plan,
+            firmware=err.firmware,
+            flash=err.flash,
+            sim_type=stype,
+            extra=extra or None,
+            added_by=user.id if user else None
+        )
+        db.add(dev)
     db.delete(err)
     db.commit()
     db.refresh(dev)
@@ -2168,38 +2205,62 @@ def bulk_push_errors_to_customer(data: schemas.BulkPushErrorsIn, db: Session = D
                 raw_imei = f"INV_{uuid.uuid4().hex[:10].upper()}"
 
         final_imei = raw_imei[:20]
+        stype = err.sim_type or ("E-SIM" if err.iccid else "Plastic SIM")
         existing_dev = db.query(Device).filter(Device.imei == final_imei).first()
         if existing_dev:
-            if existing_dev.deleted_at:
-                existing_dev.deleted_at = existing_dev.deleted_by = existing_dev.delete_reason = None
-                existing_dev.customer_id = cust.id
-            else:
-                extra["original_imei"] = final_imei
-                suffix = f"_E{err.id}"
-                max_prefix = 20 - len(suffix)
-                final_imei = f"{final_imei[:max_prefix]}{suffix}"
-
-        stype = err.sim_type or ("E-SIM" if err.iccid else "Plastic SIM")
-        dev = Device(
-            customer_id=cust.id,
-            imei=final_imei,
-            device_sr_no=err.device_sr_no,
-            iccid=err.iccid,
-            msisdn1=err.msisdn1,
-            msisdn2=err.msisdn2,
-            act_date=err.act_date,
-            expiry_date=err.expiry_date,
-            dispatched_date=err.dispatched_date,
-            model=err.model,
-            sim_provider=err.sim_provider,
-            activation_plan=err.activation_plan,
-            firmware=err.firmware,
-            flash=err.flash,
-            sim_type=stype,
-            extra=extra or None,
-            added_by=user.id if user else None
-        )
-        db.add(dev)
+            dev = existing_dev
+            dev.customer_id = cust.id
+            if err.device_sr_no:
+                dev.device_sr_no = err.device_sr_no
+            if err.iccid:
+                dev.iccid = err.iccid
+            if err.msisdn1:
+                dev.msisdn1 = err.msisdn1
+            if err.msisdn2:
+                dev.msisdn2 = err.msisdn2
+            if err.act_date:
+                dev.act_date = err.act_date
+            if err.expiry_date:
+                dev.expiry_date = err.expiry_date
+            if err.dispatched_date:
+                dev.dispatched_date = err.dispatched_date
+            if err.model:
+                dev.model = err.model
+            if err.sim_provider:
+                dev.sim_provider = err.sim_provider
+            if err.activation_plan:
+                dev.activation_plan = err.activation_plan
+            if err.firmware:
+                dev.firmware = err.firmware
+            if err.flash:
+                dev.flash = err.flash
+            if stype:
+                dev.sim_type = stype
+            merged_extra = {**(dev.extra or {}), **extra}
+            dev.extra = merged_extra or None
+            if dev.deleted_at:
+                dev.deleted_at = dev.deleted_by = dev.delete_reason = None
+        else:
+            dev = Device(
+                customer_id=cust.id,
+                imei=final_imei,
+                device_sr_no=err.device_sr_no,
+                iccid=err.iccid,
+                msisdn1=err.msisdn1,
+                msisdn2=err.msisdn2,
+                act_date=err.act_date,
+                expiry_date=err.expiry_date,
+                dispatched_date=err.dispatched_date,
+                model=err.model,
+                sim_provider=err.sim_provider,
+                activation_plan=err.activation_plan,
+                firmware=err.firmware,
+                flash=err.flash,
+                sim_type=stype,
+                extra=extra or None,
+                added_by=user.id if user else None
+            )
+            db.add(dev)
         db.delete(err)
         pushed += 1
         mirror_items.append((cust.id, cust.name, {
