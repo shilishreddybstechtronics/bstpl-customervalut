@@ -3009,7 +3009,10 @@
       <div class="container-tag">⚠️ Errored & Invalid Upload Entries</div>
       <div class="row" style="margin-bottom:12px">
         <div class="grow">
-          <h2>Errored & Invalid Entries</h2>
+          <h2 style="display:flex;align-items:center;gap:10px;margin:0 0 6px">
+            <span>Errored & Invalid Entries</span>
+            <span class="tag bad" id="errHeaderBadge" style="font-size:13px;font-weight:700">0 records</span>
+          </h2>
           <p class="sub" style="margin:0">Entries with formatting errors, invalid IMEIs, or missing fields encountered
             during upload. Review where each is wrong, then Edit to upload directly to its specified customer, or Delete
             to move to Cart.</p>
@@ -3032,6 +3035,48 @@
           sequence) are safely preserved here without breaking your upload.
           Click <b>Edit & Upload</b> to correct any wrong fields and immediately upload to its customer, or click
           <b>Move to Cart</b> to discard it into the Cart.
+        </div>
+      </div>
+
+      <!-- Dedicated Deletion Percentage & Live Progress Monitor Container (Always visible in Errored Entries section) -->
+      <div id="errDeleteProgressBox" style="margin:16px 0">
+        <div id="errDelCard" class="card" style="padding:22px 26px;border:2px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 4px 16px rgba(0,0,0,0.04);transition:all 0.3s ease">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div id="errDelIconWrap" style="width:48px;height:48px;border-radius:12px;background:var(--card-subtle);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.06);transition:all 0.3s ease">
+                <img src="logo.svg" alt="Company Logo" style="width:34px;height:34px;object-fit:contain" />
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span id="errDelTag" style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.8px;background:var(--primary-bg, #eff6ff);padding:2px 8px;border-radius:6px;border:1px solid rgba(59,130,246,0.25)">📊 Deletion & Progress Monitor</span>
+                  <span id="errDelLiveDot" style="display:none;width:9px;height:9px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px #ef4444"></span>
+                </div>
+                <h3 id="errDelTitle" style="margin:4px 0 0;font-size:16px;font-weight:800;color:var(--text)">Live Deletion & Progress Monitor</h3>
+              </div>
+            </div>
+            <div style="display:flex;align-items:baseline;gap:6px;text-align:right">
+              <span id="errDelPct" style="font-size:32px;font-weight:900;color:#dc2626;line-height:1;font-variant-numeric:tabular-nums">0%</span>
+              <span style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Deleted</span>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:13px;flex-wrap:wrap;gap:8px">
+            <span id="errDelStatus" style="color:var(--text);font-weight:600">Ready. Choose an option above or in the table to delete entries.</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span id="errDelCount" style="color:#b91c1c;font-weight:800;font-size:13px;background:var(--card-subtle);padding:3px 10px;border-radius:12px;border:1px solid var(--line)">0 / 0 Deleted</span>
+              <span id="errDelRemainingText" style="color:var(--text);font-weight:700;font-size:13px;background:var(--card-subtle);padding:3px 10px;border-radius:12px;border:1px solid var(--line)">Remaining: 0</span>
+            </div>
+          </div>
+
+          <!-- Animated Percentage Progress Bar -->
+          <div style="height:20px;background:var(--card-subtle);border-radius:10px;overflow:hidden;border:1.5px solid var(--line);box-shadow:inset 0 1px 3px rgba(0,0,0,0.06);position:relative">
+            <div id="errDelBar" style="width:0%;height:100%;background:linear-gradient(90deg, #dc2626 0%, #ea580c 50%, #f97316 100%);transition:width 0.25s cubic-bezier(0.4, 0, 0.2, 1);border-radius:9px;box-shadow:0 1px 6px rgba(220,38,38,0.4)"></div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:8px">
+            <span id="errDelSub">Live status and percentage update automatically with instant number decrease.</span>
+            <span id="errDelRate" style="font-weight:600">Database & Cloud Synchronized</span>
+          </div>
         </div>
       </div>
 
@@ -8891,8 +8936,26 @@
         $('errorsTableWrap').innerHTML = '<div class="empty">Loading errored entries…</div>';
         try {
           cachedErrors = await api('/api/errors');
-          if ($('errorsCountBadge')) {
-            $('errorsCountBadge').textContent = cachedErrors.length.toString();
+          const totalStaged = cachedErrors.length;
+          updateErrCountsLive(totalStaged);
+
+          // Reset and keep the Live Deletion & Progress Monitor container visible and ready
+          if ($('errDelRemainingText')) $('errDelRemainingText').textContent = `Remaining: ${totalStaged}`;
+          if ($('errDelCount')) $('errDelCount').textContent = `0 / ${totalStaged} Deleted`;
+          if ($('errDelStatus')) $('errDelStatus').textContent = totalStaged > 0 ? `Ready. ${totalStaged} errored record(s) currently staged.` : 'Clean. No errored entries found.';
+          if ($('errDelPct')) $('errDelPct').textContent = '0%';
+          if ($('errDelBar')) $('errDelBar').style.width = '0%';
+          if ($('errDelCard')) {
+            $('errDelCard').style.borderColor = 'var(--line)';
+            $('errDelCard').style.background = 'var(--card)';
+            $('errDelCard').style.boxShadow = '0 4px 16px rgba(0,0,0,0.04)';
+          }
+          if ($('errDelLiveDot')) $('errDelLiveDot').style.display = 'none';
+          if ($('errDelTag')) {
+            $('errDelTag').textContent = '📊 Deletion & Progress Monitor';
+            $('errDelTag').style.color = 'var(--primary)';
+            $('errDelTag').style.background = 'var(--primary-bg, #eff6ff)';
+            $('errDelTag').style.borderColor = 'rgba(59,130,246,0.25)';
           }
 
           if (!cachedErrors.length) {
@@ -8908,7 +8971,7 @@
 
           const html = `
       <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <b>Found ${cachedErrors.length} errored / invalid record(s) requiring attention</b>
+        <b id="errorsFoundText">Found <span id="errorsLiveCount">${cachedErrors.length}</span> errored / invalid record(s) requiring attention</b>
         <span class="sub">Sorted newest first</span>
       </div>
       <div class="tw">
@@ -8982,6 +9045,98 @@
           updateErrSelection();
         } catch (err) {
           $('errorsTableWrap').innerHTML = `<div class="empty err">${esc(err.message)}</div>`;
+        }
+      }
+
+      /* ---------- Live Counts Updater (updates all badges & numbers immediately) ---------- */
+      function updateErrCountsLive(count) {
+        const c = Math.max(0, count);
+        if ($('errorsCountBadge')) $('errorsCountBadge').textContent = c.toString();
+        if ($('errHeaderBadge')) $('errHeaderBadge').textContent = `${c} record${c === 1 ? '' : 's'}`;
+        if ($('errorsLiveCount')) $('errorsLiveCount').textContent = c.toString();
+        if ($('errorsFoundText')) $('errorsFoundText').innerHTML = `Found <span id="errorsLiveCount">${c}</span> errored / invalid record(s) requiring attention`;
+        if (c === 0 && $('errorsTableWrap')) {
+          $('errorsTableWrap').innerHTML = `
+            <div class="empty" style="padding:48px 20px">
+              <div style="font-size:36px;margin-bottom:10px">✅</div>
+              <h3 style="margin:0 0 6px">No Errored or Invalid Entries Found</h3>
+              <p class="sub" style="margin:0">All uploaded device records have passed validation or have been removed cleanly.</p>
+            </div>
+          `;
+        }
+      }
+
+      /* ---------- Inline Deletion Progress Helpers (Always visible monitor) ---------- */
+      function showErrDeleteProgress(title, tag, total) {
+        const t = Math.max(Number(total) || 1, 1);
+        if ($('errDelCard')) {
+          $('errDelCard').style.borderColor = '#dc2626';
+          $('errDelCard').style.background = 'linear-gradient(135deg, #fff1f2 0%, #fff7ed 50%, #fef2f2 100%)';
+          $('errDelCard').style.boxShadow = '0 8px 24px rgba(220,38,38,0.18)';
+        }
+        if ($('errDelLiveDot')) $('errDelLiveDot').style.display = 'inline-block';
+        if ($('errDelIconWrap')) {
+          $('errDelIconWrap').style.borderColor = '#fca5a5';
+          $('errDelIconWrap').style.background = '#fff';
+        }
+        if ($('errDelTitle')) $('errDelTitle').textContent = title || 'Deleting Errored Records…';
+        if ($('errDelTag')) {
+          $('errDelTag').textContent = tag || '⚡ Live Deletion Progress';
+          $('errDelTag').style.color = '#dc2626';
+          $('errDelTag').style.background = '#fee2e2';
+          $('errDelTag').style.borderColor = '#fecaca';
+        }
+        if ($('errDelPct')) $('errDelPct').textContent = '0%';
+        if ($('errDelBar')) $('errDelBar').style.width = '0%';
+        if ($('errDelStatus')) $('errDelStatus').textContent = 'Initiating deletion…';
+        if ($('errDelCount')) $('errDelCount').textContent = `0 / ${t} Deleted (0%)`;
+        if ($('errDelRemainingText')) $('errDelRemainingText').textContent = `Remaining: ${t}`;
+        if ($('errDelSub')) $('errDelSub').textContent = `Permanently deleting records directly from database and website.`;
+        const box = $('errDeleteProgressBox');
+        if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      function updateErrDeleteProgress(current, total, statusText, remaining) {
+        const t = Math.max(Number(total) || 1, 1);
+        const c = Math.min(Math.max(Number(current) || 0, 0), t);
+        const pct = Math.min(100, Math.round((c / t) * 100));
+        const rem = remaining !== undefined ? Math.max(0, Number(remaining)) : Math.max(0, t - c);
+        if ($('errDelPct')) $('errDelPct').textContent = `${pct}%`;
+        if ($('errDelBar')) $('errDelBar').style.width = `${pct}%`;
+        if ($('errDelCount')) $('errDelCount').textContent = `${c} / ${t} Deleted (${pct}%)`;
+        if ($('errDelStatus')) $('errDelStatus').textContent = statusText || `Deleting: ${c} of ${t} (${pct}% complete)…`;
+        if ($('errDelRemainingText')) $('errDelRemainingText').textContent = `Remaining: ${rem}`;
+        updateErrCountsLive(rem);
+      }
+
+      function finishErrDeleteProgress(finalMsg) {
+        if ($('errDelPct')) $('errDelPct').textContent = '100%';
+        if ($('errDelBar')) $('errDelBar').style.width = '100%';
+        if ($('errDelCount')) $('errDelCount').textContent = `All Records Deleted (100%)`;
+        if ($('errDelStatus')) $('errDelStatus').textContent = finalMsg || '100% Complete – All records deleted!';
+        if ($('errDelRemainingText')) $('errDelRemainingText').textContent = 'Remaining: 0';
+        if ($('errDelSub')) $('errDelSub').textContent = 'Operation completed successfully. The database and website have been updated.';
+        if ($('errDelLiveDot')) $('errDelLiveDot').style.display = 'none';
+        if ($('errDelCard')) {
+          $('errDelCard').style.borderColor = 'var(--ok, #10b981)';
+          $('errDelCard').style.background = 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)';
+          $('errDelCard').style.boxShadow = '0 4px 16px rgba(16,185,129,0.12)';
+        }
+        if ($('errDelTag')) {
+          $('errDelTag').textContent = '✅ Deletion Complete';
+          $('errDelTag').style.color = '#15803d';
+          $('errDelTag').style.background = '#dcfce7';
+          $('errDelTag').style.borderColor = '#bbf7d0';
+        }
+        updateErrCountsLive(0);
+      }
+
+      /* ---------- Immediately remove a row from the errors table without refresh ---------- */
+      function removeErrRowFromDOM(id) {
+        const chk = document.querySelector(`.err-row-chk[data-chkerr="${id}"]`);
+        if (chk) {
+          const row = chk.closest('tr');
+          if (row) row.remove();
         }
       }
 
@@ -9060,38 +9215,25 @@
           const id = +delBtn.dataset.errdel;
           if (!confirm(`Move errored entry #${id} to Cart? It will remain recoverable in Cart.`)) return;
           try {
-            await runProgressAction({
-              title: `Moving Errored Entry #${id} to Cart…`,
-              tag: '🗑️ Deletion to Cart Progress',
-              tagColor: '#ef4444',
-              barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
-              subText: `Safely moving errored record #${id} to Cart.`,
-              total: 1,
-              workFn: async (updateProgress) => {
-                updateProgress(0, 1, `Preparing deletion of entry #${id} to Cart (0% deleted)…`);
-                await new Promise(r => setTimeout(r, 120));
-                updateProgress(0.5, 1, `Moving entry #${id} to Cart (50% deleted)…`);
-                await api('/api/errors/' + id, { method: 'DELETE' });
-                updateProgress(1, 1, `Entry #${id} moved to Cart (100% deleted to Cart)!`);
-                await new Promise(r => setTimeout(r, 220));
-              }
-            });
-            toast('Entry moved to Cart');
-            showEventPopup({
-              type: 'deletion',
-              title: 'Errored Entry Moved to Cart',
-              message: `Errored entry #${id} was safely deleted from active staging and moved to Cart.`,
-              meta: {
-                'Error ID': id,
-                'Percentage of Deletion': '100% Complete',
-                'Status': 'In Cart (Recoverable)'
-              },
-              progress: '100% Complete'
-            });
+            showErrDeleteProgress(`Moving entry #${id} to Cart…`, '🗑️ Move to Cart', 1);
+            updateErrDeleteProgress(0, 1, `Moving entry #${id} to Cart (0%)…`, 1);
+            await new Promise(r => setTimeout(r, 150));
+            await api('/api/errors/' + id, { method: 'DELETE' });
+            removeErrRowFromDOM(id);
             cachedErrors = cachedErrors.filter(e => e.id !== id);
-            await loadErrorsContainer();
+            updateErrCountsLive(cachedErrors.length);
+            if ($('cartCountBadge')) {
+              const cur = parseInt($('cartCountBadge').textContent || '0', 10) || 0;
+              $('cartCountBadge').textContent = (cur + 1).toString();
+            }
+            updateErrDeleteProgress(1, 1, `Entry #${id} moved to Cart (100%)!`, 0);
+            finishErrDeleteProgress(`Entry #${id} moved to Cart (100% complete).`);
+            toast(`✓ Errored entry #${id} moved to Cart.`);
             await updateChrome();
-          } catch (err) { fail(err); }
+            if (!cachedErrors.length) await loadErrorsContainer();
+          } catch (err) {
+            fail(err);
+          }
         }
 
         const purgeBtn = e.target.closest('[data-errpurge]');
@@ -9099,38 +9241,21 @@
           const id = +purgeBtn.dataset.errpurge;
           if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently delete errored entry #${id} directly from the database forever.\n\nIt CANNOT be recovered or restored from Cart. Are you sure you want to proceed?`)) return;
           try {
-            await runProgressAction({
-              title: `Permanently Deleting Errored Entry #${id}…`,
-              tag: '⚡ Permanent Database Deletion',
-              tagColor: '#dc2626',
-              barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
-              subText: `Permanently deleting errored record #${id} directly from database.`,
-              total: 1,
-              workFn: async (updateProgress) => {
-                updateProgress(0, 1, `Initiating permanent deletion of entry #${id} (0% deleted)…`);
-                await new Promise(r => setTimeout(r, 120));
-                updateProgress(0.5, 1, `Permanently erasing record #${id} from database (50% deleted)…`);
-                await api(`/api/errors/${id}/permanent`, { method: 'DELETE' });
-                updateProgress(1, 1, `Entry #${id} permanently erased from database (100% complete)!`);
-                await new Promise(r => setTimeout(r, 220));
-              }
-            });
-            toast(`Errored entry #${id} permanently deleted.`);
-            showEventPopup({
-              type: 'deletion',
-              title: 'Errored Entry Permanently Erased',
-              message: `Errored entry #${id} was permanently erased directly from the database forever.`,
-              meta: {
-                'Error ID': id,
-                'Percentage of Deletion': '100% Complete',
-                'Status': 'Permanently Erased from Database'
-              },
-              progress: '100% Complete'
-            });
+            showErrDeleteProgress(`Permanently deleting entry #${id}…`, '⚡ Direct Permanent Deletion', 1);
+            updateErrDeleteProgress(0, 1, `Initiating permanent deletion of entry #${id} (0%)…`, 1);
+            await new Promise(r => setTimeout(r, 150));
+            await api(`/api/errors/${id}/permanent`, { method: 'DELETE' });
+            removeErrRowFromDOM(id);
             cachedErrors = cachedErrors.filter(e => e.id !== id);
-            await loadErrorsContainer();
+            updateErrCountsLive(cachedErrors.length);
+            updateErrDeleteProgress(1, 1, `Entry #${id} permanently erased from database (100%)!`, 0);
+            finishErrDeleteProgress(`Entry #${id} permanently erased (100% complete).`);
+            toast(`✓ Errored entry #${id} permanently deleted.`);
             await updateChrome();
-          } catch (err) { fail(err); }
+            if (!cachedErrors.length) await loadErrorsContainer();
+          } catch (err) {
+            fail(err);
+          }
         }
       };
 
@@ -9309,56 +9434,57 @@
 
         let totalMoved = 0;
         const startTime = Date.now();
-        await runProgressAction({
-          title: `Moving ${totalToMove} Errored Entries to Cart…`,
-          tag: '🗑️ Moving to Cart – Live Status',
-          tagColor: '#ef4444',
-          barGradient: 'linear-gradient(90deg, #ef4444, #f97316)',
-          subText: `Inserting all ${totalToMove} errored records into Cart. Live status is shown below.`,
-          total: totalToMove,
-          workFn: async (updateProgress) => {
-            updateProgress(0, totalToMove, `Preparing to move ${totalToMove} entries to Cart… (0% – 0 of ${totalToMove} inserted)`);
-            await new Promise(r => setTimeout(r, 100));
-            const batchSize = Math.min(25, Math.max(1, Math.ceil(totalToMove / 10)));
-            let remaining = totalToMove;
-            while (remaining > 0) {
-              const res = await api(`/api/errors/empty?limit=${batchSize}`, { method: 'POST' });
-              const batchMoved = res.moved_count || res.batch_moved || res.moved_all_to_cart || 0;
-              totalMoved += batchMoved;
-              remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchMoved);
-              const pct = Math.min(100, Math.round((totalMoved / totalToMove) * 100));
-              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-              updateProgress(totalMoved, totalToMove, `Inserting into Cart: ${totalMoved} of ${totalToMove} entries moved (${pct}% complete) – ${remaining} remaining – ${elapsed}s elapsed`);
-              if ($('cartCountBadge')) {
-                const curCart = parseInt($('cartCountBadge').textContent || '0', 10) || 0;
-                $('cartCountBadge').textContent = (curCart + batchMoved).toString();
-              }
-              if ($('errorsCountBadge')) {
-                $('errorsCountBadge').textContent = Math.max(0, totalToMove - totalMoved).toString();
-              }
-              if (batchMoved === 0 || remaining === 0) break;
-              await new Promise(r => setTimeout(r, 120));
-            }
-          }
-        });
+        showErrDeleteProgress(`Moving ${totalToMove} Errored Entries to Cart…`, '🗑️ Move to Cart – Live Status', totalToMove);
+        updateErrDeleteProgress(0, totalToMove, `Preparing to move ${totalToMove} entries to Cart… (0%)`, totalToMove);
 
-        const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-        toast(`✓ Moved ${totalMoved || totalToMove} of ${totalToMove} entries to Cart (100%).`);
-        showEventPopup({
-          type: 'deletion',
-          title: 'All Errored Entries Moved to Cart',
-          message: `Successfully moved ${totalMoved || totalToMove} of ${totalToMove} errored entries into the Cart.`,
-          meta: {
-            'Total Entries Moved': `${totalMoved || totalToMove} of ${totalToMove}`,
-            'Percentage Completed': '100%',
-            'Time Elapsed': `${totalElapsed}s`,
-            'Status': 'In Cart (Recoverable)'
-          },
-          progress: '100% Complete'
-        });
-        cachedErrors = [];
-        await loadErrorsContainer();
-        await updateChrome();
+        try {
+          const batchSize = totalToMove <= 10 ? 1 : Math.min(25, Math.max(1, Math.ceil(totalToMove / 10)));
+          let remaining = totalToMove;
+          while (remaining > 0) {
+            const res = await api(`/api/errors/empty?limit=${batchSize}`, { method: 'POST' });
+            const batchMoved = res.moved_count || res.batch_moved || res.moved_all_to_cart || 0;
+            totalMoved += batchMoved;
+            remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchMoved);
+
+            // Remove moved rows from DOM table immediately
+            for (let r = 0; r < batchMoved; r++) {
+              const firstTr = document.querySelector('#errorsTableWrap table tbody tr');
+              if (firstTr) firstTr.remove();
+            }
+            cachedErrors = cachedErrors.slice(batchMoved);
+
+            // Update live numbers across the website immediately
+            const curRemaining = Math.max(0, totalToMove - totalMoved);
+            updateErrCountsLive(curRemaining);
+            if ($('cartCountBadge')) {
+              const curCart = parseInt($('cartCountBadge').textContent || '0', 10) || 0;
+              $('cartCountBadge').textContent = (curCart + batchMoved).toString();
+            }
+
+            const pct = Math.min(100, Math.round((totalMoved / totalToMove) * 100));
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            updateErrDeleteProgress(
+              totalMoved,
+              totalToMove,
+              `Inserting into Cart: ${totalMoved} of ${totalToMove} entries moved (${pct}% complete) – ${curRemaining} remaining – ${elapsed}s elapsed`,
+              curRemaining
+            );
+
+            if (batchMoved === 0 || remaining === 0) break;
+            await new Promise(r => setTimeout(r, 180));
+          }
+
+          cachedErrors = [];
+          updateErrCountsLive(0);
+          finishErrDeleteProgress(`Successfully moved all ${totalMoved || totalToMove} errored entries to Cart (100% complete)!`);
+
+          const totalElapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+          toast(`✓ Moved all ${totalMoved || totalToMove} entries to Cart (${totalElapsed}s).`);
+          await loadErrorsContainer();
+          await updateChrome();
+        } catch (err) {
+          fail(err);
+        }
       };
 
       if ($('btnDirectDeleteAllErrors')) {
@@ -9368,47 +9494,53 @@
           if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently delete all ${totalToDelete} errored entries directly from the database and website forever.\n\nThey CANNOT be recovered or restored from the Cart.\n\nAre you sure you want to permanently erase them?`)) return;
 
           let totalDeleted = 0;
-          await runProgressAction({
-            title: 'Permanently Deleting Errored Entries…',
-            tag: '⚡ Permanent Database Deletion',
-            tagColor: '#dc2626',
-            barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
-            subText: `Permanently deleting all ${totalToDelete} errored records directly from database.`,
-            total: totalToDelete,
-            workFn: async (updateProgress) => {
-              const batchSize = Math.min(25, Math.max(1, Math.ceil(totalToDelete / 10)));
-              let remaining = totalToDelete;
-              while (remaining > 0) {
-                const res = await api(`/api/errors/permanent?limit=${batchSize}`, { method: 'DELETE' });
-                const batchDeleted = res.deleted_count || res.deleted_forever || 0;
-                totalDeleted += batchDeleted;
-                remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchDeleted);
-                const pct = Math.min(100, Math.round((totalDeleted / totalToDelete) * 100));
-                updateProgress(totalDeleted, totalToDelete, `Permanently deleting: ${totalDeleted} of ${totalToDelete} records (${pct}% deleted forever)...`);
-                if ($('errorsCountBadge')) {
-                  $('errorsCountBadge').textContent = Math.max(0, totalToDelete - totalDeleted).toString();
-                }
-                if (batchDeleted === 0 || remaining === 0) break;
-                await new Promise(r => setTimeout(r, 120));
-              }
-            }
-          });
+          const startTime = Date.now();
+          showErrDeleteProgress(`Permanently Deleting All ${totalToDelete} Errored Records…`, '⚡ Permanent Database Deletion', totalToDelete);
+          updateErrDeleteProgress(0, totalToDelete, `Preparing permanent deletion… (0%)`, totalToDelete);
 
-          toast(`Permanently deleted ${totalDeleted || totalToDelete} errored entries from database.`);
-          showEventPopup({
-            type: 'deletion',
-            title: 'Errored Entries Permanently Erased',
-            message: `Successfully and permanently deleted all ${totalDeleted || totalToDelete} errored entries directly from the database and website forever.`,
-            meta: {
-              'Total Erased': totalDeleted || totalToDelete,
-              'Percentage Completed': '100%',
-              'Status': 'Permanently Erased from Database'
-            },
-            progress: '100% Complete'
-          });
-          cachedErrors = [];
-          await loadErrorsContainer();
-          await updateChrome();
+          try {
+            const batchSize = totalToDelete <= 10 ? 1 : Math.min(25, Math.max(1, Math.ceil(totalToDelete / 10)));
+            let remaining = totalToDelete;
+            while (remaining > 0) {
+              const res = await api(`/api/errors/permanent?limit=${batchSize}`, { method: 'DELETE' });
+              const batchDeleted = res.deleted_count || res.deleted_forever || 0;
+              totalDeleted += batchDeleted;
+              remaining = typeof res.remaining_count === 'number' ? res.remaining_count : Math.max(0, remaining - batchDeleted);
+
+              // Remove rows from DOM table immediately
+              for (let r = 0; r < batchDeleted; r++) {
+                const firstTr = document.querySelector('#errorsTableWrap table tbody tr');
+                if (firstTr) firstTr.remove();
+              }
+              cachedErrors = cachedErrors.slice(batchDeleted);
+
+              // Update live numbers across the website immediately
+              const curRemaining = Math.max(0, totalToDelete - totalDeleted);
+              updateErrCountsLive(curRemaining);
+
+              const pct = Math.min(100, Math.round((totalDeleted / totalToDelete) * 100));
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+              updateErrDeleteProgress(
+                totalDeleted,
+                totalToDelete,
+                `Permanently deleting: ${totalDeleted} of ${totalToDelete} records erased (${pct}% complete) – ${curRemaining} remaining – ${elapsed}s elapsed`,
+                curRemaining
+              );
+
+              if (batchDeleted === 0 || remaining === 0) break;
+              await new Promise(r => setTimeout(r, 180));
+            }
+
+            cachedErrors = [];
+            updateErrCountsLive(0);
+            finishErrDeleteProgress(`Successfully erased all ${totalDeleted || totalToDelete} errored entries forever (100% complete)!`);
+
+            toast(`✓ Permanently deleted all ${totalDeleted || totalToDelete} errored entries from database.`);
+            await loadErrorsContainer();
+            await updateChrome();
+          } catch (err) {
+            fail(err);
+          }
         };
       }
 
@@ -9421,55 +9553,55 @@
           if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently delete ${totalToDelete} selected errored record(s) directly from the database and website forever.\n\nThey CANNOT be recovered or restored from the Cart.\n\nAre you sure you want to permanently erase them?`)) return;
 
           let totalDeleted = 0;
-          const chunkSize = 25;
+          const startTime = Date.now();
+          showErrDeleteProgress(`Permanently Deleting ${totalToDelete} Selected Records…`, '⚡ Selected Records Deletion', totalToDelete);
+          updateErrDeleteProgress(0, totalToDelete, `Preparing deletion of ${totalToDelete} selected records… (0%)`, totalToDelete);
+
+          const chunkSize = totalToDelete <= 10 ? 1 : Math.min(25, Math.max(1, Math.ceil(totalToDelete / 10)));
           const chunks = [];
           for (let i = 0; i < selectedIds.length; i += chunkSize) {
             chunks.push(selectedIds.slice(i, i + chunkSize));
           }
 
-          await runProgressAction({
-            title: 'Permanently Deleting Selected Errored Entries…',
-            tag: '⚡ Permanent Database Deletion',
-            tagColor: '#dc2626',
-            barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
-            subText: `Permanently deleting ${totalToDelete} selected errored record(s) directly from database.`,
-            total: totalToDelete,
-            workFn: async (updateProgress) => {
-              for (let cIdx = 0; cIdx < chunks.length; cIdx++) {
-                const chunk = chunks[cIdx];
-                const res = await api('/api/errors/batch-delete', {
-                  method: 'POST',
-                  body: JSON.stringify({ error_ids: chunk })
-                });
-                const batchDeleted = res.deleted_count || chunk.length;
-                totalDeleted += batchDeleted;
-                const pct = Math.min(100, Math.round((totalDeleted / totalToDelete) * 100));
-                updateProgress(totalDeleted, totalToDelete, `Permanently deleting: ${totalDeleted} of ${totalToDelete} records (${pct}% deleted forever)...`);
-                if ($('errorsCountBadge')) {
-                  const curBadge = parseInt($('errorsCountBadge').textContent || '0', 10) || cachedErrors.length;
-                  $('errorsCountBadge').textContent = Math.max(0, curBadge - batchDeleted).toString();
-                }
-                await new Promise(r => setTimeout(r, 120));
-              }
-            }
-          });
+          try {
+            for (let cIdx = 0; cIdx < chunks.length; cIdx++) {
+              const chunk = chunks[cIdx];
+              const res = await api('/api/errors/batch-delete', {
+                method: 'POST',
+                body: JSON.stringify({ error_ids: chunk })
+              });
+              const batchDeleted = res.deleted_count || chunk.length;
+              totalDeleted += batchDeleted;
 
-          toast(`Permanently deleted ${totalDeleted || totalToDelete} selected errored entries from database.`);
-          showEventPopup({
-            type: 'deletion',
-            title: 'Selected Errored Entries Permanently Erased',
-            message: `Successfully and permanently deleted ${totalDeleted || totalToDelete} selected errored record(s) directly from the database and website forever.`,
-            meta: {
-              'Total Erased': totalDeleted || totalToDelete,
-              'Percentage Completed': '100%',
-              'Status': 'Permanently Erased from Database'
-            },
-            progress: '100% Complete'
-          });
-          const selectedSet = new Set(selectedIds);
-          cachedErrors = cachedErrors.filter(e => !selectedSet.has(e.id));
-          await loadErrorsContainer();
-          await updateChrome();
+              // Remove selected rows from DOM table immediately
+              chunk.forEach(id => removeErrRowFromDOM(id));
+              const chunkSet = new Set(chunk);
+              cachedErrors = cachedErrors.filter(e => !chunkSet.has(e.id));
+
+              // Update live numbers across the website immediately
+              updateErrCountsLive(cachedErrors.length);
+
+              const pct = Math.min(100, Math.round((totalDeleted / totalToDelete) * 100));
+              const curRemaining = Math.max(0, totalToDelete - totalDeleted);
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+              updateErrDeleteProgress(
+                totalDeleted,
+                totalToDelete,
+                `Permanently deleting: ${totalDeleted} of ${totalToDelete} selected records (${pct}% complete) – ${curRemaining} remaining – ${elapsed}s elapsed`,
+                curRemaining
+              );
+
+              await new Promise(r => setTimeout(r, 180));
+            }
+
+            finishErrDeleteProgress(`Successfully erased all ${totalDeleted || totalToDelete} selected errored record(s) forever (100% complete)!`);
+
+            toast(`✓ Permanently deleted ${totalDeleted || totalToDelete} selected errored entries from database.`);
+            await loadErrorsContainer();
+            await updateChrome();
+          } catch (err) {
+            fail(err);
+          }
         };
       }
 
