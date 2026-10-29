@@ -3100,6 +3100,57 @@
         </div>
         <button class="b d" id="btnEmptyCart" hidden>Empty Cart Forever</button>
       </div>
+
+      <!-- Cart Deletion Progress Container (matches Upload Data Progress UI) -->
+      <div id="cartEmptyProgressWrap" hidden style="margin:18px 0;background:var(--card);padding:20px;border:1.5px solid var(--danger, #ef4444);border-radius:12px;box-shadow:0 6px 20px rgba(239,68,68,0.12)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="cartProgSpinIcon" class="spin" style="font-size:22px">⏳</span>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <img src="logo.svg" alt="Company Logo" style="width:20px;height:20px;object-fit:contain" onerror="this.style.display='none'" />
+                <b id="cartProgTitle" style="font-size:15px;color:var(--ink)">Emptying Cart Forever (Permanent Deletion)…</b>
+              </div>
+              <div id="cartProgStatus" style="font-size:12.5px;color:var(--danger, #dc2626);font-weight:600;margin-top:2px">Preparing batches…</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <span id="cartProgPct" style="font-size:22px;font-weight:800;color:var(--danger, #dc2626)">0%</span>
+            <div id="cartProgRowsCount" style="font-size:12px;font-weight:600;color:var(--muted)">0 / 0 records</div>
+          </div>
+        </div>
+
+        <!-- Animated Progress Bar -->
+        <div class="progress-bar" style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;margin:10px 0;border:1px solid var(--line)">
+          <div class="progress-fill" id="cartProgBar" style="width:0%;height:100%;background:linear-gradient(90deg, #ef4444, #dc2626);transition:width 0.2s ease"></div>
+        </div>
+
+        <!-- Live Metric Counters -->
+        <div class="stats" style="margin:14px 0 10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px">
+          <div class="card stat" style="padding:10px 14px"><b id="cartProgTotalCount" style="font-size:16px">0</b><span>Total in Cart</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--danger, #ef4444)"><b id="cartProgDeletedCount" style="font-size:16px;color:var(--danger, #dc2626)">0</b><span>Permanently Deleted</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="cartProgRemainCount" style="font-size:16px">0</b><span>Remaining in Cart</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:#f97316"><b id="cartProgCustsCount" style="font-size:16px">0</b><span>Customer Tables Dropped</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--primary)"><b id="cartProgElapsed" style="font-size:16px">0.0s</b><span>Time Elapsed</span></div>
+        </div>
+
+        <!-- Live Monospace Activity Stream Log Box -->
+        <div id="cartProgLiveDetailBox" style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:12px;max-height:120px;overflow-y:auto;font-family:monospace;margin-top:10px">
+          <div style="color:var(--muted)">[Ready] Waiting to start permanent deletion…</div>
+        </div>
+
+        <!-- Completion Banner -->
+        <div id="cartProgCompleteBanner" hidden style="margin-top:14px;background:var(--ok-bg, rgba(16,185,129,0.1));border:1px solid var(--ok, #10b981);border-radius:10px;padding:14px;color:var(--ink)">
+          <div style="font-weight:700;font-size:14px;color:var(--ok, #10b981);margin-bottom:4px">✅ Cart Successfully Emptied!</div>
+          <div id="cartProgCompleteSummary" style="font-size:13px">All deleted device records and customer tables have been permanently erased from the database and TiDB Cloud.</div>
+        </div>
+
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="b" id="btnCloseCartProgress" type="button">✕ Dismiss Deletion Status</button>
+          <button class="b p" id="btnRefreshCart" type="button">🔄 Refresh Cart</button>
+        </div>
+      </div>
+
       <div id="cartBody">
         <div class="empty">Checking Cart items…</div>
       </div>
@@ -9711,6 +9762,9 @@
           }
           $('cartBody').innerHTML = html;
 
+          if ($('btnCloseCartProgress')) $('btnCloseCartProgress').onclick = () => $('cartEmptyProgressWrap').hidden = true;
+          if ($('btnRefreshCart')) $('btnRefreshCart').onclick = () => loadCartContainer();
+
           $('btnEmptyCart').onclick = () => {
             openDlg('⚠️ Permanently Empty Cart', `
         <div style="background:var(--card-subtle);border:1px solid var(--danger, #ef4444);padding:14px 16px;border-radius:8px;margin-bottom:12px">
@@ -9730,53 +9784,155 @@
         </div>
       `, 'Empty Cart Permanently', async () => {
               const totalItems = totalCart || parseInt($('cartCountBadge')?.textContent || '0', 10) || 1;
-              let totalPurged = 0;
               const purgeStart = Date.now();
-              await runProgressAction({
-                title: `Permanently Deleting ${totalItems} Cart Items…`,
-                tag: '🗑️ Permanent Purge – Live Status',
-                tagColor: '#dc2626',
-                barGradient: 'linear-gradient(90deg, #dc2626, #b91c1c)',
-                subText: `Permanently deleting all ${totalItems} items from database and TiDB Cloud. Live deletion status is shown below.`,
-                total: totalItems,
-                workFn: async (updateProgress) => {
-                  updateProgress(0, totalItems, `Preparing to delete ${totalItems} Cart items… (0% – 0 of ${totalItems} deleted)`);
-                  await new Promise(r => setTimeout(r, 100));
-                  const batchSize = Math.min(25, Math.max(1, Math.ceil(totalItems / 10)));
-                  let remaining = totalItems;
-                  while (remaining > 0) {
-                    const res = await api(`/api/bin?limit=${batchSize}`, { method: 'DELETE' });
-                    const batchPurged = res.deleted_forever || res.deleted_count || 0;
-                    const custsPurged = res.customers_purged || 0;
-                    totalPurged += batchPurged + custsPurged;
-                    remaining = typeof res.remaining_count === 'number' ? Math.max(0, res.remaining_count - custsPurged) : Math.max(0, remaining - batchPurged - custsPurged);
-                    const pct = Math.min(100, Math.round((totalPurged / totalItems) * 100));
-                    const elapsed = ((Date.now() - purgeStart) / 1000).toFixed(1);
-                    updateProgress(totalPurged, totalItems, `Deleting Cart items: ${totalPurged} of ${totalItems} permanently deleted (${pct}% complete) – ${remaining} remaining – ${elapsed}s elapsed`);
-                    if ($('cartCountBadge')) {
-                      $('cartCountBadge').textContent = Math.max(0, totalItems - totalPurged).toString();
-                    }
-                    if (batchPurged === 0 && custsPurged === 0 || remaining === 0) break;
-                    await new Promise(r => setTimeout(r, 120));
-                  }
+              let totalPurged = 0;
+              let totalCustPurged = 0;
+
+              // Reveal in-container live deletion status progress container (just like uploading data)
+              const progWrap = $('cartEmptyProgressWrap');
+              if (progWrap) {
+                progWrap.hidden = false;
+                progWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+              if ($('cartProgCompleteBanner')) $('cartProgCompleteBanner').hidden = true;
+              if ($('btnEmptyCart')) $('btnEmptyCart').disabled = true;
+
+              // Setup Live Log Stream Box
+              const logBox = $('cartProgLiveDetailBox');
+              const addCartLog = msg => {
+                if (!logBox) return;
+                const time = new Date().toLocaleTimeString();
+                const div = document.createElement('div');
+                div.textContent = `[${time}] ${msg}`;
+                logBox.appendChild(div);
+                logBox.scrollTop = logBox.scrollHeight;
+              };
+              if (logBox) logBox.innerHTML = '';
+              addCartLog(`Starting Cart permanent deletion: ${totalItems.toLocaleString()} items to permanently erase from database & TiDB Cloud…`);
+
+              // Initialize live counters & progress bar
+              if ($('cartProgTotalCount')) $('cartProgTotalCount').textContent = totalItems.toLocaleString();
+              if ($('cartProgDeletedCount')) $('cartProgDeletedCount').textContent = '0';
+              if ($('cartProgRemainCount')) $('cartProgRemainCount').textContent = totalItems.toLocaleString();
+              if ($('cartProgCustsCount')) $('cartProgCustsCount').textContent = '0';
+              if ($('cartProgElapsed')) $('cartProgElapsed').textContent = '0.0s';
+              if ($('cartProgBar')) $('cartProgBar').style.width = '0%';
+              if ($('cartProgPct')) $('cartProgPct').textContent = '0%';
+              if ($('cartProgRowsCount')) $('cartProgRowsCount').textContent = `0 / ${totalItems.toLocaleString()} items deleted`;
+              if ($('cartProgStatus')) $('cartProgStatus').textContent = '0% deleting… Preparing batches for permanent deletion from database & cloud…';
+
+              await new Promise(r => setTimeout(r, 120));
+
+              // Compute chunk size to give user smooth percentage steps (e.g. 10%, 20%, 30%...)
+              const batchSize = Math.max(1, Math.min(25, Math.ceil(totalItems / 10)));
+              let remaining = totalItems;
+              let batchNum = 0;
+
+              while (remaining > 0) {
+                batchNum++;
+                const elapsed = ((Date.now() - purgeStart) / 1000).toFixed(1);
+                const currentPct = Math.min(99, Math.round(((totalPurged + totalCustPurged) / totalItems) * 100));
+
+                if ($('cartProgStatus')) {
+                  $('cartProgStatus').textContent = `${currentPct}% deleting… Deleting batch ${batchNum} permanently from database & TiDB Cloud…`;
                 }
-              });
+                if ($('cartProgElapsed')) $('cartProgElapsed').textContent = elapsed + 's';
+
+                try {
+                  const res = await api(`/api/bin?limit=${batchSize}`, { method: 'DELETE' });
+                  const batchPurged = res.deleted_forever || res.deleted_count || 0;
+                  const custsPurged = res.customers_purged || 0;
+                  totalPurged += batchPurged;
+                  totalCustPurged += custsPurged;
+
+                  remaining = typeof res.remaining_count === 'number' ? Math.max(0, res.remaining_count) : Math.max(0, remaining - batchPurged);
+                  const pct = remaining === 0 ? 100 : Math.min(99, Math.round(((totalPurged + totalCustPurged) / totalItems) * 100));
+
+                  if ($('cartProgBar')) $('cartProgBar').style.width = pct + '%';
+                  if ($('cartProgPct')) $('cartProgPct').textContent = pct + '%';
+                  if ($('cartProgStatus')) {
+                    $('cartProgStatus').textContent = `${pct}% deleting… Batch ${batchNum} erased ${batchPurged} items (${remaining} remaining in Cart)…`;
+                  }
+                  if ($('cartProgRowsCount')) $('cartProgRowsCount').textContent = `${totalPurged} / ${totalItems.toLocaleString()} items deleted`;
+                  if ($('cartProgDeletedCount')) $('cartProgDeletedCount').textContent = (totalPurged + totalCustPurged).toLocaleString();
+                  if ($('cartProgRemainCount')) $('cartProgRemainCount').textContent = remaining.toLocaleString();
+                  if ($('cartProgCustsCount')) $('cartProgCustsCount').textContent = totalCustPurged.toLocaleString();
+                  if ($('cartCountBadge')) $('cartCountBadge').textContent = remaining.toString();
+
+                  addCartLog(`${pct}% deleting: Batch ${batchNum} permanently erased ${batchPurged} items (${remaining} remaining in Cart)`);
+
+                  // Mark and fade deleted rows from visible table DOM in real-time
+                  const tableRows = $('cartBody')?.querySelectorAll('tbody tr');
+                  if (tableRows && tableRows.length > 0) {
+                    let marked = 0;
+                    for (let k = 0; k < tableRows.length && marked < batchPurged; k++) {
+                      const row = tableRows[k];
+                      if (row && !row.dataset.deleted) {
+                        row.dataset.deleted = '1';
+                        row.style.opacity = '0.25';
+                        row.style.textDecoration = 'line-through';
+                        marked++;
+                      }
+                    }
+                  }
+
+                  if ((batchPurged === 0 && custsPurged === 0) || remaining === 0) {
+                    break;
+                  }
+                } catch (batchErr) {
+                  console.error('Batch deletion error:', batchErr);
+                  addCartLog(`[Error] Batch ${batchNum} failed: ${batchErr.message}`);
+                  break;
+                }
+
+                await new Promise(r => setTimeout(r, 180));
+              }
+
+              // Finalize completion state
               const totalElapsed = ((Date.now() - purgeStart) / 1000).toFixed(1);
-              toast(`✓ Permanently deleted ${totalPurged || totalItems} of ${totalItems} Cart items (100%).`);
+              if ($('cartProgBar')) $('cartProgBar').style.width = '100%';
+              if ($('cartProgPct')) $('cartProgPct').textContent = '100%';
+              if ($('cartProgStatus')) $('cartProgStatus').textContent = '100% deleted – All Cart items & customer tables permanently erased!';
+              if ($('cartProgRowsCount')) $('cartProgRowsCount').textContent = `${totalItems.toLocaleString()} / ${totalItems.toLocaleString()} items deleted`;
+              if ($('cartProgDeletedCount')) $('cartProgDeletedCount').textContent = (totalPurged || totalItems).toLocaleString();
+              if ($('cartProgRemainCount')) $('cartProgRemainCount').textContent = '0';
+              if ($('cartProgCustsCount')) $('cartProgCustsCount').textContent = totalCustPurged.toLocaleString();
+              if ($('cartProgElapsed')) $('cartProgElapsed').textContent = totalElapsed + 's';
+              if ($('cartCountBadge')) $('cartCountBadge').textContent = '0';
+
+              if ($('cartProgCompleteBanner')) {
+                $('cartProgCompleteBanner').hidden = false;
+                if ($('cartProgCompleteSummary')) {
+                  $('cartProgCompleteSummary').textContent = `Successfully permanently erased ${totalPurged || totalItems} items and dropped ${totalCustPurged} customer tables from the database and TiDB Cloud in ${totalElapsed}s.`;
+                }
+              }
+              addCartLog(`[Completed] 100% deleting finished in ${totalElapsed}s. Cart is completely empty.`);
+
+              if ($('btnEmptyCart')) {
+                $('btnEmptyCart').hidden = true;
+                $('btnEmptyCart').disabled = false;
+              }
+              $('cartBody').innerHTML = '<div class="empty">Cart is empty. No deleted device records.</div>';
+
+              toast(`✓ Permanently deleted ${totalPurged || totalItems} Cart items (100% complete).`);
               showEventPopup({
                 type: 'deletion',
                 title: 'Cart Permanently Emptied',
-                message: `All ${totalPurged || totalItems} of ${totalItems} Cart items have been permanently deleted from the database and TiDB Cloud.`,
+                message: `All ${totalPurged || totalItems} Cart items have been permanently deleted from the database and TiDB Cloud.`,
                 meta: {
                   'Total Items Deleted': `${totalPurged || totalItems} of ${totalItems}`,
                   'Percentage Completed': '100%',
                   'Time Elapsed': `${totalElapsed}s`,
+                  'Customer Tables Dropped': totalCustPurged,
                   'Status': 'Permanently Erased from Database & Cloud'
                 },
                 progress: '100% Complete'
               });
+
+              if ($('btnCloseCartProgress')) $('btnCloseCartProgress').onclick = () => $('cartEmptyProgressWrap').hidden = true;
+              if ($('btnRefreshCart')) $('btnRefreshCart').onclick = () => loadCartContainer();
+
               await updateChrome();
-              loadCartContainer();
             }, true);
           };
         } catch (err) { $('cartBody').innerHTML = `<div class="empty err">${esc(err.message)}</div>`; }
@@ -10295,6 +10451,7 @@
           }
           if (b.dataset.cpurge) {
             const cid = b.dataset.cpurge;
+            const trRow = b.closest('tr');
             openDlg('⚠️ Permanently Delete Customer', `
         <div style="background:var(--card-subtle);border:1px solid var(--danger, #ef4444);padding:14px 16px;border-radius:8px;margin-bottom:12px">
           <div style="font-weight:700;font-size:15px;color:var(--danger, #dc2626);margin-bottom:6px">
@@ -10312,6 +10469,14 @@
           </p>
         </div>
       `, 'Permanently Delete Forever', async () => {
+              if (trRow) {
+                trRow.style.opacity = '0.25';
+                trRow.style.textDecoration = 'line-through';
+              }
+              const currentBadge = parseInt($('cartCountBadge')?.textContent || '0', 10);
+              if (currentBadge > 0 && $('cartCountBadge')) {
+                $('cartCountBadge').textContent = (currentBadge - 1).toString();
+              }
               await runProgressAction({
                 title: `Permanently Deleting Customer #${cid}…`,
                 tag: '🗑️ Permanent Customer Table Deletion',
@@ -10324,6 +10489,7 @@
                   await new Promise(r => setTimeout(r, 120));
                   updateProgress(0.5, 1, `Dropping customer table #${cid} from TiDB Cloud (50% deleted)…`);
                   await api(`/api/customers/${cid}/purge`, { method: 'DELETE' });
+                  if (trRow) trRow.remove();
                   updateProgress(1, 1, `Customer table #${cid} permanently dropped (100% complete)!`);
                   await new Promise(r => setTimeout(r, 220));
                 }
@@ -10410,6 +10576,7 @@
           }
           if (b.dataset.purge) {
             const devId = b.dataset.purge;
+            const trRow = b.closest('tr');
             openDlg('⚠️ Permanently Delete Record', `
         <div style="background:var(--card-subtle);border:1px solid var(--danger, #ef4444);padding:14px 16px;border-radius:8px;margin-bottom:12px">
           <div style="font-weight:700;font-size:15px;color:var(--danger, #dc2626);margin-bottom:6px">
@@ -10427,6 +10594,14 @@
           </p>
         </div>
       `, 'Permanently Delete Forever', async () => {
+              if (trRow) {
+                trRow.style.opacity = '0.25';
+                trRow.style.textDecoration = 'line-through';
+              }
+              const currentBadge = parseInt($('cartCountBadge')?.textContent || '0', 10);
+              if (currentBadge > 0 && $('cartCountBadge')) {
+                $('cartCountBadge').textContent = (currentBadge - 1).toString();
+              }
               await runProgressAction({
                 title: `Permanently Deleting Record #${devId}…`,
                 tag: '🗑️ Permanent Record Deletion',
@@ -10439,6 +10614,7 @@
                   await new Promise(r => setTimeout(r, 120));
                   updateProgress(0.5, 1, `Erasing record #${devId} from database & TiDB table (50% deleted)…`);
                   await api('/api/bin/' + devId, { method: 'DELETE' });
+                  if (trRow) trRow.remove();
                   updateProgress(1, 1, `Record #${devId} permanently erased from database (100% complete)!`);
                   await new Promise(r => setTimeout(r, 220));
                 }
