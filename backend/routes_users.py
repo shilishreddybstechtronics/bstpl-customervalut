@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 import models, schemas
 from activity import log_activity
 from auth import (
+    DEFAULT_PERMISSIONS,
     MASTER_SUPER_ADMIN_IDS,
     MASTER_SUPER_ADMIN_ID,
     MASTER_ADMIN_IDS,
@@ -108,23 +109,39 @@ def create_user(data: schemas.UserCreate, db: Session = Depends(get_db), admin: 
         raise HTTPException(400, "Master Super Admin accounts (0001, 0007) are reserved.")
 
     # Only Master Super Admins (0001, 0007) can provision Master Admin accounts
-    if norm_id in MASTER_ADMIN_IDS and norm_admin not in MASTER_SUPER_ADMIN_IDS:
+    target_role = (data.role or "").strip().lower() or "master_admin"
+    if (target_role == "master_admin" or norm_id in MASTER_ADMIN_IDS) and norm_admin not in MASTER_SUPER_ADMIN_IDS:
         raise HTTPException(403, "Only Master Super Admins (0001, 0007) have permission to provision Master Admin accounts.")
 
     if db.query(models.User).filter(models.User.user_id == login_id).first():
         raise HTTPException(400, "This ID is already taken. Choose another one.")
 
-    role = role_for_id(norm_id)
+    # Determine assigned category: Default is Master Admin when added by Super Admin
+    if norm_admin in MASTER_SUPER_ADMIN_IDS:
+        assigned_category = target_role if target_role in ("master_admin", "admin_user", "regular_user") else "master_admin"
+    elif norm_id in MASTER_ADMIN_IDS:
+        assigned_category = "master_admin"
+    elif norm_id in ADMIN_USER_IDS:
+        assigned_category = "admin_user"
+    else:
+        assigned_category = "regular_user"
+
+    initial_perms = dict(DEFAULT_PERMISSIONS.get(assigned_category, DEFAULT_PERMISSIONS["master_admin"]))
+    if data.permissions and isinstance(data.permissions, dict):
+        initial_perms.update(data.permissions)
+    initial_perms["role"] = assigned_category
+
+    db_role = "admin" if assigned_category in ("master_admin", "admin_user", "super_admin") else "limited"
     u = models.User(
         name=data.name.strip(),
         user_id=login_id,
         password_hash=hash_password(data.password),
         plain_password=data.password,
-        permissions=data.permissions
+        permissions=initial_perms
     )
-    set_role(u, role)
+    set_role(u, db_role)
     db.add(u)
-    log_activity(db, "user_create", f"Created {login_id} as {role}", user=admin)
+    log_activity(db, "user_create", f"Created {login_id} as {assigned_category} ({db_role})", user=admin)
     db.commit()
     db.refresh(u)
     return user_out(u, actor=admin)

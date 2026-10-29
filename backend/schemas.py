@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, AliasChoices
 
 ID_PATTERN = r"^[A-Za-z0-9_.-]{3,30}$"
-Role = Literal["admin", "standard", "limited"]
+Role = str
 
 
 _DATE_FORMATS = (
@@ -390,7 +390,7 @@ class UserCreate(BaseModel):
     @classmethod
     def check_password(cls, v):
         return _pw_ok(v)
-    role: Optional[Role] = None       # new
+    role: Optional[str] = "master_admin"  # Default role is Master Admin per requirements
     is_admin: bool = False            # old field, still accepted: used only when role is not given
     permissions: Optional[dict[str, bool]] = None
 
@@ -484,5 +484,37 @@ class BulkPushErrorsIn(BaseModel):
 class BatchDeleteErrorsIn(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
     error_ids: list[int] = Field(default_factory=list)
+
+
+class BulkDeletePreviewIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    column: str = "imei"  # imei | iccid | device_sr_no | msisdn1 | customer_name
+    values: list[str] = Field(default_factory=list)
+
+
+class BulkDeleteExecuteIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    column: str = "imei"
+    values: list[str] = Field(default_factory=list)
+    permanent: bool = False
+    reason: Optional[str] = "Bulk delete via Excel"
+
+
+class BulkEditPreviewIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    imei_column: Optional[str] = "imei"
+    imei_col: Optional[str] = None
+    rows: Optional[list[dict]] = None
+    file_rows: Optional[list[dict]] = None
+    field_mappings: Optional[dict[str, str]] = None
+
+
+class BulkEditExecuteIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    imei_column: Optional[str] = "imei"
+    imei_col: Optional[str] = None
+    rows: Optional[list[dict]] = None
+    file_rows: Optional[list[dict]] = None
+    field_mappings: Optional[dict[str, str]] = None
 
 

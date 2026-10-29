@@ -1591,6 +1591,361 @@
         display: none;
       }
     }
+
+    /* ===== 6 PREMIER THEMES (with Dark & Light Mode Support) ===== */
+    /* 1. Midnight Pro (#0B1120, #172554, #38BDF8) */
+    [data-palette="midnight_pro"][data-mode="dark"],
+    [data-palette="midnight_pro"]:not([data-mode="light"]) {
+      --bg: #0B1120;
+      --card: #172554;
+      --card-subtle: #1e293b;
+      --primary: #38BDF8;
+      --accent: #38BDF8;
+      --accentd: #0284c7;
+      --ink: #F0F9FF;
+      --ink2: #E0F2FE;
+      --line: #1E3A8A;
+      --muted: #94A3B8;
+      --ok: #34D399;
+      --warn: #FBBF24;
+      --danger: #F87171;
+    }
+    [data-palette="midnight_pro"][data-mode="light"] {
+      --bg: #F0F9FF;
+      --card: #FFFFFF;
+      --card-subtle: #E0F2FE;
+      --primary: #0284C7;
+      --accent: #38BDF8;
+      --accentd: #0369A1;
+      --ink: #0C4A6E;
+      --ink2: #075985;
+      --line: #BAE6FD;
+      --muted: #475569;
+      --ok: #059669;
+      --warn: #D97706;
+      --danger: #DC2626;
+    }
+
+    /* 2. Obsidian Luxury (#09090B, #27272A, #D4AF37) */
+    [data-palette="obsidian_luxury"][data-mode="dark"],
+    [data-palette="obsidian_luxury"]:not([data-mode="light"]) {
+      --bg: #09090B;
+      --card: #27272A;
+      --card-subtle: #18181B;
+      --primary: #D4AF37;
+      --accent: #D4AF37;
+      --accentd: #B45309;
+      --ink: #FAFAF9;
+      --ink2: #F5F5F4;
+      --line: #3F3F46;
+      --muted: #A1A1AA;
+      --ok: #10B981;
+      --warn: #D4AF37;
+      --danger: #EF4444;
+    }
+    [data-palette="obsidian_luxury"][data-mode="light"] {
+      --bg: #FAFAF9;
+      --card: #FFFFFF;
+      --card-subtle: #F5F5F4;
+      --primary: #B45309;
+      --accent: #D4AF37;
+      --accentd: #92400E;
+      --ink: #1C1917;
+      --ink2: #292524;
+      --line: #E7E5E4;
+      --muted: #57534E;
+      --ok: #059669;
+      --warn: #B45309;
+      --danger: #DC2626;
+    }
+
+    /* 3. Quantum AI (#0F1025, #6D5DFB, #22D3EE) */
+    [data-palette="quantum_ai"][data-mode="dark"],
+    [data-palette="quantum_ai"]:not([data-mode="light"]) {
+      --bg: #0F1025;
+      --card: #1E1B4B;
+      --card-subtle: #2E1065;
+      --primary: #6D5DFB;
+      --accent: #22D3EE;
+      --accentd: #4F46E5;
+      --ink: #F5F3FF;
+      --ink2: #EDE9FE;
+      --line: #3730A3;
+      --muted: #A5B4FC;
+      --ok: #10B981;
+      --warn: #F59E0B;
+      --danger: #F43F5E;
+    }
+    [data-palette="quantum_ai"][data-mode="light"] {
+      --bg: #F5F3FF;
+      --card: #FFFFFF;
+      --card-subtle: #EDE9FE;
+      --primary: #6D5DFB;
+      --accent: #06B6D4;
+      --accentd: #4F46E5;
+      --ink: #1E1B4B;
+      --ink2: #312E81;
+      --line: #DDD6FE;
+      --muted: #4B5563;
+      --ok: #059669;
+      --warn: #D97706;
+      --danger: #E11D48;
+    }
+
+    /* 4. Enterprise Clean (#F8FAFC, #2563EB, #0EA5E9) */
+    [data-palette="enterprise_clean"][data-mode="light"],
+    [data-palette="enterprise_clean"]:not([data-mode="dark"]) {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --card-subtle: #F1F5F9;
+      --primary: #2563EB;
+      --accent: #0EA5E9;
+      --accentd: #1D4ED8;
+      --ink: #0F172A;
+      --ink2: #1E293B;
+      --line: #CBD5E1;
+      --muted: #64748B;
+      --ok: #10B981;
+      --warn: #F59E0B;
+      --danger: #EF4444;
+    }
+    [data-palette="enterprise_clean"][data-mode="dark"] {
+      --bg: #0F172A;
+      --card: #1E293B;
+      --card-subtle: #334155;
+      --primary: #3B82F6;
+      --accent: #0EA5E9;
+      --accentd: #60A5FA;
+      --ink: #F8FAFC;
+      --ink2: #E2E8F0;
+      --line: #475569;
+      --muted: #94A3B8;
+      --ok: #34D399;
+      --warn: #FBBF24;
+      --danger: #F87171;
+    }
+
+    /* 5. Crystal Glass (#101827, #1E293B, #60A5FA) */
+    [data-palette="crystal_glass"][data-mode="dark"],
+    [data-palette="crystal_glass"]:not([data-mode="light"]) {
+      --bg: #101827;
+      --card: #1E293B;
+      --card-subtle: #283548;
+      --primary: #60A5FA;
+      --accent: #60A5FA;
+      --accentd: #3B82F6;
+      --ink: #F1F5F9;
+      --ink2: #E2E8F0;
+      --line: #334155;
+      --muted: #94A3B8;
+      --ok: #34D399;
+      --warn: #FBBF24;
+      --danger: #F87171;
+    }
+    [data-palette="crystal_glass"][data-mode="light"] {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --card-subtle: #EFF6FF;
+      --primary: #3B82F6;
+      --accent: #60A5FA;
+      --accentd: #2563EB;
+      --ink: #0F172A;
+      --ink2: #1E293B;
+      --line: #BFDBFE;
+      --muted: #475569;
+      --ok: #059669;
+      --warn: #D97706;
+      --danger: #DC2626;
+    }
+
+    /* 6. Emerald Control (#0F172A, #064E3B, #34D399) */
+    [data-palette="emerald_control"][data-mode="dark"],
+    [data-palette="emerald_control"]:not([data-mode="light"]) {
+      --bg: #0F172A;
+      --card: #064E3B;
+      --card-subtle: #065F46;
+      --primary: #34D399;
+      --accent: #34D399;
+      --accentd: #10B981;
+      --ink: #F0FDF4;
+      --ink2: #DCFCE7;
+      --line: #047857;
+      --muted: #94A3B8;
+      --ok: #34D399;
+      --warn: #FBBF24;
+      --danger: #F87171;
+    }
+    [data-palette="emerald_control"][data-mode="light"] {
+      --bg: #F0FDF4;
+      --card: #FFFFFF;
+      --card-subtle: #DCFCE7;
+      --primary: #059669;
+      --accent: #34D399;
+      --accentd: #047857;
+      --ink: #0F172A;
+      --ink2: #064E3B;
+      --line: #A7F3D0;
+      --muted: #4B5563;
+      --ok: #059669;
+      --warn: #D97706;
+      --danger: #DC2626;
+    }
+
+    [data-palette] body {
+      background: var(--bg) !important;
+      color: var(--ink) !important;
+    }
+    [data-palette] body::before,
+    [data-palette] body::after,
+    [data-palette] #dashboardWrap::before,
+    [data-palette] #dashboardWrap::after {
+      display: none !important;
+    }
+
+    /* Docked Theme Selector at the right-end of the whole web page */
+    .theme-dock-container {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      font-family: inherit;
+    }
+    .theme-dock-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: var(--card);
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      border-right: none;
+      border-radius: 12px 0 0 12px;
+      padding: 12px 7px;
+      cursor: pointer;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      user-select: none;
+    }
+    .theme-dock-tab:hover {
+      background: var(--primary);
+      color: #fff;
+      transform: translateX(-3px);
+    }
+    .theme-dock-tab .theme-dock-icon {
+      writing-mode: horizontal-tb;
+      font-size: 16px;
+      margin-bottom: 2px;
+    }
+    .theme-dock-tab .theme-dock-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    .theme-dock-panel {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 300px;
+      background: var(--card);
+      border: 1.5px solid var(--line);
+      border-radius: 16px 0 0 16px;
+      box-shadow: -10px 14px 40px rgba(0,0,0,0.4);
+      overflow: hidden;
+      z-index: 100000;
+      animation: slideDockIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideDockIn {
+      from { opacity: 0; transform: translateY(-50%) translateX(40px); }
+      to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    .theme-dock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--card-subtle);
+    }
+    .theme-palette-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1.5px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+    .theme-palette-opt:hover {
+      border-color: var(--primary);
+      transform: translateX(-2px);
+    }
+    .theme-palette-opt.active {
+      border-color: var(--primary);
+      background: var(--card-subtle);
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .theme-swatch-group {
+      display: flex;
+      gap: 3px;
+    }
+    .theme-swatch-group span {
+      width: 14px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+      display: inline-block;
+    }
+    .theme-palette-info {
+      flex: 1;
+    }
+    .theme-name {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--ink);
+    }
+    .theme-desc {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .theme-mode-btn.active {
+      background: var(--primary) !important;
+      color: #fff !important;
+    }
+    .theme-mode-btn:not(.active) {
+      background: transparent;
+      color: var(--muted);
+    }
+    .cust-highlight-new {
+      background: rgba(16, 185, 129, 0.12) !important;
+      border-left: 3px solid var(--ok) !important;
+    }
+    .cust-badge-new {
+      background: var(--ok);
+      color: #fff;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .cust-badge-existing {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -1794,6 +2149,9 @@
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="b" id="invAddColumn" type="button">➕ Add Column</button>
           <button class="b" id="invExport">📥 Export to Excel</button>
+          <button class="b" id="btnBulkEditImei" type="button" title="Bulk update inventory records by matching IMEI from an Excel file">✏️ Bulk Edit (IMEI)</button>
+          <button class="b d" id="btnBulkDeleteImei" type="button" title="Bulk delete inventory records by matching IMEI from an Excel file">🗑️ Bulk Delete (IMEI)</button>
+          <button class="b d" id="btnBulkDeleteExcel" type="button" title="Bulk delete inventory records by matching identifiers in an uploaded Excel file">🗑️ Bulk Delete (Excel)</button>
           <button class="b p" id="invAddDev">+ Add Device Record</button>
         </div>
       </div>
@@ -2113,6 +2471,26 @@
           <div id="valSummaryWrap" hidden>
             <div id="valTargetCustBanner" style="margin-top:10px"></div>
 
+            <!-- Customer & Duplicate Summary Card (Requirements 1, 2, 6) -->
+            <div id="customerDuplicateSummaryBox" class="card" style="padding:16px 18px;border:1.5px solid var(--primary);background:var(--card-subtle);border-radius:12px;margin:14px 0">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+                <div>
+                  <h4 style="margin:0;font-size:15px;display:flex;align-items:center;gap:8px">
+                    <span>👥</span> <span>Customer Identification & Duplicate Summary</span>
+                  </h4>
+                  <div class="sub" style="font-size:12px;margin-top:2px">Every customer in the uploaded workbook compared against database records. Duplicate customer entries are automatically prevented.</div>
+                </div>
+              </div>
+              <div class="stats" style="grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:12px">
+                <div class="card stat" style="border-left-color:var(--primary);padding:10px 14px"><b id="vExistingCustCount">0</b><span>📋 Existing Customers</span></div>
+                <div class="card stat" style="border-left-color:var(--ok);padding:10px 14px"><b id="vNewCustCount" style="color:var(--ok)">0</b><span>✨ New Customers</span></div>
+                <div class="card stat" style="border-left-color:var(--warn);padding:10px 14px"><b id="vDupCustSummary" style="color:var(--warn)">0</b><span>⚠️ Duplicate Entries</span></div>
+                <div class="card stat" style="border-left-color:#6366f1;padding:10px 14px"><b id="vTotalScannedSummary">0</b><span>📊 Total Scanned</span></div>
+              </div>
+              <!-- Customer Categorization Breakdown Table -->
+              <div id="custIdentTableWrap" style="max-height:180px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)"></div>
+            </div>
+
             <!-- Warnings for missing main columns -->
             <div id="valColWarnings" hidden
               style="background:var(--danger-bg, #fee2e2);border:1px solid var(--danger);color:var(--danger);padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;font-weight:600">
@@ -2124,7 +2502,7 @@
                   <span>📊</span> <span>Entry Segregation & Validation Review</span>
                 </h4>
                 <div class="sub" style="font-size:12px;margin-top:2px">
-                  Entries segregated by <b>New Entries</b>, <b>Updated Entries</b>, <b>Existing (Unchanged)</b>, and <b>Duplicate Errors</b>.
+                  Entries segregated across 7 key validation metrics and database tables.
                 </div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -2135,27 +2513,39 @@
                   <button class="b" data-valfilter="new" type="button" id="btnFilterNew" style="font-weight:700;color:var(--ok)">✨ New (<span id="vNewCount">0</span>)</button>
                   <button class="b" data-valfilter="updated" type="button" id="btnFilterUpdated" style="font-weight:700;color:#0284c7">🔄 Updated (<span id="vUpdatedCount">0</span>)</button>
                   <button class="b" data-valfilter="existing" type="button" id="btnFilterExisting">📋 Existing (<span id="vExistingCount">0</span>)</button>
+                  <button class="b" data-valfilter="review" type="button" id="btnFilterReview" style="font-weight:700;color:#d97706">🔍 Review (<span id="vReviewCount">0</span>)</button>
                   <button class="b" data-valfilter="duplicate" type="button" id="btnFilterDup">⚠️ Duplicates (<span id="vDupCount">0</span>)</button>
+                  <button class="b" data-valfilter="cannot" type="button" id="btnFilterCannot" style="font-weight:700;color:#dc2626">⛔ Blocked (<span id="vCannotCount">0</span>)</button>
                 </div>
               </div>
             </div>
 
-            <!-- Segregation Metric Cards -->
-            <div class="stats" style="margin-top:10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px">
-              <div class="card stat" style="border-left-color:var(--ok);padding:10px 14px"><b id="vNew">0</b><span>✨ New Entries (Add to DB)</span></div>
-              <div class="card stat" style="border-left-color:#38bdf8;padding:10px 14px"><b id="vUpdated">0</b><span>🔄 Updated Entries</span></div>
-              <div class="card stat" style="border-left-color:#94a3b8;padding:10px 14px"><b id="vExisting">0</b><span>📋 Existing (Unchanged)</span></div>
-              <div class="card stat" style="border-left-color:var(--warn);padding:10px 14px"><b id="vDup">0</b><span>⚠️ Duplicate Conflicts</span></div>
-              <div class="card stat" style="border-left-color:var(--primary);padding:10px 14px"><b id="vTotalScanned">0</b><span>Total Scanned</span></div>
+            <!-- The 7 Segregation Metric Cards (Requirements 3 & 5) -->
+            <div class="stats" style="margin-top:10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px">
+              <div class="card stat" style="border-left-color:var(--primary);padding:10px 12px"><b id="vTotalScanned">0</b><span>1. Total Scanned</span></div>
+              <div class="card stat" style="border-left-color:#10b981;padding:10px 12px"><b id="vValid">0</b><span>2. Valid Entries</span></div>
+              <div class="card stat" style="border-left-color:#f59e0b;padding:10px 12px"><b id="vReview">0</b><span>3. Requiring Review</span></div>
+              <div class="card stat" style="border-left-color:#ef4444;padding:10px 12px"><b id="vDup">0</b><span>4. Duplicate Entries</span></div>
+              <div class="card stat" style="border-left-color:var(--ok);padding:10px 12px"><b id="vNew">0</b><span>5. Eligible to Add</span></div>
+              <div class="card stat" style="border-left-color:#38bdf8;padding:10px 12px"><b id="vUpdated">0</b><span>6. Eligible to Update</span></div>
+              <div class="card stat" style="border-left-color:#64748b;padding:10px 12px"><b id="vCannotAdd">0</b><span>7. Cannot Add/Update</span></div>
             </div>
 
             <div id="valMetaBadges" style="margin:10px 0;display:flex;gap:12px;flex-wrap:wrap;font-size:13px"></div>
+
+            <!-- Add or Update Entries Action Container & No Eligible Banner (Requirement 7) -->
+            <div id="msgNoEligibleUpload" hidden style="background:var(--card-subtle);border:1.5px solid var(--warn);color:var(--ink);padding:12px 16px;border-radius:10px;margin:12px 0;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:10px">
+              <span style="font-size:20px">⚠️</span>
+              <span>No new or updated entries are available to add. All entries are either duplicates or already up-to-date in the database.</span>
+            </div>
 
             <div class="row" style="margin:14px 0;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="b p" id="btnConfirmUpload" type="button" style="font-weight:700;padding:10px 22px;border-radius:8px">
                 Confirm & Upload Records to Customer Data
               </button>
-              <button class="b" id="btnDlSkipped" type="button" hidden>Download Duplicate Errors Excel</button>
+              <button class="b" id="btnDlSkipped" type="button" hidden style="font-weight:700;display:inline-flex;align-items:center;gap:6px">
+                <span>📥</span> <span>Download Duplicate Errors as Excel (2 Sheets)</span>
+              </button>
             </div>
 
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:8px">
@@ -3080,7 +3470,31 @@
         </div>
       </div>
 
-      <div class="card" style="padding:20px;border:1px solid var(--line);margin-top:14px">
+      <!-- Dynamic Error Reason Filter & Search Bar -->
+      <div class="card" style="padding:16px 20px;border:1px solid var(--line);margin:14px 0 10px;background:var(--card-subtle);border-radius:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <label for="errReasonFilter" style="font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px">
+              <span>🎯</span> <span>Filter by Error Reason:</span>
+            </label>
+            <select id="errReasonFilter" style="min-width:240px;height:36px;font-weight:600;padding:0 12px;border-radius:8px;border:1.5px solid var(--primary);background:var(--card);font-size:13px">
+              <option value="">All Error Reasons</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <input id="errSearchFilter" placeholder="🔍 Search by IMEI, Customer, ICCID, Reason..." style="width:280px;height:36px;font-size:13px;padding:0 12px;border-radius:8px" autocomplete="off" />
+            <button class="b" id="errFilterClear" type="button" style="height:36px;padding:0 12px;font-size:12px">Clear Filter</button>
+            <button class="b d" id="btnDeleteFilteredErrors" type="button" style="height:36px;padding:0 14px;background:#dc2626;color:#fff;font-weight:700;border-color:#b91c1c" title="Directly and permanently delete all entries currently matching the filter from database">🗑️ Delete All Filtered (<span id="errFilteredCount">0</span>)</button>
+          </div>
+        </div>
+        <!-- Dynamic Error Reason Pill Badges -->
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Quick Filters:</span>
+          <div id="errCategoryPills" style="display:inline-flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:20px;border:1px solid var(--line);margin-top:10px">
         <div id="errorsTableWrap">
           <div class="empty">Loading errored entries…</div>
         </div>
@@ -3159,6 +3573,246 @@
   </div>
 
   <!-- =========================================================================
+     POPUP: BULK DELETE USING EXCEL FILES (Inventory Management)
+     ========================================================================= -->
+  <dialog id="dlgBulkDeleteExcel" class="modal-card" style="width:min(880px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">🗑️</span>
+        <div>
+          <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text)">Bulk Delete Inventory via Excel File</h3>
+          <p class="sub" style="margin:2px 0 0;font-size:12px">Upload an Excel or CSV file to match and delete inventory records from database and cloud.</p>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgBulkDeleteExcel" style="font-size:20px;padding:4px 10px;cursor:pointer">✕</button>
+    </div>
+
+    <div style="padding:22px 26px;overflow-y:auto;max-height:calc(90vh - 75px)">
+      <!-- Step 1: Upload File -->
+      <div class="card" style="padding:18px 20px;border:1.5px dashed var(--line);background:var(--card-subtle);border-radius:12px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <b style="font-size:14px;display:flex;align-items:center;gap:6px"><span>📁</span> <span>Step 1: Upload Excel File (.xlsx, .xls, .csv)</span></b>
+            <p class="sub" style="margin:3px 0 0;font-size:12px">Select an Excel file containing the identifiers (IMEI, ICCID, Device Serial No, etc.) of records to delete.</p>
+          </div>
+          <div>
+            <input type="file" id="bulkDelFileInput" accept=".xlsx,.xls,.csv" style="display:none" />
+            <button class="b p" type="button" onclick="$('bulkDelFileInput').click()" style="background:#2563eb;color:#fff;font-weight:700">📤 Choose Excel File</button>
+          </div>
+        </div>
+        <div id="bulkDelFileInfo" style="margin-top:10px;font-size:12.5px;color:var(--text);font-weight:600" hidden></div>
+      </div>
+
+      <!-- Step 2: Column Mapping Selection -->
+      <div id="bulkDelMappingBox" hidden class="card" style="padding:18px 20px;border:1px solid var(--line);background:var(--card);border-radius:12px;margin-bottom:18px">
+        <b style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:12px"><span>⚙️</span> <span>Step 2: Choose Matching Columns</span></b>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <label for="selBulkDelExcelCol" style="font-weight:700">Select Excel Column with Identifiers:</label>
+            <select id="selBulkDelExcelCol" style="font-weight:600;height:38px"></select>
+          </div>
+          <div>
+            <label for="selBulkDelDbCol" style="font-weight:700">Match against Database Column:</label>
+            <select id="selBulkDelDbCol" style="font-weight:600;height:38px">
+              <option value="imei">IMEI Number (Exact Match)</option>
+              <option value="iccid">ICCID / SIM Number</option>
+              <option value="device_sr_no">Device Serial Number</option>
+              <option value="msisdn1">MSISDN (Mobile / SIM 1)</option>
+              <option value="customer_name">Customer Name</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:14px;text-align:right">
+          <button class="b p" id="btnAnalyzeBulkDelete" type="button" style="background:#2563eb;color:#fff;font-weight:700">🔍 Analyze & Preview Matches</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Match Preview Cards -->
+      <div id="bulkDelPreviewBox" hidden class="card" style="padding:18px 20px;border:1.5px solid var(--primary);background:var(--card-subtle);border-radius:12px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+          <b style="font-size:14.5px;color:var(--text);display:flex;align-items:center;gap:8px"><span>📊</span> <span>Step 3: Verification & Deletion Preview</span></b>
+          <span class="tag info" id="bulkDelTargetColBadge" style="font-weight:700">Matching Column: IMEI</span>
+        </div>
+
+        <div class="stats" style="grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin:12px 0">
+          <div class="card stat" style="padding:10px 14px"><b id="bulkDelTotalRead" style="font-size:18px">0</b><span>Total in Excel</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--ok)"><b id="bulkDelMatchedCount" style="font-size:18px;color:var(--ok)">0</b><span>Matching in DB</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--warn)"><b id="bulkDelUnmatchedCount" style="font-size:18px;color:var(--warn)">0</b><span>Unmatched</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="bulkDelDupCount" style="font-size:18px">0</b><span>Duplicates in File</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:#dc2626"><b id="bulkDelEligibleCount" style="font-size:18px;color:#dc2626">0</b><span>Eligible to Delete</span></div>
+        </div>
+
+        <!-- Deletion Mode & Safety Confirmation -->
+        <div style="background:var(--card);padding:14px 16px;border-radius:10px;border:1px solid var(--line);margin:14px 0">
+          <div style="font-weight:700;font-size:13.5px;margin-bottom:8px">Select Deletion Action:</div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px">
+            <label style="display:inline-flex;align-items:center;gap:8px;font-weight:600;cursor:pointer">
+              <input type="radio" name="bulkDelMode" value="cart" checked />
+              <span>🛒 Move Matching Records to Cart (Safe & Recoverable)</span>
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;color:#dc2626">
+              <input type="radio" name="bulkDelMode" value="permanent" />
+              <span>⚡ Permanently Delete Forever from Database & TiDB Cloud</span>
+            </label>
+          </div>
+          <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);font-weight:600;cursor:pointer">
+            <input type="checkbox" id="chkConfirmBulkDelete" />
+            <span>I have verified the preview and authorize deleting the matching inventory records.</span>
+          </label>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">
+          <button class="b" id="btnCancelBulkDelete" type="button">Cancel</button>
+          <button class="b d" id="btnExecuteBulkDelete" disabled style="background:#dc2626;color:#fff;font-weight:700;border-color:#b91c1c">🗑️ Confirm & Execute Bulk Deletion</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Live Progress Bar -->
+      <div id="bulkDelProgressBox" hidden style="margin:16px 0;background:var(--card);padding:20px;border:1.5px solid var(--danger, #ef4444);border-radius:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="spin" style="font-size:22px">⏳</span>
+            <div>
+              <b style="font-size:15px;color:var(--ink)">Executing Bulk Deletion…</b>
+              <div id="bulkDelProgStatus" style="font-size:12.5px;color:var(--danger, #dc2626);font-weight:600;margin-top:2px">Processing batches…</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <span id="bulkDelProgPct" style="font-size:22px;font-weight:800;color:var(--danger, #dc2626)">0%</span>
+          </div>
+        </div>
+        <div class="progress-bar" style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;margin:10px 0;border:1px solid var(--line)">
+          <div class="progress-fill" id="bulkDelProgBar" style="width:0%;height:100%;background:linear-gradient(90deg, #ef4444, #dc2626);transition:width 0.2s ease"></div>
+        </div>
+      </div>
+
+      <!-- Step 5: Completion Report Banner -->
+      <div id="bulkDelReportBanner" hidden style="margin-top:16px;background:var(--ok-bg, rgba(16,185,129,0.1));border:1px solid var(--ok, #10b981);border-radius:12px;padding:18px;color:var(--ink)">
+        <div style="font-weight:800;font-size:15px;color:var(--ok, #10b981);margin-bottom:6px">✅ Bulk Deletion Successfully Completed!</div>
+        <div id="bulkDelReportSummary" style="font-size:13px;line-height:1.5"></div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="b p" id="btnDoneBulkDelete" type="button">Close & View Updated Inventory</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- =========================================================================
+     POPUP: BULK EDIT USING IMEI (Excel)
+     ========================================================================= -->
+  <dialog id="dlgBulkEditImei" class="modal-card" style="width:min(900px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">✏️</span>
+        <div>
+          <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text)">Bulk Edit Inventory via IMEI (Excel)</h3>
+          <p class="sub" style="margin:2px 0 0;font-size:12px">Upload an Excel or CSV file with IMEI numbers to batch update inventory attributes in database & cloud.</p>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgBulkEditImei" style="font-size:20px;padding:4px 10px;cursor:pointer">✕</button>
+    </div>
+
+    <div style="padding:22px 26px;overflow-y:auto;max-height:calc(90vh - 75px)">
+      <!-- Step 1: Upload File -->
+      <div class="card" style="padding:18px 20px;border:1.5px dashed var(--line);background:var(--card-subtle);border-radius:12px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <b style="font-size:14px;display:flex;align-items:center;gap:6px"><span>📁</span> <span>Step 1: Upload Excel File (.xlsx, .xls, .csv)</span></b>
+            <p class="sub" style="margin:3px 0 0;font-size:12px">File must contain an IMEI column and one or more columns with updated values.</p>
+          </div>
+          <div>
+            <input type="file" id="bulkEditFileInput" accept=".xlsx,.xls,.csv" style="display:none" />
+            <button class="b p" type="button" onclick="$('bulkEditFileInput').click()" style="background:#2563eb;color:#fff;font-weight:700">📤 Choose Excel File</button>
+          </div>
+        </div>
+        <div id="bulkEditFileInfo" style="margin-top:10px;font-size:12.5px;color:var(--text);font-weight:600" hidden></div>
+      </div>
+
+      <!-- Step 2: Column Mapping Selection -->
+      <div id="bulkEditMappingBox" hidden class="card" style="padding:18px 20px;border:1px solid var(--line);background:var(--card);border-radius:12px;margin-bottom:18px">
+        <b style="font-size:14px;display:flex;align-items:center;gap:6px;margin-bottom:8px"><span>⚙️</span> <span>Step 2: Map Columns for Update</span></b>
+        <p class="sub" style="margin:0 0 14px;font-size:12px">Select which column in your file contains the IMEI, and which database fields should be updated. Unmapped or blank cells will not overwrite existing values.</p>
+
+        <div style="margin-bottom:14px">
+          <label for="selBulkEditImeiCol" style="font-weight:700;color:var(--primary)">Primary Key: Excel Column with IMEI Number:</label>
+          <select id="selBulkEditImeiCol" style="font-weight:600;height:38px;width:100%"></select>
+        </div>
+
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">Map Target Fields to Update:</div>
+        <div id="bulkEditFieldsGrid" class="form-grid" style="grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:10px"></div>
+
+        <div style="margin-top:16px;text-align:right">
+          <button class="b p" id="btnAnalyzeBulkEdit" type="button" style="background:#2563eb;color:#fff;font-weight:700">🔍 Analyze & Preview Changes</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Match & Changes Preview -->
+      <div id="bulkEditPreviewBox" hidden class="card" style="padding:18px 20px;border:1.5px solid var(--primary);background:var(--card-subtle);border-radius:12px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+          <b style="font-size:14.5px;color:var(--text);display:flex;align-items:center;gap:8px"><span>📊</span> <span>Step 3: Verification & Changes Preview</span></b>
+          <span class="tag info" id="bulkEditMatchedBadge" style="font-weight:700">Ready to Review</span>
+        </div>
+
+        <div class="stats" style="grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin:12px 0">
+          <div class="card stat" style="padding:10px 14px"><b id="bulkEditTotalRead" style="font-size:18px">0</b><span>Total in Excel</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--ok)"><b id="bulkEditMatchedCount" style="font-size:18px;color:var(--ok)">0</b><span>Matching in DB</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--warn)"><b id="bulkEditUnmatchedCount" style="font-size:18px;color:var(--warn)">0</b><span>Unmatched</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="bulkEditDupCount" style="font-size:18px">0</b><span>Duplicates in File</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:#6366f1"><b id="bulkEditInvalidCount" style="font-size:18px">0</b><span>Invalid/Blank</span></div>
+          <div class="card stat" style="padding:10px 14px;border-left-color:#0284c7"><b id="bulkEditEligibleCount" style="font-size:18px;color:#0284c7">0</b><span>Eligible to Update</span></div>
+        </div>
+
+        <!-- Sample Changes Preview Table -->
+        <div style="margin:14px 0">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px">Sample Field Value Changes:</div>
+          <div id="bulkEditSampleChangesWrap" style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)"></div>
+        </div>
+
+        <!-- Safety Confirmation -->
+        <div style="background:var(--card);padding:14px 16px;border-radius:10px;border:1px solid var(--line);margin:14px 0">
+          <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);font-weight:600;cursor:pointer">
+            <input type="checkbox" id="chkConfirmBulkEdit" />
+            <span>I have verified the preview and authorize bulk updating the matching inventory records.</span>
+          </label>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">
+          <button class="b" id="btnCancelBulkEdit" type="button">Cancel</button>
+          <button class="b p" id="btnExecuteBulkEdit" disabled style="background:#0284c7;color:#fff;font-weight:700;border-color:#0369a1">✏️ Confirm & Execute Bulk Edit</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Progress Bar -->
+      <div id="bulkEditProgressBox" hidden style="margin:16px 0;background:var(--card);padding:20px;border:1.5px solid var(--primary);border-radius:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="spin" style="font-size:22px">⏳</span>
+            <div>
+              <b style="font-size:15px;color:var(--ink)">Applying Bulk Updates…</b>
+              <div id="bulkEditProgStatus" style="font-size:12.5px;color:var(--primary);font-weight:600;margin-top:2px">Processing batches…</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <span id="bulkEditProgPct" style="font-size:22px;font-weight:800;color:var(--primary)">0%</span>
+          </div>
+        </div>
+        <div class="progress-bar" style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;margin:10px 0;border:1px solid var(--line)">
+          <div class="progress-fill" id="bulkEditProgBar" style="width:0%;height:100%;background:linear-gradient(90deg, #0284c7, #38bdf8);transition:width 0.2s ease"></div>
+        </div>
+      </div>
+
+      <!-- Step 5: Completion Report Banner -->
+      <div id="bulkEditReportBanner" hidden style="margin-top:16px;background:var(--ok-bg, rgba(16,185,129,0.1));border:1px solid var(--ok, #10b981);border-radius:12px;padding:18px;color:var(--ink)">
+        <div style="font-weight:800;font-size:15px;color:var(--ok, #10b981);margin-bottom:6px">✅ Bulk Edit Successfully Completed!</div>
+        <div id="bulkEditReportSummary" style="font-size:13px;line-height:1.5"></div>
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="b p" id="btnDoneBulkEdit" type="button">Close & View Updated Inventory</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- =========================================================================
      POPUP 1: AUDIT LOG (LOGIN INVENTORY) MODAL
      ========================================================================= -->
   <dialog id="dlgAuditLog" class="modal-card">
@@ -3226,10 +3880,11 @@
               autocapitalize="none" autocomplete="off" required /></div>
           <div><label for="up">Initial Password * (8+ chars)</label><input id="up" type="password"
               autocomplete="new-password" required /></div>
-          <div><label for="ur2">Assigned Role (Auto by ID)</label>
-            <select id="ur2" disabled title="Role is set automatically by the ID number">
-              <option value="admin">Admin (0001–0010: Master Admins & Admin Users)</option>
-              <option value="limited">Limited (Regular Users created after 0010)</option>
+          <div><label for="ur2">Assigned Role</label>
+            <select id="ur2" title="Select assigned employee role tier">
+              <option value="master_admin" selected>⭐ Master Admin (Default)</option>
+              <option value="admin_user">🛡️ Regular Admin</option>
+              <option value="regular_user">👤 Regular User</option>
             </select>
           </div>
         </div>
@@ -3308,8 +3963,15 @@
           <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
             <input type="checkbox" id="perm_act_delete" data-perm="delete" style="margin-top:2px;accent-color:var(--primary)" />
             <div>
-              <b style="font-size:12.5px;display:block">🗑️ Delete Data</b>
-              <span class="sub" style="font-size:11px;color:var(--muted)">Delete records, errors & bin purge</span>
+              <b style="font-size:12.5px;display:block">🗑️ Delete Valid Inventory</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">General deletion and bulk deletion of valid inventory</span>
+            </div>
+          </label>
+          <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
+            <input type="checkbox" id="perm_act_delete_invalid" data-perm="delete_invalid" style="margin-top:2px;accent-color:var(--primary)" />
+            <div>
+              <b style="font-size:12.5px;display:block">⚠️ Delete Invalid Entries</b>
+              <span class="sub" style="font-size:11px;color:var(--muted)">Direct deletion and batch purging of errored / invalid entries</span>
             </div>
           </label>
           <label class="perm-card" style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;cursor:pointer">
@@ -3583,8 +4245,10 @@
         <button class="b p" type="submit">Update Password</button>
       </div>
     </form>
-    <!-- Edit & Upload Errored Entry Dialog -->
-    <dialog id="dlgEditError" style="width:min(720px, 94vw)">
+  </dialog>
+
+  <!-- Edit & Upload Errored Entry Dialog -->
+  <dialog id="dlgEditError" style="width:min(720px, 94vw)">
       <form id="formEditError">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <h2 style="margin:0">✏️ Correct & Upload Entry</h2>
@@ -3750,11 +4414,54 @@
     <div id="toast" role="status"></div>
 
     <script>
+      // Apply theme immediately from localStorage before render
+      (function() {
+        const pal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+        const m = localStorage.getItem('valut_theme_mode') || 'dark';
+        document.documentElement.setAttribute('data-palette', pal);
+        document.documentElement.setAttribute('data-mode', m);
+      })();
+
       const $ = id => document.getElementById(id);
       let tok = localStorage.getItem('token');
       const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
       const myRole = () => { const u = getUser(); return u.role || (u.is_admin ? 'admin' : 'standard'); };
       const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+      const getUserNormId = () => {
+        const u = getUser();
+        const raw = (u.user_id || '').trim().toLowerCase();
+        return /^\d+$/.test(raw) ? raw.padStart(4, '0') : raw;
+      };
+      const isSuperAdminUser = () => {
+        const u = getUser(), norm = getUserNormId();
+        return ['0001', '0007'].includes(norm) || u.category === 'super_admin';
+      };
+      const isMasterAdminUser = () => {
+        const u = getUser(), norm = getUserNormId();
+        return ['0002', '0003', '0004'].includes(norm) || u.category === 'master_admin';
+      };
+      const isRegularAdminUser = () => {
+        const u = getUser(), norm = getUserNormId();
+        return ['0005', '0006', '0008', '0009', '0010'].includes(norm) || u.category === 'admin_user';
+      };
+      const canDeleteValidInventory = () => {
+        if (isSuperAdminUser()) return true;
+        if (isMasterAdminUser()) return false; // Master Admin is explicitly forbidden from deleting valid inventory
+        const u = getUser();
+        if (u.permissions && u.permissions.delete !== undefined) return Boolean(u.permissions.delete);
+        if (isRegularAdminUser()) return true;
+        return false;
+      };
+      const canDeleteInvalidEntries = () => {
+        if (isSuperAdminUser() || isMasterAdminUser() || isRegularAdminUser()) return true;
+        const u = getUser();
+        if (u.permissions && u.permissions.delete_invalid !== undefined) return Boolean(u.permissions.delete_invalid);
+        return false;
+      };
+      const canAccessLoginInventory = () => {
+        return isSuperAdminUser() || isMasterAdminUser();
+      };
 
       // Standard Column Registry
       const COLS = [
@@ -4488,6 +5195,7 @@
       }
 
       function switchView(signedIn) {
+        initThemeDock();
         if (signedIn) {
           $('authWrap').style.display = 'none';
           $('dashboardWrap').style.display = 'block';
@@ -4539,15 +5247,15 @@
           S = s; XC = x;
           localStorage.setItem('user', JSON.stringify(me));
 
-          const rawMe = (me.user_id || '').trim().toLowerCase();
-          const normMe = /^\d+$/.test(rawMe) ? rawMe.padStart(4, '0') : rawMe;
-          const isSuperAdmin = ['0001', '0007'].includes(normMe);
+          const isSuperAdmin = isSuperAdminUser();
           const perms = me.permissions || {};
           const canView = perm => isSuperAdmin || perms[perm] !== false;
 
           // Both Super Admins have access to the Manage Users & Permissions section
           if ($('bUsers')) $('bUsers').hidden = !isSuperAdmin;
-          if ($('btnEmptyCart')) $('btnEmptyCart').hidden = !isAdm || !canView('delete');
+          if ($('btnEmptyCart')) $('btnEmptyCart').hidden = !canDeleteValidInventory();
+          if ($('btnBulkDeleteImei')) $('btnBulkDeleteImei').hidden = !canDeleteValidInventory();
+          if ($('btnBulkDeleteExcel')) $('btnBulkDeleteExcel').hidden = !canDeleteValidInventory();
           $('cartCountBadge').textContent = (cart.length + (S.deleted_customers || 0)).toString();
           if ($('errorsCountBadge')) $('errorsCountBadge').textContent = (S.errored_records || 0).toString();
 
@@ -4574,7 +5282,8 @@
               }
             }
           }
-          if ($('bLogInv')) $('bLogInv').hidden = !canView('page_audit');
+          // Login Inventory: visible ONLY to Super Admins and Master Admins
+          if ($('bLogInv')) $('bLogInv').hidden = !canAccessLoginInventory();
 
           // Action button visibility
           if ($('btnDownloadAllCustData')) $('btnDownloadAllCustData').hidden = !canView('download');
@@ -4820,7 +5529,7 @@
         try {
           const d = await api(`/api/devices?page=${livePage}&page_size=25&q=${encodeURIComponent(liveQ)}&column=${liveCol}&sort_by=${sortCol}&sort_dir=${sortDir}${liveCid ? '&customer_id=' + liveCid : ''}`);
           const s = (d.page - 1) * 25;
-          const staff = myRole() !== 'limited';
+          const staff = canDeleteValidInventory();
           const act = dev => `
       <div style="display:flex;gap:4px">
         <button class="b" data-editdev="${dev.id}" style="height:28px;padding:0 8px;font-size:12px">Edit</button>
@@ -4998,8 +5707,582 @@
         dlg.showModal();
       }
 
+      function openBulkDeleteExcelModal() {
+        if (!canDeleteValidInventory()) {
+          toast('Access Denied: Master Admins do not have permission to delete inventory records.');
+          return;
+        }
+        const dlg = $('dlgBulkDeleteExcel');
+        if (!dlg) return;
+
+        // Reset state
+        if ($('bulkDelFileInput')) $('bulkDelFileInput').value = '';
+        if ($('bulkDelFileName')) $('bulkDelFileName').textContent = 'No file chosen';
+        if ($('bulkDelFileSummary')) $('bulkDelFileSummary').textContent = '';
+        if ($('bulkDelMappingBox')) $('bulkDelMappingBox').hidden = true;
+        if ($('bulkDelPreviewBox')) $('bulkDelPreviewBox').hidden = true;
+        if ($('bulkDelProgressBox')) $('bulkDelProgressBox').hidden = true;
+        if ($('bulkDelReportBanner')) $('bulkDelReportBanner').hidden = true;
+        if ($('chkConfirmBulkDelete')) $('chkConfirmBulkDelete').checked = false;
+        if ($('btnExecuteBulkDelete')) $('btnExecuteBulkDelete').disabled = true;
+
+        window._bulkDelFileRows = null;
+        window._bulkDelHeaders = null;
+        window._bulkDelAnalyzedValues = null;
+        window._bulkDelAnalyzedDbCol = null;
+
+        // Wire file input
+        $('bulkDelFileInput').onchange = e => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          $('bulkDelFileName').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+          $('bulkDelFileSummary').textContent = 'Reading and analyzing file…';
+
+          const reader = new FileReader();
+          reader.onload = ev => {
+            try {
+              const data = new Uint8Array(ev.target.result);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+              if (!jsonRows || jsonRows.length < 2) {
+                toast('The uploaded file is empty or does not contain data rows.');
+                $('bulkDelFileSummary').textContent = 'File is empty or missing data rows.';
+                return;
+              }
+
+              const headers = (jsonRows[0] || []).map(h => String(h || '').trim()).filter(Boolean);
+              if (!headers.length) {
+                toast('No valid header columns found in the uploaded file.');
+                $('bulkDelFileSummary').textContent = 'No column headers detected in row 1.';
+                return;
+              }
+
+              window._bulkDelFileRows = jsonRows;
+              window._bulkDelHeaders = headers;
+
+              // Populate select
+              const sel = $('selBulkDelExcelCol');
+              sel.innerHTML = headers.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('');
+
+              // Auto-detect matching header
+              let defaultMatch = headers[0];
+              for (const h of headers) {
+                const hl = h.toLowerCase();
+                if (hl.includes('imei')) { defaultMatch = h; if ($('selBulkDelDbCol')) $('selBulkDelDbCol').value = 'imei'; break; }
+                if (hl.includes('iccid') || hl.includes('ccid')) { defaultMatch = h; if ($('selBulkDelDbCol')) $('selBulkDelDbCol').value = 'iccid'; break; }
+                if (hl.includes('serial') || hl.includes('sr_no') || hl.includes('sr no')) { defaultMatch = h; if ($('selBulkDelDbCol')) $('selBulkDelDbCol').value = 'device_sr_no'; break; }
+                if (hl.includes('msisdn') || hl.includes('phone') || hl.includes('mobile')) { defaultMatch = h; if ($('selBulkDelDbCol')) $('selBulkDelDbCol').value = 'msisdn1'; break; }
+                if (hl.includes('customer') || hl.includes('client')) { defaultMatch = h; if ($('selBulkDelDbCol')) $('selBulkDelDbCol').value = 'customer_name'; break; }
+              }
+              sel.value = defaultMatch;
+
+              $('bulkDelFileSummary').textContent = `✅ Successfully loaded ${jsonRows.length - 1} rows with ${headers.length} detected columns.`;
+              $('bulkDelMappingBox').hidden = false;
+              $('bulkDelPreviewBox').hidden = true;
+              $('bulkDelProgressBox').hidden = true;
+              $('bulkDelReportBanner').hidden = true;
+            } catch (err) {
+              toast('Failed to parse Excel file: ' + err.message);
+              $('bulkDelFileSummary').textContent = 'Error parsing file: ' + err.message;
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        };
+
+        // Wire Analyze & Preview Matches button
+        $('btnAnalyzeBulkDelete').onclick = async () => {
+          if (!window._bulkDelFileRows || !window._bulkDelHeaders) {
+            toast('Please choose a valid Excel file first.');
+            return;
+          }
+          const selCol = $('selBulkDelExcelCol').value;
+          const colIdx = window._bulkDelHeaders.indexOf(selCol);
+          if (colIdx === -1) {
+            toast('Selected column not found in headers.');
+            return;
+          }
+
+          const rawVals = window._bulkDelFileRows.slice(1).map(r => String(r[colIdx] || '').trim()).filter(Boolean);
+          if (!rawVals.length) {
+            toast(`Column "${selCol}" does not contain any non-empty identifier values.`);
+            return;
+          }
+
+          const dbCol = ($('selBulkDelDbCol') && $('selBulkDelDbCol').value) || 'imei';
+
+          $('btnAnalyzeBulkDelete').disabled = true;
+          $('btnAnalyzeBulkDelete').textContent = 'Analyzing Database Matches…';
+
+          try {
+            const res = await api('/api/devices/bulk-delete/preview', {
+              method: 'POST',
+              body: JSON.stringify({ column: dbCol, values: rawVals })
+            });
+
+            $('bulkDelTotalRead').textContent = res.total_values.toLocaleString();
+            $('bulkDelMatchedCount').textContent = res.matching_records.toLocaleString();
+            $('bulkDelUnmatchedCount').textContent = res.unmatched_values.toLocaleString();
+            $('bulkDelDupCount').textContent = res.duplicate_values.toLocaleString();
+            $('bulkDelEligibleCount').textContent = res.eligible_for_deletion.toLocaleString();
+
+            window._bulkDelAnalyzedValues = rawVals;
+            window._bulkDelAnalyzedDbCol = dbCol;
+
+            $('bulkDelPreviewBox').hidden = false;
+            $('chkConfirmBulkDelete').checked = false;
+            $('btnExecuteBulkDelete').disabled = true;
+            $('bulkDelProgressBox').hidden = true;
+            $('bulkDelReportBanner').hidden = true;
+
+            if (res.eligible_for_deletion === 0) {
+              toast(`Preview ready: 0 matching records found in database for column "${dbCol}".`);
+            } else {
+              toast(`Preview ready: ${res.eligible_for_deletion} records eligible for deletion.`);
+            }
+          } catch (err) {
+            fail(err);
+          } finally {
+            $('btnAnalyzeBulkDelete').disabled = false;
+            $('btnAnalyzeBulkDelete').textContent = '🔍 Analyze & Preview Matches';
+          }
+        };
+
+        // Wire Confirmation checkbox
+        if ($('chkConfirmBulkDelete')) {
+          $('chkConfirmBulkDelete').onchange = e => {
+            if ($('btnExecuteBulkDelete')) {
+              const eligible = parseInt($('bulkDelEligibleCount')?.textContent?.replace(/,/g, '') || '0', 10);
+              $('btnExecuteBulkDelete').disabled = !e.target.checked || eligible === 0;
+            }
+          };
+        }
+
+        // Wire Execute Bulk Deletion button
+        $('btnExecuteBulkDelete').onclick = async () => {
+          if (!canDeleteValidInventory()) {
+            toast('Access Denied: Master Admins do not have permission to delete inventory records.');
+            return;
+          }
+          if (!window._bulkDelAnalyzedValues || !window._bulkDelAnalyzedDbCol) {
+            toast('Please preview the matches before executing deletion.');
+            return;
+          }
+
+          const mode = document.querySelector('input[name="bulkDelMode"]:checked')?.value || 'cart';
+          const isPermanent = mode === 'permanent';
+          const eligible = parseInt($('bulkDelEligibleCount')?.textContent?.replace(/,/g, '') || '0', 10);
+
+          if (isPermanent) {
+            if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently erase ${eligible} matching inventory records from the database and TiDB Cloud forever!\n\nThey CANNOT be recovered or restored from the Cart.\n\nAre you absolutely sure you want to permanently erase them?`)) {
+              return;
+            }
+          } else {
+            if (!confirm(`Move ${eligible} matching inventory records to Cart (Recycle Bin)?`)) {
+              return;
+            }
+          }
+
+          $('btnExecuteBulkDelete').disabled = true;
+          $('chkConfirmBulkDelete').disabled = true;
+          $('bulkDelProgressBox').hidden = false;
+          $('bulkDelProgBar').style.width = '25%';
+          $('bulkDelProgPct').textContent = '25%';
+          $('bulkDelProgStatus').textContent = 'Executing bulk deletion in database…';
+
+          try {
+            $('bulkDelProgBar').style.width = '60%';
+            $('bulkDelProgPct').textContent = '60%';
+            $('bulkDelProgStatus').textContent = 'Processing records and synchronizing cloud tables…';
+
+            const res = await api('/api/devices/bulk-delete/execute', {
+              method: 'POST',
+              body: JSON.stringify({
+                column: window._bulkDelAnalyzedDbCol,
+                values: window._bulkDelAnalyzedValues,
+                permanent: isPermanent
+              })
+            });
+
+            $('bulkDelProgBar').style.width = '100%';
+            $('bulkDelProgPct').textContent = '100%';
+            $('bulkDelProgStatus').textContent = 'Complete! Changes committed to database.';
+
+            await new Promise(r => setTimeout(r, 350));
+            $('bulkDelProgressBox').hidden = true;
+            $('bulkDelReportBanner').hidden = false;
+
+            const modeLabel = res.permanent ? '⚡ Permanently Deleted Forever' : '🛒 Moved to Cart';
+            $('bulkDelReportSummary').innerHTML = `
+              <b>Execution Report:</b><br />
+              • <b>Successfully Deleted:</b> <span style="font-weight:800;color:var(--ok)">${res.deleted_count}</span> record(s) (${modeLabel})<br />
+              • <b>Skipped / Duplicates in File:</b> ${res.skipped_count} value(s)<br />
+              • <b>Unmatched Identifiers:</b> ${res.unmatched_count} value(s)<br />
+              • <b>Failures:</b> ${res.failures_count || 0}<br />
+              • <b>Target Database Column:</b> <code>${esc(res.column)}</code>
+            `;
+
+            toast(`Bulk deletion complete: ${res.deleted_count} record(s) ${res.permanent ? 'permanently erased' : 'moved to Cart'}.`);
+            await fetchInventoryRows();
+            await updateChrome();
+          } catch (err) {
+            $('bulkDelProgressBox').hidden = true;
+            fail(err);
+          } finally {
+            $('btnExecuteBulkDelete').disabled = false;
+            $('chkConfirmBulkDelete').disabled = false;
+          }
+        };
+
+        // Close and Cancel buttons
+        if ($('closeDlgBulkDeleteExcel')) $('closeDlgBulkDeleteExcel').onclick = () => dlg.close();
+        if ($('btnCancelBulkDelete')) $('btnCancelBulkDelete').onclick = () => dlg.close();
+        if ($('btnDoneBulkDelete')) $('btnDoneBulkDelete').onclick = () => dlg.close();
+        dlg.onclick = e => { if (e.target === dlg) dlg.close(); };
+
+        dlg.showModal();
+      }
+
+      function downloadDuplicateErrorsExcel(valResult, custSummaryList, totalCnt) {
+        if (!valResult || !valResult.duplicates || !valResult.duplicates.length) {
+          toast('No duplicate error records to download.');
+          return;
+        }
+
+        const wb = XLSX.utils.book_new();
+
+        // Sheet 1: Customers
+        // Customer Name, Customer Status, Duplicate Count, Total Scanned
+        const custHeaders = ['Customer Name', 'Customer Status', 'Duplicate Count', 'Total Scanned'];
+        const custRows = (custSummaryList || []).map(c => [
+          c.name || 'General_Customer',
+          c.isExisting ? 'Already Existing Customer' : 'New Customer',
+          c.duplicateCount || 0,
+          c.count || 0
+        ]);
+        const wsCust = XLSX.utils.aoa_to_sheet([custHeaders, ...custRows]);
+        XLSX.utils.book_append_sheet(wb, wsCust, 'Customers');
+
+        // Sheet 2: Entries
+        // Row #, Customer Name, IMEI, Device Serial No, ICCID, MSISDN 1, Model, SIM Provider, Duplicate Reason
+        const entryHeaders = ['Row #', 'Customer Name', 'IMEI', 'Device Serial No', 'ICCID', 'MSISDN 1', 'Model', 'SIM Provider', 'Duplicate Reason'];
+        const entryRows = (valResult.duplicates || []).map(d => [
+          d.row_num || '—',
+          d.customer_name || '—',
+          d.imei || '',
+          d.device_sr_no || '',
+          d.iccid || '',
+          d.msisdn1 || '',
+          d.model || '',
+          d.sim_provider || '',
+          d.reason || 'Duplicate record conflict'
+        ]);
+        const wsEntries = XLSX.utils.aoa_to_sheet([entryHeaders, ...entryRows]);
+        XLSX.utils.book_append_sheet(wb, wsEntries, 'Entries');
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `Duplicate_Errors_Report_${dateStr}.xlsx`);
+      }
+
+      function openBulkEditImeiModal() {
+        const dlg = $('dlgBulkEditImei');
+        if (!dlg) return;
+
+        // Reset state
+        if ($('bulkEditFileInput')) $('bulkEditFileInput').value = '';
+        if ($('bulkEditFileInfo')) $('bulkEditFileInfo').hidden = true;
+        if ($('bulkEditMappingBox')) $('bulkEditMappingBox').hidden = true;
+        if ($('bulkEditPreviewBox')) $('bulkEditPreviewBox').hidden = true;
+        if ($('bulkEditProgressBox')) $('bulkEditProgressBox').hidden = true;
+        if ($('bulkEditReportBanner')) $('bulkEditReportBanner').hidden = true;
+        if ($('chkConfirmBulkEdit')) $('chkConfirmBulkEdit').checked = false;
+        if ($('btnExecuteBulkEdit')) $('btnExecuteBulkEdit').disabled = true;
+
+        window._bulkEditFileRows = null;
+        window._bulkEditHeaders = null;
+        window._bulkEditAnalyzedResult = null;
+
+        const targetFields = [
+          { key: 'customer_name', label: 'Customer Name' },
+          { key: 'device_sr_no', label: 'Device Serial Number' },
+          { key: 'model', label: 'Model' },
+          { key: 'sim_provider', label: 'SIM Provider' },
+          { key: 'msisdn1', label: 'MSISDN 1 (Mobile No)' },
+          { key: 'activation_date', label: 'Activation Date' },
+          { key: 'expiry_date', label: 'Expiry Date' },
+          { key: 'dispatched_date', label: 'Dispatched Date' },
+          { key: 'firmware', label: 'Firmware' },
+          { key: 'flash', label: 'Flash' }
+        ];
+
+        // Wire file input
+        $('bulkEditFileInput').onchange = e => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          $('bulkEditFileInfo').hidden = false;
+          $('bulkEditFileInfo').innerHTML = `📄 <b>${esc(file.name)}</b> (${(file.size / 1024).toFixed(1)} KB) — Reading…`;
+
+          const reader = new FileReader();
+          reader.onload = ev => {
+            try {
+              const data = new Uint8Array(ev.target.result);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+              if (!rawJson || rawJson.length < 1) {
+                toast('The uploaded file is empty or does not contain data rows.');
+                $('bulkEditFileInfo').textContent = '⚠️ File is empty or missing data rows.';
+                return;
+              }
+
+              const headers = Object.keys(rawJson[0] || {}).map(h => String(h || '').trim()).filter(Boolean);
+              if (!headers.length) {
+                toast('No valid header columns found in row 1.');
+                $('bulkEditFileInfo').textContent = '⚠️ No column headers detected.';
+                return;
+              }
+
+              window._bulkEditFileRows = rawJson;
+              window._bulkEditHeaders = headers;
+
+              // Populate IMEI Column Select
+              const imeiSel = $('selBulkEditImeiCol');
+              imeiSel.innerHTML = headers.map(h => `<option value="${esc(h)}">${esc(h)}</option>`).join('');
+
+              // Auto-detect IMEI column
+              let defaultImei = headers[0];
+              for (const h of headers) {
+                const hl = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (hl.includes('imei')) { defaultImei = h; break; }
+              }
+              imeiSel.value = defaultImei;
+
+              // Populate Target Fields Grid
+              const grid = $('bulkEditFieldsGrid');
+              grid.innerHTML = targetFields.map(tf => {
+                let matchedHeader = '';
+                const tfKeyClean = tf.key.toLowerCase().replace(/[^a-z0-9]/g, '');
+                for (const h of headers) {
+                  const hClean = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+                  if (hClean === tfKeyClean || (tf.key === 'customer_name' && (hClean === 'customer' || hClean === 'client')) || (tf.key === 'activation_date' && (hClean === 'actdate' || hClean === 'activationdate')) || (tf.key === 'expiry_date' && (hClean === 'expdate' || hClean === 'expirydate' || hClean === 'validity')) || (tf.key === 'dispatched_date' && (hClean === 'dispatchdate' || hClean === 'dispatcheddate')) || (tf.key === 'device_sr_no' && (hClean === 'srno' || hClean === 'serialno' || hClean === 'devicesrno'))) {
+                    matchedHeader = h;
+                    break;
+                  }
+                }
+
+                const optionsHtml = ['<option value="">-- Do Not Update (Unmapped) --</option>']
+                  .concat(headers.map(h => `<option value="${esc(h)}" ${h === matchedHeader ? 'selected' : ''}>${esc(h)}</option>`))
+                  .join('');
+
+                return `
+                  <div style="background:var(--card-subtle);padding:10px 12px;border-radius:8px;border:1px solid var(--line)">
+                    <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px;color:var(--ink)">${esc(tf.label)}</label>
+                    <select class="bulk-edit-col-map" data-field="${esc(tf.key)}" style="width:100%;font-size:12.5px;height:34px">
+                      ${optionsHtml}
+                    </select>
+                  </div>
+                `;
+              }).join('');
+
+              $('bulkEditFileInfo').innerHTML = `✅ <b>${esc(file.name)}</b>: Loaded <b>${rawJson.length.toLocaleString()} rows</b> with <b>${headers.length} detected columns</b>.`;
+              $('bulkEditMappingBox').hidden = false;
+              $('bulkEditPreviewBox').hidden = true;
+              $('bulkEditProgressBox').hidden = true;
+              $('bulkEditReportBanner').hidden = true;
+            } catch (err) {
+              toast('Failed to parse file: ' + err.message);
+              $('bulkEditFileInfo').textContent = 'Error parsing file: ' + err.message;
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        };
+
+        // Wire Analyze & Preview Changes
+        $('btnAnalyzeBulkEdit').onclick = async () => {
+          if (!window._bulkEditFileRows || !window._bulkEditHeaders) {
+            toast('Please choose a valid Excel file first.');
+            return;
+          }
+          const imeiCol = $('selBulkEditImeiCol').value;
+          if (!imeiCol) {
+            toast('Please select the Excel column that contains IMEI numbers.');
+            return;
+          }
+
+          const mappings = {};
+          document.querySelectorAll('.bulk-edit-col-map').forEach(sel => {
+            const excelCol = sel.value;
+            const dbField = sel.dataset.field;
+            if (excelCol && dbField) {
+              mappings[excelCol] = dbField;
+            }
+          });
+
+          if (!Object.keys(mappings).length) {
+            toast('Please map at least one field to update.');
+            return;
+          }
+
+          $('btnAnalyzeBulkEdit').disabled = true;
+          $('btnAnalyzeBulkEdit').textContent = 'Analyzing Database & Differences…';
+
+          try {
+            const res = await api('/api/devices/bulk-edit/preview', {
+              method: 'POST',
+              body: JSON.stringify({
+                file_rows: window._bulkEditFileRows.slice(0, 10000),
+                imei_col: imeiCol,
+                field_mappings: mappings
+              })
+            });
+
+            window._bulkEditAnalyzedResult = {
+              imeiCol: imeiCol,
+              mappings: mappings,
+              preview: res
+            };
+
+            $('bulkEditTotalRead').textContent = res.total_rows.toLocaleString();
+            $('bulkEditMatchedCount').textContent = res.matching_imeis.toLocaleString();
+            $('bulkEditUnmatchedCount').textContent = res.unmatched_imeis.toLocaleString();
+            $('bulkEditDupCount').textContent = res.duplicates_in_file.toLocaleString();
+            $('bulkEditInvalidCount').textContent = res.invalid_imeis.toLocaleString();
+            $('bulkEditEligibleCount').textContent = res.eligible_to_update.toLocaleString();
+
+            const sampleWrap = $('bulkEditSampleChangesWrap');
+            if (res.sample_changes && res.sample_changes.length) {
+              sampleWrap.innerHTML = `
+                <table class="data-table" style="font-size:12px;margin:0">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>IMEI</th>
+                      <th>Field</th>
+                      <th>Current Value in Database</th>
+                      <th>New Value from File</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${res.sample_changes.map((sc, i) => `
+                      <tr>
+                        <td>${i + 1}</td>
+                        <td><b><code>${esc(sc.imei)}</code></b></td>
+                        <td><span class="badge" style="background:var(--card-subtle);border:1px solid var(--line);font-weight:700">${esc(sc.field)}</span></td>
+                        <td style="color:var(--muted)">${esc(sc.old_val || '—')}</td>
+                        <td style="color:var(--ok);font-weight:700">➔ ${esc(sc.new_val || '—')}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `;
+            } else {
+              sampleWrap.innerHTML = '<div class="empty">No differing values found to update among matching records.</div>';
+            }
+
+            $('bulkEditPreviewBox').hidden = false;
+            $('chkConfirmBulkEdit').checked = false;
+            $('btnExecuteBulkEdit').disabled = true;
+            $('bulkEditProgressBox').hidden = true;
+            $('bulkEditReportBanner').hidden = true;
+
+            toast(`Preview ready: ${res.eligible_to_update} records eligible for update.`);
+          } catch (err) {
+            fail(err);
+          } finally {
+            $('btnAnalyzeBulkEdit').disabled = false;
+            $('btnAnalyzeBulkEdit').textContent = '🔍 Analyze & Preview Changes';
+          }
+        };
+
+        // Wire Confirmation Checkbox
+        if ($('chkConfirmBulkEdit')) {
+          $('chkConfirmBulkEdit').onchange = e => {
+            const eligible = parseInt($('bulkEditEligibleCount')?.textContent?.replace(/,/g, '') || '0', 10);
+            $('btnExecuteBulkEdit').disabled = !e.target.checked || eligible === 0;
+          };
+        }
+
+        // Wire Execute Bulk Edit Button
+        $('btnExecuteBulkEdit').onclick = async () => {
+          if (!window._bulkEditAnalyzedResult || !window._bulkEditFileRows) {
+            toast('Please preview changes before executing update.');
+            return;
+          }
+          const { imeiCol, mappings } = window._bulkEditAnalyzedResult;
+          const eligible = parseInt($('bulkEditEligibleCount')?.textContent?.replace(/,/g, '') || '0', 10);
+          if (!confirm(`Are you sure you want to update ${eligible} inventory records in the database?`)) return;
+
+          $('btnExecuteBulkEdit').disabled = true;
+          $('chkConfirmBulkEdit').disabled = true;
+          $('bulkEditProgressBox').hidden = false;
+          $('bulkEditProgBar').style.width = '20%';
+          $('bulkEditProgPct').textContent = '20%';
+          $('bulkEditProgStatus').textContent = 'Applying updates in database…';
+
+          try {
+            const rows = window._bulkEditFileRows;
+            const chunkSize = 500;
+            let totalUpdated = 0, totalUnmatched = 0, totalSkipped = 0;
+            const allErrors = [];
+
+            for (let i = 0; i < rows.length; i += chunkSize) {
+              const chunk = rows.slice(i, i + chunkSize);
+              const pct = Math.round(((i + chunk.length) / rows.length) * 100);
+              $('bulkEditProgBar').style.width = pct + '%';
+              $('bulkEditProgPct').textContent = pct + '%';
+              $('bulkEditProgStatus').textContent = `Updating batch ${Math.floor(i / chunkSize) + 1} of ${Math.ceil(rows.length / chunkSize)}…`;
+
+              const res = await api('/api/devices/bulk-edit/execute', {
+                method: 'POST',
+                body: JSON.stringify({
+                  file_rows: chunk,
+                  imei_col: imeiCol,
+                  field_mappings: mappings
+                })
+              });
+
+              totalUpdated += (res.updated || 0);
+              totalUnmatched += (res.unmatched || 0);
+              totalSkipped += (res.skipped || 0);
+              if (res.errors && res.errors.length) allErrors.push(...res.errors);
+            }
+
+            $('bulkEditProgressBox').hidden = true;
+            $('bulkEditReportBanner').hidden = false;
+            $('bulkEditReportSummary').innerHTML = `
+              <b>Execution Summary:</b><br />
+              • <b>Successfully Updated:</b> <span style="font-weight:800;color:var(--ok)">${totalUpdated.toLocaleString()}</span> record(s)<br />
+              • <b>Unmatched IMEIs:</b> ${totalUnmatched.toLocaleString()} record(s)<br />
+              • <b>Skipped / Blank / Duplicate:</b> ${totalSkipped.toLocaleString()} row(s)<br />
+              ${allErrors.length ? `• <b>Errors encountered:</b> ${allErrors.length} (${esc(allErrors.slice(0, 3).join('; '))})` : ''}
+            `;
+
+            toast(`Bulk edit complete: ${totalUpdated} records updated.`);
+            await loadCU();
+            await updateChrome();
+            fetchInventoryRows();
+          } catch (err) {
+            fail(err);
+          }
+        };
+
+        // Close and Cancel buttons
+        if ($('closeDlgBulkEditImei')) $('closeDlgBulkEditImei').onclick = () => dlg.close();
+        if ($('btnCancelBulkEdit')) $('btnCancelBulkEdit').onclick = () => dlg.close();
+        if ($('btnDoneBulkEdit')) $('btnDoneBulkEdit').onclick = () => dlg.close();
+        dlg.onclick = e => { if (e.target === dlg) dlg.close(); };
+
+        dlg.showModal();
+      }
+
       async function loadInventoryContainer() {
-        const staff = myRole() !== 'limited';
+        const staff = canDeleteValidInventory();
         $('invAddDev').hidden = false;  // every role may add data
 
         document.querySelectorAll('.inv-sub-btn').forEach(b => {
@@ -5017,6 +6300,23 @@
         $('invAddDev').onclick = openAddDeviceModal;
         if ($('invAddColumn')) $('invAddColumn').onclick = openAddColumnModal;
         $('invExport').onclick = openExportColumnsModal;
+        if ($('btnBulkEditImei')) $('btnBulkEditImei').onclick = openBulkEditImeiModal;
+        if ($('btnBulkDeleteImei')) {
+          $('btnBulkDeleteImei').onclick = () => {
+            if (!canDeleteValidInventory()) {
+              toast('Access Denied: Master Admins do not have permission to delete inventory records.');
+              return;
+            }
+            openBulkDeleteExcelModal();
+            if ($('selBulkDelDbCol')) $('selBulkDelDbCol').value = 'imei';
+            if ($('bulkDelTargetColBadge')) $('bulkDelTargetColBadge').textContent = 'Matching Column: IMEI';
+          };
+          $('btnBulkDeleteImei').hidden = !canDeleteValidInventory();
+        }
+        if ($('btnBulkDeleteExcel')) {
+          $('btnBulkDeleteExcel').onclick = openBulkDeleteExcelModal;
+          $('btnBulkDeleteExcel').hidden = !canDeleteValidInventory();
+        }
 
         await loadCustomerFilesContainer();
         initBulkUploadContainer();
@@ -5027,7 +6327,7 @@
         try {
           const d = await api(`/api/devices?page=${invPage}&page_size=50&q=${encodeURIComponent(invQ)}&column=${invCol}&sort_by=${sortCol}&sort_dir=${sortDir}${invCid ? '&customer_id=' + invCid : ''}`);
           const s = (d.page - 1) * 50;
-          const staff = myRole() !== 'limited';
+          const staff = canDeleteValidInventory();
           const act = dev => `
       <div style="display:flex;gap:4px">
         <button class="b" data-editdev="${dev.id}" style="height:30px;padding:0 8px;font-size:12px">Edit</button>
@@ -5354,11 +6654,15 @@
           firmware: 'firmware',
           firmwareversion: 'firmware',
           flash: 'flash',
-          flashtype: 'flash'
+          flashtype: 'flash',
+          customer: 'customer_name',
+          customername: 'customer_name',
+          custname: 'customer_name',
+          client: 'customer_name',
+          clientname: 'customer_name'
         };
 
         const IGNORE_COLS = new Set([
-          'customer', 'customername', 'custname', 'client', 'clientname',
           'simtype', 'sim', 'typeofsim'
         ]);
 
@@ -5723,6 +7027,32 @@
                 return;
               }
 
+              // Auto-populate optional fields from file if currently unselected / blank in UI
+              selected.forEach(sName => {
+                const sheet = wbData.Sheets[sName];
+                const rawSample = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+                for (const r of rawSample) {
+                  const dev = normalizeExcelRow(r);
+                  if ($('optModel') && !$('optModel').value && dev.model) {
+                    const exists = [...$('optModel').options].some(o => o.value === dev.model);
+                    if (exists) $('optModel').value = dev.model;
+                    else {
+                      $('optModel').value = '__new__';
+                      if ($('optNewModel')) {
+                        $('optNewModel').hidden = false;
+                        $('optNewModel').value = dev.model;
+                      }
+                    }
+                  }
+                  if ($('optDispatchedDate') && !$('optDispatchedDate').value && dev.dispatched_date) $('optDispatchedDate').value = dev.dispatched_date;
+                  if ($('optActDate') && !$('optActDate').value && dev.act_date) $('optActDate').value = dev.act_date;
+                  if ($('optExpiryDate') && !$('optExpiryDate').value && dev.expiry_date) $('optExpiryDate').value = dev.expiry_date;
+                  if ($('optFlash') && !$('optFlash').value && dev.flash) $('optFlash').value = dev.flash;
+                  if ($('optFirmware') && !$('optFirmware').value && dev.firmware) $('optFirmware').value = dev.firmware;
+                  if ($('optSimProvider') && !$('optSimProvider').value && dev.sim_provider) $('optSimProvider').value = dev.sim_provider;
+                }
+              });
+
               const optModel = (optModelSel && optModelSel.value !== '__new__') ? optModelSel.value.trim() : ($('optNewModel') ? $('optNewModel').value.trim() : '');
               const optDispatchedDate = $('optDispatchedDate') ? $('optDispatchedDate').value.trim() : '';
               const optActDate = $('optActDate') ? $('optActDate').value.trim() : '';
@@ -5764,7 +7094,20 @@
                 const sheetSimType = sheetHasIccid ? 'E-SIM' : 'Plastic SIM';
 
                 preRows.forEach(dev => {
-                  dev.customer_name = assignedCust;
+                  // Determine customer for this record: row-level customer takes precedence if present
+                  let rowCustName = assignedCust;
+                  if (dev.customer_name && String(dev.customer_name).trim()) {
+                    const rowCustRaw = String(dev.customer_name).trim();
+                    const lower = rowCustRaw.toLowerCase();
+                    const clean = lower.replace(/[^a-z0-9]/g, '');
+                    const m = (CU || []).find(c => (c.name || '').trim().toLowerCase() === lower || (c.name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '') === clean);
+                    if (m) {
+                      rowCustName = m.name;
+                    } else {
+                      rowCustName = rowCustRaw.replace(/[^a-zA-Z0-9_\s-]/g, '').trim().replace(/\s+/g, '_') || rowCustRaw;
+                    }
+                  }
+                  dev.customer_name = rowCustName;
                   dev.sim_type = sheetSimType;
 
                   // Optional defaults: if row already has a value, row's value wins
@@ -5780,19 +7123,33 @@
                 });
               });
 
+              // Map of all identified customers across the scanned file
+              const custSummaryMap = new Map();
+              allRows.forEach(dev => {
+                const cn = dev.customer_name || 'General_Customer';
+                if (!custSummaryMap.has(cn)) {
+                  const lower = cn.toLowerCase();
+                  const clean = lower.replace(/[^a-z0-9]/g, '');
+                  const isEx = (CU || []).some(c => (c.name || '').trim().toLowerCase() === lower || (c.name || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '') === clean);
+                  custSummaryMap.set(cn, { name: cn, isExisting: isEx, count: 0, duplicateCount: 0 });
+                }
+                custSummaryMap.get(cn).count++;
+              });
+              window._currentCustSummaryList = Array.from(custSummaryMap.values());
+
               // Render Target Customer Banner
               if ($('valTargetCustBanner')) {
-                const existingList = sheetCustSummaries.filter(s => s.isExisting);
-                const newList = sheetCustSummaries.filter(s => !s.isExisting);
+                const existingList = window._currentCustSummaryList.filter(s => s.isExisting);
+                const newList = window._currentCustSummaryList.filter(s => !s.isExisting);
                 $('valTargetCustBanner').innerHTML = `
                   <div style="background:var(--card-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px">
                     <div style="font-weight:700;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                      <span>📊 Total Data Scanned: <b>${allRows.length.toLocaleString()} records</b> from <b>${selected.length} sheet(s)</b></span>
-                      <span style="font-size:12px;color:var(--muted)">Sheet Names in DB &rarr; Push to Existing Table | Not in DB &rarr; Create New Table</span>
+                      <span>📊 Total Data Scanned: <b>${allRows.length.toLocaleString()} records</b> from <b>${selected.length} sheet(s)</b> across <b>${window._currentCustSummaryList.length} customer(s)</b></span>
+                      <span style="font-size:12px;color:var(--muted)">Existing Customers in DB &rarr; Update/Add | New Customers &rarr; Create Table Automatically</span>
                     </div>
                     <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">
-                      ${existingList.map(s => `<span class="badge" style="background:rgba(37,99,235,0.12);color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:4px 10px;border-radius:6px">✓ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Existing Table)</span>`).join('')}
-                      ${newList.map(s => `<span class="badge" style="background:rgba(16,185,129,0.12);color:var(--ok);border:1px solid var(--ok);font-size:12px;padding:4px 10px;border-radius:6px">✨ Sheet "${esc(s.sheetName)}" &rarr; <b>${esc(s.customerName)}</b> (${s.rowCount.toLocaleString()} rows, Create New Customer & Table)</span>`).join('')}
+                      ${existingList.map(s => `<span class="badge" style="background:rgba(37,99,235,0.12);color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:4px 10px;border-radius:6px">📋 <b>${esc(s.name)}</b> (${s.count.toLocaleString()} rows, Existing Customer)</span>`).join('')}
+                      ${newList.map(s => `<span class="badge" style="background:rgba(16,185,129,0.12);color:var(--ok);border:1.5px solid var(--ok);font-size:12px;padding:4px 10px;border-radius:6px;box-shadow:0 0 6px rgba(16,185,129,0.25)">✨ <b>${esc(s.name)}</b> (${s.count.toLocaleString()} rows, New Customer)</span>`).join('')}
                     </div>
                   </div>
                 `;
@@ -5943,7 +7300,12 @@
           if (activeValFilter === 'new') list = activeValResult.new_sample || [];
           else if (activeValFilter === 'updated') list = activeValResult.updated_sample || [];
           else if (activeValFilter === 'existing') list = activeValResult.existing_sample || [];
+          else if (activeValFilter === 'review') list = activeValResult.invalid_sample || activeValResult.invalids || [];
           else if (activeValFilter === 'duplicate') list = activeValResult.duplicates || [];
+          else if (activeValFilter === 'cannot') {
+            const mode = $('dupMode')?.value || 'skip';
+            list = (mode === 'skip') ? (activeValResult.duplicates || []).concat(activeValResult.existing_sample || []) : (activeValResult.duplicates || []);
+          }
           else list = activeValResult.all_sample || [];
 
           // Search filtering
@@ -6006,19 +7368,83 @@
             const updatedCnt = valResult.updated_count || 0;
             const existingCnt = valResult.existing_count || 0;
             const dupCnt = valResult.duplicate_count || 0;
+            const invalidCnt = valResult.invalid_count || 0;
             const totalCnt = valResult.total_count || rows.length;
 
-            if ($('vNew')) $('vNew').textContent = newCnt.toLocaleString();
-            if ($('vUpdated')) $('vUpdated').textContent = updatedCnt.toLocaleString();
-            if ($('vExisting')) $('vExisting').textContent = existingCnt.toLocaleString();
-            if ($('vDup')) $('vDup').textContent = dupCnt.toLocaleString();
-            if ($('vTotalScanned')) $('vTotalScanned').textContent = totalCnt.toLocaleString();
+            const dupMode = $('dupMode').value;
+            const validCnt = (valResult.valid_count !== undefined) ? valResult.valid_count : (newCnt + (dupMode === 'replace' ? updatedCnt : 0));
+            const reviewCnt = invalidCnt + (valResult.missing_columns_warning && valResult.missing_columns_warning.length ? 1 : 0);
+            const eligibleToAdd = newCnt;
+            const eligibleToUpdate = (dupMode === 'replace') ? updatedCnt : 0;
+            const cannotAdd = (dupMode === 'skip') ? (dupCnt + updatedCnt + invalidCnt) : (dupCnt + invalidCnt);
 
+            // Update 7 Metric Cards (Requirement 3 & 5)
+            if ($('vTotalScanned')) $('vTotalScanned').textContent = totalCnt.toLocaleString();
+            if ($('vValid')) $('vValid').textContent = validCnt.toLocaleString();
+            if ($('vReview')) $('vReview').textContent = reviewCnt.toLocaleString();
+            if ($('vDup')) $('vDup').textContent = dupCnt.toLocaleString();
+            if ($('vNew')) $('vNew').textContent = eligibleToAdd.toLocaleString();
+            if ($('vUpdated')) $('vUpdated').textContent = eligibleToUpdate.toLocaleString();
+            if ($('vCannotAdd')) $('vCannotAdd').textContent = cannotAdd.toLocaleString();
+
+            // Update Filter Badges
             if ($('vAllCount')) $('vAllCount').textContent = totalCnt.toLocaleString();
-            if ($('vNewCount')) $('vNewCount').textContent = newCnt.toLocaleString();
+            if ($('vNewCount')) $('vNewCount').textContent = eligibleToAdd.toLocaleString();
             if ($('vUpdatedCount')) $('vUpdatedCount').textContent = updatedCnt.toLocaleString();
             if ($('vExistingCount')) $('vExistingCount').textContent = existingCnt.toLocaleString();
+            if ($('vReviewCount')) $('vReviewCount').textContent = reviewCnt.toLocaleString();
             if ($('vDupCount')) $('vDupCount').textContent = dupCnt.toLocaleString();
+            if ($('vCannotCount')) $('vCannotCount').textContent = cannotAdd.toLocaleString();
+
+            // Customer Identification & Duplicate Summary Card (Requirements 2 & 6)
+            const custDups = valResult.customer_duplicates || {};
+            const custSummaryList = (window._currentCustSummaryList || []).map(c => {
+              return {
+                name: c.name,
+                isExisting: c.isExisting,
+                count: c.count,
+                duplicateCount: custDups[c.name] || 0
+              };
+            });
+
+            const existingCustList = custSummaryList.filter(c => c.isExisting);
+            const newCustList = custSummaryList.filter(c => !c.isExisting);
+
+            if ($('vExistingCustCount')) $('vExistingCustCount').textContent = existingCustList.length.toLocaleString();
+            if ($('vNewCustCount')) $('vNewCustCount').textContent = newCustList.length.toLocaleString();
+            if ($('vDupCustSummary')) $('vDupCustSummary').textContent = dupCnt.toLocaleString();
+            if ($('vTotalScannedSummary')) $('vTotalScannedSummary').textContent = totalCnt.toLocaleString();
+
+            if ($('custIdentTableWrap')) {
+              $('custIdentTableWrap').innerHTML = `
+                <table class="data-table" style="font-size:12px;margin:0">
+                  <thead>
+                    <tr style="background:var(--card-subtle)">
+                      <th style="width:50px">#</th>
+                      <th>Customer Name</th>
+                      <th>Scanned Entries</th>
+                      <th>Duplicate Entries</th>
+                      <th>Customer Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${custSummaryList.map((c, i) => `
+                      <tr class="${c.isExisting ? '' : 'cust-highlight-new'}">
+                        <td>${i + 1}</td>
+                        <td><b>${esc(c.name)}</b></td>
+                        <td><b>${c.count.toLocaleString()}</b> entries</td>
+                        <td style="${c.duplicateCount > 0 ? 'color:var(--warn);font-weight:700' : 'color:var(--muted)'}">${c.duplicateCount.toLocaleString()}</td>
+                        <td>
+                          ${c.isExisting
+                            ? `<span class="cust-badge-existing">📋 Already Existing Customer</span>`
+                            : `<span class="cust-badge-new">✨ New Customer</span>`}
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              `;
+            }
 
             $('valColWarnings').hidden = true;
 
@@ -6034,25 +7460,42 @@
 
             applyPreviewFilter(activeValFilter || 'all');
 
-            const dupMode = $('dupMode').value;
-            const canUpload = newCnt > 0 || (dupMode === 'replace' && updatedCnt > 0);
-            $('btnConfirmUpload').disabled = !canUpload;
-            if (newCnt > 0 && updatedCnt > 0 && dupMode === 'replace') {
-              $('btnConfirmUpload').textContent = `Confirm & Upload: Add ${newCnt.toLocaleString()} New + Update ${updatedCnt.toLocaleString()} Existing`;
-            } else if (newCnt > 0) {
-              $('btnConfirmUpload').textContent = `Confirm & Add ${newCnt.toLocaleString()} New Entries to Database`;
-            } else if (updatedCnt > 0 && dupMode === 'replace') {
-              $('btnConfirmUpload').textContent = `Confirm & Update ${updatedCnt.toLocaleString()} Existing Entries in Database`;
+            // Submit Button Control (Requirement 7)
+            const eligibleTotal = eligibleToAdd + eligibleToUpdate;
+            if (eligibleTotal > 0) {
+              if ($('btnConfirmUpload')) {
+                $('btnConfirmUpload').disabled = false;
+                $('btnConfirmUpload').hidden = false;
+                if (eligibleToAdd > 0 && eligibleToUpdate > 0) {
+                  $('btnConfirmUpload').textContent = `Confirm & Upload: Add ${eligibleToAdd.toLocaleString()} New + Update ${eligibleToUpdate.toLocaleString()} Existing`;
+                } else if (eligibleToAdd > 0) {
+                  $('btnConfirmUpload').textContent = `Confirm & Add ${eligibleToAdd.toLocaleString()} New Entries to Database`;
+                } else {
+                  $('btnConfirmUpload').textContent = `Confirm & Update ${eligibleToUpdate.toLocaleString()} Existing Entries in Database`;
+                }
+              }
+              if ($('msgNoEligibleUpload')) $('msgNoEligibleUpload').hidden = true;
             } else {
-              $('btnConfirmUpload').textContent = `No New or Updated Entries to Add`;
+              if ($('btnConfirmUpload')) {
+                $('btnConfirmUpload').disabled = true;
+                $('btnConfirmUpload').textContent = `No New or Updated Entries to Add`;
+              }
+              if ($('msgNoEligibleUpload')) {
+                $('msgNoEligibleUpload').hidden = false;
+                $('msgNoEligibleUpload').innerHTML = `
+                  <span style="font-size:20px">⚠️</span>
+                  <span><b>No new or updated entries are available to add.</b> All entries are either duplicate conflicts or already up-to-date in the database.</span>
+                `;
+              }
             }
 
-            $('btnDlSkipped').hidden = (dupCnt === 0);
-            $('btnDlSkipped').onclick = () => {
-              const headers = ['Row', 'Customer Name', 'Status', 'IMEI', 'Device Sr No', 'ICCID', 'Reason'];
-              const skipRows = (valResult.duplicates || []).map(d => [d.row_num || '—', d.customer_name, 'Duplicate Error', d.imei, d.device_sr_no, d.iccid, d.reason]);
-              exportExcel('Duplicate_Error_Records', headers, skipRows);
-            };
+            // Download 2-Sheet Excel (Requirement 8)
+            if ($('btnDlSkipped')) {
+              $('btnDlSkipped').hidden = (dupCnt === 0);
+              $('btnDlSkipped').onclick = () => {
+                downloadDuplicateErrorsExcel(valResult, custSummaryList, totalCnt);
+              };
+            }
           } catch (err) {
             $('valPreviewTable').innerHTML = `<div class="empty err">${esc(err.message)}</div>`;
           }
@@ -6365,12 +7808,39 @@
               return `<li><b>${esc(cname)}</b>: ${cnt.toLocaleString()} records ${isEx ? '(Pushed to existing customer)' : '(New customer created & added)'}</li>`;
             }).join('');
 
+            const totalScannedAll = validRowsToUpload.length + duplicatesToStage.length;
+            const distinctCustNames = Object.keys(custBreakdown);
+            const existingCustProcessed = distinctCustNames.filter(cn => (CU || []).some(c => (c.name || '').toLowerCase() === cn.toLowerCase())).length;
+            const newCustCreated = distinctCustNames.length - existingCustProcessed;
+            const duplicateEntriesDetected = duplicatesToStage.length;
+            const entriesAdded = addedTotal;
+            const entriesUpdated = updatedTotal;
+            const entriesSkipped = skippedTotal;
+            const entriesFailed = 0;
+            const finalUploadStatus = entriesFailed === 0 ? 'File Processed Completely (100% Success)' : 'File Processed Partially';
+
             if ($('progCompleteBanner')) {
               $('progCompleteBanner').hidden = false;
               if ($('progCompleteSummary')) {
                 $('progCompleteSummary').innerHTML = `
-                  <div>Processed <b>${validRowsToUpload.length.toLocaleString()}</b> records: <b>${addedTotal.toLocaleString()}</b> new records added to database, <b>${updatedTotal.toLocaleString()}</b> updated, <b>${duplicatesToStage.length.toLocaleString()}</b> duplicate errors held.</div>
-                  <ul style="margin:8px 0 0;padding-left:20px;font-size:12.5px">${breakdownHtml}</ul>
+                  <div style="margin-bottom:12px">
+                    <b>Upload Status & Final Processing Summary:</b>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:8px;margin-top:8px">
+                      <div>• <b>Total Scanned:</b> ${totalScannedAll.toLocaleString()} entries</div>
+                      <div>• <b>Existing Customers:</b> ${existingCustProcessed.toLocaleString()}</div>
+                      <div>• <b>New Customers:</b> ${newCustCreated.toLocaleString()}</div>
+                      <div>• <b>Duplicates Detected:</b> ${duplicateEntriesDetected.toLocaleString()}</div>
+                      <div>• <b>Successfully Added:</b> <span style="color:var(--ok);font-weight:700">${entriesAdded.toLocaleString()}</span></div>
+                      <div>• <b>Successfully Updated:</b> <span style="color:#0284c7;font-weight:700">${entriesUpdated.toLocaleString()}</span></div>
+                      <div>• <b>Entries Skipped:</b> ${entriesSkipped.toLocaleString()}</div>
+                      <div>• <b>Failed Entries:</b> ${entriesFailed.toLocaleString()}</div>
+                      <div style="grid-column:1/-1;margin-top:4px">
+                        • <b>Final Upload Status:</b> <span class="badge" style="background:${entriesFailed === 0 ? 'var(--ok)' : 'var(--warn)'};color:#fff;font-weight:800;padding:4px 10px;border-radius:6px">${finalUploadStatus}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <b>Processed Customers Breakdown:</b>
+                  <ul style="margin:6px 0 0;padding-left:20px;font-size:12.5px">${breakdownHtml}</ul>
                 `;
               }
             }
@@ -8292,7 +9762,7 @@
           ];
         }
 
-        const staff = myRole() !== 'limited';
+        const staff = canDeleteValidInventory();
 
         const html = `
     <div class="row" style="align-items:center;justify-content:space-between;margin:14px 0 10px;flex-wrap:wrap;gap:10px">
@@ -8643,7 +10113,7 @@
         const similarList = res.similar_matches || [];
         const notFoundList = res.not_found_values || [];
 
-        const staff = myRole() !== 'limited';
+        const staff = canDeleteValidInventory();
         const act = dev => `
     <div style="display:flex;gap:4px">
       <button class="b" data-editdev="${dev.id}" style="height:26px;padding:0 8px;font-size:11.5px">Edit</button>
@@ -8777,7 +10247,7 @@
           if (!v) return;
           try {
             const d = await api('/api/devices/by-imei/' + encodeURIComponent(v));
-            const staff = myRole() !== 'limited';
+            const staff = canDeleteValidInventory();
             $('er').innerHTML = `
         <div style="margin:16px 0">${buildDeviceFormFields(d)}</div>
         <div class="row" style="gap:10px">
@@ -8864,7 +10334,7 @@
             api('/api/inventory/report')
           ]);
 
-          const staff = myRole() !== 'limited';
+          const staff = canDeleteValidInventory();
           const act = dev => `
       <div style="display:flex;gap:4px">
         <button class="b" data-expedit="${dev.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit this record">Edit</button>
@@ -8885,6 +10355,10 @@
             }
             const delBtn = e.target.closest('[data-del]');
             if (delBtn) {
+              if (!canDeleteValidInventory()) {
+                toast('Access Denied: Master Admins do not have permission to delete inventory records.');
+                return;
+              }
               if (!confirm('Move this device record to Cart?')) return;
               try {
                 await api('/api/devices/' + delBtn.dataset.del, { method: 'DELETE' });
@@ -9009,94 +10483,181 @@
             $('errDelTag').style.borderColor = 'rgba(59,130,246,0.25)';
           }
 
-          if (!cachedErrors.length) {
-            $('errorsTableWrap').innerHTML = `
-        <div class="empty" style="padding:48px 20px">
-          <div style="font-size:36px;margin-bottom:10px">✅</div>
-          <h3 style="margin:0 0 6px">No Errored or Invalid Entries Found</h3>
-          <p class="sub" style="margin:0">All uploaded device records have passed validation and are cleanly synced into the database and cloud.</p>
-        </div>
-      `;
-            return;
-          }
-
-          const html = `
-      <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <b id="errorsFoundText">Found <span id="errorsLiveCount">${cachedErrors.length}</span> errored / invalid record(s) requiring attention</b>
-        <span class="sub">Sorted newest first</span>
-      </div>
-      <div class="tw">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:38px;text-align:center"><input type="checkbox" id="chkSelectAllErrors" title="Select all errored records" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></th>
-              <th>ID</th>
-              <th>Flagged Error Reason</th>
-              <th>Target Customer</th>
-              <th>IMEI</th>
-              <th>Device SR No</th>
-              <th>ICCID</th>
-              <th>MSISDN 1</th>
-              <th>Activation Date</th>
-              <th>Expiry Date</th>
-              <th style="min-width:200px">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${cachedErrors.map(err => `
-              <tr>
-                <td style="text-align:center"><input type="checkbox" class="err-row-chk" data-chkerr="${err.id}" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></td>
-                <td><b>#${err.id}</b></td>
-                <td><span class="tag bad" style="display:inline-block;max-width:240px;white-space:normal;line-height:1.3;font-size:12px">⚠️ ${esc(err.error_reason)}</span></td>
-                <td><b>${esc(err.customer_name || '—')}</b></td>
-                <td><code>${esc(err.imei || '—')}</code></td>
-                <td>${esc(err.device_sr_no || '—')}</td>
-                <td>${esc(err.iccid || '—')}</td>
-                <td>${esc(err.msisdn1 || '—')}</td>
-                <td>${esc(err.act_date || '—')}</td>
-                <td>${esc(err.expiry_date || '—')}</td>
-                <td>
-                  <div style="display:flex;gap:6px;flex-wrap:wrap">
-                    <button class="b p" data-errpush="${err.id}" style="height:28px;padding:0 8px;font-size:12px;background:#2563eb;color:#fff" title="Push this entry into the specified customer even with error">🚀 Push to Customer</button>
-                    <button class="b" data-erredit="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit fields and upload to customer">✏️ Edit & Upload</button>
-                    <button class="b d" data-errdel="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move this entry to Cart with percentage progress">🗑️ Move to Cart</button>
-                    <button class="b d" data-errpurge="${err.id}" style="height:28px;padding:0 10px;font-size:12px;background:#dc2626;color:#fff;font-weight:700" title="Directly and completely delete from database and website">❌ Direct Delete</button>
-                  </div>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-          $('errorsTableWrap').innerHTML = html;
-
-          const updateErrSelection = () => {
-            const chks = Array.from(document.querySelectorAll('.err-row-chk:checked'));
-            const count = chks.length;
-            if ($('errSelectedCount')) $('errSelectedCount').textContent = count.toString();
-            if ($('btnDirectDeleteSelectedErrors')) $('btnDirectDeleteSelectedErrors').hidden = (count === 0);
-            if ($('chkSelectAllErrors')) {
-              const allChks = document.querySelectorAll('.err-row-chk');
-              $('chkSelectAllErrors').checked = allChks.length > 0 && chks.length === allChks.length;
-            }
-          };
-
-          if ($('chkSelectAllErrors')) {
-            $('chkSelectAllErrors').onchange = (e) => {
-              const val = e.target.checked;
-              document.querySelectorAll('.err-row-chk').forEach(c => c.checked = val);
-              updateErrSelection();
-            };
-          }
-
-          document.querySelectorAll('.err-row-chk').forEach(c => {
-            c.onchange = updateErrSelection;
+          // Build dynamic error reasons list & frequency counts
+          const reasonCounts = {};
+          cachedErrors.forEach(err => {
+            const r = (err.error_reason || 'Unknown Error').trim();
+            reasonCounts[r] = (reasonCounts[r] || 0) + 1;
           });
-          updateErrSelection();
+          const sortedReasons = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]);
+
+          // Populate select filter dropdown
+          if ($('errReasonFilter')) {
+            const curVal = $('errReasonFilter').value;
+            $('errReasonFilter').innerHTML = `<option value="">All Error Reasons (${totalStaged})</option>` +
+              sortedReasons.map(([r, cnt]) => `<option value="${esc(r)}">${esc(r)} (${cnt})</option>`).join('');
+            if (reasonCounts[curVal]) {
+              $('errReasonFilter').value = curVal;
+            } else {
+              $('errReasonFilter').value = '';
+            }
+          }
+
+          // Populate category quick filter pills
+          if ($('errCategoryPills')) {
+            $('errCategoryPills').innerHTML = sortedReasons.slice(0, 10).map(([r, cnt]) => `
+              <button type="button" class="tag" data-pillreason="${esc(r)}" style="cursor:pointer;border:1px solid var(--line);background:var(--card);font-size:11.5px;padding:3px 9px;border-radius:12px;transition:all 0.15s;font-weight:600">
+                ${esc(r)} <span style="margin-left:4px;color:var(--primary);font-weight:800">(${cnt})</span>
+              </button>
+            `).join('');
+          }
+
+          renderFilteredErrors();
         } catch (err) {
           $('errorsTableWrap').innerHTML = `<div class="empty err">${esc(err.message)}</div>`;
         }
+      }
+
+      function renderFilteredErrors() {
+        const selectedReason = ($('errReasonFilter') ? $('errReasonFilter').value : '').trim().toLowerCase();
+        const q = ($('errSearchFilter') ? $('errSearchFilter').value : '').trim().toLowerCase();
+
+        // Highlight active pill if any
+        if ($('errCategoryPills')) {
+          document.querySelectorAll('#errCategoryPills [data-pillreason]').forEach(pill => {
+            const pr = pill.dataset.pillreason.toLowerCase();
+            const isActive = selectedReason && pr === selectedReason;
+            pill.style.background = isActive ? 'var(--primary)' : 'var(--card)';
+            pill.style.color = isActive ? '#fff' : 'inherit';
+            pill.style.borderColor = isActive ? 'var(--primary)' : 'var(--line)';
+          });
+        }
+
+        let filtered = cachedErrors;
+        if (selectedReason) {
+          filtered = filtered.filter(e => (e.error_reason || '').trim().toLowerCase() === selectedReason);
+        }
+        if (q) {
+          filtered = filtered.filter(e => {
+            return (e.customer_name || '').toLowerCase().includes(q) ||
+                   (e.imei || '').toLowerCase().includes(q) ||
+                   (e.device_sr_no || '').toLowerCase().includes(q) ||
+                   (e.iccid || '').toLowerCase().includes(q) ||
+                   (e.msisdn1 || '').toLowerCase().includes(q) ||
+                   (e.msisdn2 || '').toLowerCase().includes(q) ||
+                   (e.error_reason || '').toLowerCase().includes(q) ||
+                   String(e.id).includes(q);
+          });
+        }
+
+        if ($('errFilteredCount')) $('errFilteredCount').textContent = filtered.length.toString();
+        window._currentFilteredErrors = filtered;
+
+        const canDelInvalid = canDeleteInvalidEntries();
+        if ($('btnDeleteFilteredErrors')) {
+          $('btnDeleteFilteredErrors').hidden = !canDelInvalid;
+          $('btnDeleteFilteredErrors').disabled = filtered.length === 0;
+        }
+
+        if (!cachedErrors.length) {
+          $('errorsTableWrap').innerHTML = `
+            <div class="empty" style="padding:48px 20px">
+              <div style="font-size:36px;margin-bottom:10px">✅</div>
+              <h3 style="margin:0 0 6px">No Errored or Invalid Entries Found</h3>
+              <p class="sub" style="margin:0">All uploaded device records have passed validation and are cleanly synced into the database and cloud.</p>
+            </div>
+          `;
+          return;
+        }
+
+        if (!filtered.length) {
+          $('errorsTableWrap').innerHTML = `
+            <div class="empty" style="padding:40px 20px">
+              <div style="font-size:32px;margin-bottom:8px">🔍</div>
+              <h4 style="margin:0 0 6px">No Errored Records Match Filter</h4>
+              <p class="sub" style="margin:0 0 14px">No records match the selected error reason or search criteria.</p>
+              <button class="b" type="button" onclick="document.getElementById('errFilterClear')?.click()">Reset Filter</button>
+            </div>
+          `;
+          return;
+        }
+
+        const html = `
+          <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <b id="errorsFoundText">Showing <span id="errorsLiveCount">${filtered.length}</span> of ${cachedErrors.length} errored / invalid record(s)</b>
+            <span class="sub">Sorted newest first</span>
+          </div>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:38px;text-align:center"><input type="checkbox" id="chkSelectAllErrors" title="Select all filtered records" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></th>
+                  <th>ID</th>
+                  <th>Flagged Error Reason</th>
+                  <th>Target Customer</th>
+                  <th>IMEI</th>
+                  <th>Device SR No</th>
+                  <th>ICCID</th>
+                  <th>MSISDN 1</th>
+                  <th>Activation Date</th>
+                  <th>Expiry Date</th>
+                  <th style="min-width:200px">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map(err => `
+                  <tr>
+                    <td style="text-align:center"><input type="checkbox" class="err-row-chk" data-chkerr="${err.id}" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></td>
+                    <td><b>#${err.id}</b></td>
+                    <td><span class="tag bad" style="display:inline-block;max-width:240px;white-space:normal;line-height:1.3;font-size:12px">⚠️ ${esc(err.error_reason)}</span></td>
+                    <td><b>${esc(err.customer_name || '—')}</b></td>
+                    <td><code>${esc(err.imei || '—')}</code></td>
+                    <td>${esc(err.device_sr_no || '—')}</td>
+                    <td>${esc(err.iccid || '—')}</td>
+                    <td>${esc(err.msisdn1 || '—')}</td>
+                    <td>${esc(err.act_date || '—')}</td>
+                    <td>${esc(err.expiry_date || '—')}</td>
+                    <td>
+                      <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button class="b p" data-errpush="${err.id}" style="height:28px;padding:0 8px;font-size:12px;background:#2563eb;color:#fff" title="Push this entry into the specified customer even with error">🚀 Push to Customer</button>
+                        <button class="b" data-erredit="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit fields and upload to customer">✏️ Edit & Upload</button>
+                        ${canDelInvalid ? `
+                          <button class="b d" data-errdel="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move this entry to Cart with percentage progress">🗑️ Move to Cart</button>
+                          <button class="b d" data-errpurge="${err.id}" style="height:28px;padding:0 10px;font-size:12px;background:#dc2626;color:#fff;font-weight:700" title="Directly and completely delete from database and website">❌ Direct Delete</button>
+                        ` : ''}
+                      </div>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+        $('errorsTableWrap').innerHTML = html;
+
+        const updateErrSelection = () => {
+          const chks = Array.from(document.querySelectorAll('.err-row-chk:checked'));
+          const count = chks.length;
+          if ($('errSelectedCount')) $('errSelectedCount').textContent = count.toString();
+          if ($('btnDirectDeleteSelectedErrors')) $('btnDirectDeleteSelectedErrors').hidden = !canDelInvalid || (count === 0);
+          if ($('chkSelectAllErrors')) {
+            const allChks = document.querySelectorAll('.err-row-chk');
+            $('chkSelectAllErrors').checked = allChks.length > 0 && chks.length === allChks.length;
+          }
+        };
+
+        if ($('chkSelectAllErrors')) {
+          $('chkSelectAllErrors').onchange = (e) => {
+            const val = e.target.checked;
+            document.querySelectorAll('.err-row-chk').forEach(c => c.checked = val);
+            updateErrSelection();
+          };
+        }
+
+        document.querySelectorAll('.err-row-chk').forEach(c => {
+          c.onchange = updateErrSelection;
+        });
+        updateErrSelection();
       }
 
       /* ---------- Live Counts Updater (updates all badges & numbers immediately) ---------- */
@@ -9597,6 +11158,10 @@
 
       if ($('btnDirectDeleteSelectedErrors')) {
         $('btnDirectDeleteSelectedErrors').onclick = async () => {
+          if (!canDeleteInvalidEntries()) {
+            toast('Access Denied: You do not have permission to delete invalid entries.');
+            return;
+          }
           const checkedBoxes = Array.from(document.querySelectorAll('.err-row-chk:checked'));
           const selectedIds = checkedBoxes.map(c => parseInt(c.dataset.chkerr, 10)).filter(Boolean);
           if (!selectedIds.length) { toast('No errored entries selected.'); return; }
@@ -9628,6 +11193,7 @@
               chunk.forEach(id => removeErrRowFromDOM(id));
               const chunkSet = new Set(chunk);
               cachedErrors = cachedErrors.filter(e => !chunkSet.has(e.id));
+              window._currentFilteredErrors = (window._currentFilteredErrors || []).filter(e => !chunkSet.has(e.id));
 
               // Update live numbers across the website immediately
               updateErrCountsLive(cachedErrors.length);
@@ -9652,6 +11218,107 @@
             await updateChrome();
           } catch (err) {
             fail(err);
+          }
+        };
+      }
+
+      if ($('btnDeleteFilteredErrors')) {
+        $('btnDeleteFilteredErrors').onclick = async () => {
+          if (!canDeleteInvalidEntries()) {
+            toast('Access Denied: You do not have permission to delete invalid entries.');
+            return;
+          }
+          const filtered = window._currentFilteredErrors || [];
+          if (!filtered.length) {
+            toast('No errored entries currently match the filter.');
+            return;
+          }
+          const selReason = ($('errReasonFilter') && $('errReasonFilter').value) || '';
+          const filterDesc = selReason ? `matching "${selReason}"` : 'currently filtered';
+          const totalToDelete = filtered.length;
+
+          if (!confirm(`⚠️ PERMANENT DELETION WARNING: This will permanently delete ${totalToDelete} invalid record(s) ${filterDesc} directly from the database forever.\n\nThey CANNOT be recovered or restored from the Cart.\n\nAre you sure you want to proceed?`)) {
+            return;
+          }
+
+          let totalDeleted = 0;
+          const startTime = Date.now();
+          showErrDeleteProgress(`Permanently Deleting ${totalToDelete} Filtered Records…`, '⚡ Filtered Deletion Progress', totalToDelete);
+          updateErrDeleteProgress(0, totalToDelete, `Preparing batch deletion of ${totalToDelete} filtered records… (0%)`, totalToDelete);
+
+          const idsToDelete = filtered.map(e => e.id);
+          const chunkSize = totalToDelete <= 10 ? 1 : Math.min(25, Math.max(1, Math.ceil(totalToDelete / 10)));
+          const chunks = [];
+          for (let i = 0; i < idsToDelete.length; i += chunkSize) {
+            chunks.push(idsToDelete.slice(i, i + chunkSize));
+          }
+
+          try {
+            for (let cIdx = 0; cIdx < chunks.length; cIdx++) {
+              const chunk = chunks[cIdx];
+              const res = await api('/api/errors/batch-delete', {
+                method: 'POST',
+                body: JSON.stringify({ error_ids: chunk })
+              });
+              const batchDeleted = res.deleted_count || chunk.length;
+              totalDeleted += batchDeleted;
+
+              chunk.forEach(id => removeErrRowFromDOM(id));
+              const chunkSet = new Set(chunk);
+              cachedErrors = cachedErrors.filter(e => !chunkSet.has(e.id));
+              window._currentFilteredErrors = (window._currentFilteredErrors || []).filter(e => !chunkSet.has(e.id));
+
+              updateErrCountsLive(cachedErrors.length);
+
+              const pct = Math.min(100, Math.round((totalDeleted / totalToDelete) * 100));
+              const curRemaining = Math.max(0, totalToDelete - totalDeleted);
+              const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+              updateErrDeleteProgress(
+                totalDeleted,
+                totalToDelete,
+                `Permanently deleting: ${totalDeleted} of ${totalToDelete} records (${pct}% complete) – ${curRemaining} remaining – ${elapsed}s elapsed`,
+                curRemaining
+              );
+
+              await new Promise(r => setTimeout(r, 150));
+            }
+
+            finishErrDeleteProgress(`Successfully erased all ${totalDeleted || totalToDelete} filtered errored record(s) forever (100% complete)!`);
+            toast(`✓ Permanently deleted ${totalDeleted || totalToDelete} filtered errored entries.`);
+            await loadErrorsContainer();
+            await updateChrome();
+          } catch (err) {
+            fail(err);
+          }
+        };
+      }
+
+      if ($('errReasonFilter')) {
+        $('errReasonFilter').onchange = () => renderFilteredErrors();
+      }
+      let errSearchDebounceTimer;
+      if ($('errSearchFilter')) {
+        $('errSearchFilter').oninput = () => {
+          clearTimeout(errSearchDebounceTimer);
+          errSearchDebounceTimer = setTimeout(renderFilteredErrors, 200);
+        };
+      }
+      if ($('errFilterClear')) {
+        $('errFilterClear').onclick = () => {
+          if ($('errReasonFilter')) $('errReasonFilter').value = '';
+          if ($('errSearchFilter')) $('errSearchFilter').value = '';
+          renderFilteredErrors();
+        };
+      }
+      if ($('errCategoryPills')) {
+        $('errCategoryPills').onclick = e => {
+          const pill = e.target.closest('[data-pillreason]');
+          if (pill) {
+            const reason = pill.dataset.pillreason;
+            if ($('errReasonFilter')) {
+              $('errReasonFilter').value = ($('errReasonFilter').value === reason) ? '' : reason;
+              renderFilteredErrors();
+            }
           }
         };
       }
@@ -10169,33 +11836,47 @@
       </tbody></table></div>
     `;
 
-          // Live preview of role as the admin enters an ID
+          // Default role is Master Admin when adding a new user
+          if ($('ur2')) $('ur2').value = 'master_admin';
+          if ($('roleTierBadge')) $('roleTierBadge').textContent = '⭐ Master Admin (Default) — Full Access; protected from valid inventory deletion; authorized for invalid entries direct delete.';
+
+          if ($('ur2')) {
+            $('ur2').onchange = () => {
+              const sel = $('ur2').value;
+              if (sel === 'master_admin') {
+                if ($('roleTierBadge')) $('roleTierBadge').textContent = '⭐ Master Admin — Full Access & Login Inventory; invalid entries direct delete; protected from valid entry delete.';
+              } else if (sel === 'admin_user') {
+                if ($('roleTierBadge')) $('roleTierBadge').textContent = '🛡️ Regular Admin — Entry & Excel bulk deletion privileges; Login Inventory strictly restricted.';
+              } else {
+                if ($('roleTierBadge')) $('roleTierBadge').textContent = '👤 Regular User — Upload data, fetch/view entries, and edit entries.';
+              }
+            };
+          }
+
+          // Live preview of role suggestions as the admin enters an ID
           if ($('ui')) {
             $('ui').oninput = e => {
               const val = e.target.value.trim().toLowerCase();
               const norm = /^\d+$/.test(val) ? val.padStart(4, '0') : val;
-              let r = 'limited';
               let badge = '';
               if (['0001', '0007'].includes(norm)) {
-                r = 'admin';
-                badge = '👑 Super Administrator (' + norm + ') — Full Unrestricted Control';
+                badge = '👑 Super Administrator (' + norm + ') — Full Unrestricted Control (Reserved ID)';
               } else if (['0002', '0003', '0004'].includes(norm)) {
-                r = 'admin';
                 badge = '⭐ Master Admin (' + norm + ') — Full Access (Protected Deletion)';
+                if ($('ur2')) $('ur2').value = 'master_admin';
               } else if (['0005', '0006', '0008', '0009', '0010'].includes(norm)) {
-                r = 'admin';
-                badge = '🛡️ Admin User (' + norm + ') — Entry & Admin Deletion Privileges';
+                badge = '🛡️ Regular Admin (' + norm + ') — Entry & Admin Deletion Privileges';
+                if ($('ur2')) $('ur2').value = 'admin_user';
               } else {
-                r = 'limited';
-                badge = '👤 Regular User (' + (norm || 'after 0010') + ') — Upload, Fetch & Edit Entries';
+                badge = 'Role Tier: ' + ($('ur2') ? $('ur2').options[$('ur2').selectedIndex].text : 'Master Admin');
               }
-              if ($('ur2')) $('ur2').value = r;
               if ($('roleTierBadge')) $('roleTierBadge').textContent = badge;
             };
           }
 
           $('uadd').onclick = async () => {
             const name = $('un').value.trim(), user_id = $('ui').value.trim(), password = $('up').value;
+            const role = ($('ur2') && $('ur2').value) || 'master_admin';
             if (!name || !user_id || !password) { toast('Please complete all fields'); return; }
             const norm = /^\d+$/.test(user_id) ? user_id.padStart(4, '0') : user_id;
             if (['0001', '0007'].includes(norm)) {
@@ -10207,9 +11888,10 @@
               return;
             }
             try {
-              await api('/api/users', { method: 'POST', body: JSON.stringify({ name, user_id, password }) });
+              await api('/api/users', { method: 'POST', body: JSON.stringify({ name, user_id, password, role }) });
               toast('Employee account created successfully');
               $('un').value = ''; $('ui').value = ''; $('up').value = '';
+              if ($('ur2')) $('ur2').value = 'master_admin';
               if ($('roleTierBadge')) $('roleTierBadge').textContent = '';
               loadUsersContainer();
             } catch (err) { fail(err); }
@@ -10516,6 +12198,10 @@
             return;
           }
           if (b.dataset.del) {
+            if (!canDeleteValidInventory()) {
+              toast('Access Denied: Master Admins do not have permission to delete inventory records.');
+              return;
+            }
             const devId = b.dataset.del;
             openDlg('🗑️ Delete Device & Move to Cart', `
         <div style="padding:10px 0">
@@ -10700,8 +12386,78 @@
         return R;
       }
 
+      /* ---------- Docked Theme Manager (6 Themes + Dark/Light) ---------- */
+      function applyTheme(palette, mode) {
+        const pal = palette || localStorage.getItem('valut_palette') || 'enterprise_clean';
+        const m = mode || localStorage.getItem('valut_theme_mode') || 'dark';
+
+        document.documentElement.setAttribute('data-palette', pal);
+        document.documentElement.setAttribute('data-mode', m);
+
+        localStorage.setItem('valut_palette', pal);
+        localStorage.setItem('valut_theme_mode', m);
+
+        // Update active class on palette buttons
+        document.querySelectorAll('.theme-palette-opt').forEach(opt => {
+          opt.classList.toggle('active', opt.dataset.paletteVal === pal);
+        });
+
+        // Update active class on mode buttons
+        const btnDark = $('btnModeDark');
+        const btnLight = $('btnModeLight');
+        if (btnDark) btnDark.classList.toggle('active', m === 'dark');
+        if (btnLight) btnLight.classList.toggle('active', m === 'light');
+      }
+
+      function initThemeDock() {
+        const dockPanel = $('themeDockPanel');
+        const toggleBtn = $('themeDockToggleBtn');
+        const closeBtn = $('themeDockCloseBtn');
+
+        if (toggleBtn && dockPanel) {
+          toggleBtn.onclick = () => {
+            dockPanel.hidden = !dockPanel.hidden;
+          };
+        }
+        if (closeBtn && dockPanel) {
+          closeBtn.onclick = () => {
+            dockPanel.hidden = true;
+          };
+        }
+
+        // Palette selector buttons
+        document.querySelectorAll('.theme-palette-opt').forEach(btn => {
+          btn.onclick = () => {
+            const pal = btn.dataset.paletteVal;
+            const currentMode = localStorage.getItem('valut_theme_mode') || 'dark';
+            applyTheme(pal, currentMode);
+            toast(`Applied theme: ${btn.querySelector('.theme-name')?.textContent || pal}`);
+          };
+        });
+
+        // Dark / Light mode buttons
+        const btnDark = $('btnModeDark');
+        const btnLight = $('btnModeLight');
+        if (btnDark) {
+          btnDark.onclick = () => {
+            const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+            applyTheme(currentPal, 'dark');
+          };
+        }
+        if (btnLight) {
+          btnLight.onclick = () => {
+            const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+            applyTheme(currentPal, 'light');
+          };
+        }
+
+        // Apply saved or default theme immediately
+        applyTheme(localStorage.getItem('valut_palette') || 'enterprise_clean', localStorage.getItem('valut_theme_mode') || 'dark');
+      }
+
       /* ---------- Main App Initialization ---------- */
       async function initApp() {
+        initThemeDock();
         await loadCU();
         await updateChrome();
         await showContainer('box-inv');
@@ -10847,6 +12603,10 @@
         }
       };
       function openAuditLogModal() {
+        if (!canAccessLoginInventory()) {
+          toast('Access Denied: Login Inventory is restricted to Super Admins and Master Admins only.');
+          return;
+        }
         loadAuditLogContainer();
         if ($('dlgAuditLog')) $('dlgAuditLog').showModal();
       }
@@ -10871,7 +12631,7 @@
 
         const perms = user.permissions || {};
         const allKeys = [
-          'view', 'add', 'edit', 'delete', 'search', 'download', 'upload',
+          'view', 'add', 'edit', 'delete', 'delete_invalid', 'search', 'download', 'upload',
           'page_live', 'page_inventory', 'page_upload', 'page_fetch', 'page_edit',
           'page_alerts', 'page_health', 'page_errors', 'page_cart', 'page_audit'
         ];
@@ -11054,6 +12814,115 @@
         };
       });
     </script>
+
+  <!-- =========================================================================
+     DOCKED THEME SELECTOR AT RIGHT-END (6 Themes + Dark/Light Mode)
+     ========================================================================= -->
+  <div id="themeDockRightEnd" class="theme-dock-container">
+    <button id="themeDockToggleBtn" class="theme-dock-tab" type="button" title="Switch Theme (6 Styles + Dark/Light)">
+      <span class="theme-dock-icon">🎨</span>
+      <span class="theme-dock-label">THEMES</span>
+    </button>
+    <div id="themeDockPanel" class="theme-dock-panel" hidden>
+      <div class="theme-dock-header">
+        <div style="font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px">
+          <span>🎨</span> <span>Theme Selector</span>
+        </div>
+        <button class="b ghost" id="themeDockCloseBtn" type="button" style="font-size:16px;padding:2px 8px;cursor:pointer">✕</button>
+      </div>
+      <div style="padding:14px 16px">
+        <!-- Dark / Light Mode Switcher -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px">Mode Variant</label>
+          <div class="theme-mode-switch" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg);padding:4px;border-radius:8px;border:1px solid var(--line)">
+            <button type="button" class="theme-mode-btn" data-mode-val="dark" id="btnModeDark" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;font-size:12px;font-weight:700;border-radius:6px;border:none;cursor:pointer">
+              <span>🌙</span> <span>Dark</span>
+            </button>
+            <button type="button" class="theme-mode-btn" data-mode-val="light" id="btnModeLight" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;font-size:12px;font-weight:700;border-radius:6px;border:none;cursor:pointer">
+              <span>☀️</span> <span>Light</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 Themes List -->
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px">Select Palette</label>
+        <div class="theme-palette-list" style="display:flex;flex-direction:column;gap:6px">
+          <!-- 1. Midnight Pro -->
+          <button type="button" class="theme-palette-opt" data-palette-val="midnight_pro">
+            <div class="theme-swatch-group">
+              <span style="background:#0B1120"></span>
+              <span style="background:#172554"></span>
+              <span style="background:#38BDF8"></span>
+            </div>
+            <div class="theme-palette-info">
+              <div class="theme-name">Midnight Pro</div>
+              <div class="theme-desc">Deep Tech Navy & Sky</div>
+            </div>
+          </button>
+          <!-- 2. Obsidian Luxury -->
+          <button type="button" class="theme-palette-opt" data-palette-val="obsidian_luxury">
+            <div class="theme-swatch-group">
+              <span style="background:#09090B"></span>
+              <span style="background:#27272A"></span>
+              <span style="background:#D4AF37"></span>
+            </div>
+            <div class="theme-palette-info">
+              <div class="theme-name">Obsidian Luxury</div>
+              <div class="theme-desc">Obsidian & Champagne Gold</div>
+            </div>
+          </button>
+          <!-- 3. Quantum AI -->
+          <button type="button" class="theme-palette-opt" data-palette-val="quantum_ai">
+            <div class="theme-swatch-group">
+              <span style="background:#0F1025"></span>
+              <span style="background:#6D5DFB"></span>
+              <span style="background:#22D3EE"></span>
+            </div>
+            <div class="theme-palette-info">
+              <div class="theme-name">Quantum AI</div>
+              <div class="theme-desc">Electric Indigo & Cyan</div>
+            </div>
+          </button>
+          <!-- 4. Enterprise Clean -->
+          <button type="button" class="theme-palette-opt" data-palette-val="enterprise_clean">
+            <div class="theme-swatch-group">
+              <span style="background:#F8FAFC"></span>
+              <span style="background:#2563EB"></span>
+              <span style="background:#0EA5E9"></span>
+            </div>
+            <div class="theme-palette-info">
+              <div class="theme-name">Enterprise Clean</div>
+              <div class="theme-desc">Crisp Executive & Blue</div>
+            </div>
+          </button>
+          <!-- 5. Crystal Glass -->
+          <button type="button" class="theme-palette-opt" data-palette-val="crystal_glass">
+            <div class="theme-swatch-group">
+              <span style="background:#101827"></span>
+              <span style="background:#1E293B"></span>
+              <span style="background:#60A5FA"></span>
+            </div>
+            <div class="theme-palette-info">
+              <div class="theme-name">Crystal Glass</div>
+              <div class="theme-desc">Slate Charcoal & Ice</div>
+            </div>
+          </button>
+          <!-- 6. Emerald Control -->
+          <button type="button" class="theme-palette-opt" data-palette-val="emerald_control">
+            <div class="theme-swatch-group">
+              <span style="background:#0F172A"></span>
+              <span style="background:#064E3B"></span>
+              <span style="background:#34D399"></span>
+            </div>
+            <div class="theme-palette-info">
+              <div class="theme-name">Emerald Control</div>
+              <div class="theme-desc">Nordic Forest & Mint</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

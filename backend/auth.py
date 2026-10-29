@@ -114,22 +114,22 @@ MASTER_ID = MASTER_SUPER_ADMIN_ID  # backwards compatibility
 
 DEFAULT_PERMISSIONS = {
     "super_admin": {
-        "view": True, "add": True, "edit": True, "delete": True, "search": True, "download": True, "upload": True,
+        "view": True, "add": True, "edit": True, "delete": True, "delete_invalid": True, "search": True, "download": True, "upload": True,
         "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
         "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": True, "page_cart": True, "page_audit": True
     },
     "master_admin": {
-        "view": True, "add": True, "edit": True, "delete": True, "search": True, "download": True, "upload": True,
+        "view": True, "add": True, "edit": True, "delete": False, "delete_invalid": True, "search": True, "download": True, "upload": True,
         "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
         "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": True, "page_cart": True, "page_audit": True
     },
     "admin_user": {
-        "view": True, "add": True, "edit": True, "delete": True, "search": True, "download": True, "upload": True,
+        "view": True, "add": True, "edit": True, "delete": True, "delete_invalid": True, "search": True, "download": True, "upload": True,
         "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
-        "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": True, "page_cart": True, "page_audit": True
+        "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": True, "page_cart": True, "page_audit": False
     },
     "regular_user": {
-        "view": True, "add": True, "edit": True, "delete": False, "search": True, "download": True, "upload": True,
+        "view": True, "add": True, "edit": True, "delete": False, "delete_invalid": False, "search": True, "download": True, "upload": True,
         "page_live": True, "page_inventory": True, "page_upload": True, "page_fetch": True,
         "page_edit": True, "page_alerts": True, "page_health": True, "page_errors": False, "page_cart": False, "page_audit": False
     }
@@ -141,7 +141,7 @@ def get_user_permissions(user: models.User) -> dict[str, bool]:
     norm = normalize_id(user.user_id)
     if norm in MASTER_SUPER_ADMIN_IDS:
         return {k: True for k in DEFAULT_PERMISSIONS["super_admin"]}
-    cat = get_user_category(norm)["category"]
+    cat = get_user_category(user)["category"]
     perms = dict(DEFAULT_PERMISSIONS.get(cat, DEFAULT_PERMISSIONS["regular_user"]))
     if user.permissions and isinstance(user.permissions, dict):
         for k, v in user.permissions.items():
@@ -166,6 +166,17 @@ def require_permission(perm: str):
     return dep
 
 
+def require_login_inventory_access(user: models.User = Depends(get_current_user)) -> models.User:
+    """Restricts Login Inventory (Audit Log) to Super Admins and Master Admins only. Regular Admins are forbidden."""
+    norm = normalize_id(user.user_id)
+    if norm in MASTER_SUPER_ADMIN_IDS:
+        return user
+    cat = get_user_category(user)["category"]
+    if cat not in ("super_admin", "master_admin") or not user_has_permission(user, "page_audit"):
+        raise HTTPException(403, "Access denied: Login Inventory is restricted to Super Admins and Master Admins only.")
+    return user
+
+
 def role_for_id(user_id: str) -> str:
     """Role mapping strictly decided by the ID number:
     - 0001 & 0007 (Super Admins), 0002, 0003, 0004 (Master Admins): Admin
@@ -178,9 +189,21 @@ def role_for_id(user_id: str) -> str:
     return "limited"
 
 
-def get_user_category(user_id: str) -> dict:
-    """Classifies user ID into their role tier and security category."""
-    norm = normalize_id(user_id)
+def get_user_category(user_or_id) -> dict:
+    """Classifies user ID into their role tier and security category.
+    Accepts either a User model instance or a string user_id.
+    """
+    if isinstance(user_or_id, models.User):
+        uid = user_or_id.user_id
+        assigned_role = getattr(user_or_id, "role", "") or ""
+        perms = getattr(user_or_id, "permissions", {}) or {}
+        assigned_cat = perms.get("role") if isinstance(perms, dict) else None
+    else:
+        uid = str(user_or_id or "")
+        assigned_role = ""
+        assigned_cat = None
+
+    norm = normalize_id(uid)
     if norm in MASTER_SUPER_ADMIN_IDS:
         return {
             "category": "super_admin",
@@ -188,18 +211,18 @@ def get_user_category(user_id: str) -> dict:
             "badge": "👑 Super Admin",
             "is_master": True,
         }
-    if norm in MASTER_ADMIN_IDS:
+    if assigned_cat == "master_admin" or assigned_role == "master_admin" or norm in MASTER_ADMIN_IDS:
         return {
             "category": "master_admin",
             "category_label": f"Master Admin ({norm})",
             "badge": "⭐ Master Admin",
             "is_master": True,
         }
-    if norm in ADMIN_USER_IDS:
+    if assigned_cat in ("admin_user", "regular_admin") or assigned_role == "admin" or norm in ADMIN_USER_IDS:
         return {
             "category": "admin_user",
-            "category_label": f"Admin User ({norm})",
-            "badge": "🛡️ Admin User",
+            "category_label": f"Regular Admin ({norm})",
+            "badge": "🛡️ Regular Admin",
             "is_master": False,
         }
     return {

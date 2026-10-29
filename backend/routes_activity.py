@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 
 import models
 from activity import SIGNIN_ACTIONS, now_utc
-from auth import get_current_user
+from auth import get_current_user, require_login_inventory_access
 from database import get_db
 
-router = APIRouter(prefix="/api/activity", dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix="/api/activity", dependencies=[Depends(require_login_inventory_access)])
 Log = models.ActivityLog
 
 

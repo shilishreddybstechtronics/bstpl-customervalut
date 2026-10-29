@@ -634,6 +634,11 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
     all_rows = new_entries + updated_entries + existing_entries + duplicates + invalids
     all_rows.sort(key=lambda x: x.get("row_num", 0))
 
+    cust_dups = {}
+    for d in duplicates:
+        cn = d.get("customer_name") or "General_Customer"
+        cust_dups[cn] = cust_dups.get(cn, 0) + 1
+
     return {
         "valid_count": len(valid),
         "new_count": len(new_entries),
@@ -647,12 +652,13 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         "new_customers": sorted(list(new_customers)),
         "new_columns": sorted(list(new_columns)),
         "missing_columns_warning": list(missing_columns),
+        "customer_duplicates": cust_dups,
         "new_sample": new_entries[:300],
         "updated_sample": updated_entries[:300],
         "existing_sample": existing_entries[:300],
         "valid_sample": valid[:300],
-        "duplicates": duplicates[:300],
-        "invalids": invalids[:300],
+        "duplicates": duplicates[:10000],
+        "invalids": invalids[:1000],
         "all_sample": all_rows[:300],
         "new_imeis": [r.get("imei") for r in new_entries if r.get("imei")]
     }
@@ -2144,9 +2150,33 @@ def errored_out(r: models.ErroredRecord):
 
 
 @router.get("/errors", dependencies=[Depends(require_permission("view"))])
-def list_errors(db: Session = Depends(get_db)):
-    rows = db.query(models.ErroredRecord).order_by(models.ErroredRecord.created_at.desc(), models.ErroredRecord.id.desc()).all()
+def list_errors(reason: Optional[str] = None, q: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(models.ErroredRecord)
+    if reason and reason.strip():
+        query = query.filter(models.ErroredRecord.error_reason.ilike(f"%{reason.strip()}%"))
+    if q and q.strip():
+        term = f"%{q.strip()}%"
+        query = query.filter(
+            or_(
+                models.ErroredRecord.imei.ilike(term),
+                models.ErroredRecord.customer_name.ilike(term),
+                models.ErroredRecord.iccid.ilike(term),
+                models.ErroredRecord.device_sr_no.ilike(term),
+                models.ErroredRecord.msisdn1.ilike(term),
+                models.ErroredRecord.error_reason.ilike(term)
+            )
+        )
+    rows = query.order_by(models.ErroredRecord.created_at.desc(), models.ErroredRecord.id.desc()).all()
     return [errored_out(r) for r in rows]
+
+
+@router.get("/errors/summary", dependencies=[Depends(require_permission("view"))])
+def errors_summary(db: Session = Depends(get_db)):
+    rows = db.query(models.ErroredRecord.error_reason, func.count(models.ErroredRecord.id)).group_by(models.ErroredRecord.error_reason).all()
+    total = sum(c for _, c in rows)
+    reasons = [{"reason": r or "Unknown Error", "count": c} for r, c in rows]
+    reasons.sort(key=lambda x: x["count"], reverse=True)
+    return {"total": total, "reasons": reasons}
 
 
 @router.post("/errors", dependencies=[Depends(require_permission("view"))])
@@ -2446,7 +2476,7 @@ def bulk_push_errors_to_customer(data: schemas.BulkPushErrorsIn, db: Session = D
     return {"pushed_count": pushed, "customer_name": cust.name}
 
 
-@router.delete("/errors/{error_id}", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+@router.delete("/errors/{error_id}", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
 def move_error_to_cart(error_id: int, permanent: bool = False, db: Session = Depends(get_db),
                        user: models.User = Depends(get_current_user)):
     err = db.query(models.ErroredRecord).filter(models.ErroredRecord.id == error_id).first()
@@ -2498,7 +2528,7 @@ def move_error_to_cart(error_id: int, permanent: bool = False, db: Session = Dep
     return {"moved_to_cart": error_id}
 
 
-@router.post("/errors/empty", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+@router.post("/errors/empty", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
 def move_all_errors_to_cart(limit: int = 0, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     total_remaining = db.query(models.ErroredRecord).count()
     query = db.query(models.ErroredRecord)
@@ -2545,7 +2575,7 @@ def move_all_errors_to_cart(limit: int = 0, db: Session = Depends(get_db), user:
     return {"moved_count": count, "remaining_count": remaining, "moved_all_to_cart": count}
 
 
-@router.delete("/errors/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+@router.delete("/errors/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
 def direct_delete_all_errors_permanent(limit: int = 0, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     """Directly and permanently deletes errored entries from the database forever."""
     total_remaining = db.query(models.ErroredRecord).count()
@@ -2566,7 +2596,7 @@ def direct_delete_all_errors_permanent(limit: int = 0, db: Session = Depends(get
         return {"deleted_count": count, "remaining_count": 0, "deleted_forever": count}
 
 
-@router.delete("/errors/{error_id}/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+@router.delete("/errors/{error_id}/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
 def direct_delete_single_error_permanent(error_id: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     """Directly and permanently deletes a single errored entry from the database forever."""
     err = db.query(models.ErroredRecord).filter(models.ErroredRecord.id == error_id).first()
@@ -2578,7 +2608,7 @@ def direct_delete_single_error_permanent(error_id: int, db: Session = Depends(ge
     return {"deleted_forever": error_id}
 
 
-@router.post("/errors/batch-delete", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+@router.post("/errors/batch-delete", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
 def direct_delete_batch_errors(data: schemas.BatchDeleteErrorsIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     """Directly and permanently deletes specific errored records by ID from the database forever."""
     if not data.error_ids:
@@ -2587,4 +2617,410 @@ def direct_delete_batch_errors(data: schemas.BatchDeleteErrorsIn, db: Session = 
     db.commit()
     log_activity(db, "errors_batch_delete", f"Permanently deleted {count} errored entries from database", user=user)
     return {"deleted_count": count, "deleted_forever": count}
+
+
+# ---------- Bulk Deletion via Excel matching ----------
+@router.post("/devices/bulk-delete/preview", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+def bulk_delete_preview(data: schemas.BulkDeletePreviewIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Analyzes an uploaded Excel list of identifiers and previews matches in valid inventory."""
+    col_name = (data.column or "imei").strip().lower()
+    raw_vals = [str(v).strip() for v in data.values if v is not None and str(v).strip()]
+    total_vals = len(raw_vals)
+    if not total_vals:
+        return {
+            "total_values": 0, "unique_values": 0, "duplicate_values": 0,
+            "matching_records": 0, "unmatched_values": 0, "eligible_for_deletion": 0,
+            "column": col_name, "sample_matches": []
+        }
+
+    unique_vals = list(dict.fromkeys(raw_vals))
+    dup_count = total_vals - len(unique_vals)
+
+    col_map = {
+        "imei": Device.imei,
+        "iccid": Device.iccid,
+        "device_sr_no": Device.device_sr_no,
+        "msisdn1": Device.msisdn1,
+        "customer_name": None
+    }
+    target_col = col_map.get(col_name, Device.imei)
+
+    matched_ids = []
+    matched_sample = []
+    matched_val_set = set()
+    chunk_size = 500
+
+    for i in range(0, len(unique_vals), chunk_size):
+        chunk = unique_vals[i:i + chunk_size]
+        if target_col is not None:
+            rows = db.query(Device.id, target_col).filter(
+                Device.deleted_at.is_(None),
+                target_col.in_(chunk)
+            ).all()
+            for dev_id, val in rows:
+                matched_ids.append(dev_id)
+                if val:
+                    matched_val_set.add(str(val).strip().lower())
+                if len(matched_sample) < 10:
+                    matched_sample.append({"id": dev_id, "matched_value": val})
+        else:
+            rows = db.query(Device.id, Customer.name).join(Customer, Customer.id == Device.customer_id).filter(
+                Device.deleted_at.is_(None),
+                Customer.name.in_(chunk)
+            ).all()
+            for dev_id, val in rows:
+                matched_ids.append(dev_id)
+                if val:
+                    matched_val_set.add(str(val).strip().lower())
+                if len(matched_sample) < 10:
+                    matched_sample.append({"id": dev_id, "matched_value": val})
+
+    unique_lower = {v.lower() for v in unique_vals}
+    unmatched_count = len(unique_lower - matched_val_set)
+
+    return {
+        "total_values": total_vals,
+        "unique_values": len(unique_vals),
+        "duplicate_values": dup_count,
+        "matching_records": len(matched_ids),
+        "unmatched_values": max(0, unmatched_count),
+        "eligible_for_deletion": len(matched_ids),
+        "column": col_name,
+        "sample_matches": matched_sample
+    }
+
+
+@router.post("/devices/bulk-delete/execute", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+def bulk_delete_execute(data: schemas.BulkDeleteExecuteIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Executes bulk deletion of inventory based on uploaded Excel column matching."""
+    col_name = (data.column or "imei").strip().lower()
+    raw_vals = [str(v).strip() for v in data.values if v is not None and str(v).strip()]
+    if not raw_vals:
+        return {"success": True, "deleted_count": 0, "skipped_count": 0, "unmatched_count": 0, "failures_count": 0, "permanent": data.permanent, "column": col_name}
+
+    unique_vals = list(dict.fromkeys(raw_vals))
+
+    col_map = {
+        "imei": Device.imei,
+        "iccid": Device.iccid,
+        "device_sr_no": Device.device_sr_no,
+        "msisdn1": Device.msisdn1,
+        "customer_name": None
+    }
+    target_col = col_map.get(col_name, Device.imei)
+
+    deleted_count = 0
+    matched_val_set = set()
+    chunk_size = 500
+
+    for i in range(0, len(unique_vals), chunk_size):
+        chunk = unique_vals[i:i + chunk_size]
+        if target_col is not None:
+            dev_objs = db.query(Device).options(joinedload(Device.customer)).filter(
+                Device.deleted_at.is_(None),
+                target_col.in_(chunk)
+            ).all()
+        else:
+            dev_objs = db.query(Device).options(joinedload(Device.customer)).join(Customer, Customer.id == Device.customer_id).filter(
+                Device.deleted_at.is_(None),
+                Customer.name.in_(chunk)
+            ).all()
+
+        if not dev_objs:
+            continue
+
+        for d in dev_objs:
+            val = getattr(d, col_name, None) if col_name != "customer_name" else (d.customer.name if d.customer else None)
+            if val:
+                matched_val_set.add(str(val).strip().lower())
+
+            cid, imei = d.customer_id, d.imei
+            cname = d.customer.name if d.customer else ""
+
+            if data.permanent:
+                try:
+                    customer_tables.delete_device_from_table(cid, imei, cname)
+                except Exception:
+                    pass
+                db.delete(d)
+            else:
+                trash(d, user, data.reason or f"Bulk deleted via Excel matching {col_name}")
+                try:
+                    customer_tables.delete_device_from_table(cid, imei, cname)
+                except Exception:
+                    pass
+
+            deleted_count += 1
+
+        db.commit()
+
+    unique_lower = {v.lower() for v in unique_vals}
+    unmatched_count = max(0, len(unique_lower - matched_val_set))
+
+    action_tag = "device_bulk_permanent_delete" if data.permanent else "device_bulk_trash"
+    log_activity(
+        db,
+        action_tag,
+        f"Bulk deleted {deleted_count} records via Excel (Column: {col_name}, Permanent: {data.permanent})",
+        user=user
+    )
+
+    return {
+        "success": True,
+        "deleted_count": deleted_count,
+        "skipped_count": 0,
+        "unmatched_count": unmatched_count,
+        "failures_count": 0,
+        "permanent": data.permanent,
+        "column": col_name
+    }
+
+
+# ---------- Bulk Edit by IMEI ----------
+@router.post("/devices/bulk-edit/preview", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
+def bulk_edit_preview(data: schemas.BulkEditPreviewIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Previews bulk editing of inventory records matched by IMEI."""
+    input_rows = data.file_rows if data.file_rows is not None else (data.rows or [])
+    total_rows = len(input_rows)
+    imei_col_raw = (data.imei_col or data.imei_column or "imei").strip()
+    mappings = data.field_mappings or {}
+
+    if not total_rows:
+        return {
+            "total_rows": 0, "total_values": 0, "matching_imeis": 0, "matching_records": 0,
+            "unmatched_imeis": 0, "unmatched_values": 0, "duplicates_in_file": 0, "duplicate_imeis": 0,
+            "invalid_imeis": 0, "eligible_to_update": 0, "eligible_for_update": 0,
+            "sample_changes": []
+        }
+
+    raw_imeis = []
+    invalid_count = 0
+    valid_row_map = {}
+    seen_imeis = set()
+    duplicate_count = 0
+
+    for r in input_rows:
+        # Extract row dictionary mapped to db fields
+        if mappings:
+            row_dict = {}
+            for ex_col, db_fld in mappings.items():
+                if ex_col in r:
+                    row_dict[db_fld] = r[ex_col]
+            raw_imei = str(r.get(imei_col_raw) or r.get("imei") or r.get(imei_col_raw.lower()) or "").strip()
+        else:
+            row_dict = dict(r)
+            raw_imei = str(r.get(imei_col_raw) or r.get("imei") or r.get(imei_col_raw.lower()) or "").strip()
+
+        if re.search(r"e\+", raw_imei, re.I):
+            try:
+                raw_imei = str(int(float(raw_imei)))
+            except Exception:
+                pass
+        clean = re.sub(r"[^0-9A-Za-z_-]", "", raw_imei).strip()
+        if not clean or len(clean) < 5:
+            invalid_count += 1
+            continue
+        if clean in seen_imeis:
+            duplicate_count += 1
+        else:
+            seen_imeis.add(clean)
+            raw_imeis.append(clean)
+            valid_row_map[clean] = row_dict
+
+    matching_devices = {}
+    chunk_size = 500
+    for i in range(0, len(raw_imeis), chunk_size):
+        chunk = raw_imeis[i:i + chunk_size]
+        devs = db.query(Device).options(joinedload(Device.customer)).filter(
+            Device.deleted_at.is_(None),
+            Device.imei.in_(chunk)
+        ).all()
+        for d in devs:
+            matching_devices[d.imei] = d
+
+    matching_count = len(matching_devices)
+    unmatched_count = max(0, len(raw_imeis) - matching_count)
+    eligible_count = matching_count
+
+    sample_changes_grouped = []
+    sample_changes_flat = []
+    for imei, d in list(matching_devices.items())[:25]:
+        new_row = valid_row_map.get(imei, {})
+        changes = {}
+        for fld in ["model", "sim_provider", "activation_plan", "firmware", "flash", "sim_type", "device_sr_no", "iccid", "msisdn1", "msisdn2"]:
+            new_val = new_row.get(fld)
+            if new_val is not None and str(new_val).strip() != "":
+                old_val = getattr(d, fld, None)
+                if str(new_val).strip() != str(old_val or "").strip():
+                    changes[fld] = {"old": str(old_val or ""), "new": str(new_val).strip()}
+
+        for fld in ["act_date", "expiry_date", "dispatched_date"]:
+            new_val = new_row.get(fld)
+            if new_val is not None and str(new_val).strip() != "":
+                old_val = getattr(d, fld, None)
+                parsed_val = normalize_date_input(str(new_val).strip())
+                if parsed_val and str(old_val or "") != str(parsed_val):
+                    changes[fld] = {"old": str(old_val or ""), "new": str(parsed_val)}
+
+        new_cust = new_row.get("customer_name")
+        if new_cust and str(new_cust).strip():
+            old_cust = d.customer.name if d.customer else ""
+            if new_cust.strip().lower() != old_cust.lower():
+                changes["customer_name"] = {"old": old_cust, "new": new_cust.strip()}
+
+        for fld, diff in changes.items():
+            sample_changes_flat.append({
+                "imei": imei,
+                "field": fld,
+                "old_val": diff["old"],
+                "new_val": diff["new"]
+            })
+
+        sample_changes_grouped.append({
+            "id": d.id,
+            "imei": imei,
+            "customer_name": d.customer.name if d.customer else "",
+            "changes": changes,
+            "fields_changed_count": len(changes)
+        })
+
+    return {
+        "total_rows": total_rows,
+        "total_values": total_rows,
+        "matching_imeis": matching_count,
+        "matching_records": matching_count,
+        "unmatched_imeis": unmatched_count,
+        "unmatched_values": unmatched_count,
+        "duplicates_in_file": duplicate_count,
+        "duplicate_imeis": duplicate_count,
+        "invalid_imeis": invalid_count,
+        "eligible_to_update": eligible_count,
+        "eligible_for_update": eligible_count,
+        "sample_changes": sample_changes_flat if mappings else sample_changes_grouped,
+        "detailed_samples": sample_changes_grouped
+    }
+
+
+@router.post("/devices/bulk-edit/execute", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
+def bulk_edit_execute(data: schemas.BulkEditExecuteIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Executes bulk update of matching inventory records by IMEI."""
+    input_rows = data.file_rows if data.file_rows is not None else (data.rows or [])
+    total_input = len(input_rows)
+    imei_col_raw = (data.imei_col or data.imei_column or "imei").strip()
+    mappings = data.field_mappings or {}
+
+    if not total_input:
+        return {"success": True, "total_submitted": 0, "total_processed": 0, "updated": 0, "updated_count": 0, "skipped": 0, "skipped_count": 0, "unmatched": 0, "unmatched_count": 0, "duplicate_count": 0, "failures_count": 0, "errors": []}
+
+    row_map = {}
+    seen = set()
+    dup_count = 0
+    invalid_count = 0
+
+    for r in input_rows:
+        if mappings:
+            row_dict = {}
+            for ex_col, db_fld in mappings.items():
+                if ex_col in r:
+                    row_dict[db_fld] = r[ex_col]
+            raw_imei = str(r.get(imei_col_raw) or r.get("imei") or r.get(imei_col_raw.lower()) or "").strip()
+        else:
+            row_dict = dict(r)
+            raw_imei = str(r.get(imei_col_raw) or r.get("imei") or r.get(imei_col_raw.lower()) or "").strip()
+
+        if re.search(r"e\+", raw_imei, re.I):
+            try:
+                raw_imei = str(int(float(raw_imei)))
+            except Exception:
+                pass
+        clean = re.sub(r"[^0-9A-Za-z_-]", "", raw_imei).strip()
+        if not clean or len(clean) < 5:
+            invalid_count += 1
+            continue
+        if clean in seen:
+            dup_count += 1
+        else:
+            seen.add(clean)
+            row_map[clean] = row_dict
+
+    unique_imeis = list(row_map.keys())
+    updated_count = 0
+    matched_set = set()
+    failures_count = 0
+    chunk_size = 500
+
+    cust_cache = {c.name.lower(): c.id for c in db.query(Customer.id, Customer.name).filter(Customer.deleted_at.is_(None))}
+
+    for i in range(0, len(unique_imeis), chunk_size):
+        chunk = unique_imeis[i:i + chunk_size]
+        devs = db.query(Device).options(joinedload(Device.customer)).filter(
+            Device.deleted_at.is_(None),
+            Device.imei.in_(chunk)
+        ).all()
+
+        for d in devs:
+            matched_set.add(d.imei)
+            new_data = row_map.get(d.imei, {})
+            try:
+                has_change = False
+                for fld in ["model", "sim_provider", "activation_plan", "firmware", "flash", "sim_type", "device_sr_no", "iccid", "msisdn1", "msisdn2"]:
+                    if fld in new_data:
+                        v = new_data[fld]
+                        if v is not None and str(v).strip() != "":
+                            setattr(d, fld, str(v).strip())
+                            has_change = True
+
+                for fld in ["act_date", "expiry_date", "dispatched_date"]:
+                    if fld in new_data:
+                        v = new_data[fld]
+                        if v is not None and str(v).strip() != "":
+                            parsed_d = normalize_date_input(str(v).strip())
+                            if parsed_d:
+                                setattr(d, fld, parsed_d)
+                                has_change = True
+
+                if "customer_name" in new_data and str(new_data["customer_name"]).strip():
+                    new_cname = str(new_data["customer_name"]).strip()
+                    lower_c = new_cname.lower()
+                    if lower_c not in cust_cache:
+                        new_cust_obj = Customer(name=new_cname)
+                        db.add(new_cust_obj)
+                        db.flush()
+                        cust_cache[lower_c] = new_cust_obj.id
+                    d.customer_id = cust_cache[lower_c]
+                    has_change = True
+
+                if "extra" in new_data and isinstance(new_data["extra"], dict):
+                    cur_extra = dict(d.extra or {})
+                    for ek, ev in new_data["extra"].items():
+                        if ev is not None and str(ev).strip() != "":
+                            cur_extra[str(ek).strip()] = str(ev).strip()
+                    d.extra = cur_extra
+                    has_change = True
+
+                if has_change:
+                    updated_count += 1
+            except Exception:
+                failures_count += 1
+
+        db.commit()
+
+    unmatched_count = max(0, len(unique_imeis) - len(matched_set))
+    log_activity(db, "bulk_edit", f"Bulk updated {updated_count} devices by IMEI (processed {total_input})", user=user)
+
+    return {
+        "success": True,
+        "total_submitted": total_input,
+        "total_processed": total_input,
+        "updated": updated_count,
+        "updated_count": updated_count,
+        "unmatched": unmatched_count,
+        "unmatched_count": unmatched_count,
+        "skipped": dup_count + invalid_count,
+        "skipped_count": dup_count + invalid_count,
+        "duplicate_count": dup_count,
+        "invalid_count": invalid_count,
+        "failures_count": failures_count,
+        "errors": []
+    }
 

@@ -16,7 +16,7 @@ from database import engine, get_db
 from routes_activity import router as activity_router
 from routes_customers import router as customers_router
 from routes_data import router as data_router
-from routes_users import router as users_router
+from routes_users import router as users_router, user_out
 
 from contextlib import asynccontextmanager
 
@@ -168,7 +168,7 @@ def register(data: schemas.RegisterIn, request: Request, db: Session = Depends(g
     log_activity(db, "register", "Master account (0001) created", user=user, request=request)
     db.commit()
     db.refresh(user)
-    return {"access_token": create_token(user), "user": user}
+    return {"access_token": create_token(user), "user": user_out(user, user)}
 
 
 @app.post("/auth/login", response_model=schemas.TokenOut)
@@ -185,7 +185,7 @@ def login(data: schemas.LoginIn, request: Request, db: Session = Depends(get_db)
                      user=user, login_id=login_id, request=request, commit=True)
         raise HTTPException(status_code=401, detail="ID or password is incorrect.")
     log_activity(db, "login", "Signed in", user=user, request=request, commit=True)
-    return {"access_token": create_token(user), "user": user}
+    return {"access_token": create_token(user), "user": user_out(user, user)}
 
 
 @app.post("/auth/logout")
@@ -196,7 +196,7 @@ def logout(request: Request, db: Session = Depends(get_db), current_user: models
 
 @app.get("/auth/me", response_model=schemas.UserOut)
 def me(current_user: models.User = Depends(get_current_user)):
-    return current_user
+    return user_out(current_user, current_user)
 
 
 app.include_router(customers_router)
