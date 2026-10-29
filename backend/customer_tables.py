@@ -270,6 +270,18 @@ def delete_device_from_table(cid: int, imei: str, name: str = ""):
         print(f"Customer table delete device failed: {e}")
 
 
+def clear_table(cid: int, name: str = ""):
+    """Empties all rows from the customer's individual table."""
+    try:
+        with engine.begin() as conn:
+            t = find_table(conn, cid, name)
+            if t:
+                conn.execute(text(f"DELETE FROM `{t}`"))
+    except Exception as e:
+        print(f"Customer table clear rows failed: {e}")
+
+
+
 def sync_all():
     """Copies every existing customer's active devices into their own table."""
     import models

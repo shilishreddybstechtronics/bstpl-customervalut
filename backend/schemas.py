@@ -252,7 +252,7 @@ class DeviceUpdate(BaseModel):
 
 
 class BulkIn(BaseModel):
-    rows: list[DeviceIn] = Field(max_length=100000)  # ceiling for large workbooks
+    rows: list[DeviceIn] = Field(max_length=500000)  # Support large workbooks up to 500,000 entries
     mode: Optional[Literal["skip", "replace"]] = "skip"
     direct_empty: Optional[bool] = False
 
@@ -290,7 +290,7 @@ class SimDataRow(BaseModel):
 
 
 class SimDataCheckIn(BaseModel):
-    rows: list[SimDataRow] = Field(max_length=50000)
+    rows: list[SimDataRow] = Field(max_length=500000)
     match_by: Optional[str] = "iccid"
     overwrite: bool = True
     sim_provider: Optional[str] = None
@@ -307,7 +307,7 @@ class SimDataCheckIn(BaseModel):
 
 
 class SimDataApplyIn(BaseModel):
-    rows: list[SimDataRow] = Field(max_length=50000)
+    rows: list[SimDataRow] = Field(max_length=500000)
     match_by: Optional[str] = "iccid"
     overwrite: bool = True
     sim_provider: Optional[str] = None
@@ -328,7 +328,7 @@ class SimDataApplyIn(BaseModel):
 
 
 class BulkFetchIn(BaseModel):
-    queries: list[str] = Field(max_length=100000)
+    queries: list[str] = Field(max_length=500000)
     field: Optional[str] = "all"
     customer_id: Optional[int] = None
     sim_type: Optional[str] = "all"
@@ -516,5 +516,29 @@ class BulkEditExecuteIn(BaseModel):
     rows: Optional[list[dict]] = None
     file_rows: Optional[list[dict]] = None
     field_mappings: Optional[dict[str, str]] = None
+
+
+class CustomerRenameIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=150)
+
+
+class CustomerRenameItem(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    id: int
+    name: str = Field(min_length=1, max_length=150)
+
+
+class CustomerRenameAllIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    renames: list[CustomerRenameItem] = Field(default_factory=list)
+
+
+class CustomerDeleteAllEntriesIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    confirm_name: str
+    permanent: bool = False
+    reason: Optional[str] = "Deleted all entries for customer"
+
 
 

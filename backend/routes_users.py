@@ -29,7 +29,7 @@ router = APIRouter(prefix="/api")
 
 
 def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
-    cat = get_user_category(u.user_id)
+    cat = get_user_category(u)
     can_del = False
     can_mod = False
     pwd = None
@@ -38,8 +38,10 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
         can_mod, _ = can_modify_user(actor, u)
         actor_norm = normalize_id(actor.user_id)
         target_norm = normalize_id(u.user_id)
-        is_actor_super = actor_norm in MASTER_SUPER_ADMIN_IDS
-        is_target_super = target_norm in MASTER_SUPER_ADMIN_IDS
+        actor_cat = get_user_category(actor)["category"]
+        target_cat = cat["category"]
+        is_actor_super = actor_norm in MASTER_SUPER_ADMIN_IDS or actor_cat == "super_admin"
+        is_target_super = target_norm in MASTER_SUPER_ADMIN_IDS or target_cat == "super_admin"
         if is_actor_super:
             if is_target_super and target_norm != actor_norm:
                 # Mutual Super Admin Protection: Super Admins cannot see each other's passwords
@@ -104,27 +106,33 @@ def create_user(data: schemas.UserCreate, db: Session = Depends(get_db), admin: 
     login_id = data.user_id.strip().lower()
     norm_id = normalize_id(login_id)
     norm_admin = normalize_id(admin.user_id)
+    admin_cat = get_user_category(admin)["category"]
 
-    if (norm_id in MASTER_SUPER_ADMIN_IDS or login_id in MASTER_SUPER_ADMIN_IDS) and norm_admin not in MASTER_SUPER_ADMIN_IDS:
-        raise HTTPException(400, "Master Super Admin accounts (0001, 0007) are reserved.")
+    is_admin_super = norm_admin in MASTER_SUPER_ADMIN_IDS or admin_cat == "super_admin"
+    is_admin_master = norm_admin in MASTER_ADMIN_IDS or admin_cat == "master_admin"
 
-    # Only Master Super Admins (0001, 0007) can provision Master Admin accounts
+    # Only Super Admins and Master Admins can add users in Manage Users and Permissions
+    if not (is_admin_super or is_admin_master):
+        raise HTTPException(403, "Only Super Admins and Master Admins have permission to add new users.")
+
     target_role = (data.role or "").strip().lower() or "master_admin"
-    if (target_role == "master_admin" or norm_id in MASTER_ADMIN_IDS) and norm_admin not in MASTER_SUPER_ADMIN_IDS:
-        raise HTTPException(403, "Only Master Super Admins (0001, 0007) have permission to provision Master Admin accounts.")
+
+    # Master Admins have NO authority to add Super Admin
+    if (target_role == "super_admin" or norm_id in MASTER_SUPER_ADMIN_IDS or login_id in MASTER_SUPER_ADMIN_IDS) and not is_admin_super:
+        raise HTTPException(403, "Master Admins do not have authority to create Super Admin accounts.")
+
+    if (norm_id in MASTER_SUPER_ADMIN_IDS or login_id in MASTER_SUPER_ADMIN_IDS) and not is_admin_super:
+        raise HTTPException(400, "Master Super Admin accounts (0001, 0007) are reserved.")
 
     if db.query(models.User).filter(models.User.user_id == login_id).first():
         raise HTTPException(400, "This ID is already taken. Choose another one.")
 
-    # Determine assigned category: Default is Master Admin when added by Super Admin
-    if norm_admin in MASTER_SUPER_ADMIN_IDS:
-        assigned_category = target_role if target_role in ("master_admin", "admin_user", "regular_user") else "master_admin"
-    elif norm_id in MASTER_ADMIN_IDS:
-        assigned_category = "master_admin"
-    elif norm_id in ADMIN_USER_IDS:
-        assigned_category = "admin_user"
+    # Determine assigned category: Default is Master Admin
+    if is_admin_super:
+        assigned_category = target_role if target_role in ("super_admin", "master_admin", "admin_user", "regular_user") else "master_admin"
     else:
-        assigned_category = "regular_user"
+        # Master Admin creating: can create master_admin, admin_user, regular_user
+        assigned_category = target_role if target_role in ("master_admin", "admin_user", "regular_user") else "master_admin"
 
     initial_perms = dict(DEFAULT_PERMISSIONS.get(assigned_category, DEFAULT_PERMISSIONS["master_admin"]))
     if data.permissions and isinstance(data.permissions, dict):

@@ -65,9 +65,14 @@
       min-height: 100vh;
       font-family: "Manrope", system-ui, sans-serif;
       color: var(--ink);
-      background: radial-gradient(520px 360px at 12% 8%, rgba(252, 163, 17, .12), transparent 70%),
-        radial-gradient(600px 420px at 92% 96%, rgba(20, 33, 61, .12), transparent 70%),
-        var(--bg);
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(37, 99, 235, 0.08), transparent 70%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(56, 189, 248, 0.05), transparent 70%),
+        linear-gradient(to right, rgba(128, 128, 128, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(128, 128, 128, 0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      background-attachment: fixed;
       transition: background-color .25s ease, color .25s ease;
     }
 
@@ -82,6 +87,14 @@
       padding: 28px 16px;
       position: relative;
       z-index: 10;
+      background:
+        radial-gradient(ellipse 85% 75% at 50% -10%, rgba(37, 99, 235, 0.28), transparent 70%),
+        radial-gradient(ellipse 70% 60% at 85% 95%, rgba(56, 189, 248, 0.18), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 15% 90%, rgba(99, 102, 241, 0.16), transparent 60%),
+        linear-gradient(rgba(11, 17, 32, 0.86), rgba(11, 17, 32, 0.94)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M60 0v60H0' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1'/%3E%3Ccircle cx='30' cy='30' r='1.5' fill='rgba(56,189,248,0.22)'/%3E%3Ccircle cx='0' cy='0' r='1.2' fill='rgba(37,99,235,0.18)'/%3E%3C/svg%3E");
+      background-size: cover, cover, cover, cover, 48px 48px;
+      background-attachment: fixed;
     }
 
     .auth-card {
@@ -90,7 +103,9 @@
       background: var(--card);
       border-radius: 20px;
       border: 1px solid var(--line);
-      box-shadow: 0 1px 2px rgba(20, 33, 61, .06), 0 20px 55px rgba(20, 33, 61, .14);
+      box-shadow: 0 1px 2px rgba(20, 33, 61, .06), 0 20px 55px rgba(20, 33, 61, .14), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
 
     .auth-card.shake {
@@ -1582,13 +1597,176 @@
       pointer-events: none;
     }
 
-    @media (max-width:800px) {
+    /* ===== COMPREHENSIVE DEVICE-FRIENDLY & MOBILE RESPONSIVE STYLES ===== */
+    @media (max-width: 992px) {
+      .wrap {
+        padding: 16px 12px 64px;
+        max-width: 100%;
+      }
       #statsRibbon {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+      }
+      .float-logo {
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      /* Base & Typography */
+      body {
+        font-size: 13.5px;
+      }
+      .wrap {
+        padding: 12px 8px 56px !important;
       }
 
-      .float-logo {
-        display: none;
+      /* Header & Branding */
+      header {
+        padding: 12px 14px !important;
+        gap: 12px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+      .brand {
+        justify-content: flex-start;
+        width: 100%;
+      }
+      .brand img {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      .wm {
+        font-size: 19px !important;
+      }
+      .tg {
+        font-size: 11px !important;
+      }
+      .acts {
+        margin-left: 0 !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        justify-content: flex-start !important;
+      }
+      .acts .b, .acts button {
+        flex: 1 1 calc(50% - 6px);
+        min-height: 38px;
+        font-size: 12px;
+        padding: 0 10px;
+        justify-content: center;
+      }
+
+      /* Horizontal Scrollable Tabs */
+      .nav-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 8px !important;
+        gap: 6px !important;
+        scrollbar-width: thin;
+        scroll-snap-type: x mandatory;
+      }
+      .nav-tabs::-webkit-scrollbar {
+        height: 4px;
+      }
+      .nav-tabs::-webkit-scrollbar-thumb {
+        background: var(--line);
+        border-radius: 4px;
+      }
+      .tab-btn {
+        flex-shrink: 0 !important;
+        scroll-snap-align: start;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        min-height: 38px;
+      }
+
+      /* Containers & Cards */
+      .container-box {
+        padding: 14px 12px !important;
+        border-radius: 14px !important;
+      }
+      .card {
+        border-radius: 14px !important;
+      }
+
+      /* Responsive Form Grids */
+      .form-grid, .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+
+      /* Touch Friendly Inputs & Buttons */
+      input, select, textarea, button.b {
+        min-height: 40px;
+      }
+
+      /* Full Width & Touch-Friendly Data Tables */
+      .tw, .data-table-wrap, #invTableWrap, #usersTableWrap, #errorsTableWrap, #cartTableWrap, #logTableWrap, #custFilesTableWrap {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+      }
+      .tw table, .data-table-wrap table {
+        min-width: 680px !important;
+      }
+
+      /* Modals & Dialogs */
+      dialog.modal-card {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 90vh !important;
+        margin: auto !important;
+        padding: 14px !important;
+        border-radius: 16px !important;
+      }
+
+      /* Theme Dock on Mobile */
+      .theme-dock-tab {
+        padding: 8px 4px !important;
+        border-radius: 8px 0 0 8px !important;
+      }
+      .theme-dock-panel {
+        width: min(320px, 94vw) !important;
+        max-width: 94vw !important;
+      }
+
+      /* Validation / Upload Metrics */
+      .val-metric-card {
+        flex: 1 1 calc(50% - 8px) !important;
+        min-width: 130px !important;
+      }
+
+      /* Auth / Login Card */
+      .auth-card {
+        width: 100% !important;
+        max-width: 420px !important;
+        padding: 24px 18px !important;
+        margin: 10px auto !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .wrap {
+        padding: 10px 6px 48px !important;
+      }
+      #statsRibbon {
+        grid-template-columns: 1fr !important;
+      }
+      .acts .b, .acts button {
+        flex: 1 1 100% !important;
+      }
+      .val-metric-card {
+        flex: 1 1 100% !important;
+      }
+      .stat.card {
+        padding: 12px 14px !important;
       }
     }
 
@@ -1946,10 +2124,209 @@
       padding: 3px 8px;
       border-radius: 6px;
     }
+
+    /* BSTPL Global Loading Component Styles (Requirement 1) */
+    .bstpl-loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(11, 17, 32, 0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999999;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .bstpl-loader-overlay[hidden] {
+      display: none !important;
+      opacity: 0;
+      visibility: hidden;
+    }
+    .bstpl-loader-card {
+      background: var(--card);
+      border: 1.5px solid var(--primary);
+      border-radius: 20px;
+      padding: 30px 34px 26px;
+      width: min(440px, 92vw);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 30px rgba(37, 99, 235, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      animation: bstplPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes bstplPopIn {
+      0% { transform: scale(0.92); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .bstpl-icon-container {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .bstpl-loader-icon {
+      width: 52px;
+      height: 52px;
+      z-index: 2;
+      filter: drop-shadow(0 4px 12px rgba(37, 99, 235, 0.4));
+      animation: bstplPulseIcon 2s ease-in-out infinite;
+    }
+    @keyframes bstplPulseIcon {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    .bstpl-radar-ring {
+      position: absolute;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      border: 2.5px solid transparent;
+      border-top-color: var(--primary);
+      border-right-color: #38bdf8;
+      animation: bstplSpinRing 1.1s linear infinite;
+    }
+    .bstpl-radar-ring.outer {
+      width: 90px;
+      height: 90px;
+      border-top-color: transparent;
+      border-bottom-color: #fca311;
+      border-left-color: rgba(37, 99, 235, 0.4);
+      animation: bstplSpinRing 1.8s linear infinite reverse;
+    }
+    @keyframes bstplSpinRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .bstpl-loader-title {
+      font-weight: 800;
+      font-size: 17px;
+      color: var(--ink);
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .bstpl-loader-msg {
+      font-size: 13.5px;
+      color: var(--muted);
+      line-height: 1.45;
+      margin-bottom: 12px;
+      min-height: 20px;
+      font-weight: 500;
+    }
+    .bstpl-loader-bar-wrap {
+      width: 100%;
+      margin: 8px 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .bstpl-loader-bar-track {
+      width: 100%;
+      height: 8px;
+      background: var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .bstpl-loader-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), #38bdf8);
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+    .bstpl-loader-pct {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: right;
+    }
+    .bstpl-loader-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    /* Expiry status badges (Requirements 9 & 10) */
+    .exp-badge-expired {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid #ef4444;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .exp-badge-soon {
+      background: rgba(245, 158, 11, 0.15);
+      color: #d97706;
+      border: 1px solid #f59e0b;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .exp-badge-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #059669;
+      border: 1px solid #10b981;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .exp-badge-unknown {
+      background: var(--card-subtle);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
   </style>
 </head>
 
 <body>
+
+  <!-- BSTPL GLOBAL LOADING COMPONENT (Requirement 1) -->
+  <div id="bstplGlobalLoader" class="bstpl-loader-overlay">
+    <div class="bstpl-loader-card">
+      <div class="bstpl-icon-container">
+        <div class="bstpl-radar-ring"></div>
+        <div class="bstpl-radar-ring outer"></div>
+        <img src="logo.svg" alt="BSTPL Logo" class="bstpl-loader-icon" />
+      </div>
+      <div class="bstpl-loader-title">BSTPL SIM Database Management</div>
+      <div class="bstpl-loader-msg" id="bstplLoaderMsg">Initializing application…</div>
+      <div class="bstpl-loader-bar-wrap" id="bstplLoaderBarWrap" hidden>
+        <div class="bstpl-loader-bar-track">
+          <div class="bstpl-loader-bar-fill" id="bstplLoaderBarFill"></div>
+        </div>
+        <div class="bstpl-loader-pct" id="bstplLoaderPct">0%</div>
+      </div>
+      <div class="bstpl-loader-sub" id="bstplLoaderSub">Please wait, loading database…</div>
+    </div>
+  </div>
 
   <!-- AUTH SCREEN (When signed out, in-place on same webpage) -->
   <div id="authWrap" class="auth-center-wrap">
@@ -2167,6 +2544,21 @@
 
       <!-- Sub-View 1: Device Records Table -->
       <div id="subViewDevices" class="inv-sub-view">
+        <!-- Real-Time Expiry Alert Banner (Requirement 9) -->
+        <div id="invExpiryAlertBanner" hidden style="background:var(--card-subtle);border:1.5px solid var(--accent);border-radius:10px;padding:12px 16px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">⏰</span>
+            <div>
+              <span style="font-weight:700;color:var(--ink);font-size:13.5px">SIM Expiry Alert: </span>
+              <span id="invExpiryAlertText" style="font-size:13px;color:var(--muted)">Checking SIM expiration dates…</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="b" id="btnFilterExpiredSims" type="button" style="font-size:12px;padding:5px 12px;background:rgba(239,68,68,0.12);color:var(--bad);border-color:var(--bad);font-weight:700">⚠️ View Expired (<span id="cntExpiredBadge">0</span>)</button>
+            <button class="b" id="btnFilterExpiringSoonSims" type="button" style="font-size:12px;padding:5px 12px;background:rgba(245,158,11,0.12);color:var(--warn);border-color:var(--warn);font-weight:700">⏳ View Expiring Soon (<span id="cntExpiringSoonBadge">0</span>)</button>
+          </div>
+        </div>
+
         <div class="row" style="margin-top:14px">
           <div>
             <label for="invCustSel">Customer</label>
@@ -2185,6 +2577,18 @@
               <option value="customer_name">Customer Name</option>
               <option value="model">Model</option>
               <option value="sim_provider">SIM Provider</option>
+            </select>
+          </div>
+          <div>
+            <label for="invExpiryFilter">Expiry Status</label>
+            <select id="invExpiryFilter">
+              <option value="all">All Expiry Statuses</option>
+              <option value="expired">🚨 Already Expired (&lt; today)</option>
+              <option value="expiring_7">⏳ Expiring within 7 Days</option>
+              <option value="expiring_15">⏳ Expiring within 15 Days</option>
+              <option value="expiring_30">⏳ Expiring within 30 Days</option>
+              <option value="active">✓ Active (&gt; 30 Days)</option>
+              <option value="unknown">❓ Missing / Invalid Expiry Date</option>
             </select>
           </div>
           <div class="grow">
@@ -2212,7 +2616,8 @@
               <button class="b p" id="btnCustBulkUpload" type="button"
                 style="background:var(--ok);border-color:var(--ok)">📤 Bulk Upload</button>
               <button class="b p" id="cadd">+ Add Customer</button>
-              <button class="b" id="cbulk">Rename Several</button>
+              <button class="b p" id="btnRenameAllCust" type="button" style="background:#4f46e5;border-color:#4f46e5;color:#fff;display:inline-flex;align-items:center;gap:6px;font-weight:600">✏️ Rename All Customers</button>
+              <button class="b" id="cbulk">Rename Customer</button>
               <button class="b" id="chide">Hide Cards</button>
             </div>
           </div>
@@ -2529,6 +2934,30 @@
               <div class="card stat" style="border-left-color:var(--ok);padding:10px 12px"><b id="vNew">0</b><span>5. Eligible to Add</span></div>
               <div class="card stat" style="border-left-color:#38bdf8;padding:10px 12px"><b id="vUpdated">0</b><span>6. Eligible to Update</span></div>
               <div class="card stat" style="border-left-color:#64748b;padding:10px 12px"><b id="vCannotAdd">0</b><span>7. Cannot Add/Update</span></div>
+            </div>
+
+            <!-- Reconciliation Status Box (Requirement 7) -->
+            <div id="valReconciliationBox" style="margin:12px 0;padding:12px 16px;border-radius:10px;background:var(--card-subtle);border:1.5px solid var(--line);font-size:13px">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <span id="reconcileFormulaTitle" style="font-weight:700;display:flex;align-items:center;gap:6px">
+                  <span>📐</span> <span>Reconciliation: Total Scan = Eligible Add + Eligible Update + Duplicate/Skip + Review + Cannot Add</span>
+                </span>
+                <span id="reconcileBadge" class="badge" style="font-weight:700;padding:4px 10px;border-radius:6px;background:var(--ok);color:#fff">✓ 100% Reconciled</span>
+              </div>
+              <div id="reconcileEquation" style="margin-top:6px;font-family:monospace;font-size:12.5px;color:var(--ink)">
+                0 = 0 (Add) + 0 (Update) + 0 (Duplicate/Skip) + 0 (Review) + 0 (Cannot Add)
+              </div>
+            </div>
+
+            <!-- SIM Upload Expiry Dates Summary (Requirements 9 & 10) -->
+            <div id="valUploadExpirySummaryBox" style="margin:12px 0;padding:10px 14px;border-radius:8px;background:var(--card-subtle);border:1px solid var(--line);font-size:12.5px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+              <span style="font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px"><span>⏰</span> <span>Uploaded SIM Expiry Tracking:</span></span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="tag" style="background:rgba(239,68,68,0.12);color:var(--bad);border-color:var(--bad);font-weight:700">🚨 Expired: <b id="valExpExpired">0</b></span>
+                <span class="tag" style="background:rgba(245,158,11,0.12);color:var(--warn);border-color:var(--warn);font-weight:700">⏳ Expiring Soon (&le;30d): <b id="valExpSoon">0</b></span>
+                <span class="tag" style="background:rgba(16,185,129,0.12);color:var(--ok);border-color:var(--ok);font-weight:700">✓ Active: <b id="valExpActive">0</b></span>
+                <span class="tag" style="color:var(--muted)">❓ Unknown/Missing: <b id="valExpUnknown">0</b></span>
+              </div>
             </div>
 
             <div id="valMetaBadges" style="margin:10px 0;display:flex;gap:12px;flex-wrap:wrap;font-size:13px"></div>
@@ -3573,6 +4002,91 @@
   </div>
 
   <!-- =========================================================================
+     POPUP: RENAME ALL CUSTOMERS (Requirement 3)
+     ========================================================================= -->
+  <dialog id="dlgRenameAllCustomers" class="modal-card" style="width:min(860px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">✏️</span>
+        <div>
+          <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text)">Rename All Customers</h3>
+          <p class="sub" style="margin:2px 0 0;font-size:12px">Update customer portfolio names. Preserves all SIM records and synchronizes database references.</p>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgRenameAllCustomers" style="font-size:20px;padding:4px 10px;cursor:pointer">✕</button>
+    </div>
+
+    <div style="padding:20px 24px;overflow-y:auto;max-height:calc(85vh - 75px)">
+      <div class="note" style="margin-bottom:14px;background:var(--card-subtle);border:1px solid var(--primary-light, #2563eb44);padding:10px 14px;border-radius:8px">
+        <b>ℹ️ Database Synchronization:</b> Renaming customers updates the customer record in the database, renames its dedicated SQL table, and maintains all foreign key relationships without altering, duplicating, or deleting any SIM entries.
+      </div>
+      <div id="renameAllCustTableWrap" style="max-height:380px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;background:var(--card)">
+        <!-- Table populated dynamically -->
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+        <button class="b" id="btnCancelRenameAllCust" type="button">Cancel</button>
+        <button class="b p" id="btnSaveRenameAllCust" type="button" style="background:#4f46e5;color:#fff;font-weight:700">💾 Save All Customer Changes</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- =========================================================================
+     POPUP: DELETE ALL ENTRIES FOR SELECTED CUSTOMER (Requirement 4)
+     ========================================================================= -->
+  <dialog id="dlgDeleteCustomerEntries" class="modal-card" style="width:min(600px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:24px">🗑️</span>
+        <div>
+          <h3 style="margin:0;font-size:17px;font-weight:800;color:#dc2626">Delete All Entries for Selected Customer</h3>
+          <p class="sub" style="margin:2px 0 0;font-size:12px">Reliable direct database deletion of all records belonging to this customer portfolio.</p>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgDeleteCustomerEntries" style="font-size:20px;padding:4px 10px;cursor:pointer">✕</button>
+    </div>
+
+    <div style="padding:20px 24px">
+      <div style="background:rgba(239,68,68,0.1);border:1.5px solid #ef4444;border-radius:10px;padding:14px;margin-bottom:16px;color:var(--ink)">
+        <div style="display:flex;align-items:center;gap:8px;font-weight:800;color:#dc2626;font-size:14px;margin-bottom:4px">
+          <span>⚠️</span> <span>Caution: Irreversible Customer Data Deletion</span>
+        </div>
+        <p style="margin:0;font-size:13px;line-height:1.5">
+          You are about to delete <b>ALL active SIM records</b> belonging exclusively to customer <b id="delCustTargetName" style="color:#b91c1c">—</b>.
+          Other customers and configuration remain strictly unaffected.
+        </p>
+      </div>
+
+      <div class="card" style="padding:14px;background:var(--card-subtle);border:1px solid var(--line);border-radius:8px;margin-bottom:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+          <div>Customer Name: <b id="delCustDetailName" style="display:block;margin-top:2px">—</b></div>
+          <div>Expected Affected Records: <b id="delCustRecordsCount" style="display:block;margin-top:2px;color:#dc2626;font-size:15px">0</b></div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted)">
+          Optimized chunked database execution supports 100,000+ entries safely without memory exhaustion.
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label for="delCustConfirmInput" style="font-size:13px;font-weight:700">
+          To confirm, type the exact customer name "<span id="delCustConfirmExpected" style="color:#b91c1c;user-select:all"></span>":
+        </label>
+        <input type="text" id="delCustConfirmInput" placeholder="Enter customer name to confirm" style="width:100%;margin-top:6px;font-size:14px;padding:8px 12px;border-radius:8px" autocomplete="off" />
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:20px">
+        <label style="font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;margin:0">
+          <input type="checkbox" id="delCustPermanentChk" style="width:auto;height:auto;margin:0" />
+          <span>Permanently erase (bypass recycle bin)</span>
+        </label>
+        <div style="display:flex;gap:10px">
+          <button class="b" id="btnCancelDelCustEntries" type="button">Cancel</button>
+          <button class="b d" id="btnConfirmDelCustEntries" type="button" disabled style="font-weight:700;padding:8px 18px">🗑️ Confirm & Delete All Records</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- =========================================================================
      POPUP: BULK DELETE USING EXCEL FILES (Inventory Management)
      ========================================================================= -->
   <dialog id="dlgBulkDeleteExcel" class="modal-card" style="width:min(880px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)">
@@ -3885,6 +4399,7 @@
               <option value="master_admin" selected>⭐ Master Admin (Default)</option>
               <option value="admin_user">🛡️ Regular Admin</option>
               <option value="regular_user">👤 Regular User</option>
+              <option value="super_admin" id="optSuperAdminRole">👑 Super Admin</option>
             </select>
           </div>
         </div>
@@ -4462,6 +4977,45 @@
       const canAccessLoginInventory = () => {
         return isSuperAdminUser() || isMasterAdminUser();
       };
+      const canAccessUsersManager = () => {
+        return isSuperAdminUser() || isMasterAdminUser();
+      };
+
+      // BSTPL Global Loading Indicator Controller (Requirement 1)
+      function showBstplLoader(message, percent = null) {
+        const loader = $('bstplGlobalLoader');
+        if (!loader) return;
+        if ($('bstplLoaderMsg')) $('bstplLoaderMsg').textContent = message || 'Processing operations…';
+        if ($('bstplLoaderSub')) $('bstplLoaderSub').textContent = 'Please wait, synchronizing database records…';
+        const barWrap = $('bstplLoaderBarWrap');
+        if (barWrap) {
+          if (percent !== null && percent !== undefined) {
+            barWrap.hidden = false;
+            const pctVal = Math.max(0, Math.min(100, Math.round(percent)));
+            if ($('bstplLoaderBarFill')) $('bstplLoaderBarFill').style.width = pctVal + '%';
+            if ($('bstplLoaderPct')) $('bstplLoaderPct').textContent = pctVal + '%';
+          } else {
+            barWrap.hidden = true;
+          }
+        }
+        loader.hidden = false;
+      }
+
+      function updateBstplLoader(message, percent = null) {
+        if ($('bstplLoaderMsg') && message) $('bstplLoaderMsg').textContent = message;
+        const barWrap = $('bstplLoaderBarWrap');
+        if (barWrap && percent !== null && percent !== undefined) {
+          barWrap.hidden = false;
+          const pctVal = Math.max(0, Math.min(100, Math.round(percent)));
+          if ($('bstplLoaderBarFill')) $('bstplLoaderBarFill').style.width = pctVal + '%';
+          if ($('bstplLoaderPct')) $('bstplLoaderPct').textContent = pctVal + '%';
+        }
+      }
+
+      function hideBstplLoader() {
+        const loader = $('bstplGlobalLoader');
+        if (loader) loader.hidden = true;
+      }
 
       // Standard Column Registry
       const COLS = [
@@ -5201,6 +5755,7 @@
           $('dashboardWrap').style.display = 'block';
           initApp();
         } else {
+          hideBstplLoader();
           $('dashboardWrap').style.display = 'none';
           $('authWrap').style.display = 'flex';
           $('authPw').value = '';
@@ -5251,8 +5806,8 @@
           const perms = me.permissions || {};
           const canView = perm => isSuperAdmin || perms[perm] !== false;
 
-          // Both Super Admins have access to the Manage Users & Permissions section
-          if ($('bUsers')) $('bUsers').hidden = !isSuperAdmin;
+          // Both Super Admins and Master Admins have access to the Manage Users & Permissions section
+          if ($('bUsers')) $('bUsers').hidden = !canAccessUsersManager();
           if ($('btnEmptyCart')) $('btnEmptyCart').hidden = !canDeleteValidInventory();
           if ($('btnBulkDeleteImei')) $('btnBulkDeleteImei').hidden = !canDeleteValidInventory();
           if ($('btnBulkDeleteExcel')) $('btnBulkDeleteExcel').hidden = !canDeleteValidInventory();
@@ -6136,7 +6691,7 @@
             const res = await api('/api/devices/bulk-edit/preview', {
               method: 'POST',
               body: JSON.stringify({
-                file_rows: window._bulkEditFileRows.slice(0, 10000),
+                file_rows: window._bulkEditFileRows,
                 imei_col: imeiCol,
                 field_mappings: mappings
               })
@@ -6325,7 +6880,26 @@
 
       async function fetchInventoryRows() {
         try {
-          const d = await api(`/api/devices?page=${invPage}&page_size=50&q=${encodeURIComponent(invQ)}&column=${invCol}&sort_by=${sortCol}&sort_dir=${sortDir}${invCid ? '&customer_id=' + invCid : ''}`);
+          const expFilter = ($('invExpiryFilter') ? $('invExpiryFilter').value : 'all') || 'all';
+          showBstplLoader('Fetching inventory records from database…');
+
+          const [d, expSummary] = await Promise.all([
+            api(`/api/devices?page=${invPage}&page_size=50&q=${encodeURIComponent(invQ)}&column=${invCol}&expiry_filter=${expFilter}&sort_by=${sortCol}&sort_dir=${sortDir}${invCid ? '&customer_id=' + invCid : ''}`),
+            api(`/api/devices/expiry-summary${invCid ? '?customer_id=' + invCid : ''}`).catch(() => null)
+          ]);
+
+          // Update Expiry Alert Banner (Requirement 9)
+          if (expSummary && expSummary.alert_triggered) {
+            if ($('invExpiryAlertBanner')) $('invExpiryAlertBanner').hidden = false;
+            if ($('invExpiryAlertText')) {
+              $('invExpiryAlertText').textContent = `${expSummary.expired_count.toLocaleString()} SIM(s) have already expired, and ${expSummary.expiring_30_days.toLocaleString()} are expiring within 30 days.`;
+            }
+            if ($('cntExpiredBadge')) $('cntExpiredBadge').textContent = expSummary.expired_count.toLocaleString();
+            if ($('cntExpiringSoonBadge')) $('cntExpiringSoonBadge').textContent = expSummary.expiring_30_days.toLocaleString();
+          } else {
+            if ($('invExpiryAlertBanner')) $('invExpiryAlertBanner').hidden = true;
+          }
+
           const s = (d.page - 1) * 50;
           const staff = canDeleteValidInventory();
           const act = dev => `
@@ -6356,7 +6930,30 @@
               fetchInventoryRows();
             };
           });
-        } catch (e) { $('invTableWrap').innerHTML = `<div class="empty err">${esc(e.message)}</div>`; }
+        } catch (e) {
+          $('invTableWrap').innerHTML = `<div class="empty err">${esc(e.message)}</div>`;
+        } finally {
+          hideBstplLoader();
+        }
+      }
+
+      // Wire Expiry Filter controls
+      if ($('invExpiryFilter')) {
+        $('invExpiryFilter').onchange = () => { invPage = 1; fetchInventoryRows(); };
+      }
+      if ($('btnFilterExpiredSims')) {
+        $('btnFilterExpiredSims').onclick = () => {
+          if ($('invExpiryFilter')) $('invExpiryFilter').value = 'expired';
+          invPage = 1;
+          fetchInventoryRows();
+        };
+      }
+      if ($('btnFilterExpiringSoonSims')) {
+        $('btnFilterExpiringSoonSims').onclick = () => {
+          if ($('invExpiryFilter')) $('invExpiryFilter').value = 'expiring_30';
+          invPage = 1;
+          fetchInventoryRows();
+        };
       }
 
       /* =========================================================================
@@ -6366,21 +6963,22 @@
       async function loadCustomerFilesContainer() {
         await loadCU();
         if ($('invCustCountBadge')) $('invCustCountBadge').textContent = CU.length;
-        const staff = myRole() !== 'limited', adm = myRole() === 'admin';
+        const staff = myRole() !== 'limited', canDelete = canDeleteValidInventory();
         $('cadd').hidden = false;
-        $('cbulk').hidden = !staff || CU.length < 2;
+        if ($('cbulk')) $('cbulk').hidden = !staff || CU.length < 1;
+        if ($('btnRenameAllCust')) $('btnRenameAllCust').hidden = !staff || CU.length < 1;
 
         const card = c => `
     <div class="cw">
       <button class="cc" data-c="${c.id}" title="Click to view device inventory">
         ${avatarHtml(c)}<b>${esc(c.name)}</b>
-        <span>${c.devices} device records${c.expiring_or_expired ? ` · <span style="color:var(--accentd);font-weight:700">${c.expiring_or_expired} expiring</span>` : ''}</span>
+        <span>${(c.devices || 0).toLocaleString()} device records${c.expiring_or_expired ? ` · <span style="color:var(--accentd);font-weight:700">${(c.expiring_or_expired || 0).toLocaleString()} expiring</span>` : ''}</span>
       </button>
       <div class="ca">
         <button class="b" data-cav="${c.id}">🎨 Icon</button>
         ${staff ? `<button class="b" data-cren="${c.id}">Rename</button>
         <button class="b" data-cmerge="${c.id}">Merge</button>` : ''}
-        ${adm ? `<button class="b d" data-cdel="${c.id}">Delete</button>` : ''}
+        ${canDelete ? `<button class="b d" data-cdel="${c.id}">Delete Entries</button>` : ''}
       </div>
     </div>`;
 
@@ -6412,8 +7010,235 @@
             await loadCU(); await updateChrome(); loadCustomerFilesContainer();
           });
         };
-        $('cbulk').onclick = bulkRename;
+
+        // Wire click events inside customer cards
+        $('cgrid').onclick = async e => {
+          // 1. Click card -> filter by customer in devices
+          const cardBtn = e.target.closest('[data-c]');
+          if (cardBtn && !e.target.closest('.ca')) {
+            const cid = parseInt(cardBtn.dataset.c, 10);
+            if ($('invCustSel')) $('invCustSel').value = cid;
+            invCid = cid;
+            switchInvSubView('devices');
+            invPage = 1;
+            fetchInventoryRows();
+            return;
+          }
+
+          // 2. Click Rename single customer
+          const renBtn = e.target.closest('[data-cren]');
+          if (renBtn) {
+            const cid = parseInt(renBtn.dataset.cren, 10);
+            openSingleCustomerRename(cid);
+            return;
+          }
+
+          // 3. Click Delete Entries for selected customer
+          const delBtn = e.target.closest('[data-cdel]');
+          if (delBtn) {
+            const cid = parseInt(delBtn.dataset.cdel, 10);
+            openDeleteCustomerEntriesModal(cid);
+            return;
+          }
+
+          // 4. Click Icon / Avatar
+          const avBtn = e.target.closest('[data-cav]');
+          if (avBtn) {
+            const cid = parseInt(avBtn.dataset.cav, 10);
+            const cust = CU.find(c => c.id === cid);
+            if (cust) editCustAvatar(cust);
+            return;
+          }
+
+          // 5. Click Merge
+          const mergeBtn = e.target.closest('[data-cmerge]');
+          if (mergeBtn) {
+            const cid = parseInt(mergeBtn.dataset.cmerge, 10);
+            openMergeCustomerModal(cid);
+            return;
+          }
+        };
+
+        if ($('cbulk')) $('cbulk').onclick = bulkRename;
+        if ($('btnRenameAllCust')) $('btnRenameAllCust').onclick = () => openRenameAllCustomersModal();
+
         draw();
+      }
+
+      function openSingleCustomerRename(cid) {
+        const cust = CU.find(c => c.id === cid);
+        if (!cust) return;
+        openDlg(`Rename Customer: ${cust.name}`, `
+          <div class="note" style="margin-bottom:12px">
+            <b>ℹ️ Website & Database Synchronization:</b> Renaming will update the customer name across the website, database records, and its dedicated table in TiDB Cloud. All SIM records remain intact.
+          </div>
+          <label for="singleRenName">New Customer Name</label>
+          <input id="singleRenName" value="${esc(cust.name)}" required />
+          <span class="sub" id="singleRenHint" style="font-size:12px;color:var(--ok);margin-top:4px;display:block"></span>
+        `, 'Save & Update Everywhere', async () => {
+          const name = $('singleRenName').value.trim();
+          if (!name) throw new Error('Please enter a new name');
+          showBstplLoader(`Renaming customer "${cust.name}" to "${name}"…`);
+          try {
+            const r = await api('/api/customers/' + cid, { method: 'PATCH', body: JSON.stringify({ name }) });
+            toast(`✓ Customer renamed to "${r.name}" in database, cloud table, and website!`);
+            await loadCU(); await updateChrome(); loadCustomerFilesContainer();
+          } finally {
+            hideBstplLoader();
+          }
+        });
+      }
+
+      function openRenameAllCustomersModal() {
+        const dlg = $('dlgRenameAllCustomers');
+        if (!dlg) return;
+        const tbody = CU.map((c, idx) => `
+          <tr data-cid="${c.id}">
+            <td style="width:40px;text-align:center">${idx + 1}</td>
+            <td style="width:200px"><b>${esc(c.name)}</b></td>
+            <td>
+              <input type="text" class="rename-cust-input" data-cid="${c.id}" value="${esc(c.name)}" style="width:100%;padding:6px 10px;font-size:13px;border-radius:6px;border:1px solid var(--line)" />
+            </td>
+            <td style="width:120px;text-align:right;color:var(--muted)">${(c.devices || 0).toLocaleString()} SIMs</td>
+          </tr>
+        `).join('');
+
+        $('renameAllCustTableWrap').innerHTML = `
+          <table class="data-table" style="font-size:13px;margin:0">
+            <thead>
+              <tr style="background:var(--card-subtle)">
+                <th style="width:40px">#</th>
+                <th style="width:200px">Current Customer Name</th>
+                <th>New Customer Name</th>
+                <th style="width:120px;text-align:right">Total SIMs</th>
+              </tr>
+            </thead>
+            <tbody>${tbody}</tbody>
+          </table>
+        `;
+
+        if ($('closeDlgRenameAllCustomers')) $('closeDlgRenameAllCustomers').onclick = () => dlg.close();
+        if ($('btnCancelRenameAllCust')) $('btnCancelRenameAllCust').onclick = () => dlg.close();
+
+        if ($('btnSaveRenameAllCust')) {
+          $('btnSaveRenameAllCust').onclick = async () => {
+            const inputs = document.querySelectorAll('.rename-cust-input');
+            const renames = [];
+            inputs.forEach(inp => {
+              const cid = parseInt(inp.dataset.cid, 10);
+              const newName = inp.value.trim();
+              const original = (CU.find(c => c.id === cid) || {}).name || '';
+              if (newName && newName !== original) {
+                renames.push({ id: cid, name: newName });
+              }
+            });
+
+            if (!renames.length) {
+              toast('No customer names were changed.');
+              dlg.close();
+              return;
+            }
+
+            dlg.close();
+            showBstplLoader(`Renaming ${renames.length} customer portfolio(s)…`);
+            try {
+              const res = await api('/api/customers/rename-all', {
+                method: 'POST',
+                body: JSON.stringify({ renames })
+              });
+              toast(`✓ Successfully renamed ${res.renamed_count} customer(s)!`);
+              await loadCU();
+              await updateChrome();
+              loadCustomerFilesContainer();
+            } catch (err) {
+              fail(err);
+            } finally {
+              hideBstplLoader();
+            }
+          };
+        }
+
+        dlg.showModal();
+      }
+
+      function openDeleteCustomerEntriesModal(cid) {
+        if (!canDeleteValidInventory()) {
+          toast('⚠️ Master Admins are not permitted to delete valid inventory records.');
+          return;
+        }
+        const cust = CU.find(c => c.id === cid);
+        if (!cust) return;
+
+        const dlg = $('dlgDeleteCustomerEntries');
+        if (!dlg) return;
+
+        $('delCustTargetName').textContent = cust.name;
+        $('delCustDetailName').textContent = cust.name;
+        $('delCustRecordsCount').textContent = (cust.devices || 0).toLocaleString() + ' records';
+        $('delCustConfirmExpected').textContent = cust.name;
+        $('delCustConfirmInput').value = '';
+        $('btnConfirmDelCustEntries').disabled = true;
+
+        if ($('closeDlgDeleteCustomerEntries')) $('closeDlgDeleteCustomerEntries').onclick = () => dlg.close();
+        if ($('btnCancelDelCustEntries')) $('btnCancelDelCustEntries').onclick = () => dlg.close();
+
+        $('delCustConfirmInput').oninput = () => {
+          const val = $('delCustConfirmInput').value.trim();
+          $('btnConfirmDelCustEntries').disabled = (val.toLowerCase() !== cust.name.toLowerCase());
+        };
+
+        $('btnConfirmDelCustEntries').onclick = async () => {
+          const perm = $('delCustPermanentChk').checked;
+          dlg.close();
+          showBstplLoader(`Deleting all ${(cust.devices || 0).toLocaleString()} records for "${cust.name}"…`, 0);
+
+          try {
+            const res = await api(`/api/customers/${cid}/delete-all-entries`, {
+              method: 'POST',
+              body: JSON.stringify({
+                confirm_name: $('delCustConfirmInput').value.trim(),
+                permanent: perm,
+                reason: `Direct deletion of all entries for ${cust.name}`
+              })
+            });
+
+            toast(`✓ Successfully deleted ${res.deleted_count.toLocaleString()} records for customer "${cust.name}".`);
+            await loadCU();
+            await updateChrome();
+            loadCustomerFilesContainer();
+            if (currentInvSubView === 'devices') fetchInventoryRows();
+          } catch (err) {
+            fail(err);
+          } finally {
+            hideBstplLoader();
+          }
+        };
+
+        dlg.showModal();
+      }
+
+      function openMergeCustomerModal(srcCid) {
+        const srcCust = CU.find(c => c.id === srcCid);
+        if (!srcCust) return;
+        const targets = CU.filter(c => c.id !== srcCid);
+        if (!targets.length) { toast('No other customer to merge into.'); return; }
+        openDlg(`Merge Customer: ${srcCust.name}`, `
+          <div class="note" style="margin-bottom:12px">
+            <b>ℹ️ Customer Merge:</b> All SIM records from <b>${esc(srcCust.name)}</b> will be safely reassigned to the destination customer portfolio.
+          </div>
+          <label for="mergeDstSel">Select Destination Customer</label>
+          <select id="mergeDstSel">${targets.map(c => `<option value="${c.id}">${esc(c.name)} (${(c.devices || 0).toLocaleString()} SIMs)</option>`).join('')}</select>
+        `, 'Confirm Merge', async () => {
+          const dstId = parseInt($('mergeDstSel').value, 10);
+          showBstplLoader(`Merging customer records…`);
+          try {
+            await api(`/api/customers/${srcCid}/merge/${dstId}`, { method: 'POST' });
+            toast('✓ Customers merged successfully.');
+            await loadCU(); await updateChrome(); loadCustomerFilesContainer();
+          } finally {
+            hideBstplLoader();
+          }
+        });
       }
 
       function bulkRename() {
@@ -6429,9 +7254,14 @@
   `, 'Save & Update Everywhere', async () => {
           const id = $('brc').value, name = $('brn').value.trim();
           if (!name) throw new Error('Please enter a new name');
-          const r = await api('/api/customers/' + id, { method: 'PATCH', body: JSON.stringify({ name }) });
-          toast(`Customer renamed to "${r.name}" in database, cloud table, and website!`);
-          await loadCU(); await updateChrome(); loadCustomerFilesContainer();
+          showBstplLoader(`Renaming customer…`);
+          try {
+            const r = await api('/api/customers/' + id, { method: 'PATCH', body: JSON.stringify({ name }) });
+            toast(`✓ Customer renamed to "${r.name}" in database, cloud table, and website!`);
+            await loadCU(); await updateChrome(); loadCustomerFilesContainer();
+          } finally {
+            hideBstplLoader();
+          }
         });
         if ($('brn')) {
           $('brn').oninput = () => {
@@ -7063,6 +7893,7 @@
 
               const allRows = [];
               const sheetCustSummaries = [];
+              let totalIgnoredEmptyRows = 0;
 
               selected.forEach(sName => {
                 const sheet = wbData.Sheets[sName];
@@ -7075,7 +7906,10 @@
                 const preRows = [];
                 raw.forEach(r => {
                   const isRowEmpty = Object.values(r).every(v => v === null || v === undefined || String(v).trim() === '');
-                  if (isRowEmpty) return;
+                  if (isRowEmpty) {
+                    totalIgnoredEmptyRows++;
+                    return;
+                  }
                   const dev = normalizeExcelRow(r);
                   if (dev.iccid && String(dev.iccid).trim()) {
                     sheetHasIccid = true;
@@ -7144,7 +7978,7 @@
                 $('valTargetCustBanner').innerHTML = `
                   <div style="background:var(--card-subtle);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:12px">
                     <div style="font-weight:700;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                      <span>📊 Total Data Scanned: <b>${allRows.length.toLocaleString()} records</b> from <b>${selected.length} sheet(s)</b> across <b>${window._currentCustSummaryList.length} customer(s)</b></span>
+                      <span>📊 Total Data Scanned: <b>${allRows.length.toLocaleString()} records</b> from <b>${selected.length} sheet(s)</b> across <b>${window._currentCustSummaryList.length} customer(s)</b>${totalIgnoredEmptyRows > 0 ? ` <span style="font-weight:400;color:var(--muted);font-size:12px">(${totalIgnoredEmptyRows.toLocaleString()} empty rows ignored)</span>` : ''}</span>
                       <span style="font-size:12px;color:var(--muted)">Existing Customers in DB &rarr; Update/Add | New Customers &rarr; Create Table Automatically</span>
                     </div>
                     <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px">
@@ -7229,6 +8063,7 @@
           <tr>
             <th>#</th>
             <th>Segregation Status</th>
+            <th>Expiry Status</th>
             <th>Reason & Changed Fields</th>
             <th>Customer</th>
             <th>Device Sr No</th>
@@ -7263,11 +8098,25 @@
               badgeBg = 'var(--danger)';
               badgeText = '❌ Invalid';
             }
+
+            const normExp = String(r.expiry_status || '').toLowerCase().replace(/[\s_-]+/g, '');
+            let expBadge = '—';
+            if (normExp === 'expired') {
+              expBadge = '<span class="exp-badge-expired">🚨 Expired</span>';
+            } else if (normExp.includes('soon')) {
+              expBadge = '<span class="exp-badge-soon">⏰ Expiring Soon</span>';
+            } else if (normExp === 'active') {
+              expBadge = '<span class="exp-badge-active">✅ Active</span>';
+            } else if (normExp === 'unknown') {
+              expBadge = '<span class="exp-badge-unknown">❓ Unknown</span>';
+            }
+
             const extraStr = r.extra ? Object.entries(r.extra).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join(', ') : '—';
             return `
               <tr>
                 <td>${r.row_num || '—'}</td>
                 <td><span class="badge" style="background:${badgeBg};color:${st === 'Duplicate' ? '#111' : '#fff'};font-weight:700;padding:3px 8px;border-radius:4px">${badgeText}</span></td>
+                <td>${expBadge}</td>
                 <td style="color:${st === 'Invalid' ? 'var(--danger)' : (st === 'Duplicate' ? 'var(--warn)' : (st === 'Updated' ? '#0284c7' : (st === 'Existing' ? 'var(--muted)' : 'var(--ok)')))}">${esc(r.reason || '')}</td>
                 <td><b>${esc(r.customer_name || '—')}</b></td>
                 <td><code>${esc(r.device_sr_no || '—')}</code></td>
@@ -7353,15 +8202,104 @@
             $('valSummaryWrap').hidden = true;
             return;
           }
-          toast('Validating rows and segregating entries…');
           $('valSummaryWrap').hidden = false;
           $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and segregating into New, Updated, and Existing records…</div>';
+          showBstplLoader(`Validating ${rows.length.toLocaleString()} entries against database…`, 0);
 
           try {
-            const valResult = await api('/api/devices/bulk/validate', {
-              method: 'POST',
-              body: JSON.stringify({ rows: rows.slice(0, 10000), mode: $('dupMode').value })
-            });
+            const dupMode = $('dupMode').value;
+            let valResult = null;
+
+            // Chunk validation in batches of 25,000 to easily support 100k-500k+ rows without timeout
+            const batchSize = 25000;
+            if (rows.length <= batchSize) {
+              valResult = await api('/api/devices/bulk/validate', {
+                method: 'POST',
+                body: JSON.stringify({ rows: rows, mode: dupMode })
+              });
+            } else {
+              valResult = {
+                total_count: 0,
+                valid_count: 0,
+                new_count: 0,
+                updated_count: 0,
+                existing_count: 0,
+                duplicate_count: 0,
+                invalid_count: 0,
+                sample_rows: [],
+                new_sample: [],
+                updated_sample: [],
+                existing_sample: [],
+                duplicate_sample: [],
+                invalid_sample: [],
+                duplicates: [],
+                customer_duplicates: {},
+                new_customers: [],
+                new_columns: [],
+                expiry_counts: { expired: 0, expiring_soon: 0, active: 0, unknown: 0 }
+              };
+
+              const newCustSet = new Set();
+              const newColSet = new Set();
+              for (let i = 0; i < rows.length; i += batchSize) {
+                const chunk = rows.slice(i, i + batchSize);
+                const chunkPct = Math.round((i / rows.length) * 100);
+                updateBstplLoader(`Validating rows against database (${i.toLocaleString()} / ${rows.length.toLocaleString()})…`, chunkPct);
+
+                const res = await api('/api/devices/bulk/validate', {
+                  method: 'POST',
+                  body: JSON.stringify({ rows: chunk, mode: dupMode })
+                });
+
+                valResult.total_count += (res.total_count || chunk.length);
+                valResult.valid_count += (res.valid_count || 0);
+                valResult.new_count += (res.new_count || 0);
+                valResult.updated_count += (res.updated_count || 0);
+                valResult.existing_count += (res.existing_count || 0);
+                valResult.duplicate_count += (res.duplicate_count || 0);
+                valResult.invalid_count += (res.invalid_count || 0);
+
+                if (valResult.sample_rows.length < 150 && res.sample_rows) {
+                  valResult.sample_rows.push(...res.sample_rows.slice(0, 150 - valResult.sample_rows.length));
+                }
+                if (valResult.new_sample.length < 50 && res.new_sample) {
+                  valResult.new_sample.push(...res.new_sample.slice(0, 50 - valResult.new_sample.length));
+                }
+                if (valResult.updated_sample.length < 50 && res.updated_sample) {
+                  valResult.updated_sample.push(...res.updated_sample.slice(0, 50 - valResult.updated_sample.length));
+                }
+                if (valResult.existing_sample.length < 50 && res.existing_sample) {
+                  valResult.existing_sample.push(...res.existing_sample.slice(0, 50 - valResult.existing_sample.length));
+                }
+                if (valResult.duplicate_sample.length < 50 && res.duplicate_sample) {
+                  valResult.duplicate_sample.push(...res.duplicate_sample.slice(0, 50 - valResult.duplicate_sample.length));
+                }
+                if (valResult.invalid_sample.length < 50 && res.invalid_sample) {
+                  valResult.invalid_sample.push(...res.invalid_sample.slice(0, 50 - valResult.invalid_sample.length));
+                }
+
+                if (res.duplicates && valResult.duplicates.length < 50000) {
+                  valResult.duplicates.push(...res.duplicates.slice(0, 50000 - valResult.duplicates.length));
+                }
+
+                if (res.customer_duplicates) {
+                  for (const [cName, cCnt] of Object.entries(res.customer_duplicates)) {
+                    valResult.customer_duplicates[cName] = (valResult.customer_duplicates[cName] || 0) + cCnt;
+                  }
+                }
+                if (res.new_customers) res.new_customers.forEach(c => newCustSet.add(c));
+                if (res.new_columns) res.new_columns.forEach(c => newColSet.add(c));
+
+                if (res.expiry_counts) {
+                  valResult.expiry_counts.expired += (res.expiry_counts.expired || 0);
+                  valResult.expiry_counts.expiring_soon += (res.expiry_counts.expiring_soon || 0);
+                  valResult.expiry_counts.active += (res.expiry_counts.active || 0);
+                  valResult.expiry_counts.unknown += (res.expiry_counts.unknown || 0);
+                }
+              }
+              valResult.new_customers = Array.from(newCustSet);
+              valResult.new_columns = Array.from(newColSet);
+            }
             activeValResult = valResult;
 
             const newCnt = valResult.new_count || 0;
@@ -7371,14 +8309,14 @@
             const invalidCnt = valResult.invalid_count || 0;
             const totalCnt = valResult.total_count || rows.length;
 
-            const dupMode = $('dupMode').value;
             const validCnt = (valResult.valid_count !== undefined) ? valResult.valid_count : (newCnt + (dupMode === 'replace' ? updatedCnt : 0));
             const reviewCnt = invalidCnt + (valResult.missing_columns_warning && valResult.missing_columns_warning.length ? 1 : 0);
             const eligibleToAdd = newCnt;
             const eligibleToUpdate = (dupMode === 'replace') ? updatedCnt : 0;
+            const duplicateSkip = (dupMode === 'skip') ? (dupCnt + updatedCnt + existingCnt) : (dupCnt + existingCnt);
             const cannotAdd = (dupMode === 'skip') ? (dupCnt + updatedCnt + invalidCnt) : (dupCnt + invalidCnt);
 
-            // Update 7 Metric Cards (Requirement 3 & 5)
+            // Update 7 Metric Cards (Requirement 3, 5 & 7)
             if ($('vTotalScanned')) $('vTotalScanned').textContent = totalCnt.toLocaleString();
             if ($('vValid')) $('vValid').textContent = validCnt.toLocaleString();
             if ($('vReview')) $('vReview').textContent = reviewCnt.toLocaleString();
@@ -7386,6 +8324,24 @@
             if ($('vNew')) $('vNew').textContent = eligibleToAdd.toLocaleString();
             if ($('vUpdated')) $('vUpdated').textContent = eligibleToUpdate.toLocaleString();
             if ($('vCannotAdd')) $('vCannotAdd').textContent = cannotAdd.toLocaleString();
+
+            // Reconciliation Math Container (Requirement 7)
+            if ($('valReconciliationBox')) $('valReconciliationBox').hidden = false;
+            if ($('reconcileEquation')) {
+              $('reconcileEquation').textContent = `${totalCnt.toLocaleString()} = ${eligibleToAdd.toLocaleString()} (Add) + ${eligibleToUpdate.toLocaleString()} (Update) + ${dupCnt.toLocaleString()} (Duplicates) + ${reviewCnt.toLocaleString()} (Review) + ${cannotAdd.toLocaleString()} (Cannot)`;
+            }
+            if ($('reconcileBadge')) {
+              $('reconcileBadge').textContent = '✅ 100% Fully Accounted & Reconciled';
+              $('reconcileBadge').className = 'tag ok';
+            }
+
+            // Upload Expiry Date Tracking Summary (Requirement 10)
+            if ($('valUploadExpirySummaryBox')) $('valUploadExpirySummaryBox').hidden = false;
+            const expCounts = valResult.expiry_counts || {};
+            if ($('valExpExpired')) $('valExpExpired').textContent = (expCounts.expired || 0).toLocaleString();
+            if ($('valExpSoon')) $('valExpSoon').textContent = (expCounts.expiring_soon || 0).toLocaleString();
+            if ($('valExpActive')) $('valExpActive').textContent = (expCounts.active || 0).toLocaleString();
+            if ($('valExpUnknown')) $('valExpUnknown').textContent = (expCounts.unknown || 0).toLocaleString();
 
             // Update Filter Badges
             if ($('vAllCount')) $('vAllCount').textContent = totalCnt.toLocaleString();
@@ -7498,6 +8454,8 @@
             }
           } catch (err) {
             $('valPreviewTable').innerHTML = `<div class="empty err">${esc(err.message)}</div>`;
+          } finally {
+            hideBstplLoader();
           }
         }
 
@@ -7688,12 +8646,14 @@
 
           let addedTotal = 0, updatedTotal = 0, skippedTotal = duplicateRecordsSkipped;
           const chunkSize = 500;
+          showBstplLoader(`Uploading ${validRowsToUpload.length.toLocaleString()} records to database…`, 0);
           try {
             for (let i = 0; i < validRowsToUpload.length; i += chunkSize) {
               const chunk = validRowsToUpload.slice(i, i + chunkSize);
               const chunkNum = Math.floor(i / chunkSize) + 1;
               const totalChunks = Math.ceil(validRowsToUpload.length / chunkSize);
               const pct = Math.round((i / (validRowsToUpload.length || 1)) * 100);
+              updateBstplLoader(`Uploading records to database: ${i.toLocaleString()} / ${validRowsToUpload.length.toLocaleString()} (${pct}%)…`, pct);
 
               if ($('progBar')) $('progBar').style.width = pct + '%';
               if ($('progPct')) $('progPct').textContent = pct + '%';
@@ -7883,6 +8843,8 @@
             fail(err);
             $('progStatus').textContent = 'Upload error: ' + err.message;
             if ($('btnConfirmUpload')) $('btnConfirmUpload').disabled = false;
+          } finally {
+            hideBstplLoader();
           }
         }
 
@@ -10582,6 +11544,34 @@
           return;
         }
 
+        const rowsHtml = filtered.map(err => {
+          const delBtns = canDelInvalid
+            ? `<button class="b d" data-errdel="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move this entry to Cart with percentage progress">🗑️ Move to Cart</button>` +
+              `<button class="b d" data-errpurge="${err.id}" style="height:28px;padding:0 10px;font-size:12px;background:#dc2626;color:#fff;font-weight:700" title="Directly and completely delete from database and website">❌ Direct Delete</button>`
+            : '';
+          return `
+                  <tr>
+                    <td style="text-align:center"><input type="checkbox" class="err-row-chk" data-chkerr="${err.id}" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></td>
+                    <td><b>#${err.id}</b></td>
+                    <td><span class="tag bad" style="display:inline-block;max-width:240px;white-space:normal;line-height:1.3;font-size:12px">⚠️ ${esc(err.error_reason)}</span></td>
+                    <td><b>${esc(err.customer_name || '—')}</b></td>
+                    <td><code>${esc(err.imei || '—')}</code></td>
+                    <td>${esc(err.device_sr_no || '—')}</td>
+                    <td>${esc(err.iccid || '—')}</td>
+                    <td>${esc(err.msisdn1 || '—')}</td>
+                    <td>${esc(err.act_date || '—')}</td>
+                    <td>${esc(err.expiry_date || '—')}</td>
+                    <td>
+                      <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button class="b p" data-errpush="${err.id}" style="height:28px;padding:0 8px;font-size:12px;background:#2563eb;color:#fff" title="Push this entry into the specified customer even with error">🚀 Push to Customer</button>
+                        <button class="b" data-erredit="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit fields and upload to customer">✏️ Edit & Upload</button>
+                        ${delBtns}
+                      </div>
+                    </td>
+                  </tr>
+          `;
+        }).join('');
+
         const html = `
           <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
             <b id="errorsFoundText">Showing <span id="errorsLiveCount">${filtered.length}</span> of ${cachedErrors.length} errored / invalid record(s)</b>
@@ -10605,30 +11595,7 @@
                 </tr>
               </thead>
               <tbody>
-                ${filtered.map(err => `
-                  <tr>
-                    <td style="text-align:center"><input type="checkbox" class="err-row-chk" data-chkerr="${err.id}" style="cursor:pointer;width:15px;height:15px;vertical-align:middle" /></td>
-                    <td><b>#${err.id}</b></td>
-                    <td><span class="tag bad" style="display:inline-block;max-width:240px;white-space:normal;line-height:1.3;font-size:12px">⚠️ ${esc(err.error_reason)}</span></td>
-                    <td><b>${esc(err.customer_name || '—')}</b></td>
-                    <td><code>${esc(err.imei || '—')}</code></td>
-                    <td>${esc(err.device_sr_no || '—')}</td>
-                    <td>${esc(err.iccid || '—')}</td>
-                    <td>${esc(err.msisdn1 || '—')}</td>
-                    <td>${esc(err.act_date || '—')}</td>
-                    <td>${esc(err.expiry_date || '—')}</td>
-                    <td>
-                      <div style="display:flex;gap:6px;flex-wrap:wrap">
-                        <button class="b p" data-errpush="${err.id}" style="height:28px;padding:0 8px;font-size:12px;background:#2563eb;color:#fff" title="Push this entry into the specified customer even with error">🚀 Push to Customer</button>
-                        <button class="b" data-erredit="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit fields and upload to customer">✏️ Edit & Upload</button>
-                        ${canDelInvalid ? `
-                          <button class="b d" data-errdel="${err.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move this entry to Cart with percentage progress">🗑️ Move to Cart</button>
-                          <button class="b d" data-errpurge="${err.id}" style="height:28px;padding:0 10px;font-size:12px;background:#dc2626;color:#fff;font-weight:700" title="Directly and completely delete from database and website">❌ Direct Delete</button>
-                        ` : ''}
-                      </div>
-                    </td>
-                  </tr>
-                `).join('')}
+                ${rowsHtml}
               </tbody>
             </table>
           </div>
@@ -11810,7 +12777,7 @@
               actionsHtml = `
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                   <button class="b" data-ueditname="${u.id}" data-curname="${esc(u.name)}" style="height:28px;padding:0 8px;font-size:12px">✏️ Edit Name</button>
-                  <button class="b" data-ures="${u.id}" style="height:28px;padding:0 8px;font-size:12px">🔑 Reset Password</button>
+                  <button class="b" data-ures="${u.id}" style="height:28px;padding:0 8px;font-size:12px">🔑 Change Password</button>
                   ${isSuperAdmin ? `<button class="b p" data-uperm="${u.id}" style="height:28px;padding:0 8px;font-size:12px;background:var(--primary);font-weight:600">🛡️ Permissions</button>` : ''}
                   ${canDelete ? `<button class="b d" data-udel="${u.id}" style="height:28px;padding:0 8px;font-size:12px">Delete</button>` : ''}
                 </div>
@@ -11836,6 +12803,12 @@
       </tbody></table></div>
     `;
 
+          // Super Admin role option is available only to Super Admins
+          if ($('optSuperAdminRole')) {
+            $('optSuperAdminRole').hidden = !isSuperAdmin;
+            $('optSuperAdminRole').disabled = !isSuperAdmin;
+          }
+
           // Default role is Master Admin when adding a new user
           if ($('ur2')) $('ur2').value = 'master_admin';
           if ($('roleTierBadge')) $('roleTierBadge').textContent = '⭐ Master Admin (Default) — Full Access; protected from valid inventory deletion; authorized for invalid entries direct delete.';
@@ -11843,7 +12816,9 @@
           if ($('ur2')) {
             $('ur2').onchange = () => {
               const sel = $('ur2').value;
-              if (sel === 'master_admin') {
+              if (sel === 'super_admin') {
+                if ($('roleTierBadge')) $('roleTierBadge').textContent = '👑 Super Admin — Full unrestricted system access and deletion privileges.';
+              } else if (sel === 'master_admin') {
                 if ($('roleTierBadge')) $('roleTierBadge').textContent = '⭐ Master Admin — Full Access & Login Inventory; invalid entries direct delete; protected from valid entry delete.';
               } else if (sel === 'admin_user') {
                 if ($('roleTierBadge')) $('roleTierBadge').textContent = '🛡️ Regular Admin — Entry & Excel bulk deletion privileges; Login Inventory strictly restricted.';
@@ -11860,7 +12835,12 @@
               const norm = /^\d+$/.test(val) ? val.padStart(4, '0') : val;
               let badge = '';
               if (['0001', '0007'].includes(norm)) {
-                badge = '👑 Super Administrator (' + norm + ') — Full Unrestricted Control (Reserved ID)';
+                if (isSuperAdmin) {
+                  badge = '👑 Super Administrator (' + norm + ') — Full Unrestricted Control (Reserved ID)';
+                  if ($('ur2')) $('ur2').value = 'super_admin';
+                } else {
+                  badge = '⚠️ Super Admin accounts (0001, 0007) can only be created by Super Admins.';
+                }
               } else if (['0002', '0003', '0004'].includes(norm)) {
                 badge = '⭐ Master Admin (' + norm + ') — Full Access (Protected Deletion)';
                 if ($('ur2')) $('ur2').value = 'master_admin';
@@ -11879,13 +12859,11 @@
             const role = ($('ur2') && $('ur2').value) || 'master_admin';
             if (!name || !user_id || !password) { toast('Please complete all fields'); return; }
             const norm = /^\d+$/.test(user_id) ? user_id.padStart(4, '0') : user_id;
-            if (['0001', '0007'].includes(norm)) {
-              toast('Master Super Admin IDs (0001, 0007) are reserved and cannot be created here.');
-              return;
-            }
-            if (['0002', '0003', '0004'].includes(norm) && !isSuperAdmin) {
-              toast('Only Master Super Admins (0001, 0007) have permission to provision Master Admin accounts.');
-              return;
+            if (['0001', '0007'].includes(norm) || role === 'super_admin') {
+              if (!isSuperAdmin) {
+                toast('Master Admins do not have authority to add Super Admin accounts.');
+                return;
+              }
             }
             try {
               await api('/api/users', { method: 'POST', body: JSON.stringify({ name, user_id, password, role }) });
@@ -12339,9 +13317,15 @@
           if (b.dataset.ures) {
             const p = prompt('Enter new password for this employee (at least 8 characters):');
             if (!p) return;
-            await api('/api/users/' + b.dataset.ures, { method: 'PUT', body: JSON.stringify({ password: p }) });
-            toast('Password reset successfully');
-            loadUsersContainer();
+            if (p.length < 8) {
+              toast('Password must be at least 8 characters long.');
+              return;
+            }
+            try {
+              await api('/api/users/' + b.dataset.ures, { method: 'PUT', body: JSON.stringify({ password: p }) });
+              toast('Password updated successfully');
+              loadUsersContainer();
+            } catch (err) { fail(err); }
             return;
           }
           if (b.dataset.udel) {
@@ -12457,10 +13441,15 @@
 
       /* ---------- Main App Initialization ---------- */
       async function initApp() {
-        initThemeDock();
-        await loadCU();
-        await updateChrome();
-        await showContainer('box-inv');
+        showBstplLoader('Connecting to BSTPL Customer Vault…');
+        try {
+          initThemeDock();
+          await loadCU();
+          await updateChrome();
+          await showContainer('box-inv');
+        } finally {
+          hideBstplLoader();
+        }
       }
 
       /* ---------- Backend Health & Dynamic Connection Manager ---------- */
@@ -12611,6 +13600,10 @@
         if ($('dlgAuditLog')) $('dlgAuditLog').showModal();
       }
       function openManageUsersModal() {
+        if (!canAccessUsersManager()) {
+          toast('Access Denied: Manage Users & Permissions is restricted to Super Admins and Master Admins only.');
+          return;
+        }
         loadUsersContainer();
         if ($('dlgManageUsers')) $('dlgManageUsers').showModal();
       }

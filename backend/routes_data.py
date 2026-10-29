@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session, joinedload
 import customer_tables
 import models, schemas
 from activity import log_activity
-from auth import get_current_user, require_admin, require_staff, require_permission
+from auth import get_current_user, require_admin, require_staff, require_permission, get_user_permissions
 from database import get_db, SessionLocal
 
 # Every route here needs a signed-in user.
@@ -117,6 +117,18 @@ def merge_extra(old, new):
     return merged
 
 
+def compute_expiry_status(exp_date: Optional[date], window_days: int = 30) -> str:
+    if not exp_date:
+        return "Unknown"
+    today = date.today()
+    if exp_date < today:
+        return "Expired"
+    elif exp_date <= today + timedelta(days=window_days):
+        return "Expiring Soon"
+    else:
+        return "Active"
+
+
 def out(d: Device) -> dict:
     saved_stype = (d.sim_type or "").strip()
     stype = saved_stype if saved_stype else ("E-SIM" if d.iccid and str(d.iccid).strip() else "Plastic SIM")
@@ -130,6 +142,7 @@ def out(d: Device) -> dict:
         "firmware": d.firmware, "flash": d.flash, "sim_type": stype,
         "extra": d.extra or {},
         "days_left": (d.expiry_date - date.today()).days if d.expiry_date else None,
+        "expiry_status": compute_expiry_status(d.expiry_date, 30),
         "added_by": d.added_by, "deleted_at": d.deleted_at,
         "deleted_by": d.deleted_by, "delete_reason": d.delete_reason,
     }
@@ -305,8 +318,182 @@ def add_customer(data: schemas.CustomerIn, db: Session = Depends(get_db),
     return {"id": c.id, "name": c.name}
 
 
+@router.patch("/customers/{customer_id}", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
+def rename_customer(customer_id: int, data: schemas.CustomerRenameIn, db: Session = Depends(get_db),
+                    user: models.User = Depends(get_current_user)):
+    c = db.query(Customer).filter(Customer.id == customer_id, Customer.deleted_at.is_(None)).first()
+    if not c:
+        raise HTTPException(404, "Customer not found.")
+    new_name = data.name.strip()
+    if not new_name:
+        raise HTTPException(400, "Customer name cannot be empty.")
+    if len(new_name) > 150 or re.search(r"[;\`\'\"]", new_name):
+        raise HTTPException(400, "Customer name contains invalid characters or exceeds 150 characters.")
+
+    # Check if another active customer already uses this name
+    existing = db.query(Customer).filter(
+        Customer.id != customer_id,
+        Customer.deleted_at.is_(None),
+        or_(
+            func.lower(Customer.name) == new_name.lower(),
+            func.replace(func.lower(Customer.name), '_', ' ') == func.replace(new_name.lower(), '_', ' ')
+        )
+    ).first()
+    if existing:
+        raise HTTPException(400, f"A customer named '{existing.name}' already exists.")
+
+    old_name = c.name
+    c.name = new_name
+    db.commit()
+
+    # Synchronize dedicated table in cloud database
+    try:
+        customer_tables.rename_table(c.id, new_name, old_name)
+    except Exception as e:
+        print(f"Customer table rename error: {e}")
+
+    log_activity(db, "customer_rename", f"Renamed customer ID {c.id} from '{old_name}' to '{new_name}'", user=user)
+    db.commit()
+    return {"id": c.id, "name": c.name, "old_name": old_name}
+
+
+@router.post("/customers/rename-all", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
+def rename_all_customers(data: schemas.CustomerRenameAllIn, db: Session = Depends(get_db),
+                         user: models.User = Depends(get_current_user)):
+    if not data.renames:
+        raise HTTPException(400, "No customer renames provided.")
+
+    seen_names = set()
+    for item in data.renames:
+        cid = item.id
+        new_name = item.name.strip()
+        if not new_name:
+            raise HTTPException(400, f"Customer name for ID {cid} cannot be empty.")
+        if len(new_name) > 150 or re.search(r"[;\`\'\"]", new_name):
+            raise HTTPException(400, f"Customer name '{new_name}' contains invalid characters or exceeds 150 characters.")
+        norm_name = new_name.lower().replace("_", " ")
+        if norm_name in seen_names:
+            raise HTTPException(400, f"Duplicate customer name '{new_name}' in request.")
+        seen_names.add(norm_name)
+
+    renamed_items = []
+    for item in data.renames:
+        cid = item.id
+        new_name = item.name.strip()
+        c = db.query(Customer).filter(Customer.id == cid, Customer.deleted_at.is_(None)).first()
+        if not c:
+            continue
+        if c.name == new_name:
+            continue
+        old_name = c.name
+        c.name = new_name
+        db.flush()
+        try:
+            customer_tables.rename_table(c.id, new_name, old_name)
+        except Exception as e:
+            print(f"Error renaming table for {cid}: {e}")
+        renamed_items.append({"id": cid, "old_name": old_name, "new_name": new_name})
+
+    db.commit()
+    log_activity(db, "customer_rename_all", f"Renamed {len(renamed_items)} customer portfolios", user=user)
+    db.commit()
+    return {"success": True, "renamed_count": len(renamed_items), "renames": renamed_items}
+
+
+@router.post("/customers/{customer_id}/delete-all-entries", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+def delete_all_entries_for_customer(customer_id: int, data: schemas.CustomerDeleteAllEntriesIn, db: Session = Depends(get_db),
+                                    user: models.User = Depends(get_current_user)):
+    # Master Admin restriction: Master Admins are NOT permitted to delete valid inventory!
+    if user.role == "master_admin" or not get_user_permissions(user).get("delete", False):
+        raise HTTPException(status_code=403, detail="Master Admins are not permitted to delete valid inventory records.")
+
+    c = db.query(Customer).filter(Customer.id == customer_id, Customer.deleted_at.is_(None)).first()
+    if not c:
+        raise HTTPException(404, "Customer not found.")
+
+    clean_expected = c.name.strip().lower()
+    clean_provided = data.confirm_name.strip().lower()
+    if clean_provided != clean_expected and clean_provided.replace(" ", "_") != clean_expected.replace(" ", "_"):
+        raise HTTPException(400, f"Confirmation name mismatch. Expected '{c.name}'.")
+
+    total_to_delete = db.query(Device).filter(Device.customer_id == customer_id, ACTIVE).count()
+    if total_to_delete == 0:
+        return {"success": True, "customer_id": customer_id, "customer_name": c.name, "deleted_count": 0, "message": "No active entries found for this customer."}
+
+    deleted_so_far = 0
+    now_utc = datetime.utcnow()
+    batch_size = 2000
+
+    while True:
+        batch_ids = [d_id for (d_id,) in db.query(Device.id).filter(Device.customer_id == customer_id, ACTIVE).limit(batch_size).all()]
+        if not batch_ids:
+            break
+        if data.permanent:
+            db.query(Device).filter(Device.id.in_(batch_ids)).delete(synchronize_session=False)
+        else:
+            db.query(Device).filter(Device.id.in_(batch_ids)).update({
+                Device.deleted_at: now_utc,
+                Device.deleted_by: user.user_id,
+                Device.delete_reason: data.reason or f"Deleted all entries for customer '{c.name}'"
+            }, synchronize_session=False)
+        db.commit()
+        deleted_so_far += len(batch_ids)
+
+    try:
+        customer_tables.clear_table(c.id, c.name)
+    except Exception as e:
+        print(f"Customer table clear rows error: {e}")
+
+    log_activity(db, "customer_delete_all_entries", f"Deleted all {deleted_so_far} entries for customer '{c.name}' (ID {c.id})", user=user)
+    db.commit()
+    return {
+        "success": True,
+        "customer_id": c.id,
+        "customer_name": c.name,
+        "deleted_count": deleted_so_far
+    }
+
+
+@router.delete("/customers/{customer_id}", dependencies=[Depends(require_staff), Depends(require_permission("delete"))])
+def delete_customer(customer_id: int, db: Session = Depends(get_db),
+                    user: models.User = Depends(get_current_user)):
+    if user.role == "master_admin" or not get_user_permissions(user).get("delete", False):
+        raise HTTPException(status_code=403, detail="Master Admins are not permitted to delete customer portfolios.")
+
+    c = db.query(Customer).filter(Customer.id == customer_id, Customer.deleted_at.is_(None)).first()
+    if not c:
+        raise HTTPException(404, "Customer not found.")
+
+    c.deleted_at = datetime.utcnow()
+    c.deleted_by = user.user_id
+
+    db.query(Device).filter(Device.customer_id == customer_id, ACTIVE).update({
+        Device.deleted_at: datetime.utcnow(),
+        Device.deleted_by: user.user_id,
+        Device.delete_reason: f"Customer '{c.name}' deleted"
+    }, synchronize_session=False)
+
+    log_activity(db, "customer_delete", f"Customer '{c.name}' (ID {c.id}) moved to bin", user=user)
+    db.commit()
+    return {"success": True, "customer_id": c.id, "customer_name": c.name}
+
+
+@router.put("/customers/{customer_id}/avatar", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
+@router.patch("/customers/{customer_id}/avatar", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
+def update_customer_avatar(customer_id: int, data: dict, db: Session = Depends(get_db),
+                           user: models.User = Depends(get_current_user)):
+    c = db.query(Customer).filter(Customer.id == customer_id, Customer.deleted_at.is_(None)).first()
+    if not c:
+        raise HTTPException(404, "Customer not found.")
+    c.avatar = data.get("avatar")
+    db.commit()
+    return {"id": c.id, "avatar": c.avatar}
+
+
+
 # ---------- devices ----------
-def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, sim_type="all"):
+def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, sim_type="all",
+                       expiry_filter="all", expiry_days=30, exp_start=None, exp_end=None):
     """Search + sort shared by the table and the Excel export, so both always agree."""
     query = db.query(Device).join(Customer).options(joinedload(Device.customer)).filter(ACTIVE)
     if customer_id:
@@ -322,6 +509,22 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
             func.upper(Device.sim_type).in_(['PLASTIC SIM', 'PLASTIC']),
             and_(or_(Device.sim_type.is_(None), Device.sim_type == ''), or_(Device.iccid.is_(None), Device.iccid == ''))
         ))
+
+    today = date.today()
+    if expiry_filter == "expired":
+        query = query.filter(Device.expiry_date.isnot(None), Device.expiry_date < today)
+    elif expiry_filter == "expiring_7":
+        query = query.filter(Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=7))
+    elif expiry_filter == "expiring_15":
+        query = query.filter(Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=15))
+    elif expiry_filter in ("expiring_30", "expiring_soon"):
+        query = query.filter(Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=expiry_days or 30))
+    elif expiry_filter == "active":
+        query = query.filter(Device.expiry_date.isnot(None), Device.expiry_date > today + timedelta(days=expiry_days or 30))
+    elif expiry_filter == "unknown":
+        query = query.filter(or_(Device.expiry_date.is_(None), Device.expiry_date == ""))
+    elif expiry_filter == "custom" and exp_start and exp_end:
+        query = query.filter(Device.expiry_date.isnot(None), Device.expiry_date >= exp_start, Device.expiry_date <= exp_end)
 
     q = (q or "").strip()
     if q:
@@ -413,10 +616,13 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
 @router.get("/devices", dependencies=[Depends(require_permission("view"))])
 def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optional[str] = "all",
                  sim_type: Optional[str] = "all",
+                 expiry_filter: Optional[str] = "all", expiry_days: int = Query(30, ge=1, le=365),
+                 exp_start: Optional[date] = None, exp_end: Optional[date] = None,
                  sort_by: Optional[str] = "id", sort_dir: Optional[str] = "asc",
                  page: int = Query(1, ge=1), page_size: int = Query(100, ge=1, le=5000),
                  db: Session = Depends(get_db)):
-    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type)
+    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type,
+                               expiry_filter=expiry_filter, expiry_days=expiry_days, exp_start=exp_start, exp_end=exp_end)
     total = query.count()
     items = query.offset((page - 1) * page_size).limit(page_size).all()
     return {"total": total, "page": page, "page_size": page_size,
@@ -426,11 +632,14 @@ def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optiona
 @router.get("/devices/export", dependencies=[Depends(require_permission("download"))])
 def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optional[str] = "all",
                    sim_type: Optional[str] = "all",
+                   expiry_filter: Optional[str] = "all", expiry_days: int = Query(30, ge=1, le=365),
+                   exp_start: Optional[date] = None, exp_end: Optional[date] = None,
                    sort_by: Optional[str] = "id", sort_dir: Optional[str] = "asc",
                    title: str = "Customer_Inventory_Export",
                    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     """EVERY record that matches the current filters (not just one page) as an Excel file."""
-    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type)
+    query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type,
+                               expiry_filter=expiry_filter, expiry_days=expiry_days, exp_start=exp_start, exp_end=exp_end)
     extra_cols = [n for (n,) in db.query(models.ColumnRegistry.name).order_by(models.ColumnRegistry.name)]
     headers = ["ID"] + [label for _, label in EXPORT_COLS] + extra_cols
     rows, offset, batch = [], 0, 2000
@@ -452,6 +661,34 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
     return StreamingResponse(
         buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/devices/expiry-summary", dependencies=[Depends(require_permission("view"))])
+def get_expiry_summary(customer_id: Optional[int] = None, days: int = Query(30, ge=1, le=365), db: Session = Depends(get_db)):
+    today = date.today()
+    base_q = db.query(Device).filter(ACTIVE)
+    if customer_id:
+        base_q = base_q.filter(Device.customer_id == customer_id)
+
+    total = base_q.count()
+    expired = base_q.filter(Device.expiry_date.isnot(None), Device.expiry_date < today).count()
+    exp_7 = base_q.filter(Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=7)).count()
+    exp_15 = base_q.filter(Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=15)).count()
+    exp_30 = base_q.filter(Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=days)).count()
+    active = base_q.filter(Device.expiry_date.isnot(None), Device.expiry_date > today + timedelta(days=days)).count()
+    unknown = base_q.filter(or_(Device.expiry_date.is_(None), Device.expiry_date == "")).count()
+
+    return {
+        "total_count": total,
+        "expired_count": expired,
+        "expiring_7_days": exp_7,
+        "expiring_15_days": exp_15,
+        "expiring_30_days": exp_30,
+        "active_count": active,
+        "unknown_count": unknown,
+        "alert_triggered": (expired > 0 or exp_30 > 0)
+    }
+
 
 
 @router.post("/devices/bulk/validate", dependencies=[Depends(require_permission("upload"))])
@@ -554,6 +791,7 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         row_dict = r.model_dump()
         row_dict["sim_type"] = stype
         row_dict["row_num"] = idx
+        row_dict["expiry_status"] = compute_expiry_status(r.expiry_date, 30)
 
         mode = getattr(data, "mode", "skip") or "skip"
 
@@ -639,6 +877,21 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         cn = d.get("customer_name") or "General_Customer"
         cust_dups[cn] = cust_dups.get(cn, 0) + 1
 
+    exp_expired_cnt = 0
+    exp_soon_cnt = 0
+    exp_active_cnt = 0
+    exp_unknown_cnt = 0
+    today = date.today()
+    for r in data.rows:
+        if not r.expiry_date:
+            exp_unknown_cnt += 1
+        elif r.expiry_date < today:
+            exp_expired_cnt += 1
+        elif r.expiry_date <= today + timedelta(days=30):
+            exp_soon_cnt += 1
+        else:
+            exp_active_cnt += 1
+
     return {
         "valid_count": len(valid),
         "new_count": len(new_entries),
@@ -653,12 +906,18 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         "new_columns": sorted(list(new_columns)),
         "missing_columns_warning": list(missing_columns),
         "customer_duplicates": cust_dups,
+        "expiry_counts": {
+            "expired": exp_expired_cnt,
+            "expiring_soon": exp_soon_cnt,
+            "active": exp_active_cnt,
+            "unknown": exp_unknown_cnt
+        },
         "new_sample": new_entries[:300],
         "updated_sample": updated_entries[:300],
         "existing_sample": existing_entries[:300],
         "valid_sample": valid[:300],
-        "duplicates": duplicates[:10000],
-        "invalids": invalids[:1000],
+        "duplicates": duplicates[:50000],
+        "invalids": invalids[:2000],
         "all_sample": all_rows[:300],
         "new_imeis": [r.get("imei") for r in new_entries if r.get("imei")]
     }
