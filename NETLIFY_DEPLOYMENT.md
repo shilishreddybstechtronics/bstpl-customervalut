@@ -2,7 +2,7 @@
 
 Your project is configured for **1-click instant deployment on Netlify**.
 
-Because your backend is live on Render (`https://bstpl-customervalut-l40y.onrender.com`), Netlify will host the frontend and automatically proxy all database/auth/API requests with zero CORS issues.
+Because your backend is live on Render (`https://bstpl-customervalut-1-ehoz.onrender.com`), Netlify will host the frontend and automatically proxy all database/auth/API requests with zero CORS issues.
 
 ---
 

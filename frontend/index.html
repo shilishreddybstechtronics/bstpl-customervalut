@@ -10727,9 +10727,9 @@
       }
 
       function promptServerUrl() {
-        const defaultRender = "https://bstpl-customervalut-l40y.onrender.com";
+        const defaultRender = "https://bstpl-customervalut-1-ehoz.onrender.com";
         const entered = prompt(
-          "CustomerVault Backend Server URL\n\nIf your backend is deployed on Render, enter:\nhttps://bstpl-customervalut-l40y.onrender.com\n\nOr leave empty to use this website's same host:",
+          "CustomerVault Backend Server URL\n\nIf your backend is deployed on Render, enter:\nhttps://bstpl-customervalut-1-ehoz.onrender.com\n\nOr leave empty to use this website's same host:",
           API_BASE || defaultRender
         );
         if (entered === null) return;
@@ -10772,10 +10772,10 @@
                 res = probe8000;
               }
             } else {
-              // Deployed on Vercel or other cloud host: probe the active Render backend
-              const probeRender = await pingHealth('https://bstpl-customervalut-l40y.onrender.com');
+              // Deployed on Netlify, Vercel, or other cloud host: probe the active Render backend
+              const probeRender = await pingHealth('https://bstpl-customervalut-1-ehoz.onrender.com');
               if (probeRender.ok) {
-                API_BASE = 'https://bstpl-customervalut-l40y.onrender.com';
+                API_BASE = 'https://bstpl-customervalut-1-ehoz.onrender.com';
                 localStorage.setItem('API_URL', API_BASE);
                 res = probeRender;
               }
