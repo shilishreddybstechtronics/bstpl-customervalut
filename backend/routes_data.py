@@ -693,67 +693,76 @@ def get_expiry_summary(customer_id: Optional[int] = None, days: int = Query(30, 
 
 @router.post("/devices/bulk/validate", dependencies=[Depends(require_permission("upload"))])
 def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
-    imeis = [(r.imei or "").strip() for r in data.rows if (r.imei or "").strip()]
-    sr_nos = [(r.device_sr_no or "").strip() for r in data.rows if (r.device_sr_no or "").strip()]
-    iccids = [(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
+    """Step 2 & 3: Compare uploaded records against entire database using ICCID as primary matching identifier.
+    Segregates strictly into New Entries (eligible for insertion) and Existing Entries (skipped).
+    Strict INSERT-ONLY: No automatic updates or overwrites."""
+    iccids = [str(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
+    imeis = [str(r.imei or "").strip() for r in data.rows if (r.imei or "").strip()]
+    sr_nos = [str(r.device_sr_no or "").strip() for r in data.rows if (r.device_sr_no or "").strip()]
 
+    # Query all existing ICCIDs across the entire database
+    existing_iccids = {}
+    for i in range(0, len(iccids), 2000):
+        for (v, dev_imei) in db.query(Device.iccid, Device.imei).filter(Device.iccid.in_(iccids[i:i + 2000]), ACTIVE):
+            if v:
+                existing_iccids[v] = dev_imei
+                existing_iccids[v.lower()] = dev_imei
+
+    # Query all existing IMEIs across the entire database
     existing_devices_map = {}
     for i in range(0, len(imeis), 2000):
         for d in db.query(Device).filter(Device.imei.in_(imeis[i:i + 2000]), ACTIVE):
             existing_devices_map[d.imei] = d
+            existing_devices_map[d.imei.lower()] = d
 
+    # Query existing Device Sr Nos
     existing_sr_nos = {}
     for i in range(0, len(sr_nos), 2000):
         for (v, dev_imei) in db.query(Device.device_sr_no, Device.imei).filter(Device.device_sr_no.in_(sr_nos[i:i + 2000]), ACTIVE):
             if v:
                 existing_sr_nos[v] = dev_imei
 
-    existing_iccids = {}
-    for i in range(0, len(iccids), 2000):
-        for (v, dev_imei) in db.query(Device.iccid, Device.imei).filter(Device.iccid.in_(iccids[i:i + 2000]), ACTIVE):
-            if v:
-                existing_iccids[v] = dev_imei
-
     known_custs = {c.name.lower() for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
     known_custs_norm = {c.name.lower().replace('_', ' ') for c in db.query(Customer.name).filter(Customer.deleted_at.is_(None))}
-    known_cust_map = {c.id: c.name for c in db.query(Customer.id, Customer.name).filter(Customer.deleted_at.is_(None))}
     known_cols = {n.lower() for (n,) in db.query(models.ColumnRegistry.name)}
     known_cols.update(c.lower() for c in BASE_COLUMNS)
 
-    seen_imeis, seen_sr_nos, seen_iccids = set(), set(), set()
-    new_entries, updated_entries, existing_entries = [], [], []
-    valid, duplicates, invalids = [], [], []
+    seen_iccids, seen_imeis, seen_sr_nos = set(), set(), set()
+    new_entries = []
+    existing_entries = []
+    duplicates = []
+    invalids = []
     new_customers = set()
     new_columns = set()
     missing_columns = set()
     esim_count = 0
     plastic_count = 0
 
+    has_iccid_any = any(bool(r.iccid) for r in data.rows)
     has_imei_any = any(bool(r.imei) for r in data.rows)
-    has_sr_any = any(bool(r.device_sr_no) for r in data.rows)
-    if not has_imei_any:
-        missing_columns.add("IMEI")
-    if not has_sr_any and not getattr(data, "direct_empty", False):
-        missing_columns.add("Device Sr No")
+    if not has_iccid_any and not has_imei_any:
+        missing_columns.add("ICCID / IMEI")
 
     for idx, r in enumerate(data.rows, start=1):
         errs = []
         cname = str(r.customer_name or "").strip()
         if not cname:
             errs.append("Missing or bad Customer Name")
-        elif len(cname) > 100 or re.search(r"[;\`\'\"]", cname):
+        elif len(cname) > 100 or any(ch in cname for ch in [';', '`', "'", '"']):
             errs.append("Customer name contains invalid characters or exceeds 100 characters")
         elif cname.lower() not in known_custs and cname.lower().replace('_', ' ') not in known_custs_norm:
             new_customers.add(cname)
 
-        if not r.imei:
-            errs.append("Missing IMEI")
-        elif len(r.imei) > 255:
-            errs.append("IMEI exceeds 255 characters")
+        if not r.iccid and not r.imei:
+            errs.append("Missing both ICCID and IMEI identifier")
+
+        if r.act_date and r.expiry_date and r.expiry_date < r.act_date:
+            errs.append("Bad date sequence: Expiry date is before Activation date")
 
         for fld, name in [
             (r.device_sr_no, "Device Sr No"),
             (r.iccid, "ICCID"),
+            (r.imei, "IMEI"),
             (r.msisdn1, "MSISDN1"),
             (r.msisdn2, "MSISDN2"),
             (r.model, "Model"),
@@ -765,10 +774,6 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
             if fld and len(str(fld)) > 255:
                 errs.append(f"{name} exceeds 255 characters")
 
-        if r.act_date and r.expiry_date and r.expiry_date < r.act_date:
-            errs.append("Bad date sequence: Expiry date is before Activation date")
-
-        # Check column names in extra
         if r.extra and isinstance(r.extra, dict):
             for k, v in r.extra.items():
                 k_clean = str(k).strip()
@@ -779,10 +784,7 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
                 if v and len(str(v)) > 255:
                     errs.append(f"Value for '{k_clean}' exceeds 255 characters")
 
-        if getattr(data, "direct_empty", False):
-            stype = r.sim_type
-        else:
-            stype = r.sim_type or ("E-SIM" if r.iccid else "Plastic SIM")
+        stype = r.sim_type or ("E-SIM" if r.iccid else "Plastic SIM")
         if stype == "E-SIM":
             esim_count += 1
         elif stype:
@@ -793,84 +795,59 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         row_dict["row_num"] = idx
         row_dict["expiry_status"] = compute_expiry_status(r.expiry_date, 30)
 
-        mode = getattr(data, "mode", "skip") or "skip"
+        raw_iccid = str(r.iccid or "").strip()
+        raw_imei = str(r.imei or "").strip()
+        raw_sr = str(r.device_sr_no or "").strip()
 
-        # Check Duplicate Conflicts
-        is_dup = False
-        dup_reason = ""
-        if r.imei and r.imei in seen_imeis:
-            is_dup = True
-            dup_reason = "Duplicate IMEI repeats earlier in this file"
-        elif r.device_sr_no and r.device_sr_no in seen_sr_nos:
-            is_dup = True
-            dup_reason = "Duplicate Device Sr No repeats earlier in this file"
-        elif r.device_sr_no and r.device_sr_no in existing_sr_nos and (existing_sr_nos.get(r.device_sr_no) != r.imei):
-            is_dup = True
-            dup_reason = f"Device Sr No '{r.device_sr_no}' already belongs to another IMEI in database"
-        elif r.iccid and r.iccid in seen_iccids:
-            is_dup = True
-            dup_reason = "Duplicate ICCID repeats earlier in this file"
-        elif r.iccid and r.iccid in existing_iccids and (existing_iccids.get(r.iccid) != r.imei):
-            is_dup = True
-            dup_reason = f"ICCID '{r.iccid}' already belongs to another IMEI in database"
+        # Step 3: Segregate into Duplicates (within file), Invalids, Existing (in DB), and New Entries
+        is_dup_in_file = False
+        dup_file_reason = ""
 
-        if is_dup:
+        if raw_iccid and raw_iccid in seen_iccids:
+            is_dup_in_file = True
+            dup_file_reason = f"Duplicate ICCID '{raw_iccid}' repeats earlier in this uploaded file"
+        elif raw_imei and raw_imei in seen_imeis:
+            is_dup_in_file = True
+            dup_file_reason = f"Duplicate IMEI '{raw_imei}' repeats earlier in this uploaded file"
+        elif raw_sr and raw_sr in seen_sr_nos:
+            is_dup_in_file = True
+            dup_file_reason = f"Duplicate Device Sr No '{raw_sr}' repeats earlier in this uploaded file"
+
+        if is_dup_in_file:
             row_dict["entry_type"] = "Duplicate"
             row_dict["status"] = "Duplicate"
-            row_dict["reason"] = dup_reason
+            row_dict["reason"] = dup_file_reason
             duplicates.append(row_dict)
-        elif r.imei and r.imei in existing_devices_map:
-            # Existing Device in database -> Check if updated or existing
-            d = existing_devices_map[r.imei]
-            differing = []
-            for f in ["device_sr_no", "iccid", "msisdn1", "msisdn2", "model", "sim_provider", "activation_plan", "firmware", "flash", "sim_type"]:
-                val = getattr(r, f, None)
-                if val is not None and str(val).strip() != "":
-                    old_val = getattr(d, f, None)
-                    if str(val).strip() != str(old_val or "").strip():
-                        differing.append(f)
-            for f in ["act_date", "expiry_date", "dispatched_date"]:
-                val = getattr(r, f, None)
-                if val is not None:
-                    old_val = getattr(d, f, None)
-                    if val != old_val:
-                        differing.append(f)
-            if cname and d.customer_id in known_cust_map:
-                existing_cname = known_cust_map[d.customer_id]
-                if cname.lower().replace("_", " ") != existing_cname.lower().replace("_", " "):
-                    differing.append("customer_name")
-
-            if differing:
-                row_dict["entry_type"] = "Updated"
-                row_dict["status"] = "Updated"
-                row_dict["reason"] = f"Existing in database — will update {len(differing)} field(s): {', '.join(differing)}"
-                row_dict["differing_fields"] = differing
-                updated_entries.append(row_dict)
-                valid.append(row_dict)
-            else:
-                row_dict["entry_type"] = "Existing"
-                row_dict["status"] = "Existing"
-                row_dict["reason"] = "Already exists in database with identical values (No change needed)"
-                existing_entries.append(row_dict)
-                if mode == "replace":
-                    valid.append(row_dict)
+        elif errs:
+            row_dict["entry_type"] = "Invalid"
+            row_dict["status"] = "Invalid"
+            row_dict["reason"] = "; ".join(errs)
+            invalids.append(row_dict)
+        elif raw_iccid and (raw_iccid in existing_iccids or raw_iccid.lower() in existing_iccids):
+            row_dict["entry_type"] = "Existing"
+            row_dict["status"] = "Existing"
+            row_dict["reason"] = f"ICCID '{raw_iccid}' already present in database (Skipped — Insert Only)"
+            existing_entries.append(row_dict)
+        elif raw_imei and (raw_imei in existing_devices_map or raw_imei.lower() in existing_devices_map):
+            row_dict["entry_type"] = "Existing"
+            row_dict["status"] = "Existing"
+            row_dict["reason"] = f"IMEI '{raw_imei}' already present in database (Skipped — Insert Only)"
+            existing_entries.append(row_dict)
         else:
-            # Completely New Entry!
+            # Truly NEW Entry eligible for insertion!
             row_dict["entry_type"] = "New"
             row_dict["status"] = "New"
-            row_dict["reason"] = "New entry — ready to add to database and customer table"
+            row_dict["reason"] = "New entry — eligible for insertion"
             new_entries.append(row_dict)
-            valid.append(row_dict)
 
-        if r.imei:
-            seen_imeis.add(r.imei)
-        if r.device_sr_no:
-            seen_sr_nos.add(r.device_sr_no)
-        if r.iccid:
-            seen_iccids.add(r.iccid)
+        if raw_iccid:
+            seen_iccids.add(raw_iccid)
+        if raw_imei:
+            seen_imeis.add(raw_imei)
+        if raw_sr:
+            seen_sr_nos.add(raw_sr)
 
-    all_rows = new_entries + updated_entries + existing_entries + duplicates + invalids
-    all_rows.sort(key=lambda x: x.get("row_num", 0))
+    valid = new_entries  # Strict INSERT-ONLY: Only new entries are valid for insertion
 
     cust_dups = {}
     for d in duplicates:
@@ -895,7 +872,7 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
     return {
         "valid_count": len(valid),
         "new_count": len(new_entries),
-        "updated_count": len(updated_entries),
+        "updated_count": 0,
         "existing_count": len(existing_entries),
         "duplicate_count": len(duplicates),
         "invalid_count": len(invalids),
@@ -913,219 +890,171 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
             "unknown": exp_unknown_cnt
         },
         "new_sample": new_entries[:300],
-        "updated_sample": updated_entries[:300],
         "existing_sample": existing_entries[:300],
         "valid_sample": valid[:300],
         "duplicates": duplicates[:50000],
         "invalids": invalids[:2000],
-        "all_sample": all_rows[:300],
+        "all_sample": (new_entries[:150] + existing_entries[:150]),
+        "new_iccids": [r.get("iccid") for r in new_entries if r.get("iccid")],
         "new_imeis": [r.get("imei") for r in new_entries if r.get("imei")],
-        "existing_imeis": [d.imei for d in existing_devices_map.values()],
-        "existing_sr_nos": list(existing_sr_nos.keys()),
-        "existing_iccids": list(existing_iccids.keys())
+        "existing_iccids": list(existing_iccids.keys()),
+        "existing_imeis": list(existing_devices_map.keys()),
+        "existing_sr_nos": list(existing_sr_nos.keys())
     }
 
 
-def insert_chunk(db: Session, rows: list):
-    """Inserts one chunk in a single multi-row INSERT and commits it. If an error occurs (such as
-    invalid values, encoding or integrity issue in any row), falls back to row-by-row insertion
-    so that only the bad record is skipped and every valid row in the chunk proceeds successfully."""
+def insert_chunk(db: Session, rows: list) -> int:
+    """Inserts one chunk in a single multi-row INSERT and commits it. If an error occurs,
+    falls back to row-by-row insertion so only problematic rows fail and valid rows proceed.
+    Returns the exact count of rows successfully inserted into the database."""
     if not rows:
-        return
+        return 0
     for attempt in range(3):
         try:
             db.execute(insert(Device), rows)
             db.commit()
-            return
+            return len(rows)
         except OperationalError:
             db.rollback()
             if attempt == 2:
                 raise
-            time.sleep(2 * (attempt + 1))
-        except Exception as e:
-            # Multi-row batch failed; retry row-by-row to ignore invalid values and proceed
+            time.sleep(1.5 * (attempt + 1))
+        except Exception:
             db.rollback()
+            saved_count = 0
             for r in rows:
                 try:
                     db.execute(insert(Device), [r])
                     db.commit()
+                    saved_count += 1
                 except Exception as inner_e:
                     db.rollback()
-                    print(f"Skipping problematic row during bulk upload ({r.get('imei')}): {inner_e}")
-            return
+                    print(f"Skipping problematic row ({r.get('iccid') or r.get('imei')}): {inner_e}")
+            return saved_count
+    return 0
 
 
 @router.post("/devices/bulk", dependencies=[Depends(require_permission("upload"))])
 def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
              user: models.User = Depends(get_current_user)):
-    imeis = [(r.imei or "").strip() for r in data.rows if (r.imei or "").strip()]
-    sr_nos = [(r.device_sr_no or "").strip() for r in data.rows if (r.device_sr_no or "").strip()]
-    iccids = [(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
-    mode = getattr(data, "mode", "skip") or "skip"
+    """Step 4: Strict INSERT-ONLY operation. Inserts only new entries into customer's database.
+    Skips all existing ICCIDs and duplicate records. Never updates, modifies, overwrites, or alters existing data."""
+    iccids = [str(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
+    imeis = [str(r.imei or "").strip() for r in data.rows if (r.imei or "").strip()]
 
-    clean_imeis = [re.sub(r"[^0-9A-Za-z_-]", "", (r.imei or "").strip())[:20] for r in data.rows if (r.imei or "").strip()]
-    all_query_imeis = list(set([im for im in imeis if im] + [cim for cim in clean_imeis if cim]))
-    existing_devices = {}
-    for i in range(0, len(all_query_imeis), 2000):
-        for d in db.query(Device).filter(Device.imei.in_(all_query_imeis[i:i + 2000])):
-            existing_devices[d.imei] = d
-            existing_devices[d.imei.lower()] = d
-
-    existing_sr_nos = {}
-    for i in range(0, len(sr_nos), 2000):
-        for (v, dev_imei) in db.query(models.Device.device_sr_no, models.Device.imei).filter(models.Device.device_sr_no.in_(sr_nos[i:i + 2000]), models.Device.deleted_at.is_(None)):
-            if v:
-                existing_sr_nos[v] = dev_imei
-
-    existing_iccids = {}
+    # Query existing ICCIDs across the database
+    existing_iccids = set()
     for i in range(0, len(iccids), 2000):
-        for (v, dev_imei) in db.query(models.Device.iccid, models.Device.imei).filter(models.Device.iccid.in_(iccids[i:i + 2000]), models.Device.deleted_at.is_(None)):
+        for (v,) in db.query(Device.iccid).filter(Device.iccid.in_(iccids[i:i + 2000])):
             if v:
-                existing_iccids[v] = dev_imei
+                existing_iccids.add(v)
+                existing_iccids.add(v.lower())
 
-    cache, added, updated, skipped, names = {}, 0, 0, [], set()
-    seen_in_batch = set()
-    seen_sr_nos = set()
-    seen_iccids = set()
-    mirror = []  # rows to copy into each customer's own table
-    new_rows = []  # rows inserted in a few big batches instead of one round trip per row
+    # Query existing IMEIs across the database
+    existing_imeis = set()
+    for i in range(0, len(imeis), 2000):
+        for (v,) in db.query(Device.imei).filter(Device.imei.in_(imeis[i:i + 2000])):
+            if v:
+                existing_imeis.add(v)
+                existing_imeis.add(v.lower())
+
+    cache = {}
+    skipped = []
+    seen_in_batch_iccid = set()
+    seen_in_batch_imei = set()
+    mirror = []
+    new_rows = []
+    names = set()
 
     for r in data.rows:
         try:
-            cust_name = str(r.customer_name or "").strip()
-            if not cust_name:
-                cust_name = "General_Customer"
-
+            raw_iccid = str(r.iccid or "").strip()
             raw_imei = str(r.imei or "").strip()
-            if "e+" in raw_imei.lower():
-                try:
-                    raw_imei = str(int(float(raw_imei)))
-                except Exception:
-                    pass
+
+            # Skip existing ICCIDs in DB
+            if raw_iccid and (raw_iccid in existing_iccids or raw_iccid.lower() in existing_iccids):
+                skipped.append(raw_iccid)
+                continue
+            # Skip in-file duplicate ICCIDs
+            if raw_iccid and raw_iccid in seen_in_batch_iccid:
+                skipped.append(raw_iccid)
+                continue
+
+            # Skip existing IMEIs in DB
+            if raw_imei and (raw_imei in existing_imeis or raw_imei.lower() in existing_imeis):
+                skipped.append(raw_imei)
+                continue
+            if raw_imei and raw_imei in seen_in_batch_imei:
+                skipped.append(raw_imei)
+                continue
+
+            cust_name = str(r.customer_name or "").strip() or "General_Customer"
+            key = cust_name.lower().replace("_", " ")
+            if key not in cache:
+                cache[key] = customer_by_name(db, cust_name)
+            cust = cache[key]
+
             imei = re.sub(r"[^0-9A-Za-z_-]", "", raw_imei)
             if not imei or len(imei) < 5:
-                # Invalid rows are also inserted: assign unique fallback identifier so DB accepts it
-                alt = re.sub(r"[^0-9A-Za-z_-]", "", str(r.device_sr_no or r.iccid or "").strip())
+                alt = re.sub(r"[^0-9A-Za-z_-]", "", str(r.device_sr_no or raw_iccid or "").strip())
                 if alt and len(alt) >= 5:
                     imei = alt[:20]
                 else:
                     imei = f"INV_{uuid.uuid4().hex[:10].upper()}"
             imei = imei[:20]
 
-            # Duplicates must NEVER be inserted
-            if imei in seen_in_batch:
-                skipped.append(imei)
-                continue
-            seen_in_batch.add(imei)
-
-            sr_no = str(r.device_sr_no or "").strip()[:50]
-            if sr_no:
-                sr_owner = existing_sr_nos.get(sr_no)
-                if sr_no in seen_sr_nos or (sr_owner and sr_owner != imei and mode == "skip"):
-                    skipped.append(sr_no)
-                    continue
-                seen_sr_nos.add(sr_no)
-
-            iccid_val = str(r.iccid or "").strip()[:30]
-            if iccid_val:
-                iccid_owner = existing_iccids.get(iccid_val)
-                if iccid_val in seen_iccids or (iccid_owner and iccid_owner != imei and mode == "skip"):
-                    skipped.append(iccid_val)
-                    continue
-                seen_iccids.add(iccid_val)
-
-            key = cust_name.lower().replace("_", " ")
-            if key not in cache:
-                cache[key] = customer_by_name(db, cust_name)
-            cust = cache[key]
-
             exp = r.expiry_date or (r.act_date + timedelta(days=365) if r.act_date else None)
-            stype = (r.sim_type or classify_sim_type(r.iccid))[:20]
+            stype = (r.sim_type or classify_sim_type(raw_iccid))[:20]
             extra = clean_extra(r.extra)
             names.update(extra)
 
-            dev_match = existing_devices.get(imei) or existing_devices.get(imei.lower())
-            if dev_match:
-                in_bin = getattr(dev_match, "deleted_at", None) if not isinstance(dev_match, bool) else None
-                if in_bin:
-                    d = dev_match
-                    d.customer_id = cust.id
-                    d.act_date = r.act_date or d.act_date
-                    d.expiry_date = exp or d.expiry_date
-                    d.dispatched_date = r.dispatched_date or d.dispatched_date
-                    d.sim_type = stype or d.sim_type
-                    for f in TEXT_FIELDS:
-                        val = getattr(r, f, None)
-                        if val is not None and str(val).strip() != "":
-                            max_len = FIELD_MAX_LEN.get(f, 100)
-                            setattr(d, f, str(val).strip()[:max_len])
-                    if extra:
-                        non_blank = {k: v for k, v in extra.items() if v is not None and str(v).strip() != ""}
-                        merged = {**(d.extra or {}), **non_blank}
-                        d.extra = merged or None
-                    d.deleted_at = d.deleted_by = d.delete_reason = None
-                    updated += 1
-                    mirror.append((cust.id, cust.name, {
-                        "imei": imei, "customer_name": cust.name, "act_date": d.act_date, "expiry_date": d.expiry_date, "dispatched_date": d.dispatched_date,
-                        "sim_type": d.sim_type, "extra": d.extra or {}, **{f: getattr(d, f) for f in TEXT_FIELDS}}))
+            row_vals = {}
+            for f in TEXT_FIELDS:
+                val = getattr(r, f, None)
+                if val is not None and str(val).strip() != "":
+                    max_len = FIELD_MAX_LEN.get(f, 100)
+                    row_vals[f] = str(val).strip()[:max_len]
                 else:
-                    # In bulk upload, only new entries which are not there should upload
-                    skipped.append(imei)
-            else:
-                row_vals = {}
-                for f in TEXT_FIELDS:
-                    val = getattr(r, f, None)
-                    if val is not None and str(val).strip() != "":
-                        max_len = FIELD_MAX_LEN.get(f, 100)
-                        row_vals[f] = str(val).strip()[:max_len]
-                    else:
-                        row_vals[f] = None
-                new_rows.append(dict(
-                    customer_id=cust.id, imei=imei, act_date=r.act_date, expiry_date=exp,
-                    dispatched_date=r.dispatched_date, sim_type=stype, extra=extra or None,
-                    added_by=user.id, **row_vals
-                ))
-                existing_devices[imei] = True
-                added += 1
-                mirror.append((cust.id, cust.name, {
-                    "imei": imei, "customer_name": cust.name, "act_date": r.act_date, "expiry_date": exp, "dispatched_date": r.dispatched_date,
-                    "sim_type": stype, "extra": extra, **row_vals}))
+                    row_vals[f] = None
+
+            new_rows.append(dict(
+                customer_id=cust.id, imei=imei, act_date=r.act_date, expiry_date=exp,
+                dispatched_date=r.dispatched_date, sim_type=stype, extra=extra or None,
+                added_by=user.id, **row_vals
+            ))
+            mirror.append((cust.id, cust.name, {
+                "imei": imei, "customer_name": cust.name, "act_date": r.act_date, "expiry_date": exp,
+                "dispatched_date": r.dispatched_date, "sim_type": stype, "extra": extra, **row_vals
+            }))
+
+            if raw_iccid:
+                seen_in_batch_iccid.add(raw_iccid)
+                existing_iccids.add(raw_iccid)
+            if imei:
+                seen_in_batch_imei.add(imei)
+                existing_imeis.add(imei)
+
         except Exception as row_err:
             print(f"Skipping row error in bulk_add: {row_err}")
+            skipped.append(str(r.iccid or r.imei or "unknown"))
             continue
 
     try:
-        db.commit()  # customers first
+        db.commit()  # commit new customer records if any
     except Exception as ce:
         db.rollback()
-        print(f"Commit error during bulk_add customers: {ce}")
+        print(f"Commit error during customer creation: {ce}")
 
-    saved = 0
+    # Step 6: Insert only new entries in safe chunks
+    actual_inserted = 0
+    chunk_size = 500
+    for i in range(0, len(new_rows), chunk_size):
+        chunk = new_rows[i:i + chunk_size]
+        actual_inserted += insert_chunk(db, chunk)
+
+    register_columns(db, names)
+
     try:
-        for i in range(0, len(new_rows), 500):  # pymysql turns each list into ONE multi-row INSERT
-            chunk = new_rows[i:i + 500]
-            insert_chunk(db, chunk)
-            saved += len(chunk)
-        register_columns(db, names)
-        if len(data.rows) == 1:
-            log_activity(db, "device_add", f"IMEI {data.rows[0].imei}" + (" (updated)" if updated else "" if added else " (skipped)"), user=user)
-        else:
-            log_activity(db, "device_upload", f"{saved} added, {updated} updated, {len(skipped)} duplicates skipped (batch of {len(data.rows)})", user=user)
-        db.commit()
-
-        # Clean up any staged error records for successfully added or updated devices
-        if saved > 0 or updated > 0:
-            success_imeis = [r["imei"] for r in new_rows] + list(existing_devices.keys())
-            for i in range(0, len(success_imeis), 1000):
-                db.query(models.ErroredRecord).filter(models.ErroredRecord.imei.in_(success_imeis[i:i + 1000])).delete(synchronize_session=False)
-            db.commit()
-    except OperationalError:
-        db.rollback()
-        raise HTTPException(503, f"The database did not answer in time. {saved} of {len(new_rows)} new records were saved. "
-                                 "Upload the same file again: records already saved are skipped automatically. "
-                                 "Then run  python customer_tables.py  once to fill the customer tables.")
-
-    try:  # per-customer tables; a failure here never breaks the upload itself
         db.commit()
         if getattr(getattr(db, "bind", None), "dialect", None) and getattr(db.bind.dialect, "name", "") == "sqlite":
             customer_tables.mirror_rows(mirror, conn=db.connection())
@@ -1134,7 +1063,18 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
             customer_tables.mirror_rows(mirror)
     except Exception as e:
         print(f"Customer table sync failed: {e}")
-    return {"added": added, "updated": updated, "skipped_duplicates": len(skipped), "skipped_imeis": skipped[:50]}
+
+    log_activity(db, "device_upload", f"{actual_inserted} new entries added, {len(skipped)} existing/duplicate skipped (batch of {len(data.rows)})", user=user)
+
+    return {
+        "ok": True,
+        "added": actual_inserted,
+        "updated": 0,
+        "skipped_duplicates": len(skipped),
+        "skipped_imeis": skipped[:50],
+        "total_processed": len(data.rows),
+        "failed": len(new_rows) - actual_inserted
+    }
 
 
 @router.post("/devices/sheet-upload", dependencies=[Depends(require_permission("upload"))])

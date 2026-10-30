@@ -258,9 +258,14 @@
     }
 
     .db-status {
-      margin: 0;
-      font-size: 12.5px;
+      margin: 16px auto 0 auto;
+      font-size: 13px;
       color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      width: 100%;
     }
 
     .db-status::before {
@@ -2812,8 +2817,16 @@
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   box-shadow: 2px 0 16px rgba(9, 19, 43, 0.15);
   z-index: 100;
+}
+
+.cv-sidebar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .cv-sidebar-brand {
@@ -3045,12 +3058,21 @@
   align-items: center;
   gap: 8px;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   padding: 6px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   margin-bottom: 22px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  width: 100%;
+}
+
+.cv-action-tabs::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .cv-action-tabs .tab-btn {
@@ -4270,7 +4292,7 @@ body:not(.app-active) {
             </div>
             <div class="cv-search-wrap">
               <span class="cv-search-ico">🔍</span>
-              <input type="text" id="homeSearchInput" class="cv-search-input" placeholder="Search by name, email, or IMEI..." />
+              <input type="text" id="homeSearchInput" class="cv-search-input" placeholder="Search by name, ICCID, or IMEI..." />
               <button class="cv-search-btn" id="homeSearchBtn">Search</button>
             </div>
           </div>
@@ -4344,6 +4366,22 @@ body:not(.app-active) {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Data Health & Integrity Monitor Card (Moved to Home directly above Recent Activity) -->
+        <div class="card" id="homeDataHealthCard" style="margin:20px 0;padding:22px 24px;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 2px 10px rgba(0,0,0,0.04)">
+          <div class="row" style="margin-bottom:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div class="grow">
+              <h3 style="margin:0 0 4px;font-size:16px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
+                <span>🩺</span> <span>Data Health &amp; Integrity Monitor</span>
+              </h3>
+              <p class="sub" style="margin:0;font-size:12.5px">Automated diagnostics: duplicate detection, IMEI length validation, invalid date checks, and column completeness scores.</p>
+            </div>
+            <button class="b" id="liveDownloadHealth" type="button" style="font-weight:700">📥 Download Health Issues Excel</button>
+          </div>
+          <div id="healthContainerBody">
+            <div class="empty">Running health diagnostics…</div>
           </div>
         </div>
 
@@ -5804,19 +5842,8 @@ body:not(.app-active) {
     <!-- =========================================================================
        CONTAINER 9: SEPARATE DATA HEALTH & INTEGRITY
        ========================================================================= -->
-    <section class="container-box" id="box-health">
-      <div class="container-tag">🩺 Data Health Diagnostics Container</div>
-      <div class="row" style="margin-bottom:12px">
-        <div class="grow">
-          <h2>Data Health & Integrity Monitor</h2>
-          <p class="sub" style="margin:0">Automated diagnostics: duplicate detection, IMEI length validation, invalid
-            date checks, and column completeness scores.</p>
-        </div>
-        <button class="b" id="liveDownloadHealth">📥 Download Health Issues Excel</button>
-      </div>
-      <div id="healthContainerBody">
-        <div class="empty">Running health diagnostics…</div>
-      </div>
+    <section class="container-box" id="box-health" hidden>
+      <!-- Data Health has been moved to Home above Recent Activity -->
     </section>
 
     <!-- =========================================================================
@@ -7069,7 +7096,14 @@ body:not(.app-active) {
       const fail = e => toast(e instanceof TypeError ? 'Cannot reach server. Is backend running?' : e.message);
 
       /* ---------- Event Notification Popup System ---------- */
-      function showEventPopup({ type = 'info', title = '', message = '', meta = null, progress = '100% Complete', duration = 4500 }) {
+      function showEventPopup(opts) {
+        opts = opts || {};
+        const type = opts.type || 'info';
+        const title = opts.title || '';
+        const message = opts.message || '';
+        const meta = opts.meta || null;
+        const progress = opts.progress || '100% Complete';
+        const duration = opts.duration !== undefined ? opts.duration : 4500;
         const dlg = $('dlgEventPopup');
         if (!dlg) { toast(title + ': ' + message); return; }
 
@@ -7203,15 +7237,15 @@ body:not(.app-active) {
       if ($('btnOkEventPopup')) $('btnOkEventPopup').onclick = () => $('dlgEventPopup').close();
 
       /* ---------- Reusable Action Progress Dialog with Percentage Bar ---------- */
-      async function runProgressAction({
-        title = 'Processing Data…',
-        tag = 'Data Action Progress',
-        tagColor = 'var(--danger)',
-        barGradient = 'linear-gradient(90deg, #ef4444, #f97316)',
-        subText = 'Please wait while records are processed.',
-        total = 0,
-        workFn = null
-      }) {
+      async function runProgressAction(opts) {
+        opts = opts || {};
+        const title = opts.title || 'Processing Data…';
+        const tag = opts.tag || 'Data Action Progress';
+        const tagColor = opts.tagColor || 'var(--danger)';
+        const barGradient = opts.barGradient || 'linear-gradient(90deg, #ef4444, #f97316)';
+        const subText = opts.subText || 'Please wait while records are processed.';
+        const total = opts.total || 0;
+        const workFn = opts.workFn || null;
         const dlg = $('dlgActionProgress');
         if (!dlg) {
           if (typeof workFn === 'function') await workFn(() => {});
@@ -8157,11 +8191,14 @@ body:not(.app-active) {
       async function runLiveCycle(immediate = false) {
         if (currentContainerId !== 'box-live' || !tok) { clearTimeout(liveTimer); return; }
         try {
-          const [ins, hea, actData] = await Promise.all([
-            api('/api/inventory/insights'),
-            api('/api/inventory/health'),
-            api('/api/activity?page=1&page_size=8')
+          const [rawIns, rawHea, rawAct] = await Promise.all([
+            api('/api/inventory/insights').catch(() => null),
+            api('/api/inventory/health').catch(() => null),
+            api('/api/activity?page=1&page_size=8').catch(() => null)
           ]);
+          const ins = (rawIns && typeof rawIns === 'object') ? rawIns : { total_devices: 0, total_customers: 0, expiring_30: 0, expired: 0 };
+          const hea = (rawHea && typeof rawHea === 'object') ? rawHea : { score: 100, completeness: {}, issues: [] };
+          const actData = (rawAct && typeof rawAct === 'object' && Array.isArray(rawAct.items)) ? rawAct : { items: [] };
 
           if (currentContainerId !== 'box-live') return;
 
@@ -8211,7 +8248,8 @@ body:not(.app-active) {
 
       async function updateLiveFeedTable() {
         try {
-          const d = await api(`/api/devices?page=${livePage}&page_size=25&q=${encodeURIComponent(liveQ)}&column=${liveCol}&sort_by=${sortCol}&sort_dir=${sortDir}${liveCid ? '&customer_id=' + liveCid : ''}`);
+          const rawD = await api(`/api/devices?page=${livePage}&page_size=25&q=${encodeURIComponent(liveQ)}&column=${liveCol}&sort_by=${sortCol}&sort_dir=${sortDir}${liveCid ? '&customer_id=' + liveCid : ''}`).catch(() => null);
+          const d = (rawD && typeof rawD === 'object' && Array.isArray(rawD.items)) ? rawD : { items: [], total: 0, page: 1, total_pages: 1 };
           const s = (d.page - 1) * 25;
           const staff = canDeleteValidInventory();
           const act = dev => `
@@ -10215,19 +10253,16 @@ body:not(.app-active) {
           ${sampleRows.map(r => {
             const st = r.entry_type || r.status || 'New';
             let badgeBg = 'var(--ok)';
-            let badgeText = '✨ New Entry';
-            if (st === 'Updated') {
-              badgeBg = '#0284c7';
-              badgeText = '🔄 Updated';
-            } else if (st === 'Existing') {
+            let badgeText = '✨ New Entry (Eligible for Insertion)';
+            if (st === 'Existing') {
               badgeBg = '#64748b';
-              badgeText = '📋 Existing';
+              badgeText = '📋 Existing in DB (Skipped — Insert Only)';
             } else if (st === 'Duplicate') {
               badgeBg = 'var(--warn)';
-              badgeText = '⚠️ Duplicate';
+              badgeText = '⚠️ In-File Duplicate (Skipped)';
             } else if (st === 'Invalid') {
               badgeBg = 'var(--danger)';
-              badgeText = '❌ Invalid';
+              badgeText = '❌ Invalid Record (Skipped)';
             }
 
             const normExp = String(r.expiry_status || '').toLowerCase().replace(/[\s_-]+/g, '');
@@ -10271,7 +10306,7 @@ body:not(.app-active) {
         }
 
         function applyPreviewFilter(filter) {
-          activeValFilter = filter || 'all';
+          activeValFilter = filter || 'new';
           document.querySelectorAll('#valFilterBtns button').forEach(b => {
             b.classList.toggle('on', b.dataset.valfilter === activeValFilter);
           });
@@ -10341,8 +10376,8 @@ body:not(.app-active) {
             const dupMode = $('dupMode').value;
             let valResult = null;
 
-            // Chunk validation in batches of 25,000 to easily support 100k-500k+ rows without timeout
-            const batchSize = 25000;
+            // Stream validation in safe batches of 2,500 to guarantee 100k+ rows without proxy timeouts or 413 payload crashes
+            const batchSize = 2500;
             if (rows.length <= batchSize) {
               valResult = await api('/api/devices/bulk/validate', {
                 method: 'POST',
@@ -15664,7 +15699,7 @@ body:not(.app-active) {
               API_BASE = url.replace(/\/+$/, '');
               localStorage.setItem('API_URL', API_BASE);
               if (el) {
-                el.innerHTML = `Database online and verified <span title="Configure backend server URL" style="cursor:pointer;opacity:0.65;margin-left:4px" onclick="promptServerUrl()">⚙️</span>`;
+                el.innerHTML = `Database Online and Verified <span title="Configure backend server URL" style="cursor:pointer;opacity:0.65;margin-left:6px" onclick="promptServerUrl()">⚙️</span>`;
                 el.className = 'db-status ok';
               }
               const d = probe.data || {};
@@ -16010,11 +16045,14 @@ body:not(.app-active) {
 
       async function refreshLiveUpdatesModalData() {
         try {
-          const [ins, hea, actData] = await Promise.all([
+          const [rawIns, rawHea, rawAct] = await Promise.all([
             api('/api/inventory/insights').catch(() => null),
             api('/api/inventory/health').catch(() => null),
             api('/api/activity?page=1&page_size=10').catch(() => null)
           ]);
+          const ins = (rawIns && typeof rawIns === 'object') ? rawIns : { total_devices: 0, total_customers: 0, expiring_30: 0, expired: 0 };
+          const hea = (rawHea && typeof rawHea === 'object') ? rawHea : { score: 100, completeness: {}, issues: [] };
+          const actData = (rawAct && typeof rawAct === 'object' && Array.isArray(rawAct.items)) ? rawAct : { items: [] };
 
           if (ins) {
             if ($('kpiDev')) $('kpiDev').textContent = (ins.total_devices || 0).toLocaleString();
@@ -16288,7 +16326,7 @@ body:not(.app-active) {
           <span style="font-size:12px; color:var(--muted)">Manage credentials, employee permissions &amp; logs</span>
         </div>
       </div>
-      <button class="b ghost" id="closeDlgSettings" type="button" style="font-size:18px; padding:4px 8px; cursor:pointer">✕</button>
+      <button class="b ghost" id="closeDlgSettings" type="button" onclick="document.getElementById('dlgSettings').close()" style="font-size:18px; min-width:38px; min-height:38px; display:inline-flex; align-items:center; justify-content:center; padding:4px 8px; cursor:pointer; z-index:99; border-radius:8px" aria-label="Close Settings">✕</button>
     </div>
 
     <div style="padding:22px 24px">
