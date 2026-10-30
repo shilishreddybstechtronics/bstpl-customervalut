@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CustomerVault | Enterprise Device & Inventory Systems</title>
+  <title>BSTPL CustomerVault | Enterprise Device & Inventory Systems</title>
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -2303,13 +2303,1650 @@
       font-size: 11px;
       white-space: nowrap;
     }
+  
+/* =========================================================================
+   EXACT REDESIGN: LOGIN PAGE & DASHBOARD SHELL (MATCHING DESIGN MOCKUP)
+   ========================================================================= */
+
+:root {
+  --cv-navy-deep: #071026;
+  --cv-navy: #0c1938;
+  --cv-navy-light: #16264c;
+  --cv-blue: #1d68e1;
+  --cv-blue-bright: #0084ff;
+  --cv-blue-gradient: linear-gradient(90deg, #1b64da 0%, #0084ff 100%);
+  --cv-blue-soft: #f0f6ff;
+  --cv-blue-border: #bfdbfe;
+  --cv-sidebar-w: 240px;
+}
+
+/* --- 1. LOGIN SCREEN (LEFT HALF OF DESIGN) --- */
+.cv-login-screen {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow-x: hidden;
+  background: radial-gradient(ellipse 90% 70% at 75% 20%, rgba(219, 234, 254, 0.6), transparent 70%),
+              radial-gradient(ellipse 80% 60% at 20% 90%, rgba(224, 242, 254, 0.7), transparent 60%),
+              linear-gradient(145deg, #ffffff 0%, #f6faff 60%, #eef5ff 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 48px;
+  font-family: "Manrope", system-ui, sans-serif;
+  color: #0f172a;
+  z-index: 1;
+}
+
+.cv-login-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 20px;
+  position: relative;
+  z-index: 10;
+}
+
+.cv-brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cv-brand-icon {
+  width: 38px;
+  height: 38px;
+  background: #0c1938;
+  color: #ffffff;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(12, 25, 56, 0.25);
+  flex-shrink: 0;
+}
+
+.cv-brand-icon.lg {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  border-radius: 12px;
+  margin: 0 auto 8px;
+}
+
+.cv-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-brand-title {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: #0c1938;
+  line-height: 1.1;
+}
+
+.cv-brand-sub {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.cv-login-tagline {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.8px;
+}
+
+.cv-login-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  max-width: 1240px;
+  width: 100%;
+  margin: auto;
+  position: relative;
+  z-index: 10;
+  padding: 20px 0 60px;
+}
+
+.cv-login-hero {
+  flex: 1;
+  max-width: 580px;
+}
+
+.cv-hero-headline {
+  font-size: 44px;
+  font-weight: 800;
+  color: #0c1938;
+  line-height: 1.15;
+  margin: 0 0 14px 0;
+  letter-spacing: -0.8px;
+}
+
+.cv-hero-highlight {
+  color: #1d68e1;
+  display: block;
+}
+
+.cv-hero-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #64748b;
+  margin: 0 0 32px 0;
+  max-width: 460px;
+}
+
+.cv-hero-visual-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  height: 290px;
+}
+
+.cv-visual-ambient-glow {
+  position: absolute;
+  width: 320px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.35) 0%, rgba(29, 104, 225, 0.15) 50%, transparent 70%);
+  filter: blur(40px);
+  left: 60px;
+  top: 40px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cv-visual-cluster {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.cv-3d-cylinder-box {
+  position: absolute;
+  width: 110px;
+  height: 120px;
+  left: 170px;
+  top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
+  perspective: 600px;
+}
+
+.cv-cyl-ring {
+  width: 90px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #38bdf8 0%, #1d68e1 100%);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  transform: rotateX(55deg);
+  position: relative;
+}
+
+.cv-cyl-ring.ring-1 { z-index: 5; margin-bottom: -6px; }
+.cv-cyl-ring.ring-2 { z-index: 4; margin-bottom: -6px; opacity: 0.9; }
+.cv-cyl-ring.ring-3 { z-index: 3; opacity: 0.85; }
+
+.cv-cyl-core {
+  position: absolute;
+  width: 70px;
+  height: 80px;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.4) 0%, rgba(29, 104, 225, 0.8) 100%);
+  border-radius: 12px;
+  top: 20px;
+  filter: blur(8px);
+  z-index: 2;
+}
+
+.cv-holo-sat {
+  position: absolute;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid #bfdbfe;
+  box-shadow: 0 8px 20px rgba(29, 104, 225, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  z-index: 6;
+  animation: floatOrb 4s ease-in-out infinite alternate;
+}
+
+.sat-cloud { left: 90px; top: 15px; animation-delay: 0s; }
+.sat-user { left: 80px; top: 120px; animation-delay: 1s; }
+.sat-edit { left: 280px; top: 35px; animation-delay: 1.5s; }
+.sat-db { left: 290px; top: 130px; animation-delay: 0.5s; }
+
+@keyframes floatOrb {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+
+.cv-isometric-laptop {
+  position: absolute;
+  left: 20px;
+  bottom: 10px;
+  width: 250px;
+  height: 150px;
+  perspective: 700px;
+  z-index: 5;
+}
+
+.laptop-screen {
+  width: 200px;
+  height: 125px;
+  background: #0f172a;
+  border-radius: 8px 8px 0 0;
+  border: 3px solid #cbd5e1;
+  border-bottom: none;
+  transform: rotateY(14deg) rotateX(10deg);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.laptop-screen-header {
+  height: 14px;
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+}
+
+.ls-dot { width: 5px; height: 5px; border-radius: 50%; }
+.ls-dot.red { background: #ef4444; }
+.ls-dot.yellow { background: #f59e0b; }
+.ls-dot.green { background: #10b981; }
+
+.laptop-screen-content {
+  flex: 1;
+  display: flex;
+  background: #0b1120;
+  padding: 6px;
+  gap: 6px;
+}
+
+.ls-side {
+  width: 28px;
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+.ls-table {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ls-row {
+  height: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.ls-row.h { background: rgba(56, 189, 248, 0.15); }
+
+.ls-badge {
+  width: 24px;
+  height: 6px;
+  border-radius: 3px;
+  margin-left: auto;
+}
+.ls-badge.ok { background: #10b981; }
+.ls-badge.info { background: #38bdf8; }
+
+.laptop-base {
+  width: 240px;
+  height: 12px;
+  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
+  border-radius: 2px 2px 10px 10px;
+  margin-top: -4px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.laptop-phone {
+  position: absolute;
+  width: 32px;
+  height: 58px;
+  background: #1e293b;
+  border: 2px solid #cbd5e1;
+  border-radius: 6px;
+  right: 5px;
+  bottom: 0px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: rotateZ(-8deg);
+}
+
+.cv-login-card-col {
+  flex-shrink: 0;
+  width: 390px;
+}
+
+.cv-login-card {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.1), 0 4px 18px rgba(29, 104, 225, 0.06);
+  padding: 38px 34px 28px;
+  position: relative;
+  z-index: 10;
+}
+
+.cv-card-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.cv-signin-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0c1938;
+  margin: 0 0 6px 0;
+  text-align: left;
+}
+
+.cv-signin-sub {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0 0 22px 0;
+  text-align: left;
+}
+
+.cv-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.cv-input-ico {
+  position: absolute;
+  left: 14px;
+  font-size: 15px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.cv-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 14px 0 42px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.cv-input:focus {
+  outline: none;
+  border-color: #1d68e1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(29, 104, 225, 0.12);
+}
+
+.cv-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  opacity: 0.6;
+  padding: 4px;
+  transition: opacity 0.15s;
+}
+
+.cv-eye-btn:hover { opacity: 1; }
+
+.cv-login-btn {
+  width: 100%;
+  height: 46px;
+  border-radius: 23px;
+  border: none;
+  background: linear-gradient(90deg, #1b64da 0%, #0084ff 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(27, 100, 218, 0.35);
+  transition: all 0.2s ease;
+  margin-top: 6px;
+}
+
+.cv-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(27, 100, 218, 0.45);
+}
+
+.cv-forgot-wrap {
+  text-align: center;
+  margin: 18px 0 0;
+}
+
+.cv-forgot-link {
+  color: #1b64da;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.cv-forgot-link:hover { text-decoration: underline; }
+
+.cv-login-waves {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 180px;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.cv-login-waves svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cv-login-footer {
+  width: 100%;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  font-size: 12.5px;
+  color: #94a3b8;
+  padding-top: 10px;
+}
+
+/* --- 2. DASHBOARD SHELL (RIGHT HALF OF DESIGN) --- */
+.cv-app-shell {
+  display: flex !important;
+  min-height: 100vh;
+  width: 100%;
+  background: #f4f7fb;
+  font-family: "Manrope", system-ui, sans-serif;
+  color: #0f172a;
+}
+
+.cv-sidebar {
+  width: var(--cv-sidebar-w);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #09132b 0%, #0c1a3c 100%);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px 20px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  box-shadow: 2px 0 16px rgba(9, 19, 43, 0.15);
+  z-index: 100;
+}
+
+.cv-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 20px;
+}
+
+.cv-sidebar-brand .cv-brand-title {
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.cv-sidebar-brand .cv-brand-sub {
+  color: #93c5fd;
+  font-size: 8px;
+  letter-spacing: 1.2px;
+}
+
+.cv-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.cv-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.cv-nav-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+.cv-nav-item.on {
+  background: linear-gradient(90deg, #1d68e1 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(29, 104, 225, 0.38);
+}
+
+.cv-nav-ico {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.cv-sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+}
+
+.cv-tech-emblem {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.cv-footer-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.cv-footer-sub {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.cv-main-panel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 20px 28px 48px;
+}
+
+.cv-top-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.cv-header-row-1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cv-header-icons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cv-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.cv-icon-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.cv-dot-badge {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+.cv-avatar-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1d68e1 0%, #0c1938 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(29, 104, 225, 0.25);
+  cursor: pointer;
+}
+
+.cv-header-row-2 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#statsRibbon {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-num {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0c1938;
+  line-height: 1.1;
+}
+
+.stat-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.cv-action-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  margin-bottom: 22px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.cv-action-tabs .tab-btn {
+  padding: 8px 14px;
+  font-size: 12.5px;
+  border-radius: 9px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.cv-action-tabs .tab-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.cv-action-tabs .tab-btn.on {
+  background: #1d68e1;
+  color: #ffffff;
+  border-color: #1d68e1;
+  box-shadow: 0 2px 8px rgba(29, 104, 225, 0.3);
+}
+
+.tab-btn.cv-pill-danger {
+  background: linear-gradient(90deg, #dc2626 0%, #db2777 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+/* --- HOME OVERVIEW SECTION --- */
+.cv-overview-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 24px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+}
+
+.cv-overview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.cv-overview-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0c1938;
+  margin: 0 0 4px 0;
+}
+
+.cv-overview-sub {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.cv-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.cv-search-ico {
+  position: absolute;
+  left: 12px;
+  font-size: 13px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.cv-search-input {
+  width: 280px;
+  height: 38px;
+  padding: 0 12px 0 34px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  font-size: 13px;
+  background: #f8fafc;
+}
+
+.cv-search-input:focus {
+  outline: none;
+  border-color: #1d68e1;
+  background: #ffffff;
+}
+
+.cv-search-btn {
+  height: 38px;
+  border-radius: 20px;
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #1d68e1;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+}
+
+.cv-overview-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+.cv-flow-diagram {
+  position: relative;
+  flex: 1;
+  max-width: 520px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cv-flow-cylinder {
+  position: relative;
+  width: 80px;
+  height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.cv-flow-cylinder:hover {
+  transform: scale(1.05);
+}
+
+.flow-cyl-disk {
+  width: 80px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #38bdf8 0%, #1d68e1 100%);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6);
+  border: 1.5px solid #ffffff;
+  transform: rotateX(50deg);
+}
+
+.flow-cyl-core {
+  position: absolute;
+  width: 60px;
+  height: 70px;
+  background: linear-gradient(180deg, #38bdf8 0%, #1d68e1 100%);
+  border-radius: 8px;
+  top: 12px;
+  z-index: -1;
+  opacity: 0.85;
+}
+
+.cv-flow-satellite {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 12;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.cv-flow-satellite:hover { transform: scale(1.08); }
+
+.cv-flow-satellite .sat-bubble {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #38bdf8;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.cv-flow-satellite .sat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0c1938;
+}
+
+.sat-fetch { top: 10px; left: 60px; }
+.sat-edit { top: 10px; right: 60px; }
+.sat-view { bottom: 10px; left: 60px; }
+.sat-inv { bottom: 10px; right: 60px; }
+
+.cv-flow-svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.cv-overview-features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.cv-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cv-feature-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateX(3px);
+}
+
+.cv-feat-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.cv-feat-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0c1938;
+}
+
+.cv-feat-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.cv-activity-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+}
+
+.cv-activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cv-activity-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0c1938;
+  margin: 0;
+}
+
+.badge-success {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+}
+
+@media (max-width: 992px) {
+  .cv-app-shell { flex-direction: column !important; }
+  .cv-sidebar { width: 100% !important; height: auto !important; position: static !important; }
+  .cv-login-body { flex-direction: column !important; align-items: center !important; }
+  .cv-login-hero { text-align: center !important; }
+  .cv-login-card-col { width: 100% !important; max-width: 400px !important; }
+  #statsRibbon { grid-template-columns: repeat(2, 1fr) !important; }
+  .cv-overview-body { flex-direction: column !important; }
+}
+
+@media (max-width: 600px) {
+  #statsRibbon { grid-template-columns: 1fr !important; }
+  .cv-login-screen { padding: 16px !important; }
+  .cv-main-panel { padding: 12px !important; }
+}
+
+  
+/* --- SCROLLING ISOLATION & FIXED SIDEBAR --- */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body.app-active {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.cv-app-shell {
+  display: flex !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  width: 100%;
+  background: #f4f7fb;
+  font-family: "Manrope", system-ui, sans-serif;
+  color: #0f172a;
+}
+
+.cv-sidebar {
+  width: var(--cv-sidebar-w);
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #09132b 0%, #0c1a3c 100%);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px 20px;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  box-shadow: 2px 0 16px rgba(9, 19, 43, 0.15);
+  z-index: 100;
+}
+
+.cv-main-panel {
+  flex: 1;
+  min-width: 0;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  padding: 20px 28px 48px;
+  scroll-behavior: smooth;
+}
+
+/* Database Verified Badge in Middle of Login Page */
+.cv-db-verified-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 14px 0 22px;
+  width: 100%;
+}
+
+.cv-db-verified-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 22px;
+  background: #ffffff;
+  border: 1.5px solid #86efac;
+  border-radius: 99px;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.18), 0 1px 3px rgba(0, 0, 0, 0.05);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #15803d;
+  letter-spacing: 0.3px;
+  animation: pulseGlow 3s infinite ease-in-out;
+}
+
+.cv-verified-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+  animation: dotPulse 1.8s infinite;
+}
+
+@keyframes dotPulse {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 4px 16px rgba(34, 197, 94, 0.15); }
+  50% { box-shadow: 0 4px 22px rgba(34, 197, 94, 0.35); }
+  100% { box-shadow: 0 4px 16px rgba(34, 197, 94, 0.15); }
+}
+
+/* Settings Modal Specifics */
+#dlgSettings::backdrop {
+  background: rgba(11, 17, 32, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+  
+/* --- UNIFIED SINGLE-LINE HEADER BAR --- */
+.cv-top-header {
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.cv-header-single-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 10px 18px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cv-header-single-line #uBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #0c1938;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cv-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cv-header-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.cv-header-actions .b {
+  height: 34px;
+  padding: 0 11px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  white-space: nowrap;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.cv-header-actions .b:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.cv-header-actions .b.b-logout {
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+  background: #fff5f5 !important;
+  font-weight: 700 !important;
+}
+.cv-header-actions .b.b-logout:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+.cv-header-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.cv-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1d68e1 0%, #0c1938 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(29, 104, 225, 0.25);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* --- SIDEBAR LIVE UPDATES WIDGET --- */
+.cv-nav-live {
+  display: flex;
+  align-items: center;
+  justify-content: space-between !important;
+}
+
+.cv-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.cv-live-badge.off {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.cv-sidebar-live-widget {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0 16px 0;
+}
+
+.cv-sb-live-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cv-live-dot-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: dotPulse 1.6s infinite;
+}
+
+.cv-sb-toggle-btn {
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 800;
+  border: none;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cv-sb-toggle-btn.off {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.cv-sb-live-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.cv-sb-metric-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.cv-sb-metric-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.cv-sb-metric-lbl {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.cv-sb-live-foot {
+  font-size: 10px;
+  color: #64748b;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+@media (max-width: 1250px) {
+  .cv-header-single-line {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .cv-header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+    order: 3;
+    padding-top: 8px;
+    border-top: 1px solid #f1f5f9;
+  }
+}
+
+  
+/* --- GLOBAL SIM EXPIRY ALERT BANNER (BELOW GOOD MORNING CONTAINER) --- */
+.cv-expiry-global-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(90deg, #fff1f2 0%, #fff7ed 100%);
+  border: 1.5px solid #fecdd3;
+  border-left: 5px solid #ef4444;
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.08);
+  flex-wrap: wrap;
+}
+
+.cv-exp-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cv-exp-clock {
+  font-size: 24px;
+  animation: pulseClock 2s infinite ease-in-out;
+}
+
+@keyframes pulseClock {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.cv-exp-label {
+  font-weight: 800;
+  font-size: 14px;
+  color: #991b1b;
+  margin-right: 4px;
+}
+
+.cv-exp-msg {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #7f1d1d;
+}
+
+.cv-exp-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cv-exp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.18s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.cv-exp-btn.expired {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+}
+.cv-exp-btn.expired:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.cv-exp-btn.expiring {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fcd34d;
+}
+.cv-exp-btn.expiring:hover {
+  background: #d97706;
+  color: #ffffff;
+}
+
+/* Settings Action Items List */
+.settings-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-action-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+}
+
+.settings-action-item:hover {
+  background: var(--card-subtle);
+  border-color: var(--primary, #1d68e1);
+  transform: translateX(3px);
+}
+
+.settings-action-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.settings-action-text {
+  flex: 1;
+}
+
+.settings-action-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.settings-action-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.settings-action-arrow {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.settings-action-item.danger:hover {
+  background: #fff5f5;
+  border-color: #fca5a5;
+}
+
+  
+/* STRICT DISPLAY ISOLATION: NEVER DISPLAY DASHBOARD ON LOGOUT */
+body:not(.app-active) #dashboardWrap,
+#dashboardWrap[hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+body.app-active #authWrap,
+#authWrap[hidden] {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ensure login screen takes 100vh without trailing dashboard bleed */
+body:not(.app-active) {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+  background-color: var(--bg);
+}
+
+.cv-login-screen {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+  
+/* ===== PRISTINE DEFAULT LIGHT MODE & RICH DARK MODE ===== */
+:root,
+[data-theme="light"],
+[data-mode="light"] {
+  --bg: #f4f7fb;
+  --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #edf2f9 100%);
+  --card: #ffffff;
+  --card-subtle: #f8fafc;
+  --text: #0f172a;
+  --text-dim: #64748b;
+  --muted: #64748b;
+  --ink: #0f172a;
+  --ink2: #334155;
+  --line: #e2e8f0;
+  --primary: #1d68e1;
+  --primary-hover: #1555bd;
+  --accent: #2563eb;
+  --accentd: #1d4ed8;
+  --ok: #16a34a;
+  --danger: #dc2626;
+  --warn: #d97706;
+}
+
+[data-theme="dark"],
+[data-mode="dark"] {
+  --bg: #090e1a;
+  --bg-gradient: linear-gradient(180deg, #090e1a 0%, #0f172a 100%);
+  --card: #131d33;
+  --card-subtle: #192540;
+  --text: #f8fafc;
+  --text-dim: #94a3b8;
+  --muted: #94a3b8;
+  --ink: #f8fafc;
+  --ink2: #cbd5e1;
+  --line: rgba(255, 255, 255, 0.12);
+  --primary: #38bdf8;
+  --primary-hover: #60a5fa;
+  --accent: #38bdf8;
+  --accentd: #0284c7;
+  --ok: #22c55e;
+  --danger: #f87171;
+  --warn: #fbbf24;
+}
+
+/* Sync card background in dark mode */
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal-card {
+  background: var(--card) !important;
+  color: var(--text) !important;
+  border-color: var(--line) !important;
+}
+
+[data-theme="dark"] .data-table th {
+  background: #192540 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .data-table td {
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .cv-top-header,
+[data-theme="dark"] .cv-action-tabs {
+  background: #131d33 !important;
+  border-color: var(--line) !important;
+}
+
+[data-theme="dark"] .cv-stat-card {
+  background: #131d33 !important;
+  border-color: var(--line) !important;
+}
+
+[data-theme="dark"] .cv-stat-val {
+  color: #f8fafc !important;
+}
+
   </style>
 </head>
 
 <body>
 
   <!-- BSTPL GLOBAL LOADING COMPONENT (Requirement 1) -->
-  <div id="bstplGlobalLoader" class="bstpl-loader-overlay">
+  <div id="bstplGlobalLoader" class="bstpl-loader-overlay" hidden>
     <div class="bstpl-loader-card">
       <div class="bstpl-icon-container">
         <div class="bstpl-radar-ring"></div>
@@ -2329,104 +3966,440 @@
   </div>
 
   <!-- AUTH SCREEN (When signed out, in-place on same webpage) -->
-  <div id="authWrap" class="auth-center-wrap">
-    <div class="auth-card" id="authCard">
-      <div class="auth-brand">
-        <img src="logo.svg" alt="CustomerVault Logo" />
-        <div class="auth-wordmark">CustomerVault</div>
-        <div class="auth-tag">Device & Inventory Systems</div>
+    <!-- AUTH SCREEN (Exact Left Half of Design Mockup) -->
+  <div id="authWrap" class="cv-login-screen">
+    <!-- Top Header -->
+    <header class="cv-login-header">
+      <div class="cv-brand-wrap">
+        <div class="cv-brand-icon">B</div>
+        <div class="cv-brand-text">
+          <div class="cv-brand-title">BSTPL CustomerVault</div>
+          <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
+        </div>
       </div>
+      <div class="cv-login-tagline">Secure &bull; Smart &bull; Connected</div>
+    </header>
 
-      <h2 id="authTitle" style="text-align:center;margin-bottom:6px">Sign in</h2>
-      <p class="auth-sub" id="authSub">Enter your employee ID and password to access the system.</p>
+    
 
-      <form id="authForm" novalidate>
-        <div class="auth-row" id="authNameWrap" hidden>
-          <label for="authName">Full Name</label>
-          <input type="text" id="authName" placeholder="Your full name" autocomplete="name" />
-        </div>
+    <!-- Split Hero Content -->
+    <div class="cv-login-body">
+      <!-- Left Hero Column -->
+      <div class="cv-login-hero">
+        <h1 class="cv-hero-headline">
+          Your Customer Data,<br>
+          <span class="cv-hero-highlight">Our Priority</span>
+        </h1>
+        <p class="cv-hero-sub">
+          Manage, fetch, edit and track your customer data and inventory &mdash; all in one place.
+        </p>
 
-        <div class="auth-row">
-          <label for="authId">Login ID</label>
-          <input type="text" id="authId" placeholder="Your employee login ID" autocomplete="username" spellcheck="false"
-            autocapitalize="none" required />
-        </div>
+        <!-- 3D Isometric Holographic Database & Laptop Visual -->
+        <div class="cv-hero-visual-wrap">
+          <div class="cv-visual-ambient-glow"></div>
+          
+          <div class="cv-visual-cluster">
+            <div class="cv-holo-sat sat-cloud" title="Fetch / Upload Data">
+              <span class="sat-ico">☁️</span>
+            </div>
+            <div class="cv-holo-sat sat-user" title="Customer Records">
+              <span class="sat-ico">👤</span>
+            </div>
+            <div class="cv-holo-sat sat-edit" title="Edit &amp; Track">
+              <span class="sat-ico">📝</span>
+            </div>
+            <div class="cv-holo-sat sat-db" title="Inventory Vault">
+              <span class="sat-ico">🛢️</span>
+            </div>
 
-        <div class="auth-row">
-          <label for="authPw">Password</label>
-          <div class="auth-pw-wrap">
-            <input type="password" id="authPw" placeholder="Your password" autocomplete="current-password" required />
-            <button type="button" class="auth-pw-toggle" id="authPwToggle" aria-label="Show password">Show</button>
+            <!-- Central 3D Glowing Cylinder Database -->
+            <div class="cv-3d-cylinder-box">
+              <div class="cv-cyl-ring ring-1"></div>
+              <div class="cv-cyl-ring ring-2"></div>
+              <div class="cv-cyl-ring ring-3"></div>
+              <div class="cv-cyl-core"></div>
+            </div>
+
+            <!-- Laptop Rendering with Dashboard -->
+            <div class="cv-isometric-laptop">
+              <div class="laptop-screen">
+                <div class="laptop-screen-header">
+                  <span class="ls-dot red"></span>
+                  <span class="ls-dot yellow"></span>
+                  <span class="ls-dot green"></span>
+                </div>
+                <div class="laptop-screen-content">
+                  <div class="ls-side"></div>
+                  <div class="ls-table">
+                    <div class="ls-row h"></div>
+                    <div class="ls-row"><span class="ls-badge ok"></span></div>
+                    <div class="ls-row"><span class="ls-badge ok"></span></div>
+                    <div class="ls-row"><span class="ls-badge info"></span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="laptop-base"></div>
+              <div class="laptop-phone"></div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <p class="auth-error" id="authErr" role="alert"></p>
+      <!-- Right Column: Login Card -->
+      <div class="cv-login-card-col">
+        <div class="cv-login-card" id="authCard">
+          <div class="cv-card-brand">
+            <div class="cv-brand-icon lg">B</div>
+            <div class="cv-brand-title">BSTPL CustomerVault</div>
+            <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
+          </div>
 
-        <button type="submit" class="auth-submit" id="authSubmit">
-          <span id="authSubmitLabel">Sign in to CustomerVault</span>
-        </button>
-      </form>
+          <h2 class="cv-signin-title" id="authTitle">Sign In</h2>
+          <p class="cv-signin-sub" id="authSub">Access your account to continue</p>
+          
 
-      <p class="auth-switch">
-        <span id="authSwitchText">New to CustomerVault?</span>
-        <button type="button" class="auth-link" id="authSwitchBtn">Create your ID</button>
-      </p>
+          <form id="authForm" novalidate>
+            <div class="auth-row" id="authNameWrap" hidden>
+              <label for="authName">Full Name</label>
+              <input type="text" id="authName" placeholder="Your full name" autocomplete="name" />
+            </div>
+
+            <div class="cv-input-wrap">
+              <span class="cv-input-ico">👤</span>
+              <input type="text" id="authId" class="cv-input" placeholder="Username" autocomplete="username" spellcheck="false" autocapitalize="none" required />
+            </div>
+
+            <div class="cv-input-wrap">
+              <span class="cv-input-ico">🔒</span>
+              <input type="password" id="authPw" class="cv-input" placeholder="Password" autocomplete="current-password" required />
+              <button type="button" class="cv-eye-btn" id="authPwToggle" aria-label="Show password">👁️</button>
+            </div>
+
+            <p class="auth-error" id="authErr" role="alert"></p>
+
+            <button type="submit" class="cv-login-btn" id="authSubmit">
+              <span id="authSubmitLabel">Login</span>
+            </button>
+          </form>
+
+          
+
+          <p class="auth-switch" id="authSwitchWrap" style="margin-top:14px;font-size:12.5px;text-align:center;color:var(--muted)">
+            <span id="authSwitchText">New to BSTPL CustomerVault?</span>
+            <button type="button" class="auth-link" id="authSwitchBtn">Create your ID</button>
+          </p>
+
+          <p class="db-status" id="dbStatus">Checking server…</p>
+        </div>
+      </div>
     </div>
-    <p class="db-status" id="dbStatus">Checking server…</p>
+
+    <!-- Organic Blue Bottom Wave Graphic -->
+    <div class="cv-login-waves">
+      <svg viewBox="0 0 1440 220" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,96 C280,180 720,20 1120,120 C1280,160 1380,110 1440,90 L1440,220 L0,220 Z" fill="#1d68e1" fill-opacity="0.6"/>
+        <path d="M0,130 C320,80 640,200 1040,110 C1240,65 1360,115 1440,125 L1440,220 L0,220 Z" fill="#0b1a3d"/>
+      </svg>
+    </div>
+
+    <!-- Footer -->
+    <footer class="cv-login-footer">
+      <span>&copy; 2025 BSTPL CustomerVault. All rights reserved.</span>
+    </footer>
   </div>
 
   <!-- MAIN DASHBOARD (Same Webpage) -->
-  <div id="dashboardWrap" class="wrap" style="display:none">
-    <!-- Top Navigation & Global Header -->
-    <header class="card">
-      <div class="brand">
-        <img src="logo.svg" alt="CustomerVault Logo" />
-        <div>
-          <div class="wm">CustomerVault</div>
-          <div class="tg">Device & Inventory Systems</div>
+  <div id="dashboardWrap" class="cv-app-shell" style="display:none">
+    <!-- Left Sidebar (Matching Exact Right Half of Mockup) -->
+    <aside class="cv-sidebar" id="cvSidebar">
+      <div class="cv-sidebar-brand">
+        <div class="cv-brand-icon">B</div>
+        <div class="cv-brand-text">
+          <div class="cv-brand-title">BSTPL CustomerVault</div>
+          <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
         </div>
       </div>
 
-      <div class="user-badge" id="uBadge">
-        <span id="hi">Loading…</span>
-        <span class="role-pill" id="rolePill">Role</span>
+      <nav class="cv-sidebar-menu">
+        <button class="cv-nav-item on" data-target="box-home">
+          <span class="cv-nav-ico">🏠</span>
+          <span class="cv-nav-label">Home</span>
+        </button>
+        <button class="cv-nav-item" data-target="box-inv" data-sub="cust">
+          <span class="cv-nav-ico">👥</span>
+          <span class="cv-nav-label">Customers</span>
+        </button>
+        <button class="cv-nav-item" data-target="box-fetch">
+          <span class="cv-nav-ico">📱</span>
+          <span class="cv-nav-label">Device Records</span>
+        </button>
+        <button class="cv-nav-item" data-target="box-inv" data-sub="devices">
+          <span class="cv-nav-ico">📦</span>
+          <span class="cv-nav-label">Inventory</span>
+        </button>
+        <button class="cv-nav-item" data-target="box-health">
+          <span class="cv-nav-ico">📄</span>
+          <span class="cv-nav-label">Reports</span>
+        </button>
+        <button class="cv-nav-item" data-target="box-sim">
+          <span class="cv-nav-ico">🗄️</span>
+          <span class="cv-nav-label">Data Management</span>
+        </button>
+        <button class="cv-nav-item cv-nav-live" id="sidebarLiveUpdatesBtn" title="Toggle Live Telemetry Stream">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="cv-nav-ico">⚡</span>
+            <span class="cv-nav-label">Live Updates</span>
+          </div>
+          <span class="cv-live-badge on" id="sidebarLiveBadge">
+            <span class="cv-live-dot-pulse"></span>
+            <span id="sidebarLiveText">ON</span>
+          </span>
+        </button>
+        <button class="cv-nav-item" id="sidebarBtnSettings">
+          <span class="cv-nav-ico">⚙️</span>
+          <span class="cv-nav-label">Settings</span>
+        </button>
+      </nav>
+
+      <!-- Live Telemetry Widget in Left Sidebar -->
+      <div class="cv-sidebar-live-widget" id="sidebarLiveWidget">
+        <div class="cv-sb-live-top">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="cv-live-dot-pulse"></span>
+            <span style="font-size:11px;font-weight:800;letter-spacing:0.8px;color:#38bdf8;text-transform:uppercase">Live Stream</span>
+          </div>
+          <button type="button" class="cv-sb-toggle-btn on" id="sidebarToggleLiveBtn" title="Toggle Live Streaming">ON</button>
+        </div>
+        <div class="cv-sb-live-metrics">
+          <div class="cv-sb-metric-item">
+            <span class="cv-sb-metric-val" id="sbLiveDevCount">…</span>
+            <span class="cv-sb-metric-lbl">Devices</span>
+          </div>
+          <div class="cv-sb-metric-item">
+            <span class="cv-sb-metric-val" id="sbLiveCustCount">…</span>
+            <span class="cv-sb-metric-lbl">Customers</span>
+          </div>
+        </div>
+        <div class="cv-sb-live-foot" id="sbLiveTime">Streaming live data</div>
       </div>
 
-      <div class="acts">
-        <button class="b" id="bAl" title="Toggle Expiry Alerts">Alerts: OFF</button>
-        <button class="b" id="bRefresh" title="Reload the current page's data">🔄 Refresh</button>
-        <button class="b" id="bEditMyName" title="Edit your display name">✏️ Edit Name</button>
-        <button class="b" id="bPw" title="Change Password">🔑 Password</button>
-        <button class="b" id="bQs" title="Quick Search (Ctrl + K)"><span>🔎 Search</span></button>
-        <button class="b" id="bLogInv" title="Open the activity log">🕘 Login Inventory</button>
-        <button class="b" id="bUsers" title="Manage Users & Permissions" hidden>👥 Manage Users & Permissions</button>
-        <button class="b" id="bTheme" hidden>🌙 Theme</button>
-        <button class="b" id="bManInv" hidden>📋 Manage Inventory</button>
-        <button class="b" id="bLo" title="Sign out of your session">Logout</button>
+      <div class="cv-sidebar-footer">
+        <div class="cv-tech-emblem">🌐</div>
+        <div class="cv-footer-text">
+          <div class="cv-footer-title">Smart Data</div>
+          <div class="cv-footer-sub">Better Decisions</div>
+        </div>
       </div>
-    </header>
+    </aside>
 
-    <div class="stats" id="statsRibbon"></div>
-    <img class="float-logo" src="logo.svg" alt="" />
+    <!-- Main Content Panel -->
+    <main class="cv-main-panel" id="cvMainPanel">
+      <!-- Top Navigation Header -->
+      <header class="cv-top-header">
+        <div class="cv-header-single-line">
+          <!-- User Greeting & Role Badge -->
+          <div class="user-badge" id="uBadge">
+            <span id="hi">Good morning, Shilish Reddy</span>
+            <span class="role-pill" id="rolePill">ADMIN</span>
+          </div>
 
-    <!-- Primary Navigation: Clean Container Tabs (Customer Files & Bulk Upload integrated into Customer Inventory) -->
-    <nav class="card nav-tabs" id="mainTabs" role="tablist">
-      <button class="tab-btn on" data-target="box-live">⚡ Live Updates</button>
-      <button class="tab-btn" data-target="box-inv">📋 Customer Inventory</button>
-      <button class="tab-btn" data-target="box-sim">📶 SIM Data Upload</button>
-      <button class="tab-btn" data-target="box-fetch">🔍 Fetch Data</button>
-      <button class="tab-btn" data-target="box-edit">✏️ Edit / Delete by IMEI</button>
-      <button class="tab-btn" data-target="box-exp">🔔 Expiry Alerts</button>
-      <button class="tab-btn" data-target="box-health">🩺 Data Health</button>
-      <button class="tab-btn" data-target="box-errors">⚠️ Errored Entries (<span
-          id="errorsCountBadge">0</span>)</button>
-      <button class="tab-btn" data-target="box-bin">🛒 Cart (<span id="cartCountBadge">0</span>)</button>
-    </nav>
+          <!-- Top Actions in One Line -->
+          <div class="cv-header-actions acts">
+            <button class="b" id="bAl" title="Toggle Expiry Alerts">Alerts: OFF</button>
+            <button class="b" id="bRefresh" title="Reload current data">🔄 Refresh</button>
+            <button class="b" id="bQs" title="Quick Search (Ctrl + K)"><span>🔎 Search</span></button>
+            <button class="b b-logout" id="bLo" title="Sign out of your session">Logout</button>
+          </div>
+
+          <!-- Right Most Corner: User Profile Avatar Circle (Settings & Expiry Alert container removed from top bar) -->
+          <div class="cv-header-icons">
+            <div class="cv-avatar-circle" id="userAvatarCircle" title="User Profile">S</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Global SIM Expiry Alert Banner (Displayed right below Good Morning container) -->
+      <div class="cv-expiry-global-banner" id="globalExpiryAlertBanner">
+        <div class="cv-exp-banner-left">
+          <span class="cv-exp-clock">⏰</span>
+          <div>
+            <span class="cv-exp-label">SIM Expiry Alert:</span>
+            <span class="cv-exp-msg" id="globalExpiryAlertText">40,928 SIM(s) have already expired, and 2,936 are expiring within 30 days.</span>
+          </div>
+        </div>
+        <div class="cv-exp-banner-actions">
+          <button type="button" class="cv-exp-btn expired" id="btnViewExpiredGlobal">
+            <span>⚠️</span> <span>View Expired (<b id="cntExpiredGlobalBadge">40,928</b>)</span>
+          </button>
+          <button type="button" class="cv-exp-btn expiring" id="btnViewExpiringSoonGlobal">
+            <span>⏳</span> <span>View Expiring Soon (<b id="cntExpiringSoonGlobalBadge">2,936</b>)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4 Stat Metric Cards -->
+      <div class="stats" id="statsRibbon"></div>
+
+      <!-- Quick Action Navigation Tabs -->
+      <nav class="card nav-tabs cv-action-tabs" id="mainTabs" role="tablist">
+        <button class="tab-btn on" data-target="box-home">🏠 Home Overview</button>
+        
+        <button class="tab-btn" data-target="box-inv">🏪 Customer Inventory</button>
+        <button class="tab-btn" data-target="box-sim">📲 SIM Data Upload</button>
+        <button class="tab-btn" data-target="box-fetch">🔍 Fetch Data</button>
+        <button class="tab-btn" data-target="box-edit">✏️ Edit / Delete by IMEI</button>
+        <button class="tab-btn" data-target="box-exp">⚠️ Expiry Alerts</button>
+        <button class="tab-btn" data-target="box-health">📈 Data Health</button>
+        <button class="tab-btn cv-pill-danger" data-target="box-errors">🚨 Errored Entries (<span id="errorsCountBadge">0</span>)</button>
+        <button class="tab-btn" data-target="box-bin" hidden>🛒 Cart (<span id="cartCountBadge">0</span>)</button>
+      </nav>
+
+      <!-- =========================================================================
+         CONTAINER 0: HOME OVERVIEW (Customer Data Overview + Recent Activity)
+         ========================================================================= -->
+      <section class="container-box active" id="box-home">
+        <!-- Customer Data Overview Card -->
+        <div class="cv-overview-card">
+          <div class="cv-overview-header">
+            <div>
+              <h2 class="cv-overview-title">Customer Data Overview</h2>
+              <p class="cv-overview-sub">Access, manage and edit customer data with ease.</p>
+            </div>
+            <div class="cv-search-wrap">
+              <span class="cv-search-ico">🔍</span>
+              <input type="text" id="homeSearchInput" class="cv-search-input" placeholder="Search by name, email, or IMEI..." />
+              <button class="cv-search-btn" id="homeSearchBtn">Search</button>
+            </div>
+          </div>
+
+          <div class="cv-overview-body">
+            <!-- 3D Flow Architecture Diagram -->
+            <div class="cv-flow-diagram">
+              <div class="cv-flow-satellite sat-fetch" id="flowSatFetch" title="Click to Fetch Data">
+                <div class="sat-bubble"><span class="sat-ico">☁️</span></div>
+                <div class="sat-label">Fetch Data</div>
+              </div>
+              <div class="cv-flow-satellite sat-edit" id="flowSatEdit" title="Click to Edit Data">
+                <div class="sat-bubble"><span class="sat-ico">✏️</span></div>
+                <div class="sat-label">Edit Data</div>
+              </div>
+
+              <!-- Central 3D Database Cylinder -->
+              <div class="cv-flow-cylinder" id="flowCylinder" title="BSTPL CustomerVault Database Core">
+                <div class="flow-cyl-disk"></div>
+                <div class="flow-cyl-core"></div>
+                <div class="flow-cyl-disk" style="margin-top:28px"></div>
+              </div>
+
+              <div class="cv-flow-satellite sat-view" id="flowSatView" title="Click to View Records">
+                <div class="sat-bubble"><span class="sat-ico">👤</span></div>
+                <div class="sat-label">View Records</div>
+              </div>
+              <div class="cv-flow-satellite sat-inv" id="flowSatInv" title="Click to Manage Inventory">
+                <div class="sat-bubble"><span class="sat-ico">📦</span></div>
+                <div class="sat-label">Manage Inventory</div>
+              </div>
+
+              <!-- SVG Connection Lines -->
+              <svg class="cv-flow-svg" viewBox="0 0 520 240">
+                <line x1="140" y1="50" x2="220" y2="100" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 5" />
+                <line x1="380" y1="50" x2="300" y2="100" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 5" />
+                <line x1="140" y1="190" x2="220" y2="140" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 5" />
+                <line x1="380" y1="190" x2="300" y2="140" stroke="#38bdf8" stroke-width="2" stroke-dasharray="5 5" />
+              </svg>
+            </div>
+
+            <!-- 3 Highlights on Right -->
+            <div class="cv-overview-features">
+              <div class="cv-feature-item" id="featFetch">
+                <div class="cv-feat-icon-wrap" style="background:rgba(16, 185, 129, 0.12);color:#10b981">
+                  <span>☁️</span>
+                </div>
+                <div class="cv-feat-text">
+                  <div class="cv-feat-title">Fetch Data</div>
+                  <div class="cv-feat-desc">Get data from website or database</div>
+                </div>
+              </div>
+
+              <div class="cv-feature-item" id="featEdit">
+                <div class="cv-feat-icon-wrap" style="background:rgba(168, 85, 247, 0.12);color:#a855f7">
+                  <span>✏️</span>
+                </div>
+                <div class="cv-feat-text">
+                  <div class="cv-feat-title">Edit Data</div>
+                  <div class="cv-feat-desc">Update customer information easily</div>
+                </div>
+              </div>
+
+              <div class="cv-feature-item" id="featSecure">
+                <div class="cv-feat-icon-wrap" style="background:rgba(14, 165, 233, 0.12);color:#0ea5e9">
+                  <span>🛡️</span>
+                </div>
+                <div class="cv-feat-text">
+                  <div class="cv-feat-title">Secure &amp; Reliable</div>
+                  <div class="cv-feat-desc">Your data is always safe with us</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity Card -->
+        <div class="cv-activity-card">
+          <div class="cv-activity-header">
+            <h3 class="cv-activity-title">Recent Activity</h3>
+            <span style="font-size:12px;color:var(--muted)">Live telemetry &amp; operations</span>
+          </div>
+          <div class="cv-activity-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date &amp; Time</th>
+                  <th>Action</th>
+                  <th>Customer</th>
+                  <th>Device/IMEI</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="homeRecentActivityTbody">
+                <tr>
+                  <td>2025-05-02 10:24 AM</td>
+                  <td>Data Fetched</td>
+                  <td><b>John Doe</b></td>
+                  <td><code>IMEI123456789</code></td>
+                  <td><span class="badge badge-success">Success</span></td>
+                </tr>
+                <tr>
+                  <td>2025-05-02 09:18 AM</td>
+                  <td>Record Updated</td>
+                  <td><b>Sarah Johnson</b></td>
+                  <td><code>IMEI987654321</code></td>
+                  <td><span class="badge badge-success">Success</span></td>
+                </tr>
+                <tr>
+                  <td>2025-05-02 08:52 AM</td>
+                  <td>Record Added</td>
+                  <td><b>Michael Brown</b></td>
+                  <td><code>IMEI456789123</code></td>
+                  <td><span class="badge badge-success">Success</span></td>
+                </tr>
+                <tr>
+                  <td>2025-05-02 08:10 AM</td>
+                  <td>Data Fetched</td>
+                  <td><b>Emily Davis</b></td>
+                  <td><code>IMEI021654987</code></td>
+                  <td><span class="badge badge-success">Success</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
     <!-- =========================================================================
        CONTAINER 1: SEPARATE DEDICATED LIVE UPDATES (Unmixed with other things)
        ========================================================================= -->
-    <section class="container-box" id="box-live">
+    <section class="container-box" id="box-live" style="display:none !important">
       <div class="container-tag">⚡ Live Telemetry Container</div>
       <!-- Live Updates Control Bar -->
       <div class="live-ctrl-card">
@@ -2525,10 +4498,7 @@
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="b" id="invAddColumn" type="button">➕ Add Column</button>
-          <button class="b" id="invExport">📥 Export to Excel</button>
-          <button class="b" id="btnBulkEditImei" type="button" title="Bulk update inventory records by matching IMEI from an Excel file">✏️ Bulk Edit (IMEI)</button>
-          <button class="b d" id="btnBulkDeleteImei" type="button" title="Bulk delete inventory records by matching IMEI from an Excel file">🗑️ Bulk Delete (IMEI)</button>
-          <button class="b d" id="btnBulkDeleteExcel" type="button" title="Bulk delete inventory records by matching identifiers in an uploaded Excel file">🗑️ Bulk Delete (Excel)</button>
+          <button class="b" id="invExport" style="font-weight:700">📥 Export to Excel</button>
           <button class="b p" id="invAddDev">+ Add Device Record</button>
         </div>
       </div>
@@ -2862,13 +4832,11 @@
           <!-- Duplicate Handling -->
           <div class="row" style="margin:14px 0 8px">
             <div style="flex:1;min-width:280px">
-              <label for="dupMode" style="font-weight:700">Duplicate Handling</label>
+              <label for="dupMode" style="font-weight:700">Upload Policy</label>
               <select id="dupMode">
-                <option value="skip">Keep existing values in database (Skip duplicates)</option>
-                <option value="replace">Replace / Update with file's values</option>
+                <option value="skip" selected>Upload only new entries (Skip all existing records in database)</option>
               </select>
-              <span class="sub" style="font-size:12px;margin-top:2px;display:block">A blank cell in the file never
-                erases a saved value.</span>
+              <span class="sub" style="font-size:12px;margin-top:2px;display:block">Strict Policy: Only new entries not present in the database are uploaded. All existing entries are safely preserved and skipped.</span>
             </div>
           </div>
 
@@ -3760,15 +5728,42 @@
        CONTAINER 7: SEPARATE EDIT BY IMEI
        ========================================================================= -->
     <section class="container-box" id="box-edit">
-      <div class="container-tag">✏️ Device Record Editor Container</div>
-      <h2>Edit / Delete by IMEI</h2>
-      <p class="sub">Find an individual device record by its IMEI to update metadata or move it to the Cart.</p>
-
-      <div class="row">
-        <div class="grow"><label for="ei">IMEI</label><input id="ei" placeholder="Enter 15-digit IMEI…" /></div>
-        <button class="b p" id="eg" style="margin-top:auto">Find Record</button>
+      <div class="container-tag">✏️ Device Record &amp; Bulk Operations Hub</div>
+      
+      <!-- Shifted Bulk Operations Toolbar Card -->
+      <div class="card" style="padding:18px 22px; margin-bottom:20px; border:1.5px solid var(--primary); background:var(--card)">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px">
+          <div>
+            <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px">
+              <span>⚡</span> <span>Bulk Operations (Excel / Identifiers)</span>
+            </h3>
+            <p class="sub" style="margin:2px 0 0; font-size:12.5px">Batch update metadata or delete records matching Excel files or multiple IMEI numbers.</p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <button class="b" id="btnBulkEditImei" type="button" style="font-weight:700; background:#0284c7; color:#fff; border-color:#0369a1" title="Bulk update inventory records by matching IMEI from an Excel file">
+              ✏️ Bulk Edit (IMEI)
+            </button>
+            <button class="b d" id="btnBulkDeleteImei" type="button" style="font-weight:700" title="Bulk delete inventory records by matching IMEI from an Excel file">
+              🗑️ Bulk Delete (IMEI)
+            </button>
+            <button class="b d" id="btnBulkDeleteExcel" type="button" style="font-weight:700" title="Bulk delete inventory records by matching identifiers in an uploaded Excel file">
+              🗑️ Bulk Delete (Excel)
+            </button>
+          </div>
+        </div>
       </div>
-      <div id="er"></div>
+
+      <!-- Single IMEI Record Editor -->
+      <div class="card" style="padding:20px 22px">
+        <h3 style="margin:0 0 4px 0; font-size:16px; font-weight:800; color:var(--text)">Edit / Delete Individual Record</h3>
+        <p class="sub" style="margin:0 0 16px 0; font-size:13px">Find an individual device record by its IMEI to update metadata or delete.</p>
+
+        <div class="row">
+          <div class="grow"><label for="ei">IMEI</label><input id="ei" placeholder="Enter 15-digit IMEI…" /></div>
+          <button class="b p" id="eg" style="margin-top:auto">Find Record</button>
+        </div>
+        <div id="er"></div>
+      </div>
     </section>
 
     <!-- =========================================================================
@@ -3998,7 +5993,7 @@
         <div class="empty">Checking Cart items…</div>
       </div>
     </section>
-
+    </main>
   </div>
 
   <!-- =========================================================================
@@ -4885,7 +6880,7 @@
       <div style="padding:18px 22px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dashed var(--line);font-size:12px;color:var(--muted)">
           <span style="font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px">
-            <img src="logo.svg" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle" /> CustomerVault Telemetry
+            <img src="logo.svg" alt="" style="width:16px;height:16px;object-fit:contain;vertical-align:middle" /> BSTPL CustomerVault Telemetry
           </span>
           <span>•</span>
           <span id="dlgEventPopupTime">Just now</span>
@@ -5051,7 +7046,7 @@
         column_delete: ['Column Deleted', 'bad'], export_excel: ['Excel Exported', 'ok']
       };
 
-      let currentContainerId = 'box-live';
+      let currentContainerId = 'box-home';
       let S = {}, CU = [], XC = [], alertsOn = localStorage.getItem('alerts') === '1';
       let livePolling = true, liveTimer = null, liveIntervalSec = 10;
       let liveCid = '', liveQ = '', liveCol = 'all', livePage = 1, sortCol = 'id', sortDir = 'desc';
@@ -5283,30 +7278,43 @@
       async function exportExcel(title, headers, rows) {
         try {
           toast('Generating Excel file…');
-          const res = await api('/api/export', {
-            method: 'POST',
-            body: JSON.stringify({ title, headers, rows }),
-            rawResponse: true
-          });
-          if (!res.ok) throw new Error('Export failed');
-          const blob = await res.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${title.replace(/[^a-zA-Z0-9_-]/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(url);
-          toast('Excel downloaded successfully');
-          showEventPopup({
-            type: 'download',
-            title: 'Download Complete',
-            message: `Excel report "${title}" (${rows ? rows.length : 0} records) has been downloaded successfully.`,
-            meta: { 'Report Name': title, 'Total Rows': rows ? rows.length : 0, 'Format': 'Excel (.xlsx)' },
-            progress: '100% Downloaded'
-          });
-        } catch (err) { fail(err); }
+          if (typeof XLSX !== 'undefined') {
+            const data = [headers, ...(rows || [])];
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Inventory');
+            const safeTitle = (title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+            toast('Excel downloaded successfully');
+            if (typeof showEventPopup === 'function') {
+              showEventPopup({
+                type: 'download',
+                title: 'Download Complete',
+                message: `Excel report "${title}" (${rows ? rows.length : 0} records) has been downloaded successfully.`,
+                meta: { 'Report Name': title, 'Total Rows': rows ? rows.length : 0, 'Format': 'Excel (.xlsx)' },
+                progress: '100% Downloaded'
+              });
+            }
+            return;
+          }
+
+          // Fallback if XLSX is not available
+          let csvContent = "data:text/csv;charset=utf-8," 
+            + headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(",") + "\n"
+            + (rows || []).map(r => r.map(c => `"${String(c != null ? c : '').replace(/"/g, '""')}"`).join(",")).join("\n");
+          const encodedUri = encodeURI(csvContent);
+          const link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", `${(title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          toast('Data exported successfully');
+        } catch (err) {
+          console.error('Export Excel error:', err);
+          fail(err);
+        }
       }
 
       /* ---------- Table & Cell Formatters ---------- */
@@ -5655,9 +7663,9 @@
         const isLogin = next === 'login';
         $('authNameWrap').hidden = isLogin;
         $('authTitle').textContent = isLogin ? 'Sign in' : 'Create your ID';
-        $('authSub').textContent = isLogin ? 'Enter your employee ID and password to access CustomerVault.' : 'Create an account to access CustomerVault.';
+        $('authSub').textContent = isLogin ? 'Enter your employee ID and password to access BSTPL CustomerVault.' : 'Create an account to access BSTPL CustomerVault.';
         $('authSubmitLabel').textContent = isLogin ? 'Sign in to CustomerVault' : 'Create my ID';
-        $('authSwitchText').textContent = isLogin ? 'New to CustomerVault?' : 'Already have an ID?';
+        $('authSwitchText').textContent = isLogin ? 'New to BSTPL CustomerVault?' : 'Already have an ID?';
         $('authSwitchBtn').textContent = isLogin ? 'Create your ID' : 'Sign in';
         $('authErr').textContent = '';
       }
@@ -5749,32 +7757,61 @@
       }
 
       function switchView(signedIn) {
-        initThemeDock();
+        initTheme();
         if (signedIn) {
-          $('authWrap').style.display = 'none';
-          $('dashboardWrap').style.display = 'block';
+          document.body.classList.add('app-active');
+          if ($('authWrap')) {
+            $('authWrap').hidden = true;
+            $('authWrap').style.setProperty('display', 'none', 'important');
+          }
+          if ($('dashboardWrap')) {
+            $('dashboardWrap').hidden = false;
+            $('dashboardWrap').style.setProperty('display', 'flex', 'important');
+          }
+          window.scrollTo(0, 0);
           initApp();
         } else {
+          document.body.classList.remove('app-active');
           hideBstplLoader();
-          $('dashboardWrap').style.display = 'none';
-          $('authWrap').style.display = 'flex';
-          $('authPw').value = '';
-          $('authId').focus();
+          if ($('dashboardWrap')) {
+            $('dashboardWrap').hidden = true;
+            $('dashboardWrap').style.setProperty('display', 'none', 'important');
+          }
+          if ($('authWrap')) {
+            $('authWrap').hidden = false;
+            $('authWrap').style.setProperty('display', 'flex', 'important');
+          }
+          window.scrollTo(0, 0);
+          if ($('authPw')) $('authPw').value = '';
+          if ($('authId')) $('authId').focus();
         }
       }
 
       /* ---------- Theme Handling ---------- */
       function initTheme() {
-        const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        const saved = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', saved);
-        $('bTheme').textContent = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
+        document.documentElement.setAttribute('data-mode', saved);
+        if ($('bTheme')) $('bTheme').textContent = saved === 'dark' ? '☀️ Light' : '🌙 Dark';
+        if ($('btnModeDark')) $('btnModeDark').classList.toggle('active', saved === 'dark');
+        if ($('btnModeLight')) $('btnModeLight').classList.toggle('active', saved === 'light');
       }
-      $('bTheme').onclick = () => {
+
+      function toggleTheme() {
         const cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', cur);
+        document.documentElement.setAttribute('data-mode', cur);
         localStorage.setItem('theme', cur);
-        $('bTheme').textContent = cur === 'dark' ? '☀️ Light' : '🌙 Dark';
-      };
+        localStorage.setItem('valut_theme_mode', cur);
+        if ($('bTheme')) $('bTheme').textContent = cur === 'dark' ? '☀️ Light' : '🌙 Dark';
+        if ($('btnModeDark')) $('btnModeDark').classList.toggle('active', cur === 'dark');
+        if ($('btnModeLight')) $('btnModeLight').classList.toggle('active', cur === 'light');
+        toast(`Switched to ${cur === 'dark' ? 'Dark Mode' : 'Light Mode'}`);
+      }
+
+      if ($('bTheme')) $('bTheme').onclick = toggleTheme;
+      if ($('btnModeDark')) $('btnModeDark').onclick = () => { if (document.documentElement.getAttribute('data-theme') !== 'dark') toggleTheme(); };
+      if ($('btnModeLight')) $('btnModeLight').onclick = () => { if (document.documentElement.getAttribute('data-theme') !== 'light') toggleTheme(); };
       initTheme();
 
       /* ---------- Global Top Chrome & Stats Ribbon ---------- */
@@ -5782,7 +7819,9 @@
 
       async function updateChrome() {
         const u = getUser(), h = new Date().getHours();
-        $('hi').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${u.name || u.user_id} 👋`;
+        $('hi').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${u.name || u.user_id}`;
+        const uInitial = ((u.name || u.user_id || 'U')[0] || 'U').toUpperCase();
+        if ($('userAvatarCircle')) $('userAvatarCircle').textContent = uInitial;
         const r = myRole();
         $('rolePill').textContent = r;
         $('rolePill').className = `role-pill ${r}`;
@@ -5854,11 +7893,21 @@
           // Summary KPI Ribbon (if present)
           if ($('statsRibbon')) {
             $('statsRibbon').innerHTML = [
-              [S.customers || 0, 'Customers', '👥'],
-              [S.devices || 0, 'Device Records', '📱'],
-              [S.added_by_you || 0, 'Added By You', '✍️'],
-              [S.columns || 0, 'Unique Columns', '🧩']
-            ].map(item => `<div class="card stat"><i class="ico">${item[2]}</i><b>${item[0].toLocaleString()}</b><span>${item[1]}</span></div>`).join('');
+              [S.customers || 0, 'Customers', '👥', '#8b5cf6', 'rgba(139, 92, 246, 0.12)'],
+              [S.devices || 0, 'Device Records', '📱', '#0ea5e9', 'rgba(14, 165, 233, 0.12)'],
+              [S.added_by_you || 0, 'Added By You', '✨', '#10b981', 'rgba(16, 185, 129, 0.12)'],
+              [S.columns || 0, 'Unique Columns', '⊞', '#f59e0b', 'rgba(245, 158, 11, 0.12)']
+            ].map(item => `
+              <div class="stat-card">
+                <div class="stat-icon-wrap" style="background:${item[4]};color:${item[3]}">
+                  <span class="stat-icon">${item[2]}</span>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-num">${Number(item[0]).toLocaleString()}</div>
+                  <div class="stat-lbl">${item[1]}</div>
+                </div>
+              </div>
+            `).join('');
           }
 
           // Populate dropdowns
@@ -5906,7 +7955,9 @@
             u.name = r.name;
             localStorage.setItem('user', JSON.stringify(u));
             const h = new Date().getHours();
-            $('hi').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${u.name || u.user_id} 👋`;
+            $('hi').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${u.name || u.user_id}`;
+        const uInitial = ((u.name || u.user_id || 'U')[0] || 'U').toUpperCase();
+        if ($('userAvatarCircle')) $('userAvatarCircle').textContent = uInitial;
             toast('Your display name has been updated');
             if (typeof loadUsersContainer === 'function') loadUsersContainer();
           } catch (err) { fail(err); }
@@ -5956,10 +8007,18 @@
         document.querySelectorAll('#mainTabs .tab-btn').forEach(b => {
           b.classList.toggle('on', b.dataset.target === boxId);
         });
+        document.querySelectorAll('#cvSidebar .cv-nav-item').forEach(b => {
+          b.classList.toggle('on', b.dataset.target === boxId);
+        });
 
         document.querySelectorAll('.container-box').forEach(box => {
           box.classList.toggle('active', box.id === boxId);
         });
+
+        if (boxId === 'box-home') {
+          loadHomeContainer();
+          return;
+        }
 
         if (boxId !== 'box-live') {
           clearTimeout(liveTimer);
@@ -5980,6 +8039,71 @@
         else if (boxId === 'box-health') { loadHealthContainer(); }
         else if (boxId === 'box-errors') { loadErrorsContainer(); }
         else if (boxId === 'box-bin') { loadCartContainer(); }
+      }
+
+      
+      async function loadHomeContainer() {
+        // Load recent activity from backend
+        try {
+          const res = await api('/api/activity?page=1&page_size=8');
+          const tbody = $('homeRecentActivityTbody');
+          if (tbody && res && res.items && res.items.length) {
+            tbody.innerHTML = res.items.map(it => {
+              const d = new Date(it.created_at);
+              const dStr = isNaN(d.getTime()) ? it.created_at : d.toLocaleString('en-US', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true });
+              let actLabel = 'Telemetry Updated';
+              if (it.action === 'login') actLabel = 'Signed In';
+              else if (it.action === 'device_upload') actLabel = 'Bulk Upload';
+              else if (it.action === 'device_add') actLabel = 'Record Added';
+              else if (it.action === 'device_edit') actLabel = 'Record Updated';
+              else if (it.action === 'fetch' || it.action.includes('fetch')) actLabel = 'Data Fetched';
+              else actLabel = (it.action || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+              const custName = it.user_name || it.user_login || 'Customer Vault';
+              const detailSnippet = (it.detail || 'System Action').substring(0, 35);
+              return `
+                <tr>
+                  <td>${esc(dStr)}</td>
+                  <td>${esc(actLabel)}</td>
+                  <td><b>${esc(custName)}</b></td>
+                  <td><code>${esc(detailSnippet)}</code></td>
+                  <td><span class="badge badge-success">Success</span></td>
+                </tr>
+              `;
+            }).join('');
+          }
+        } catch(e) {
+          console.log('Home activity notice:', e);
+        }
+
+        // Attach Home Search
+        const searchInput = $('homeSearchInput');
+        const searchBtn = $('homeSearchBtn');
+        const runHomeSearch = () => {
+          const q = searchInput ? searchInput.value.trim() : '';
+          if (q) {
+            showContainer('box-fetch');
+            const fetchInput = $('fetchImei');
+            if (fetchInput) {
+              fetchInput.value = q;
+              if (typeof doFetchImei === 'function') doFetchImei();
+            }
+          } else {
+            showContainer('box-fetch');
+          }
+        };
+        if (searchBtn) searchBtn.onclick = runHomeSearch;
+        if (searchInput) searchInput.onkeydown = e => { if (e.key === 'Enter') runHomeSearch(); };
+
+        // Attach Satellite shortcuts
+        if ($('flowSatFetch')) $('flowSatFetch').onclick = () => showContainer('box-fetch');
+        if ($('flowSatEdit')) $('flowSatEdit').onclick = () => showContainer('box-edit');
+        if ($('flowSatView')) $('flowSatView').onclick = () => showContainer('box-inv');
+        if ($('flowSatInv')) $('flowSatInv').onclick = () => showContainer('box-inv');
+        if ($('flowCylinder')) $('flowCylinder').onclick = () => showContainer('box-inv');
+        if ($('featFetch')) $('featFetch').onclick = () => showContainer('box-fetch');
+        if ($('featEdit')) $('featEdit').onclick = () => showContainer('box-edit');
+        if ($('featSecure')) $('featSecure').onclick = () => openAuditLogModal();
       }
 
       async function refreshActiveContainer() {
@@ -6884,7 +9008,7 @@
           showBstplLoader('Fetching inventory records from database…');
 
           const [d, expSummary] = await Promise.all([
-            api(`/api/devices?page=${invPage}&page_size=50&q=${encodeURIComponent(invQ)}&column=${invCol}&expiry_filter=${expFilter}&sort_by=${sortCol}&sort_dir=${sortDir}${invCid ? '&customer_id=' + invCid : ''}`),
+            api(`/api/devices?page=${invPage}&page_size=10&q=${encodeURIComponent(invQ)}&column=${invCol}&expiry_filter=${expFilter}&sort_by=${sortCol}&sort_dir=${sortDir}${invCid ? '&customer_id=' + invCid : ''}`),
             api(`/api/devices/expiry-summary${invCid ? '?customer_id=' + invCid : ''}`).catch(() => null)
           ]);
 
@@ -6900,7 +9024,7 @@
             if ($('invExpiryAlertBanner')) $('invExpiryAlertBanner').hidden = true;
           }
 
-          const s = (d.page - 1) * 50;
+          const s = (d.page - 1) * 10;
           const staff = canDeleteValidInventory();
           const act = dev => `
       <div style="display:flex;gap:4px">
@@ -8416,19 +10540,13 @@
 
             applyPreviewFilter(activeValFilter || 'all');
 
-            // Submit Button Control (Requirement 7)
-            const eligibleTotal = eligibleToAdd + eligibleToUpdate;
+            // Submit Button Control: ONLY new entries which are not there should upload!
+            const eligibleTotal = eligibleToAdd;
             if (eligibleTotal > 0) {
               if ($('btnConfirmUpload')) {
                 $('btnConfirmUpload').disabled = false;
                 $('btnConfirmUpload').hidden = false;
-                if (eligibleToAdd > 0 && eligibleToUpdate > 0) {
-                  $('btnConfirmUpload').textContent = `Confirm & Upload: Add ${eligibleToAdd.toLocaleString()} New + Update ${eligibleToUpdate.toLocaleString()} Existing`;
-                } else if (eligibleToAdd > 0) {
-                  $('btnConfirmUpload').textContent = `Confirm & Add ${eligibleToAdd.toLocaleString()} New Entries to Database`;
-                } else {
-                  $('btnConfirmUpload').textContent = `Confirm & Update ${eligibleToUpdate.toLocaleString()} Existing Entries in Database`;
-                }
+                $('btnConfirmUpload').textContent = `Confirm & Add ${eligibleToAdd.toLocaleString()} New Entries to Database (Skipping Existing)`;
               }
               if ($('msgNoEligibleUpload')) $('msgNoEligibleUpload').hidden = true;
             } else {
@@ -8470,13 +10588,26 @@
           const duplicatesToStage = [];
           let duplicateRecordsSkipped = 0;
 
-          // Collect known duplicate values from validation response
-          const dbExistingImeis = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('IMEI already exists')).map(d => String(d.imei).toLowerCase()) : []));
-          const dbExistingSrs = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('Device Sr No already exists')).map(d => String(d.device_sr_no).toLowerCase()) : []));
-          const dbExistingIccids = new Set((activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('ICCID already exists')).map(d => String(d.iccid).toLowerCase()) : []));
+          // Collect known duplicate & existing values from database (Requirement: ONLY new entries upload!)
+          const dbExistingImeis = new Set([
+            ...(activeValResult && activeValResult.existing_imeis ? activeValResult.existing_imeis : []),
+            ...(activeValResult && activeValResult.existing_sample ? activeValResult.existing_sample.map(d => d.imei) : []),
+            ...(activeValResult && activeValResult.updated_sample ? activeValResult.updated_sample.map(d => d.imei) : []),
+            ...(activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('IMEI already exists')).map(d => d.imei) : [])
+          ].filter(Boolean).map(x => String(x).toLowerCase().trim()));
 
-          // Set of all new IMEIs identified during validation
-          const newImeisSet = new Set((activeValResult && activeValResult.new_imeis ? activeValResult.new_imeis : (activeValResult && activeValResult.new_sample ? activeValResult.new_sample.map(d => d.imei) : [])).filter(Boolean).map(x => String(x).toLowerCase()));
+          const dbExistingSrs = new Set([
+            ...(activeValResult && activeValResult.existing_sr_nos ? activeValResult.existing_sr_nos : []),
+            ...(activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('Device Sr No already exists')).map(d => d.device_sr_no) : [])
+          ].filter(Boolean).map(x => String(x).toLowerCase().trim()));
+
+          const dbExistingIccids = new Set([
+            ...(activeValResult && activeValResult.existing_iccids ? activeValResult.existing_iccids : []),
+            ...(activeValResult && activeValResult.duplicates ? activeValResult.duplicates.filter(d => (d.reason || '').includes('ICCID already exists')).map(d => d.iccid) : [])
+          ].filter(Boolean).map(x => String(x).toLowerCase().trim()));
+
+          // Set of ONLY new IMEIs identified during validation
+          const newImeisSet = new Set((activeValResult && activeValResult.new_imeis ? activeValResult.new_imeis : (activeValResult && activeValResult.new_sample ? activeValResult.new_sample.map(d => d.imei) : [])).filter(Boolean).map(x => String(x).toLowerCase().trim()));
 
           const seenImeis = new Set();
           const seenSrs = new Set();
@@ -8496,9 +10627,9 @@
               if (seenImeis.has(lowerImei)) {
                 isDup = true;
                 dupReason = 'Duplicate IMEI repeats earlier in this file';
-              } else if (mode === 'skip' && dbExistingImeis.has(lowerImei)) {
+              } else if (dbExistingImeis.has(lowerImei) || (newImeisSet.size > 0 && !newImeisSet.has(lowerImei))) {
                 isDup = true;
-                dupReason = 'IMEI already exists under a customer in database';
+                dupReason = 'IMEI already exists in database (Skipped — only new entries upload)';
               }
             }
 
@@ -12608,7 +14739,7 @@
       async function fetchLogRows() {
         try {
           const d = await api(`/api/activity?page=${LG.page}&page_size=50&kind=${LG.kind}&q=${encodeURIComponent(LG.q)}${LG.who ? '&who=' + encodeURIComponent(LG.who) : ''}`);
-          const s = (d.page - 1) * 50;
+          const s = (d.page - 1) * 10;
           $('ltbl').innerHTML = `
       <div class="meta">
         <span>${d.total.toLocaleString()} log entries · showing ${d.total ? s + 1 : 0}–${s + d.items.length}</span>
@@ -12934,7 +15065,8 @@
           invCid = c.dataset.qscust; invQ = ''; invPage = 1;
           $('invCustSel').value = invCid;
           $('invQuery').value = '';
-          await showContainer('box-inv');
+          await showContainer('box-home');
+          runLiveCycleBackground();
           return;
         }
         const d = e.target.closest('[data-qsdev]');
@@ -12956,7 +15088,8 @@
             $('invCustSel').value = invCid;
             $('invQuery').value = '';
             switchInvSubView('devices');
-            await showContainer('box-inv');
+            await showContainer('box-home');
+          runLiveCycleBackground();
             fetchInventoryRows();
             return;
           }
@@ -13441,12 +15574,17 @@
 
       /* ---------- Main App Initialization ---------- */
       async function initApp() {
-        showBstplLoader('Connecting to BSTPL Customer Vault…');
         try {
           initThemeDock();
-          await loadCU();
-          await updateChrome();
-          await showContainer('box-inv');
+          await loadCU().catch(e => console.warn('loadCU notice:', e));
+          await updateChrome().catch(e => console.warn('updateChrome notice:', e));
+          await showContainer('box-home').catch(e => console.warn('showContainer notice:', e));
+          runLiveCycleBackground();
+        } catch (err) {
+          console.error('initApp unexpected error:', err);
+          if (err && err.message === 'Signed out') {
+            switchView(false);
+          }
         } finally {
           hideBstplLoader();
         }
@@ -13458,7 +15596,7 @@
       async function pingHealth(baseUrl) {
         const clean = (baseUrl || '').replace(/\/+$/, '');
         const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 10000);
+        const tid = setTimeout(() => ctrl.abort(), 2500);
         try {
           const res = await fetch((clean ? clean : '') + '/health/db', { signal: ctrl.signal });
           clearTimeout(tid);
@@ -13474,7 +15612,7 @@
       function promptServerUrl() {
         const defaultRender = "https://bstpl-customervalut-1-ehoz.onrender.com";
         const entered = prompt(
-          "CustomerVault Backend Server URL\n\nIf your backend is deployed on Render, enter:\nhttps://bstpl-customervalut-1-ehoz.onrender.com\n\nOr leave empty to use this website's same host:",
+          "BSTPL CustomerVault Backend Server URL\n\nIf backend is on Render:\nhttps://bstpl-customervalut-1-ehoz.onrender.com\n\nOr leave empty to use current host:",
           API_BASE || defaultRender
         );
         if (entered === null) return;
@@ -13489,79 +15627,67 @@
         checkBackendHealth(3);
       }
 
-      async function checkBackendHealth(maxAttempts = 5) {
+      async function checkBackendHealth(maxAttempts = 3) {
         if (isCheckingHealth) return;
         isCheckingHealth = true;
         const el = $('dbStatus');
 
+        if (el) {
+          el.innerHTML = 'Connecting to database…';
+          el.className = 'db-status waking';
+        }
+
+        const candidates = [];
+        if (API_BASE) candidates.push(API_BASE);
+        candidates.push('http://127.0.0.1:8000');
+        candidates.push('https://bstpl-customervalut-1-ehoz.onrender.com');
+
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          if (el) {
-            el.innerHTML = attempt === 1
-              ? 'Checking server connection…'
-              : `Waking up cloud server (attempt ${attempt}/${maxAttempts})…`;
-            el.className = 'db-status ' + (attempt > 1 ? 'waking' : '');
+          if (attempt > 1 && el) {
+            el.innerHTML = `Waking up cloud server (attempt ${attempt}/${maxAttempts})…`;
+            el.className = 'db-status waking';
           }
 
-          // 1. Try current API_BASE
-          let res = await pingHealth(API_BASE);
+          for (const url of candidates) {
+            const probe = await pingHealth(url);
+            if (probe.ok) {
+              API_BASE = url.replace(/\/+$/, '');
+              localStorage.setItem('API_URL', API_BASE);
+              if (el) {
+                el.innerHTML = `Database online and verified <span title="Configure backend server URL" style="cursor:pointer;opacity:0.65;margin-left:4px" onclick="promptServerUrl()">⚙️</span>`;
+                el.className = 'db-status ok';
+              }
+              const d = probe.data || {};
+              if (d.master_exists === false) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                tok = null;
+                switchView(false);
 
-          // 2. If empty API_BASE failed and we are running locally on another port or file://, auto-detect local port 8000
-          if (!res.ok && !API_BASE) {
-            const isLocal = window.location.protocol === 'file:' ||
-              ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '8000');
-            if (isLocal) {
-              const probe8000 = await pingHealth('http://127.0.0.1:8000');
-              if (probe8000.ok) {
-                API_BASE = 'http://127.0.0.1:8000';
-                localStorage.setItem('API_URL', API_BASE);
-                res = probe8000;
+                setAuthMode('register');
+                if ($('authTitle')) $('authTitle').textContent = 'Master Admin Setup';
+                if ($('authSub')) $('authSub').textContent = 'Fresh setup detected. Create the Master Account (ID 0001). This can only be performed once.';
+                if ($('authId')) {
+                  $('authId').value = '0001';
+                  $('authId').readOnly = false;
+                }
+                if ($('authSwitchText')) $('authSwitchText').textContent = '⚡ One-time fresh master setup';
+                if ($('authSwitchBtn')) $('authSwitchBtn').hidden = true;
+              } else {
+                if ($('authSwitchText')) $('authSwitchText').textContent = 'Need an account?';
+                if ($('authSwitchBtn')) {
+                  $('authSwitchBtn').textContent = 'Contact Admin';
+                  $('authSwitchBtn').onclick = () => alert('Self sign-up is permanently closed. Only Admins can issue new IDs.');
+                }
               }
-            } else {
-              // Deployed on Netlify, Vercel, or other cloud host: probe the active Render backend
-              const probeRender = await pingHealth('https://bstpl-customervalut-1-ehoz.onrender.com');
-              if (probeRender.ok) {
-                API_BASE = 'https://bstpl-customervalut-1-ehoz.onrender.com';
-                localStorage.setItem('API_URL', API_BASE);
-                res = probeRender;
-              }
+
+              isCheckingHealth = false;
+              return;
             }
           }
 
-          if (res.ok) {
-            const d = res.data || {};
-            if (el) {
-              el.innerHTML = `Database online and verified <span title="Configure backend server URL" style="cursor:pointer;opacity:0.65;margin-left:4px" onclick="promptServerUrl()">⚙️</span>`;
-              el.className = 'db-status ok';
-            }
-
-            if (d.master_exists === false) {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              tok = null;
-              switchView(false);
-
-              setAuthMode('register');
-              $('authTitle').textContent = 'Master Admin Setup';
-              $('authSub').textContent = 'Fresh setup detected. Create the Master Account (ID 0001). This can only be performed once.';
-              $('authId').value = '0001';
-              $('authId').readOnly = false;
-              if ($('authSwitchText')) $('authSwitchText').textContent = '⚡ One-time fresh master setup';
-              if ($('authSwitchBtn')) $('authSwitchBtn').hidden = true;
-            } else {
-              if ($('authSwitchText')) $('authSwitchText').textContent = 'Need an account?';
-              if ($('authSwitchBtn')) {
-                $('authSwitchBtn').textContent = 'Contact Admin';
-                $('authSwitchBtn').onclick = () => alert('Self sign-up is permanently closed. Only Admins can issue new IDs.');
-              }
-            }
-
-            isCheckingHealth = false;
-            return;
-          }
-
-          // Wait 3 seconds before next retry to give cloud container time to boot
           if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 3000));
+            await new Promise(r => setTimeout(r, 1200));
           }
         }
 
@@ -13573,14 +15699,21 @@
         isCheckingHealth = false;
       }
 
-      (async () => {
-        await checkBackendHealth();
+      (function() {
+        // Hide loader immediately on startup
+        hideBstplLoader();
 
+        // Render UI instantly without blocking on network pings
         if (tok) {
           switchView(true);
         } else {
           switchView(false);
         }
+
+        // Run health check non-blockingly in the background for zero-lag startup
+        setTimeout(() => {
+          checkBackendHealth().catch(e => console.warn('Background server check:', e));
+        }, 120);
       })();
 
       /* ---------- Header shortcuts, customer icons, alert pictures ---------- */
@@ -13715,6 +15848,296 @@
       }
 
       if ($('bRefresh')) $('bRefresh').onclick = async () => { toast('Refreshing…'); await loadCU(); await showContainer(currentContainerId); };
+      
+      // Setup Sidebar & Header Buttons
+      document.querySelectorAll('#cvSidebar .cv-nav-item').forEach(b => {
+        b.onclick = () => {
+          const target = b.dataset.target;
+          const sub = b.dataset.sub;
+          if (target) {
+            showContainer(target);
+            if (sub && typeof switchInvSubView === 'function') switchInvSubView(sub);
+          }
+        };
+      });
+      if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openManageUsersModal;
+      if ($('btnHeaderSettings')) $('btnHeaderSettings').onclick = openManageUsersModal;
+      if ($('btnHeaderBell')) $('btnHeaderBell').onclick = () => showContainer('box-exp');
+      if ($('authForgotLink')) $('authForgotLink').onclick = () => {
+        alert('Please contact your system administrator to reset your password or employee credentials.');
+      };
+
+      
+      // Dedicated Settings Modal Handler (Themes and Log Out Only)
+      
+      // Background Live Updates in Left Sidebar
+      let liveUpdatesActive = true;
+      let liveCycleTimer = null;
+
+      async function runLiveCycleBackground() {
+        if (!tok || !liveUpdatesActive) {
+          clearTimeout(liveCycleTimer);
+          return;
+        }
+
+        try {
+          const [ins] = await Promise.all([
+            api('/api/inventory/insights').catch(() => null)
+          ]);
+
+          if (ins) {
+            if ($('sbLiveDevCount')) $('sbLiveDevCount').textContent = (ins.total_devices || 0).toLocaleString();
+            if ($('sbLiveCustCount')) $('sbLiveCustCount').textContent = (ins.total_customers || 0).toLocaleString();
+            const now = new Date();
+            if ($('sbLiveTime')) $('sbLiveTime').textContent = `Live • ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+          }
+        } catch (err) {
+          console.log('Live background notice:', err);
+        } finally {
+          if (liveUpdatesActive && tok) {
+            clearTimeout(liveCycleTimer);
+            liveCycleTimer = setTimeout(runLiveCycleBackground, 10000);
+          }
+        }
+      }
+
+      function toggleLiveUpdates(forceVal) {
+        liveUpdatesActive = (forceVal !== undefined) ? forceVal : !liveUpdatesActive;
+        const btnBadge = $('sidebarLiveBadge');
+        const textBadge = $('sidebarLiveText');
+        const toggleBtn = $('sidebarToggleLiveBtn');
+
+        if (liveUpdatesActive) {
+          if (btnBadge) { btnBadge.className = 'cv-live-badge on'; }
+          if (textBadge) { textBadge.textContent = 'ON'; }
+          if (toggleBtn) { toggleBtn.className = 'cv-sb-toggle-btn on'; toggleBtn.textContent = 'ON'; }
+          toast('🟢 Live Updates: ON');
+          runLiveCycleBackground();
+        } else {
+          if (btnBadge) { btnBadge.className = 'cv-live-badge off'; }
+          if (textBadge) { textBadge.textContent = 'OFF'; }
+          if (toggleBtn) { toggleBtn.className = 'cv-sb-toggle-btn off'; toggleBtn.textContent = 'OFF'; }
+          clearTimeout(liveCycleTimer);
+          toast('⏸️ Live Updates: OFF');
+        }
+      }
+
+      if ($('sidebarLiveUpdatesBtn')) $('sidebarLiveUpdatesBtn').onclick = () => toggleLiveUpdates();
+      if ($('sidebarToggleLiveBtn')) $('sidebarToggleLiveBtn').onclick = (e) => { e.stopPropagation(); toggleLiveUpdates(); };
+
+      function openSettingsModal() {
+        const dlg = $('dlgSettings');
+        if (!dlg) return;
+        const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+        const currentMode = localStorage.getItem('valut_theme_mode') || 'dark';
+
+        // Highlight active palette and mode
+        document.querySelectorAll('#dlgSettings .theme-palette-opt').forEach(btn => {
+          btn.style.borderColor = (btn.dataset.paletteVal === currentPal) ? 'var(--primary, #1d68e1)' : 'var(--line)';
+          btn.style.background = (btn.dataset.paletteVal === currentPal) ? 'rgba(29, 104, 225, 0.08)' : 'var(--card)';
+        });
+        if ($('settingsModeDark')) {
+          $('settingsModeDark').style.borderColor = (currentMode === 'dark') ? 'var(--primary, #1d68e1)' : 'var(--line)';
+          $('settingsModeDark').style.background = (currentMode === 'dark') ? 'rgba(29, 104, 225, 0.12)' : 'var(--card)';
+        }
+        if ($('settingsModeLight')) {
+          $('settingsModeLight').style.borderColor = (currentMode === 'light') ? 'var(--primary, #1d68e1)' : 'var(--line)';
+          $('settingsModeLight').style.background = (currentMode === 'light') ? 'rgba(29, 104, 225, 0.12)' : 'var(--card)';
+        }
+
+        dlg.showModal();
+      }
+
+      if ($('closeDlgSettings')) $('closeDlgSettings').onclick = () => $('dlgSettings').close();
+
+      // Hook Settings buttons
+      if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openSettingsModal;
+      if ($('btnHeaderSettings')) $('btnHeaderSettings').onclick = openSettingsModal;
+
+      // Settings Mode Switchers
+      if ($('settingsModeDark')) {
+        $('settingsModeDark').onclick = () => {
+          const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+          applyTheme(currentPal, 'dark');
+          openSettingsModal();
+        };
+      }
+      if ($('settingsModeLight')) {
+        $('settingsModeLight').onclick = () => {
+          const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+          applyTheme(currentPal, 'light');
+          openSettingsModal();
+        };
+      }
+
+      // Settings Palette Buttons
+      document.querySelectorAll('#dlgSettings .theme-palette-opt').forEach(btn => {
+        btn.onclick = () => {
+          const pal = btn.dataset.paletteVal;
+          const currentMode = localStorage.getItem('valut_theme_mode') || 'dark';
+          applyTheme(pal, currentMode);
+          openSettingsModal();
+          toast('Theme updated');
+        };
+      });
+
+      // Settings Log Out Button
+      if ($('settingsBtnLogout')) {
+        $('settingsBtnLogout').onclick = () => {
+          $('dlgSettings').close();
+          if ($('bLo')) $('bLo').click();
+        };
+      }
+
+      
+      // Large Live Updates Popup Modal Handler
+      async function openLiveUpdatesModal() {
+        const dlg = $('dlgLiveUpdatesModal');
+        if (!dlg) return;
+        dlg.showModal();
+        await refreshLiveUpdatesModalData();
+      }
+
+      async function refreshLiveUpdatesModalData() {
+        try {
+          const [ins, hea, actData] = await Promise.all([
+            api('/api/inventory/insights').catch(() => null),
+            api('/api/inventory/health').catch(() => null),
+            api('/api/activity?page=1&page_size=10').catch(() => null)
+          ]);
+
+          if (ins) {
+            if ($('kpiDev')) $('kpiDev').textContent = (ins.total_devices || 0).toLocaleString();
+            if ($('kpiCust')) $('kpiCust').textContent = (ins.total_customers || 0).toLocaleString();
+            if ($('kpiExp30')) $('kpiExp30').textContent = (ins.expiring_30 || 0).toLocaleString();
+            if ($('kpiExpired')) $('kpiExpired').textContent = (ins.expired || 0).toLocaleString();
+          }
+
+          if (hea && hea.score !== undefined) {
+            if ($('kpiHealth')) $('kpiHealth').textContent = `${Math.round(hea.score || 98)}%`;
+          }
+
+          if ($('dlgLiveTime')) {
+            $('dlgLiveTime').textContent = new Date().toLocaleTimeString();
+          }
+
+          if (actData && actData.items && $('dlgLiveLogTbody')) {
+            $('dlgLiveLogTbody').innerHTML = actData.items.map(it => {
+              const d = new Date(it.created_at);
+              const dStr = isNaN(d.getTime()) ? it.created_at : d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+              return `
+                <tr>
+                  <td>${esc(dStr)}</td>
+                  <td><b>${esc(it.action || 'Event')}</b></td>
+                  <td>${esc(it.user_name || it.user_login || 'System')}</td>
+                  <td><code>${esc((it.detail || '—').substring(0, 45))}</code></td>
+                  <td><span class="badge" style="background:var(--ok);color:#fff;font-weight:700">Success</span></td>
+                </tr>
+              `;
+            }).join('');
+          }
+        } catch(e) {
+          console.log('Error refreshing live telemetry popup:', e);
+        }
+      }
+
+      if ($('sidebarLiveUpdatesBtn')) $('sidebarLiveUpdatesBtn').onclick = openLiveUpdatesModal;
+      if ($('closeDlgLiveUpdates')) $('closeDlgLiveUpdates').onclick = () => $('dlgLiveUpdatesModal').close();
+      if ($('dlgManualLiveRefresh')) $('dlgManualLiveRefresh').onclick = refreshLiveUpdatesModalData;
+
+      // Settings Modal Options Hookup
+      function openSettingsModal() {
+        const dlg = $('dlgSettings');
+        if (!dlg) return;
+        dlg.showModal();
+      }
+
+      if ($('closeDlgSettings')) $('closeDlgSettings').onclick = () => $('dlgSettings').close();
+      if ($('btnCloseDlgSettingsFooter')) $('btnCloseDlgSettingsFooter').onclick = () => $('dlgSettings').close();
+      if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openSettingsModal;
+
+      if ($('settingsBtnEditName')) {
+        $('settingsBtnEditName').onclick = () => {
+          $('dlgSettings').close();
+          const u = getUser();
+          openDlg('Edit Display Name', `
+            <label for="newName">Full Name</label>
+            <input id="newName" value="${esc(u.name || '')}" placeholder="Your display name" required />
+            <div class="row" style="margin-top:16px;justify-content:flex-end">
+              <button class="b" type="button" id="cEdN">Cancel</button>
+              <button class="b p" type="button" id="sEdN">Save</button>
+            </div>
+          `);
+          $('cEdN').onclick = closeDlg;
+          $('sEdN').onclick = async () => {
+            const name = $('newName').value.trim();
+            if (!name) return;
+            try {
+              const res = await api('/users/me', { method: 'PUT', body: JSON.stringify({ name }) });
+              u.name = res.name;
+              localStorage.setItem('user', JSON.stringify(u));
+              closeDlg();
+              await updateChrome();
+              toast('Your display name has been updated');
+            } catch (err) { fail(err); }
+          };
+        };
+      }
+
+      if ($('settingsBtnPassword')) {
+        $('settingsBtnPassword').onclick = () => {
+          $('dlgSettings').close();
+          if ($('pwd')) $('pwd').showModal();
+        };
+      }
+
+      if ($('settingsBtnManageUsers')) {
+        $('settingsBtnManageUsers').onclick = () => {
+          $('dlgSettings').close();
+          openManageUsersModal();
+        };
+      }
+
+      if ($('settingsBtnLoginInv')) {
+        $('settingsBtnLoginInv').onclick = () => {
+          $('dlgSettings').close();
+          openAuditLogModal();
+        };
+      }
+
+      if ($('settingsBtnLogout')) {
+        $('settingsBtnLogout').onclick = () => {
+          $('dlgSettings').close();
+          if ($('bLo')) $('bLo').click();
+        };
+      }
+
+      // Global Expiry Banner Action Buttons
+      if ($('btnViewExpiredGlobal')) {
+        $('btnViewExpiredGlobal').onclick = async () => {
+          await showContainer('box-inv');
+          if ($('invExpiryFilter')) {
+            $('invExpiryFilter').value = 'expired';
+            invPage = 1;
+            fetchInventoryRows();
+          }
+        };
+      }
+
+      if ($('btnViewExpiringSoonGlobal')) {
+        $('btnViewExpiringSoonGlobal').onclick = async () => {
+          await showContainer('box-inv');
+          if ($('invExpiryFilter')) {
+            $('invExpiryFilter').value = 'expiring_30';
+            invPage = 1;
+            fetchInventoryRows();
+          }
+        };
+      }
+
+      // Expiry Alerts Bell icon in right-most corner
+      if ($('btnHeaderBell')) $('btnHeaderBell').onclick = () => showContainer('box-exp');
+
       if ($('bUsers')) $('bUsers').onclick = openManageUsersModal;
       if ($('closeDlgManageUsers')) $('closeDlgManageUsers').onclick = () => $('dlgManageUsers').close();
       if ($('dlgManageUsers')) $('dlgManageUsers').onclick = e => { if (e.target === $('dlgManageUsers')) $('dlgManageUsers').close(); };
@@ -13837,85 +16260,165 @@
           </div>
         </div>
 
-        <!-- 6 Themes List -->
-        <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px">Select Palette</label>
-        <div class="theme-palette-list" style="display:flex;flex-direction:column;gap:6px">
-          <!-- 1. Midnight Pro -->
-          <button type="button" class="theme-palette-opt" data-palette-val="midnight_pro">
-            <div class="theme-swatch-group">
-              <span style="background:#0B1120"></span>
-              <span style="background:#172554"></span>
-              <span style="background:#38BDF8"></span>
-            </div>
-            <div class="theme-palette-info">
-              <div class="theme-name">Midnight Pro</div>
-              <div class="theme-desc">Deep Tech Navy & Sky</div>
-            </div>
-          </button>
-          <!-- 2. Obsidian Luxury -->
-          <button type="button" class="theme-palette-opt" data-palette-val="obsidian_luxury">
-            <div class="theme-swatch-group">
-              <span style="background:#09090B"></span>
-              <span style="background:#27272A"></span>
-              <span style="background:#D4AF37"></span>
-            </div>
-            <div class="theme-palette-info">
-              <div class="theme-name">Obsidian Luxury</div>
-              <div class="theme-desc">Obsidian & Champagne Gold</div>
-            </div>
-          </button>
-          <!-- 3. Quantum AI -->
-          <button type="button" class="theme-palette-opt" data-palette-val="quantum_ai">
-            <div class="theme-swatch-group">
-              <span style="background:#0F1025"></span>
-              <span style="background:#6D5DFB"></span>
-              <span style="background:#22D3EE"></span>
-            </div>
-            <div class="theme-palette-info">
-              <div class="theme-name">Quantum AI</div>
-              <div class="theme-desc">Electric Indigo & Cyan</div>
-            </div>
-          </button>
-          <!-- 4. Enterprise Clean -->
-          <button type="button" class="theme-palette-opt" data-palette-val="enterprise_clean">
-            <div class="theme-swatch-group">
-              <span style="background:#F8FAFC"></span>
-              <span style="background:#2563EB"></span>
-              <span style="background:#0EA5E9"></span>
-            </div>
-            <div class="theme-palette-info">
-              <div class="theme-name">Enterprise Clean</div>
-              <div class="theme-desc">Crisp Executive & Blue</div>
-            </div>
-          </button>
-          <!-- 5. Crystal Glass -->
-          <button type="button" class="theme-palette-opt" data-palette-val="crystal_glass">
-            <div class="theme-swatch-group">
-              <span style="background:#101827"></span>
-              <span style="background:#1E293B"></span>
-              <span style="background:#60A5FA"></span>
-            </div>
-            <div class="theme-palette-info">
-              <div class="theme-name">Crystal Glass</div>
-              <div class="theme-desc">Slate Charcoal & Ice</div>
-            </div>
-          </button>
-          <!-- 6. Emerald Control -->
-          <button type="button" class="theme-palette-opt" data-palette-val="emerald_control">
-            <div class="theme-swatch-group">
-              <span style="background:#0F172A"></span>
-              <span style="background:#064E3B"></span>
-              <span style="background:#34D399"></span>
-            </div>
-            <div class="theme-palette-info">
-              <div class="theme-name">Emerald Control</div>
-              <div class="theme-desc">Nordic Forest & Mint</div>
-            </div>
-          </button>
-        </div>
+        <!-- Pure Light & Dark Mode (All other palettes removed) -->
+        <p style="margin:10px 0 0;font-size:12px;color:var(--muted);text-align:center">
+          Clean high-contrast theme system optimized for readability.
+        </p>
       </div>
     </div>
   </div>
+
+  <!-- DEDICATED SETTINGS MODAL (THEMES AND LOG OUT ONLY) -->
+  <dialog id="dlgSettings" class="modal-card" style="width:min(520px, 94vw); padding:0; border-radius:20px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.35); overflow:hidden">
+    <div style="padding:18px 24px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); background:var(--card-subtle)">
+      <div style="display:flex; align-items:center; gap:10px">
+        <span style="font-size:22px">⚙️</span>
+        <div>
+          <h3 style="margin:0; font-size:17px; font-weight:800; color:var(--text)">Settings &amp; Account Options</h3>
+          <span style="font-size:12px; color:var(--muted)">Manage credentials, employee permissions &amp; logs</span>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgSettings" type="button" style="font-size:18px; padding:4px 8px; cursor:pointer">✕</button>
+    </div>
+
+    <div style="padding:22px 24px">
+      <!-- Options shifted from top bar into Settings (Themes option removed) -->
+      <div class="settings-action-list">
+        <button type="button" class="settings-action-item" id="settingsBtnEditName">
+          <div class="settings-action-icon" style="background:#e0f2fe;color:#0284c7">✏️</div>
+          <div class="settings-action-text">
+            <div class="settings-action-title">Edit Name</div>
+            <div class="settings-action-desc">Change your account display name</div>
+          </div>
+          <span class="settings-action-arrow">›</span>
+        </button>
+
+        <button type="button" class="settings-action-item" id="settingsBtnPassword">
+          <div class="settings-action-icon" style="background:#fef3c7;color:#d97706">🔑</div>
+          <div class="settings-action-text">
+            <div class="settings-action-title">Change Password</div>
+            <div class="settings-action-desc">Update your login security password</div>
+          </div>
+          <span class="settings-action-arrow">›</span>
+        </button>
+
+        <button type="button" class="settings-action-item" id="settingsBtnManageUsers">
+          <div class="settings-action-icon" style="background:#dcfce7;color:#16a34a">👥</div>
+          <div class="settings-action-text">
+            <div class="settings-action-title">Manage Users &amp; Permissions</div>
+            <div class="settings-action-desc">Employee accounts, roles &amp; RBAC privileges</div>
+          </div>
+          <span class="settings-action-arrow">›</span>
+        </button>
+
+        <button type="button" class="settings-action-item" id="settingsBtnLoginInv">
+          <div class="settings-action-icon" style="background:#f3e8ff;color:#9333ea">🕘</div>
+          <div class="settings-action-text">
+            <div class="settings-action-title">Login Inventory (Activity Log)</div>
+            <div class="settings-action-desc">Audit user sign-ins, uploads &amp; deletions</div>
+          </div>
+          <span class="settings-action-arrow">›</span>
+        </button>
+
+        <hr style="border:none; border-top:1px solid var(--line); margin:6px 0" />
+
+        <button type="button" class="settings-action-item danger" id="settingsBtnLogout">
+          <div class="settings-action-icon" style="background:#fee2e2;color:#dc2626">🚪</div>
+          <div class="settings-action-text">
+            <div class="settings-action-title" style="color:#dc2626">Log Out</div>
+            <div class="settings-action-desc">End your active session on this device</div>
+          </div>
+          <span class="settings-action-arrow">›</span>
+        </button>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:16px; padding-top:14px; border-top:1px solid var(--line)">
+        <button type="button" class="b" id="btnCloseDlgSettingsFooter" style="padding:8px 18px; border-radius:10px; font-weight:700">✕ Close Settings</button>
+      </div>
+    </div>
+  </dialog>
+
+
+  <!-- LARGE POP UP WEB PAGE MODAL: LIVE UPDATES & TELEMETRY STREAM -->
+  <dialog id="dlgLiveUpdatesModal" class="modal-card" style="width:min(1150px, 96vw); max-height:92vh; padding:0; border-radius:20px; border:1px solid var(--line); box-shadow:0 30px 90px rgba(0,0,0,0.5); overflow:hidden">
+    <div style="padding:16px 24px; background:linear-gradient(90deg, #0f172a 0%, #1e293b 100%); color:#fff; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.1)">
+      <div style="display:flex; align-items:center; gap:12px">
+        <div style="width:38px; height:38px; border-radius:10px; background:rgba(56,189,248,0.2); color:#38bdf8; display:flex; align-items:center; justify-content:center; font-size:18px">
+          ⚡
+        </div>
+        <div>
+          <div style="display:flex; align-items:center; gap:8px">
+            <h3 style="margin:0; font-size:18px; font-weight:800; color:#fff">Live Telemetry &amp; System Stream</h3>
+            <span class="live-badge" style="background:#10b981; color:#fff; font-size:11px; padding:2px 8px; border-radius:99px; font-weight:800">
+              <span class="cv-live-dot-pulse"></span> LIVE
+            </span>
+          </div>
+          <p style="margin:2px 0 0; font-size:12px; color:#94a3b8">Real-time device monitoring, telemetry stream &amp; customer database synchronization</p>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px">
+        <span style="font-size:12px; color:#94a3b8" id="dlgLiveTime">Just now</span>
+        <button class="b ghost" id="closeDlgLiveUpdates" type="button" style="color:#fff; font-size:20px; padding:4px 10px; cursor:pointer">✕</button>
+      </div>
+    </div>
+
+    <div style="padding:22px 24px; overflow-y:auto; max-height:calc(92vh - 80px); background:var(--bg)">
+      <!-- Controls Bar -->
+      <div class="live-ctrl-card" style="margin-bottom:18px">
+        <div class="live-ctrl-left" style="display:flex; align-items:center; gap:12px">
+          <button class="b on" id="dlgToggleLive">🟢 Live Updates: ON</button>
+          <div style="display:inline-flex; align-items:center; gap:6px">
+            <label style="margin:0; font-size:12.5px; color:var(--muted); font-weight:600">Frequency:</label>
+            <select id="dlgLiveIntervalSel" style="height:36px; padding:0 10px; font-size:12px; border-radius:8px">
+              <option value="5">Every 5 seconds</option>
+              <option value="10" selected>Every 10 seconds</option>
+              <option value="30">Every 30 seconds</option>
+              <option value="60">Every 60 seconds</option>
+            </select>
+          </div>
+        </div>
+        <div class="live-ctrl-right" style="display:flex; align-items:center; gap:10px">
+          <button class="b p" id="dlgManualLiveRefresh">⚡ Refresh Telemetry Now</button>
+        </div>
+      </div>
+
+      <!-- Live KPI Cards Ribbon -->
+      <div class="stats" id="dlgLiveKpis" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:12px; margin-bottom:20px">
+        <div class="card stat" style="padding:14px 16px"><b id="kpiDev">…</b><span>Total Live Devices</span></div>
+        <div class="card stat" style="padding:14px 16px"><b id="kpiCust">…</b><span>Active Customers</span></div>
+        <div class="card stat" style="padding:14px 16px; border-left-color:var(--warn)"><b id="kpiExp30">…</b><span>Expiring in 30 Days</span></div>
+        <div class="card stat" style="padding:14px 16px; border-left-color:var(--danger)"><b id="kpiExpired">…</b><span>Expired Devices</span></div>
+        <div class="card stat" style="padding:14px 16px; border-left-color:var(--ok)"><b id="kpiHealth">…</b><span>Data Health Score</span></div>
+      </div>
+
+      <!-- Live Telemetry Stream Table -->
+      <div class="card" style="padding:18px 20px; border-radius:14px">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px">
+          <h4 style="margin:0; font-size:15px; font-weight:800; color:var(--text); display:flex; align-items:center; gap:8px">
+            <span>📡</span> <span>Live Telemetry Event Log</span>
+          </h4>
+          <span style="font-size:12px; color:var(--muted)">Streaming latest database transactions &amp; status</span>
+        </div>
+        <div style="max-height:280px; overflow-y:auto; border:1px solid var(--line); border-radius:10px">
+          <table class="data-table" style="margin:0; font-size:12.5px">
+            <thead>
+              <tr style="background:var(--card-subtle)">
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Actor / User</th>
+                <th>Details &amp; Identifier</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dlgLiveLogTbody">
+              <tr><td colspan="5" style="text-align:center; padding:16px">Loading telemetry stream…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
 </body>
 
 </html>

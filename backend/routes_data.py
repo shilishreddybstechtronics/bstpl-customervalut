@@ -919,7 +919,10 @@ def bulk_validate(data: schemas.BulkIn, db: Session = Depends(get_db)):
         "duplicates": duplicates[:50000],
         "invalids": invalids[:2000],
         "all_sample": all_rows[:300],
-        "new_imeis": [r.get("imei") for r in new_entries if r.get("imei")]
+        "new_imeis": [r.get("imei") for r in new_entries if r.get("imei")],
+        "existing_imeis": [d.imei for d in existing_devices_map.values()],
+        "existing_sr_nos": list(existing_sr_nos.keys()),
+        "existing_iccids": list(existing_iccids.keys())
     }
 
 
@@ -960,10 +963,13 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
     iccids = [(r.iccid or "").strip() for r in data.rows if (r.iccid or "").strip()]
     mode = getattr(data, "mode", "skip") or "skip"
 
+    clean_imeis = [re.sub(r"[^0-9A-Za-z_-]", "", (r.imei or "").strip())[:20] for r in data.rows if (r.imei or "").strip()]
+    all_query_imeis = list(set([im for im in imeis if im] + [cim for cim in clean_imeis if cim]))
     existing_devices = {}
-    for i in range(0, len(imeis), 2000):
-        for d in db.query(Device).filter(Device.imei.in_(imeis[i:i + 2000])):
+    for i in range(0, len(all_query_imeis), 2000):
+        for d in db.query(Device).filter(Device.imei.in_(all_query_imeis[i:i + 2000])):
             existing_devices[d.imei] = d
+            existing_devices[d.imei.lower()] = d
 
     existing_sr_nos = {}
     for i in range(0, len(sr_nos), 2000):
@@ -1038,10 +1044,11 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
             extra = clean_extra(r.extra)
             names.update(extra)
 
-            if imei in existing_devices:
-                in_bin = getattr(existing_devices[imei], "deleted_at", None)  # deleted earlier: bring it back instead of skipping it
-                if mode == "replace" or in_bin:
-                    d = existing_devices[imei]
+            dev_match = existing_devices.get(imei) or existing_devices.get(imei.lower())
+            if dev_match:
+                in_bin = getattr(dev_match, "deleted_at", None) if not isinstance(dev_match, bool) else None
+                if in_bin:
+                    d = dev_match
                     d.customer_id = cust.id
                     d.act_date = r.act_date or d.act_date
                     d.expiry_date = exp or d.expiry_date
@@ -1056,13 +1063,13 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
                         non_blank = {k: v for k, v in extra.items() if v is not None and str(v).strip() != ""}
                         merged = {**(d.extra or {}), **non_blank}
                         d.extra = merged or None
-                    if d.deleted_at:
-                        d.deleted_at = d.deleted_by = d.delete_reason = None
+                    d.deleted_at = d.deleted_by = d.delete_reason = None
                     updated += 1
                     mirror.append((cust.id, cust.name, {
                         "imei": imei, "customer_name": cust.name, "act_date": d.act_date, "expiry_date": d.expiry_date, "dispatched_date": d.dispatched_date,
                         "sim_type": d.sim_type, "extra": d.extra or {}, **{f: getattr(d, f) for f in TEXT_FIELDS}}))
                 else:
+                    # In bulk upload, only new entries which are not there should upload
                     skipped.append(imei)
             else:
                 row_vals = {}
