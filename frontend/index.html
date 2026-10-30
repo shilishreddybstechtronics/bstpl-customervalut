@@ -7254,7 +7254,9 @@ body:not(.app-active) {
       }
 
       /* ---------- API Client ---------- */
-      let API_BASE = (window.API_URL || localStorage.getItem('API_URL') || '').replace(/\/+$/, '');
+      const isRunningOnLocalPort8000 = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port === '8000';
+      const DEFAULT_API_BASE = isRunningOnLocalPort8000 ? 'http://127.0.0.1:8000' : 'https://bstpl-customervalut-2-jm3t.onrender.com';
+      let API_BASE = (window.API_URL || localStorage.getItem('API_URL') || DEFAULT_API_BASE).replace(/\/+$/, '');
       async function api(path, opt = {}) {
         const r = await fetch(API_BASE + path, {
           ...opt,
@@ -15593,10 +15595,10 @@ body:not(.app-active) {
       /* ---------- Backend Health & Dynamic Connection Manager ---------- */
       let isCheckingHealth = false;
 
-      async function pingHealth(baseUrl) {
+      async function pingHealth(baseUrl, timeoutMs = 10000) {
         const clean = (baseUrl || '').replace(/\/+$/, '');
         const ctrl = new AbortController();
-        const tid = setTimeout(() => ctrl.abort(), 2500);
+        const tid = setTimeout(() => ctrl.abort(), timeoutMs);
         try {
           const res = await fetch((clean ? clean : '') + '/health/db', { signal: ctrl.signal });
           clearTimeout(tid);
@@ -15610,11 +15612,9 @@ body:not(.app-active) {
       }
 
       function promptServerUrl() {
-        const defaultRender = "https://bstpl-customervalut-1-ehoz.onrender.com";
-        const entered = prompt(
-          "BSTPL CustomerVault Backend Server URL\n\nIf backend is on Render:\nhttps://bstpl-customervalut-1-ehoz.onrender.com\n\nOr leave empty to use current host:",
-          API_BASE || defaultRender
-        );
+        const defaultRender = "https://bstpl-customervalut-2-jm3t.onrender.com";
+        const msg = "BSTPL CustomerVault Backend Server URL\n\nCloud backend URL:\nhttps://bstpl-customervalut-2-jm3t.onrender.com\n\nLocal development server:\nhttp://127.0.0.1:8000\n\nEnter server URL:";
+        const entered = prompt(msg, API_BASE || defaultRender);
         if (entered === null) return;
         const clean = entered.trim().replace(/\/+$/, '');
         if (clean) {
@@ -15622,7 +15622,7 @@ body:not(.app-active) {
           API_BASE = clean;
         } else {
           localStorage.removeItem('API_URL');
-          API_BASE = '';
+          API_BASE = defaultRender;
         }
         checkBackendHealth(3);
       }
@@ -15639,8 +15639,12 @@ body:not(.app-active) {
 
         const candidates = [];
         if (API_BASE) candidates.push(API_BASE);
-        candidates.push('http://127.0.0.1:8000');
-        candidates.push('https://bstpl-customervalut-1-ehoz.onrender.com');
+        if (!candidates.includes('https://bstpl-customervalut-2-jm3t.onrender.com')) {
+          candidates.push('https://bstpl-customervalut-2-jm3t.onrender.com');
+        }
+        if (!candidates.includes('http://127.0.0.1:8000')) {
+          candidates.push('http://127.0.0.1:8000');
+        }
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           if (attempt > 1 && el) {
@@ -15649,7 +15653,8 @@ body:not(.app-active) {
           }
 
           for (const url of candidates) {
-            const probe = await pingHealth(url);
+            const timeout = (url.includes('127.0.0.1') || url.includes('localhost')) ? 1500 : 10000;
+            const probe = await pingHealth(url, timeout);
             if (probe.ok) {
               API_BASE = url.replace(/\/+$/, '');
               localStorage.setItem('API_URL', API_BASE);
@@ -15666,7 +15671,7 @@ body:not(.app-active) {
 
                 setAuthMode('register');
                 if ($('authTitle')) $('authTitle').textContent = 'Master Admin Setup';
-                if ($('authSub')) $('authSub').textContent = 'Fresh setup detected. Create the Master Account (ID 0001). This can only be performed once.';
+                if ($('authSub')) $('authSub').textContent = 'Fresh setup detected. Create the Master Account (ID 0001).';
                 if ($('authId')) {
                   $('authId').value = '0001';
                   $('authId').readOnly = false;
@@ -15687,7 +15692,7 @@ body:not(.app-active) {
           }
 
           if (attempt < maxAttempts) {
-            await new Promise(r => setTimeout(r, 1200));
+            await new Promise(r => setTimeout(r, 1500));
           }
         }
 
