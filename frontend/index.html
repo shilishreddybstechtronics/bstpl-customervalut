@@ -3,6 +3,9 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>BSTPL CustomerVault | Enterprise Device & Inventory Systems</title>
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
@@ -7965,9 +7968,9 @@ body:not(.app-active) {
           } catch (err) { fail(err); }
         };
       }
-      $('bPw').onclick = () => { $('pf').reset(); $('pe').textContent = ''; $('pwd').showModal(); };
-      $('pc').onclick = () => $('pwd').close();
-      $('pf').onsubmit = async e => {
+      if ($('bPw')) $('bPw').onclick = () => { if ($('pf')) $('pf').reset(); if ($('pe')) $('pe').textContent = ''; if ($('pwd')) $('pwd').showModal(); };
+      if ($('pc')) $('pc').onclick = () => { if ($('pwd')) $('pwd').close(); };
+      if ($('pf')) $('pf').onsubmit = async e => {
         e.preventDefault(); $('pe').textContent = '';
         if ($('p2').value !== $('p3').value) { $('pe').textContent = 'New passwords do not match.'; return; }
         try {
@@ -8417,8 +8420,10 @@ body:not(.app-active) {
           const file = e.target.files && e.target.files[0];
           if (!file) return;
 
-          $('bulkDelFileName').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
-          $('bulkDelFileSummary').textContent = 'Reading and analyzing file…';
+          if ($('bulkDelFileInfo')) {
+            $('bulkDelFileInfo').hidden = false;
+            $('bulkDelFileInfo').textContent = `📁 ${file.name} (${(file.size / 1024).toFixed(1)} KB) — Reading and analyzing file…`;
+          }
 
           const reader = new FileReader();
           reader.onload = ev => {
@@ -8431,14 +8436,14 @@ body:not(.app-active) {
 
               if (!jsonRows || jsonRows.length < 2) {
                 toast('The uploaded file is empty or does not contain data rows.');
-                $('bulkDelFileSummary').textContent = 'File is empty or missing data rows.';
+                if ($('bulkDelFileInfo')) $('bulkDelFileInfo').textContent = '⚠️ File is empty or missing data rows.';
                 return;
               }
 
               const headers = (jsonRows[0] || []).map(h => String(h || '').trim()).filter(Boolean);
               if (!headers.length) {
                 toast('No valid header columns found in the uploaded file.');
-                $('bulkDelFileSummary').textContent = 'No column headers detected in row 1.';
+                if ($('bulkDelFileInfo')) $('bulkDelFileInfo').textContent = '⚠️ No column headers detected in row 1.';
                 return;
               }
 
@@ -8461,14 +8466,14 @@ body:not(.app-active) {
               }
               sel.value = defaultMatch;
 
-              $('bulkDelFileSummary').textContent = `✅ Successfully loaded ${jsonRows.length - 1} rows with ${headers.length} detected columns.`;
+              if ($('bulkDelFileInfo')) $('bulkDelFileInfo').textContent = `✅ Successfully loaded ${jsonRows.length - 1} rows with ${headers.length} detected columns.`;
               $('bulkDelMappingBox').hidden = false;
               $('bulkDelPreviewBox').hidden = true;
               $('bulkDelProgressBox').hidden = true;
               $('bulkDelReportBanner').hidden = true;
             } catch (err) {
               toast('Failed to parse Excel file: ' + err.message);
-              $('bulkDelFileSummary').textContent = 'Error parsing file: ' + err.message;
+              if ($('bulkDelFileInfo')) $('bulkDelFileInfo').textContent = '❌ Error parsing file: ' + err.message;
             }
           };
           reader.readAsArrayBuffer(file);

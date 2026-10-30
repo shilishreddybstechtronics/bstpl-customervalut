@@ -138,6 +138,16 @@ else:
         allow_headers=["*"],
     )
 
+@app.middleware("http")
+async def disable_cache_middleware(request: Request, call_next):
+    response = await call_next(request)
+    # Never return 304 Not Modified; force browser to always receive 200 with fresh content
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 
 @app.get("/health/db")
 def db_health(db: Session = Depends(get_db)):
