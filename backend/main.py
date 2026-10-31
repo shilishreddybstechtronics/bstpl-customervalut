@@ -199,6 +199,7 @@ def login(data: schemas.LoginIn, request: Request, db: Session = Depends(get_db)
 
 
 @app.post("/auth/logout")
+@app.post("/api/auth/logout")
 def logout(request: Request, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     log_activity(db, "logout", "Signed out", user=current_user, request=request, commit=True)
     return {"ok": True}

@@ -1778,203 +1778,277 @@
       }
     }
 
-    /* ===== 6 PREMIER THEMES (with Dark & Light Mode Support) ===== */
-    /* 1. Midnight Pro (#0B1120, #172554, #38BDF8) */
-    [data-palette="midnight_pro"][data-mode="dark"],
-    [data-palette="midnight_pro"]:not([data-mode="light"]) {
-      --bg: #0B1120;
-      --card: #172554;
-      --card-subtle: #1e293b;
-      --primary: #38BDF8;
-      --accent: #38BDF8;
-      --accentd: #0284c7;
-      --ink: #F0F9FF;
-      --ink2: #E0F2FE;
-      --line: #1E3A8A;
-      --muted: #94A3B8;
-      --ok: #34D399;
-      --warn: #FBBF24;
-      --danger: #F87171;
+    /* ===== 6 THEMES (with Light & Dark Mode Support) ===== */
+
+    /* 1. ROYAL NAVY (Default: Navy & Gold, Light Page) */
+    [data-palette="royal_navy"][data-mode="light"],
+    [data-palette="royal_navy"]:not([data-mode="dark"]),
+    :root:not([data-palette]) {
+      --bg: #f8fafc;
+      --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #edf2f9 100%);
+      --card: #ffffff;
+      --card-subtle: #f1f5f9;
+      --text: #0b1a30;
+      --text-dim: #475569;
+      --ink: #0b1a30;
+      --ink2: #1e293b;
+      --line: #cbd5e1;
+      --primary: #0f2b5c;
+      --primary-hover: #0a1c3d;
+      --accent: #d4af37;
+      --accentd: #b38f26;
+      --accent-light: #fef9ee;
+      --muted: #475569;
+      --ok: #16a34a;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #091a38 0%, #0d2249 100%);
     }
-    [data-palette="midnight_pro"][data-mode="light"] {
-      --bg: #F0F9FF;
-      --card: #FFFFFF;
-      --card-subtle: #E0F2FE;
-      --primary: #0284C7;
-      --accent: #38BDF8;
-      --accentd: #0369A1;
-      --ink: #0C4A6E;
-      --ink2: #075985;
-      --line: #BAE6FD;
+    [data-palette="royal_navy"][data-mode="dark"] {
+      --bg: #080f1d;
+      --bg-gradient: linear-gradient(180deg, #080f1d 0%, #0e1b33 100%);
+      --card: #0e1b33;
+      --card-subtle: #142546;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --ink: #f8fafc;
+      --ink2: #cbd5e1;
+      --line: #1e355b;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --accent: #d4af37;
+      --accentd: #f59e0b;
+      --accent-light: rgba(212, 175, 55, 0.15);
+      --muted: #94a3b8;
+      --ok: #34d399;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #040913 0%, #081224 100%);
+    }
+
+    /* 2. MIDNIGHT (Dark Navy with Soft Gold) */
+    [data-palette="midnight"][data-mode="dark"],
+    [data-palette="midnight"]:not([data-mode="light"]) {
+      --bg: #070d19;
+      --bg-gradient: linear-gradient(180deg, #070d19 0%, #0f1a2e 100%);
+      --card: #0f1a2e;
+      --card-subtle: #16243d;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --ink: #f1f5f9;
+      --ink2: #cbd5e1;
+      --line: #1e293b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #eab308;
+      --accentd: #ca8a04;
+      --accent-light: rgba(234, 179, 8, 0.15);
+      --muted: #94a3b8;
+      --ok: #34d399;
+      --danger: #f87171;
+      --warn: #eab308;
+      --cv-sidebar-bg: linear-gradient(180deg, #040811 0%, #091322 100%);
+    }
+    [data-palette="midnight"][data-mode="light"] {
+      --bg: #f1f5f9;
+      --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      --card: #ffffff;
+      --card-subtle: #f8fafc;
+      --text: #0f172a;
+      --text-dim: #475569;
+      --ink: #0f172a;
+      --ink2: #1e293b;
+      --line: #cbd5e1;
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --accent: #ca8a04;
+      --accentd: #a16207;
+      --accent-light: #fefce8;
       --muted: #475569;
       --ok: #059669;
-      --warn: #D97706;
-      --danger: #DC2626;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #0a1122 0%, #111d38 100%);
     }
 
-    /* 2. Obsidian Luxury (#09090B, #27272A, #D4AF37) */
-    [data-palette="obsidian_luxury"][data-mode="dark"],
-    [data-palette="obsidian_luxury"]:not([data-mode="light"]) {
-      --bg: #09090B;
-      --card: #27272A;
-      --card-subtle: #18181B;
-      --primary: #D4AF37;
-      --accent: #D4AF37;
-      --accentd: #B45309;
-      --ink: #FAFAF9;
-      --ink2: #F5F5F4;
-      --line: #3F3F46;
-      --muted: #A1A1AA;
-      --ok: #10B981;
-      --warn: #D4AF37;
-      --danger: #EF4444;
-    }
-    [data-palette="obsidian_luxury"][data-mode="light"] {
-      --bg: #FAFAF9;
-      --card: #FFFFFF;
-      --card-subtle: #F5F5F4;
-      --primary: #B45309;
-      --accent: #D4AF37;
-      --accentd: #92400E;
-      --ink: #1C1917;
-      --ink2: #292524;
-      --line: #E7E5E4;
-      --muted: #57534E;
+    /* 3. EMERALD (Deep Green with Gold) */
+    [data-palette="emerald"][data-mode="light"],
+    [data-palette="emerald"]:not([data-mode="dark"]) {
+      --bg: #f2fbf6;
+      --bg-gradient: linear-gradient(180deg, #f2fbf6 0%, #e6f7ee 100%);
+      --card: #ffffff;
+      --card-subtle: #e6f7ee;
+      --text: #064e3b;
+      --text-dim: #047857;
+      --ink: #064e3b;
+      --ink2: #065f46;
+      --line: #a7f3d0;
+      --primary: #065f46;
+      --primary-hover: #044e39;
+      --accent: #d4af37;
+      --accentd: #b38f26;
+      --accent-light: #fef9ee;
+      --muted: #047857;
       --ok: #059669;
-      --warn: #B45309;
-      --danger: #DC2626;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #063d2e 0%, #084f3c 100%);
+    }
+    [data-palette="emerald"][data-mode="dark"] {
+      --bg: #031a14;
+      --bg-gradient: linear-gradient(180deg, #031a14 0%, #062c21 100%);
+      --card: #062c21;
+      --card-subtle: #093d2e;
+      --text: #ecfdf5;
+      --text-dim: #a7f3d0;
+      --ink: #ecfdf5;
+      --ink2: #a7f3d0;
+      --line: #0f533f;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --accent: #fbbf24;
+      --accentd: #f59e0b;
+      --accent-light: rgba(251, 191, 36, 0.15);
+      --muted: #6ee7b7;
+      --ok: #34d399;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #02120d 0%, #041f17 100%);
     }
 
-    /* 3. Quantum AI (#0F1025, #6D5DFB, #22D3EE) */
-    [data-palette="quantum_ai"][data-mode="dark"],
-    [data-palette="quantum_ai"]:not([data-mode="light"]) {
-      --bg: #0F1025;
-      --card: #1E1B4B;
-      --card-subtle: #2E1065;
-      --primary: #6D5DFB;
-      --accent: #22D3EE;
-      --accentd: #4F46E5;
-      --ink: #F5F3FF;
-      --ink2: #EDE9FE;
-      --line: #3730A3;
-      --muted: #A5B4FC;
-      --ok: #10B981;
-      --warn: #F59E0B;
-      --danger: #F43F5E;
-    }
-    [data-palette="quantum_ai"][data-mode="light"] {
-      --bg: #F5F3FF;
-      --card: #FFFFFF;
-      --card-subtle: #EDE9FE;
-      --primary: #6D5DFB;
-      --accent: #06B6D4;
-      --accentd: #4F46E5;
-      --ink: #1E1B4B;
-      --ink2: #312E81;
-      --line: #DDD6FE;
-      --muted: #4B5563;
+    /* 4. CRIMSON VAULT (Wine Red, Close to Your Current Brand) */
+    [data-palette="crimson_vault"][data-mode="light"],
+    [data-palette="crimson_vault"]:not([data-mode="dark"]) {
+      --bg: #fff5f5;
+      --bg-gradient: linear-gradient(180deg, #fff5f5 0%, #ffe4e6 100%);
+      --card: #ffffff;
+      --card-subtle: #ffe4e6;
+      --text: #4c0519;
+      --text-dim: #881337;
+      --ink: #4c0519;
+      --ink2: #881337;
+      --line: #fecdd3;
+      --primary: #881337;
+      --primary-hover: #700f2d;
+      --accent: #d4af37;
+      --accentd: #b38f26;
+      --accent-light: #fef9ee;
+      --muted: #9f1239;
       --ok: #059669;
-      --warn: #D97706;
-      --danger: #E11D48;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #4c0519 0%, #680822 100%);
+    }
+    [data-palette="crimson_vault"][data-mode="dark"] {
+      --bg: #1a050b;
+      --bg-gradient: linear-gradient(180deg, #1a050b 0%, #2c0b15 100%);
+      --card: #2c0b15;
+      --card-subtle: #3f101f;
+      --text: #fff1f2;
+      --text-dim: #fecdd3;
+      --ink: #fff1f2;
+      --ink2: #fecdd3;
+      --line: #5c1126;
+      --primary: #fb7185;
+      --primary-hover: #f43f5e;
+      --accent: #fbbf24;
+      --accentd: #f59e0b;
+      --accent-light: rgba(251, 191, 36, 0.15);
+      --muted: #fda4af;
+      --ok: #34d399;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #120206 0%, #1e050d 100%);
     }
 
-    /* 4. Enterprise Clean (#F8FAFC, #2563EB, #0EA5E9) */
-    [data-palette="enterprise_clean"][data-mode="light"],
-    [data-palette="enterprise_clean"]:not([data-mode="dark"]) {
-      --bg: #F8FAFC;
-      --card: #FFFFFF;
-      --card-subtle: #F1F5F9;
-      --primary: #2563EB;
-      --accent: #0EA5E9;
-      --accentd: #1D4ED8;
-      --ink: #0F172A;
-      --ink2: #1E293B;
-      --line: #CBD5E1;
-      --muted: #64748B;
-      --ok: #10B981;
-      --warn: #F59E0B;
-      --danger: #EF4444;
-    }
-    [data-palette="enterprise_clean"][data-mode="dark"] {
-      --bg: #0F172A;
-      --card: #1E293B;
-      --card-subtle: #334155;
-      --primary: #3B82F6;
-      --accent: #0EA5E9;
-      --accentd: #60A5FA;
-      --ink: #F8FAFC;
-      --ink2: #E2E8F0;
-      --line: #475569;
-      --muted: #94A3B8;
-      --ok: #34D399;
-      --warn: #FBBF24;
-      --danger: #F87171;
-    }
-
-    /* 5. Crystal Glass (#101827, #1E293B, #60A5FA) */
-    [data-palette="crystal_glass"][data-mode="dark"],
-    [data-palette="crystal_glass"]:not([data-mode="light"]) {
-      --bg: #101827;
-      --card: #1E293B;
-      --card-subtle: #283548;
-      --primary: #60A5FA;
-      --accent: #60A5FA;
-      --accentd: #3B82F6;
-      --ink: #F1F5F9;
-      --ink2: #E2E8F0;
-      --line: #334155;
-      --muted: #94A3B8;
-      --ok: #34D399;
-      --warn: #FBBF24;
-      --danger: #F87171;
-    }
-    [data-palette="crystal_glass"][data-mode="light"] {
-      --bg: #F8FAFC;
-      --card: #FFFFFF;
-      --card-subtle: #EFF6FF;
-      --primary: #3B82F6;
-      --accent: #60A5FA;
-      --accentd: #2563EB;
-      --ink: #0F172A;
-      --ink2: #1E293B;
-      --line: #BFDBFE;
-      --muted: #475569;
+    /* 5. OCEAN (Teal-Blue with Amber) */
+    [data-palette="ocean"][data-mode="light"],
+    [data-palette="ocean"]:not([data-mode="dark"]) {
+      --bg: #f0fdfa;
+      --bg-gradient: linear-gradient(180deg, #f0fdfa 0%, #e0f2fe 100%);
+      --card: #ffffff;
+      --card-subtle: #e0f2fe;
+      --text: #134e4a;
+      --text-dim: #0f766e;
+      --ink: #134e4a;
+      --ink2: #0e7490;
+      --line: #99f6e4;
+      --primary: #0f766e;
+      --primary-hover: #115e59;
+      --accent: #f59e0b;
+      --accentd: #d97706;
+      --accent-light: #fffbeb;
+      --muted: #0d9488;
       --ok: #059669;
-      --warn: #D97706;
-      --danger: #DC2626;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #092e35 0%, #0d3d47 100%);
+    }
+    [data-palette="ocean"][data-mode="dark"] {
+      --bg: #041c20;
+      --bg-gradient: linear-gradient(180deg, #041c20 0%, #082f37 100%);
+      --card: #082f37;
+      --card-subtle: #0e424d;
+      --text: #ccfbf1;
+      --text-dim: #5eead4;
+      --ink: #ccfbf1;
+      --ink2: #5eead4;
+      --line: #115e59;
+      --primary: #2dd4bf;
+      --primary-hover: #14b8a6;
+      --accent: #fbbf24;
+      --accentd: #f59e0b;
+      --accent-light: rgba(251, 191, 36, 0.15);
+      --muted: #5eead4;
+      --ok: #34d399;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #021215 0%, #051e23 100%);
     }
 
-    /* 6. Emerald Control (#0F172A, #064E3B, #34D399) */
-    [data-palette="emerald_control"][data-mode="dark"],
-    [data-palette="emerald_control"]:not([data-mode="light"]) {
-      --bg: #0F172A;
-      --card: #064E3B;
-      --card-subtle: #065F46;
-      --primary: #34D399;
-      --accent: #34D399;
-      --accentd: #10B981;
-      --ink: #F0FDF4;
-      --ink2: #DCFCE7;
-      --line: #047857;
-      --muted: #94A3B8;
-      --ok: #34D399;
-      --warn: #FBBF24;
-      --danger: #F87171;
-    }
-    [data-palette="emerald_control"][data-mode="light"] {
-      --bg: #F0FDF4;
-      --card: #FFFFFF;
-      --card-subtle: #DCFCE7;
-      --primary: #059669;
-      --accent: #34D399;
-      --accentd: #047857;
-      --ink: #0F172A;
-      --ink2: #064E3B;
-      --line: #A7F3D0;
-      --muted: #4B5563;
+    /* 6. VIOLET (Rich Purple with Gold) */
+    [data-palette="violet"][data-mode="light"],
+    [data-palette="violet"]:not([data-mode="dark"]) {
+      --bg: #faf5ff;
+      --bg-gradient: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+      --card: #ffffff;
+      --card-subtle: #f3e8ff;
+      --text: #3b0764;
+      --text-dim: #581c87;
+      --ink: #3b0764;
+      --ink2: #6b21a8;
+      --line: #e9d5ff;
+      --primary: #581c87;
+      --primary-hover: #491470;
+      --accent: #d4af37;
+      --accentd: #b38f26;
+      --accent-light: #fef9ee;
+      --muted: #6b21a8;
       --ok: #059669;
-      --warn: #D97706;
-      --danger: #DC2626;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #2e0854 0%, #3d0e6e 100%);
+    }
+    [data-palette="violet"][data-mode="dark"] {
+      --bg: #150426;
+      --bg-gradient: linear-gradient(180deg, #150426 0%, #240742 100%);
+      --card: #240742;
+      --card-subtle: #340d5c;
+      --text: #faf5ff;
+      --text-dim: #e9d5ff;
+      --ink: #faf5ff;
+      --ink2: #e9d5ff;
+      --line: #4a127a;
+      --primary: #c084fc;
+      --primary-hover: #a855f7;
+      --accent: #fbbf24;
+      --accentd: #f59e0b;
+      --accent-light: rgba(251, 191, 36, 0.15);
+      --muted: #d8b4fe;
+      --ok: #34d399;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #10021e 0%, #1a052e 100%);
     }
 
     [data-palette] body {
@@ -2673,16 +2747,16 @@
 .cv-signin-title {
   font-size: 24px;
   font-weight: 800;
-  color: #0c1938;
+  color: var(--ink, #0c1938);
   margin: 0 0 6px 0;
-  text-align: left;
+  text-align: center !important;
 }
 
 .cv-signin-sub {
   font-size: 13.5px;
-  color: #64748b;
+  color: var(--muted, #64748b);
   margin: 0 0 22px 0;
-  text-align: left;
+  text-align: center !important;
 }
 
 .cv-input-wrap {
@@ -2796,7 +2870,7 @@
 }
 
 /* --- 2. DASHBOARD SHELL (RIGHT HALF OF DESIGN) --- */
-.cv-app-shell {
+body.app-active .cv-app-shell {
   display: flex !important;
   min-height: 100vh;
   width: 100%;
@@ -2808,7 +2882,7 @@
 .cv-sidebar {
   width: var(--cv-sidebar-w);
   flex-shrink: 0;
-  background: linear-gradient(180deg, #09132b 0%, #0c1a3c 100%);
+  background: var(--cv-sidebar-bg, linear-gradient(180deg, #091a38 0%, #0d2249 100%)) !important;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -3392,7 +3466,7 @@ body.app-active {
   overflow: hidden !important;
 }
 
-.cv-app-shell {
+body.app-active .cv-app-shell {
   display: flex !important;
   height: 100vh !important;
   max-height: 100vh !important;
@@ -3406,7 +3480,7 @@ body.app-active {
 .cv-sidebar {
   width: var(--cv-sidebar-w);
   flex-shrink: 0;
-  background: linear-gradient(180deg, #09132b 0%, #0c1a3c 100%);
+  background: var(--cv-sidebar-bg, linear-gradient(180deg, #091a38 0%, #0d2249 100%)) !important;
   color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -3855,11 +3929,14 @@ body.app-active {
   
 /* STRICT DISPLAY ISOLATION: NEVER DISPLAY DASHBOARD ON LOGOUT */
 body:not(.app-active) #dashboardWrap,
+body:not(.app-active) .cv-app-shell,
 #dashboardWrap[hidden] {
   display: none !important;
   visibility: hidden !important;
   height: 0 !important;
   max-height: 0 !important;
+  position: absolute !important;
+  left: -99999px !important;
   overflow: hidden !important;
   pointer-events: none !important;
 }
@@ -4079,8 +4156,8 @@ body:not(.app-active) {
             <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
           </div>
 
-          <h2 class="cv-signin-title" id="authTitle">Sign In</h2>
-          <p class="cv-signin-sub" id="authSub">Access your account to continue</p>
+          <h2 class="cv-signin-title" id="authTitle" style="text-align:center !important">Sign In</h2>
+          <p class="cv-signin-sub" id="authSub" style="text-align:center !important">Access your account to continue</p>
           
 
           <form id="authForm" novalidate>
@@ -4114,7 +4191,7 @@ body:not(.app-active) {
             <button type="button" class="auth-link" id="authSwitchBtn">Create your ID</button>
           </p>
 
-          <p class="db-status" id="dbStatus">Checking server…</p>
+          
         </div>
       </div>
     </div>
@@ -4219,26 +4296,27 @@ body:not(.app-active) {
 
     <!-- Main Content Panel -->
     <main class="cv-main-panel" id="cvMainPanel">
-      <!-- Top Navigation Header -->
+      <!-- Top Navigation Header (Requirement 7: Cart Repositioned; Requirement 8: Good Morning Greeting Restored on Right Side) -->
       <header class="cv-top-header">
-        <div class="cv-header-single-line">
-          <!-- User Greeting & Role Badge -->
-          <div class="user-badge" id="uBadge">
-            <span id="hi">Good morning, Shilish Reddy</span>
-            <span class="role-pill" id="rolePill">ADMIN</span>
-          </div>
-
-          <!-- Top Actions in One Line -->
-          <div class="cv-header-actions acts">
-            <button class="b" id="bAl" title="Toggle Expiry Alerts">Alerts: OFF</button>
-            <button class="b" id="bRefresh" title="Reload current data">🔄 Refresh</button>
+        <div class="cv-header-single-line" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+          <!-- Left Actions: Quick Search, Refresh, Expiry Alerts & Cart -->
+          <div class="cv-header-actions acts" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <button class="b" id="bQs" title="Quick Search (Ctrl + K)"><span>🔎 Search</span></button>
-            <button class="b b-logout" id="bLo" title="Sign out of your session">Logout</button>
+            <button class="b" id="bRefresh" title="Reload current data">🔄 Refresh</button>
+            <button class="b" id="bAl" title="Toggle Expiry Alerts">Alerts: OFF</button>
+            <button class="b" id="btnHeaderCart" title="View Cart / Recycle Bin" onclick="showContainer('box-bin')" style="font-weight:700">
+              🛒 Cart (<span id="headerCartCountBadge">0</span>)
+            </button>
           </div>
 
-          <!-- Right Most Corner: User Profile Avatar Circle (Settings & Expiry Alert container removed from top bar) -->
-          <div class="cv-header-icons">
-            <div class="cv-avatar-circle" id="userAvatarCircle" title="User Profile">S</div>
+          <!-- Right Side: Restored Good Morning Greeting Container & Profile Actions -->
+          <div style="display:flex;align-items:center;gap:12px;margin-left:auto;flex-wrap:nowrap">
+            <div class="user-badge" id="uBadge" style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:var(--card-subtle);border:1px solid var(--line);border-radius:99px;font-weight:700;font-size:13.5px">
+              <span id="hi">Good morning, Shilish Reddy</span>
+              <span class="role-pill" id="rolePill">ADMIN</span>
+            </div>
+            <div class="cv-avatar-circle" id="userAvatarCircle" title="User Settings & Account Options" onclick="openSettingsModal()" style="cursor:pointer">S</div>
+            <button class="b b-logout" id="bLo" title="Sign out of your session" style="font-weight:700">Logout</button>
           </div>
         </div>
       </header>
@@ -4276,7 +4354,7 @@ body:not(.app-active) {
         <button class="tab-btn" data-target="box-exp">⚠️ Expiry Alerts</button>
         <button class="tab-btn" data-target="box-health">📈 Data Health</button>
         <button class="tab-btn cv-pill-danger" data-target="box-errors">🚨 Errored Entries (<span id="errorsCountBadge">0</span>)</button>
-        <button class="tab-btn" data-target="box-bin" hidden>🛒 Cart (<span id="cartCountBadge">0</span>)</button>
+        <button class="tab-btn" data-target="box-bin">🛒 Cart (<span id="cartCountBadge">0</span>)</button>
       </nav>
 
       <!-- =========================================================================
@@ -4923,33 +5001,27 @@ body:not(.app-active) {
                 <input type="search" id="valReviewSearch" placeholder="🔍 Search in segregated entries…"
                   style="font-size:12.5px;padding:6px 12px;border-radius:6px;min-width:220px;border:1px solid var(--line)" />
                 <div style="display:flex;gap:6px;flex-wrap:wrap" id="valFilterBtns">
-                  <button class="b on" data-valfilter="all" type="button" id="btnFilterAll">All (<span id="vAllCount">0</span>)</button>
-                  <button class="b" data-valfilter="new" type="button" id="btnFilterNew" style="font-weight:700;color:var(--ok)">✨ New (<span id="vNewCount">0</span>)</button>
-                  <button class="b" data-valfilter="updated" type="button" id="btnFilterUpdated" style="font-weight:700;color:#0284c7">🔄 Updated (<span id="vUpdatedCount">0</span>)</button>
-                  <button class="b" data-valfilter="existing" type="button" id="btnFilterExisting">📋 Existing (<span id="vExistingCount">0</span>)</button>
-                  <button class="b" data-valfilter="review" type="button" id="btnFilterReview" style="font-weight:700;color:#d97706">🔍 Review (<span id="vReviewCount">0</span>)</button>
-                  <button class="b" data-valfilter="duplicate" type="button" id="btnFilterDup">⚠️ Duplicates (<span id="vDupCount">0</span>)</button>
-                  <button class="b" data-valfilter="cannot" type="button" id="btnFilterCannot" style="font-weight:700;color:#dc2626">⛔ Blocked (<span id="vCannotCount">0</span>)</button>
+                  <button class="b on" data-valfilter="new" type="button" id="btnFilterNew" style="font-weight:700;color:var(--ok)">✨ New Records Eligible for Insertion (<span id="vNewCount">0</span>)</button>
+                  <button class="b" data-valfilter="existing" type="button" id="btnFilterExisting">📋 Skipped Existing in DB (<span id="vExistingCount">0</span>)</button>
+                  <button class="b" data-valfilter="duplicate" type="button" id="btnFilterDup">⚠️ File Duplicates (<span id="vDupCount">0</span>)</button>
                 </div>
               </div>
             </div>
 
-            <!-- The 7 Segregation Metric Cards (Requirements 3 & 5) -->
-            <div class="stats" style="margin-top:10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px">
-              <div class="card stat" style="border-left-color:var(--primary);padding:10px 12px"><b id="vTotalScanned">0</b><span>1. Total Scanned</span></div>
-              <div class="card stat" style="border-left-color:#10b981;padding:10px 12px"><b id="vValid">0</b><span>2. Valid Entries</span></div>
-              <div class="card stat" style="border-left-color:#f59e0b;padding:10px 12px"><b id="vReview">0</b><span>3. Requiring Review</span></div>
-              <div class="card stat" style="border-left-color:#ef4444;padding:10px 12px"><b id="vDup">0</b><span>4. Duplicate Entries</span></div>
-              <div class="card stat" style="border-left-color:var(--ok);padding:10px 12px"><b id="vNew">0</b><span>5. Eligible to Add</span></div>
-              <div class="card stat" style="border-left-color:#38bdf8;padding:10px 12px"><b id="vUpdated">0</b><span>6. Eligible to Update</span></div>
-              <div class="card stat" style="border-left-color:#64748b;padding:10px 12px"><b id="vCannotAdd">0</b><span>7. Cannot Add/Update</span></div>
+            <!-- Bulk Upload Status Metric Cards (Requirement 10: Only New Records & Total Scanned File Count) -->
+            <div class="stats" style="margin-top:10px;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:10px">
+              <div class="card stat" style="border-left-color:var(--primary);padding:12px 14px"><b id="vTotalScanned">0</b><span>📄 Total Scanned File Rows</span></div>
+              <div class="card stat" style="border-left-color:var(--ok);padding:12px 14px"><b id="vNew" style="color:var(--ok)">0</b><span>✨ Total New Records</span></div>
+              <div class="card stat" style="border-left-color:#10b981;padding:12px 14px"><b id="vValid">0</b><span>✅ Ready for Insertion</span></div>
+              <div class="card stat" style="border-left-color:#94a3b8;padding:12px 14px"><b id="vExistingCountCard">0</b><span>📋 Skipped Existing Records</span></div>
+              <div class="card stat" style="border-left-color:#ef4444;padding:12px 14px"><b id="vDup" style="color:#ef4444">0</b><span>⚠️ Duplicate File Entries</span></div>
             </div>
 
             <!-- Reconciliation Status Box (Requirement 7) -->
             <div id="valReconciliationBox" style="margin:12px 0;padding:12px 16px;border-radius:10px;background:var(--card-subtle);border:1.5px solid var(--line);font-size:13px">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
                 <span id="reconcileFormulaTitle" style="font-weight:700;display:flex;align-items:center;gap:6px">
-                  <span>📐</span> <span>Reconciliation: Total Scan = Eligible Add + Eligible Update + Duplicate/Skip + Review + Cannot Add</span>
+                  <span>📐</span> <span>Reconciliation: Total Scanned = New Eligible Records + Skipped Existing in Database + File Duplicates</span>
                 </span>
                 <span id="reconcileBadge" class="badge" style="font-weight:700;padding:4px 10px;border-radius:6px;background:var(--ok);color:#fff">✓ 100% Reconciled</span>
               </div>
@@ -5023,14 +5095,12 @@ body:not(.app-active) {
               <div class="progress-fill" id="progBar" style="width:0%;height:100%;background:linear-gradient(90deg, #2563eb, #38bdf8);transition:width 0.2s ease"></div>
             </div>
 
-            <!-- Live Metric Counters -->
-            <div class="stats" style="margin:14px 0 10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px">
-              <div class="card stat" style="padding:10px 14px"><b id="progTotalCount" style="font-size:16px">0</b><span>Total Data</span></div>
-              <div class="card stat" style="padding:10px 14px;border-left-color:var(--primary)"><b id="progUploadedCount" style="font-size:16px">0</b><span>Uploaded</span></div>
-              <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="progRemainCount" style="font-size:16px">0</b><span>Remaining</span></div>
-              <div class="card stat" style="padding:10px 14px;border-left-color:var(--ok)"><b id="progAddedCount" style="font-size:16px">0</b><span>Added New to DB</span></div>
-              <div class="card stat" style="padding:10px 14px;border-left-color:#38bdf8"><b id="progUpdatedCount" style="font-size:16px">0</b><span>Updated</span></div>
-              <div class="card stat" style="padding:10px 14px;border-left-color:var(--warn)"><b id="progDupCount" style="font-size:16px">0</b><span>Duplicate Errors</span></div>
+            <!-- Bulk Upload Live Status (Requirement 10: Total New, Ready for Insertion, Successfully Inserted, Failed New) -->
+            <div class="stats" style="margin:14px 0 10px;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:10px">
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--primary)"><b id="progTotalCount" style="font-size:16px">0</b><span>Total New Records</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:#0284c7"><b id="progUploadedCount" style="font-size:16px">0</b><span>New Records Ready for Insertion</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--ok)"><b id="progAddedCount" style="font-size:16px;color:var(--ok)">0</b><span>Successfully Inserted New Records</span></div>
+              <div class="card stat" style="padding:10px 14px;border-left-color:var(--danger)"><b id="progFailedCount" style="font-size:16px;color:var(--danger)">0</b><span>Failed New Records</span></div>
             </div>
 
             <!-- ONLY Show New Entries While Loading -->
@@ -6956,8 +7026,8 @@ body:not(.app-active) {
     <script>
       // Apply theme immediately from localStorage before render
       (function() {
-        const pal = localStorage.getItem('valut_palette') || 'enterprise_clean';
-        const m = localStorage.getItem('valut_theme_mode') || 'dark';
+        const pal = localStorage.getItem('valut_palette') || 'royal_navy';
+        const m = localStorage.getItem('valut_theme_mode') || 'light';
         document.documentElement.setAttribute('data-palette', pal);
         document.documentElement.setAttribute('data-mode', m);
       })();
@@ -7000,10 +7070,12 @@ body:not(.app-active) {
         return false;
       };
       const canAccessLoginInventory = () => {
-        return isSuperAdminUser() || isMasterAdminUser();
+        const u = getUser();
+        return isSuperAdminUser() || isMasterAdminUser() || u.role === 'admin' || Boolean(u.is_admin);
       };
       const canAccessUsersManager = () => {
-        return isSuperAdminUser() || isMasterAdminUser();
+        const u = getUser();
+        return isSuperAdminUser() || isMasterAdminUser() || u.role === 'admin' || Boolean(u.is_admin);
       };
 
       // BSTPL Global Loading Indicator Controller (Requirement 1)
@@ -7703,7 +7775,7 @@ body:not(.app-active) {
         $('authNameWrap').hidden = isLogin;
         $('authTitle').textContent = isLogin ? 'Sign in' : 'Create your ID';
         $('authSub').textContent = isLogin ? 'Enter your employee ID and password to access BSTPL CustomerVault.' : 'Create an account to access BSTPL CustomerVault.';
-        $('authSubmitLabel').textContent = isLogin ? 'Sign in to CustomerVault' : 'Create my ID';
+        $('authSubmitLabel').textContent = isLogin ? 'Sign in to BSTPL CustomerVault' : 'Create my ID';
         $('authSwitchText').textContent = isLogin ? 'New to BSTPL CustomerVault?' : 'Already have an ID?';
         $('authSwitchBtn').textContent = isLogin ? 'Create your ID' : 'Sign in';
         $('authErr').textContent = '';
@@ -7769,19 +7841,25 @@ body:not(.app-active) {
           $('authCard').classList.add('shake');
         } finally {
           $('authSubmit').disabled = false;
-          $('authSubmitLabel').textContent = authMode === 'login' ? 'Sign in to CustomerVault' : 'Create my ID';
+          $('authSubmitLabel').textContent = authMode === 'login' ? 'Sign in to BSTPL CustomerVault' : 'Create my ID';
         }
       };
 
       function logout(manual = false) {
         if (manual && tok) {
           try { fetch(API_BASE + '/auth/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, keepalive: true }); } catch { }
+          try { fetch(API_BASE + '/api/auth/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + tok }, keepalive: true }); } catch { }
         }
         clearTimeout(liveTimer);
+        clearTimeout(liveCycleTimer);
+        clearInterval(liveUpdatesModalTimer);
         livePolling = false;
+        liveUpdatesActive = false;
         tok = null;
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        try { sessionStorage.clear(); } catch(_) {}
+        document.querySelectorAll('dialog[open]').forEach(d => { try { d.close(); } catch(_) {} });
         switchView(false);
         toast('Signed out');
         if (manual) {
@@ -7815,10 +7893,12 @@ body:not(.app-active) {
           if ($('dashboardWrap')) {
             $('dashboardWrap').hidden = true;
             $('dashboardWrap').style.setProperty('display', 'none', 'important');
+            $('dashboardWrap').style.setProperty('visibility', 'hidden', 'important');
           }
           if ($('authWrap')) {
             $('authWrap').hidden = false;
             $('authWrap').style.setProperty('display', 'flex', 'important');
+            $('authWrap').style.setProperty('visibility', 'visible', 'important');
           }
           window.scrollTo(0, 0);
           if ($('authPw')) $('authPw').value = '';
@@ -7889,7 +7969,9 @@ body:not(.app-active) {
           if ($('btnEmptyCart')) $('btnEmptyCart').hidden = !canDeleteValidInventory();
           if ($('btnBulkDeleteImei')) $('btnBulkDeleteImei').hidden = !canDeleteValidInventory();
           if ($('btnBulkDeleteExcel')) $('btnBulkDeleteExcel').hidden = !canDeleteValidInventory();
-          $('cartCountBadge').textContent = (cart.length + (S.deleted_customers || 0)).toString();
+          const cartTotalNum = (cart.length + (S.deleted_customers || 0)).toString();
+          if ($('cartCountBadge')) $('cartCountBadge').textContent = cartTotalNum;
+          if ($('headerCartCountBadge')) $('headerCartCountBadge').textContent = cartTotalNum;
           if ($('errorsCountBadge')) $('errorsCountBadge').textContent = (S.errored_records || 0).toString();
 
           // Apply page permissions to navigation tabs
@@ -8082,6 +8164,9 @@ body:not(.app-active) {
 
       
       async function loadHomeContainer() {
+        // Automatically load real database Data Health on Home (Requirement 6)
+        loadHealthContainer();
+
         // Load recent activity from backend
         try {
           const res = await api('/api/activity?page=1&page_size=8');
@@ -9052,8 +9137,10 @@ body:not(.app-active) {
           const expFilter = ($('invExpiryFilter') ? $('invExpiryFilter').value : 'all') || 'all';
           showBstplLoader('Fetching inventory records from database…');
 
+          const activeSortCol = (expFilter !== 'all' && (!sortCol || sortCol === 'id')) ? 'expiry_date' : sortCol;
+          const activeSortDir = (expFilter !== 'all' && (!sortCol || sortCol === 'id')) ? 'asc' : sortDir;
           const [d, expSummary] = await Promise.all([
-            api(`/api/devices?page=${invPage}&page_size=10&q=${encodeURIComponent(invQ)}&column=${invCol}&expiry_filter=${expFilter}&sort_by=${sortCol}&sort_dir=${sortDir}${invCid ? '&customer_id=' + invCid : ''}`),
+            api(`/api/devices?page=${invPage}&page_size=10&q=${encodeURIComponent(invQ)}&column=${invCol}&expiry_filter=${expFilter}&sort_by=${activeSortCol}&sort_dir=${activeSortDir}${invCid ? '&customer_id=' + invCid : ''}`),
             api(`/api/devices/expiry-summary${invCid ? '?customer_id=' + invCid : ''}`).catch(() => null)
           ]);
 
@@ -9444,7 +9531,7 @@ body:not(.app-active) {
       /* =========================================================================
          CONTAINER 4: BULK UPLOAD (EXCEL)
          ========================================================================= */
-      let wbData = null, parsedRows = [], activeValResult = null, activeValFilter = 'all';
+      let wbData = null, parsedRows = [], activeValResult = null, activeValFilter = 'new';
 
       function isBlankDateCell(val) {
         if (val === null || val === undefined) return true;
@@ -13464,10 +13551,16 @@ body:not(.app-active) {
       async function loadExpiryContainer() {
         $('expRange').onchange = e => { expDays = +e.target.value; loadExpiryContainer(); };
         try {
-          const [l, rep] = await Promise.all([
+          const [rawL, rep] = await Promise.all([
             api('/api/alerts/expiry?days=' + expDays),
             api('/api/inventory/report')
           ]);
+          // Requirement 1: SIM Expiry sorting ascending by days remaining (fewest days left first, expired first)
+          const l = (rawL || []).slice().sort((a, b) => {
+            const d1 = (a.days_left != null) ? a.days_left : 999999;
+            const d2 = (b.days_left != null) ? b.days_left : 999999;
+            return d1 - d2;
+          });
 
           const staff = canDeleteValidInventory();
           const act = dev => `
@@ -15547,8 +15640,8 @@ body:not(.app-active) {
 
       /* ---------- Docked Theme Manager (6 Themes + Dark/Light) ---------- */
       function applyTheme(palette, mode) {
-        const pal = palette || localStorage.getItem('valut_palette') || 'enterprise_clean';
-        const m = mode || localStorage.getItem('valut_theme_mode') || 'dark';
+        const pal = palette || localStorage.getItem('valut_palette') || 'royal_navy';
+        const m = mode || localStorage.getItem('valut_theme_mode') || 'light';
 
         document.documentElement.setAttribute('data-palette', pal);
         document.documentElement.setAttribute('data-mode', m);
@@ -15588,7 +15681,7 @@ body:not(.app-active) {
         document.querySelectorAll('.theme-palette-opt').forEach(btn => {
           btn.onclick = () => {
             const pal = btn.dataset.paletteVal;
-            const currentMode = localStorage.getItem('valut_theme_mode') || 'dark';
+            const currentMode = localStorage.getItem('valut_theme_mode') || 'light';
             applyTheme(pal, currentMode);
             toast(`Applied theme: ${btn.querySelector('.theme-name')?.textContent || pal}`);
           };
@@ -15599,19 +15692,19 @@ body:not(.app-active) {
         const btnLight = $('btnModeLight');
         if (btnDark) {
           btnDark.onclick = () => {
-            const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+            const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
             applyTheme(currentPal, 'dark');
           };
         }
         if (btnLight) {
           btnLight.onclick = () => {
-            const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+            const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
             applyTheme(currentPal, 'light');
           };
         }
 
         // Apply saved or default theme immediately
-        applyTheme(localStorage.getItem('valut_palette') || 'enterprise_clean', localStorage.getItem('valut_theme_mode') || 'dark');
+        applyTheme(localStorage.getItem('valut_palette') || 'royal_navy', localStorage.getItem('valut_theme_mode') || 'light');
       }
 
       /* ---------- Main App Initialization ---------- */
@@ -15905,7 +15998,7 @@ body:not(.app-active) {
           }
         };
       });
-      if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openManageUsersModal;
+      if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openSettingsModal;
       if ($('btnHeaderSettings')) $('btnHeaderSettings').onclick = openManageUsersModal;
       if ($('btnHeaderBell')) $('btnHeaderBell').onclick = () => showContainer('box-exp');
       if ($('authForgotLink')) $('authForgotLink').onclick = () => {
@@ -15973,8 +16066,8 @@ body:not(.app-active) {
       function openSettingsModal() {
         const dlg = $('dlgSettings');
         if (!dlg) return;
-        const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
-        const currentMode = localStorage.getItem('valut_theme_mode') || 'dark';
+        const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
+        const currentMode = localStorage.getItem('valut_theme_mode') || 'light';
 
         // Highlight active palette and mode
         document.querySelectorAll('#dlgSettings .theme-palette-opt').forEach(btn => {
@@ -16002,14 +16095,14 @@ body:not(.app-active) {
       // Settings Mode Switchers
       if ($('settingsModeDark')) {
         $('settingsModeDark').onclick = () => {
-          const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+          const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
           applyTheme(currentPal, 'dark');
           openSettingsModal();
         };
       }
       if ($('settingsModeLight')) {
         $('settingsModeLight').onclick = () => {
-          const currentPal = localStorage.getItem('valut_palette') || 'enterprise_clean';
+          const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
           applyTheme(currentPal, 'light');
           openSettingsModal();
         };
@@ -16019,7 +16112,7 @@ body:not(.app-active) {
       document.querySelectorAll('#dlgSettings .theme-palette-opt').forEach(btn => {
         btn.onclick = () => {
           const pal = btn.dataset.paletteVal;
-          const currentMode = localStorage.getItem('valut_theme_mode') || 'dark';
+          const currentMode = localStorage.getItem('valut_theme_mode') || 'light';
           applyTheme(pal, currentMode);
           openSettingsModal();
           toast('Theme updated');
@@ -16036,11 +16129,22 @@ body:not(.app-active) {
 
       
       // Large Live Updates Popup Modal Handler
+      let liveUpdatesModalTimer = null;
+      function closeLiveUpdatesModal() {
+        clearInterval(liveUpdatesModalTimer);
+        liveUpdatesModalTimer = null;
+        if ($('dlgLiveUpdatesModal') && $('dlgLiveUpdatesModal').open) {
+          $('dlgLiveUpdatesModal').close();
+        }
+      }
+
       async function openLiveUpdatesModal() {
         const dlg = $('dlgLiveUpdatesModal');
         if (!dlg) return;
-        dlg.showModal();
+        if (!dlg.open) dlg.showModal();
         await refreshLiveUpdatesModalData();
+        clearInterval(liveUpdatesModalTimer);
+        liveUpdatesModalTimer = setInterval(refreshLiveUpdatesModalData, 6000);
       }
 
       async function refreshLiveUpdatesModalData() {
@@ -16090,7 +16194,7 @@ body:not(.app-active) {
       }
 
       if ($('sidebarLiveUpdatesBtn')) $('sidebarLiveUpdatesBtn').onclick = openLiveUpdatesModal;
-      if ($('closeDlgLiveUpdates')) $('closeDlgLiveUpdates').onclick = () => $('dlgLiveUpdatesModal').close();
+      if ($('closeDlgLiveUpdates')) $('closeDlgLiveUpdates').onclick = closeLiveUpdatesModal;
       if ($('dlgManualLiveRefresh')) $('dlgManualLiveRefresh').onclick = refreshLiveUpdatesModalData;
 
       // Settings Modal Options Hookup
@@ -16104,37 +16208,31 @@ body:not(.app-active) {
       if ($('btnCloseDlgSettingsFooter')) $('btnCloseDlgSettingsFooter').onclick = () => $('dlgSettings').close();
       if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openSettingsModal;
 
+      // Settings Functionality Fixes (Requirement 2, 3, 4)
       if ($('settingsBtnEditName')) {
         $('settingsBtnEditName').onclick = () => {
           $('dlgSettings').close();
           const u = getUser();
           openDlg('Edit Display Name', `
-            <label for="newName">Full Name</label>
-            <input id="newName" value="${esc(u.name || '')}" placeholder="Your display name" required />
-            <div class="row" style="margin-top:16px;justify-content:flex-end">
-              <button class="b" type="button" id="cEdN">Cancel</button>
-              <button class="b p" type="button" id="sEdN">Save</button>
-            </div>
-          `);
-          $('cEdN').onclick = closeDlg;
-          $('sEdN').onclick = async () => {
+            <label for="newName" style="font-weight:700;font-size:12.5px;display:block;margin-bottom:6px">Full Name</label>
+            <input id="newName" value="${esc(u.name || '')}" placeholder="Your display name" required style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--card);color:var(--text)" />
+          `, 'Save', async () => {
             const name = $('newName').value.trim();
-            if (!name) return;
-            try {
-              const res = await api('/users/me', { method: 'PUT', body: JSON.stringify({ name }) });
-              u.name = res.name;
-              localStorage.setItem('user', JSON.stringify(u));
-              closeDlg();
-              await updateChrome();
-              toast('Your display name has been updated');
-            } catch (err) { fail(err); }
-          };
+            if (!name) throw new Error('Name cannot be empty.');
+            const res = await api('/api/me/name', { method: 'PUT', body: JSON.stringify({ name }) });
+            u.name = res.name || name;
+            localStorage.setItem('user', JSON.stringify(u));
+            await updateChrome();
+            toast('Your display name has been updated');
+          });
         };
       }
 
       if ($('settingsBtnPassword')) {
         $('settingsBtnPassword').onclick = () => {
           $('dlgSettings').close();
+          if ($('pf')) $('pf').reset();
+          if ($('pe')) $('pe').textContent = '';
           if ($('pwd')) $('pwd').showModal();
         };
       }
@@ -16156,7 +16254,7 @@ body:not(.app-active) {
       if ($('settingsBtnLogout')) {
         $('settingsBtnLogout').onclick = () => {
           $('dlgSettings').close();
-          if ($('bLo')) $('bLo').click();
+          logout(true);
         };
       }
 
@@ -16308,10 +16406,78 @@ body:not(.app-active) {
           </div>
         </div>
 
-        <!-- Pure Light & Dark Mode (All other palettes removed) -->
-        <p style="margin:10px 0 0;font-size:12px;color:var(--muted);text-align:center">
-          Clean high-contrast theme system optimized for readability.
-        </p>
+        <!-- 6 Requested Themes Selector -->
+        <div>
+          <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:8px">Theme Style</label>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button type="button" class="theme-palette-opt" data-palette-val="royal_navy">
+              <div class="theme-swatch-group">
+                <span style="background:#0f2b5c"></span>
+                <span style="background:#d4af37"></span>
+                <span style="background:#f8fafc"></span>
+              </div>
+              <div class="theme-palette-info">
+                <div class="theme-name">Royal Navy</div>
+                <div class="theme-desc">Navy and gold (Default, Light Page)</div>
+              </div>
+            </button>
+            <button type="button" class="theme-palette-opt" data-palette-val="midnight">
+              <div class="theme-swatch-group">
+                <span style="background:#070d19"></span>
+                <span style="background:#1e3a8a"></span>
+                <span style="background:#eab308"></span>
+              </div>
+              <div class="theme-palette-info">
+                <div class="theme-name">Midnight</div>
+                <div class="theme-desc">Dark navy with soft gold</div>
+              </div>
+            </button>
+            <button type="button" class="theme-palette-opt" data-palette-val="emerald">
+              <div class="theme-swatch-group">
+                <span style="background:#065f46"></span>
+                <span style="background:#10b981"></span>
+                <span style="background:#d4af37"></span>
+              </div>
+              <div class="theme-palette-info">
+                <div class="theme-name">Emerald</div>
+                <div class="theme-desc">Deep green with gold</div>
+              </div>
+            </button>
+            <button type="button" class="theme-palette-opt" data-palette-val="crimson_vault">
+              <div class="theme-swatch-group">
+                <span style="background:#881337"></span>
+                <span style="background:#e11d48"></span>
+                <span style="background:#d4af37"></span>
+              </div>
+              <div class="theme-palette-info">
+                <div class="theme-name">Crimson Vault</div>
+                <div class="theme-desc">Wine red, close to your brand</div>
+              </div>
+            </button>
+            <button type="button" class="theme-palette-opt" data-palette-val="ocean">
+              <div class="theme-swatch-group">
+                <span style="background:#0f766e"></span>
+                <span style="background:#0284c7"></span>
+                <span style="background:#f59e0b"></span>
+              </div>
+              <div class="theme-palette-info">
+                <div class="theme-name">Ocean</div>
+                <div class="theme-desc">Teal-blue with amber</div>
+              </div>
+            </button>
+            <button type="button" class="theme-palette-opt" data-palette-val="violet">
+              <div class="theme-swatch-group">
+                <span style="background:#581c87"></span>
+                <span style="background:#7e22ce"></span>
+                <span style="background:#d4af37"></span>
+              </div>
+              <div class="theme-palette-info">
+                <div class="theme-name">Violet</div>
+                <div class="theme-desc">Rich purple with gold</div>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -16380,9 +16546,7 @@ body:not(.app-active) {
         </button>
       </div>
 
-      <div style="display:flex; justify-content:flex-end; margin-top:16px; padding-top:14px; border-top:1px solid var(--line)">
-        <button type="button" class="b" id="btnCloseDlgSettingsFooter" style="padding:8px 18px; border-radius:10px; font-weight:700">✕ Close Settings</button>
-      </div>
+      
     </div>
   </dialog>
 
@@ -16406,7 +16570,7 @@ body:not(.app-active) {
       </div>
       <div style="display:flex; align-items:center; gap:12px">
         <span style="font-size:12px; color:#94a3b8" id="dlgLiveTime">Just now</span>
-        <button class="b ghost" id="closeDlgLiveUpdates" type="button" style="color:#fff; font-size:20px; padding:4px 10px; cursor:pointer">✕</button>
+        <button class="b ghost" id="closeDlgLiveUpdates" type="button" onclick="closeLiveUpdatesModal()" style="color:#fff; font-size:22px; padding:4px 12px; cursor:pointer; border-radius:8px; z-index:9999" aria-label="Close Live Updates">✕</button>
       </div>
     </div>
 

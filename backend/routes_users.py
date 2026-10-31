@@ -83,6 +83,7 @@ def change_password(data: schemas.PasswordIn, request: Request, db: Session = De
 
 
 @router.put("/me/name")
+@router.put("/users/me")
 def update_my_name(data: schemas.UserNameUpdate, db: Session = Depends(get_db),
                    current_user: models.User = Depends(get_current_user)):
     """Allows any logged-in employee to edit their own display name."""

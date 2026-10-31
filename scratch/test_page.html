@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+window.errors = [];
+window.onerror = function(msg, url, line, col, err) {
+  window.errors.push(`ERROR: ${msg} at line ${line}:${col}`);
+};
+</script>
+<script src="script_1.js"></script>
+</head>
+<body>
+<div id="out">TESTING</div>
+<script>
+document.getElementById('out').innerText = window.errors.length ? window.errors.join('\n') : 'NO_ERRORS_FOUND';
+</script>
+</body>
+</html>
