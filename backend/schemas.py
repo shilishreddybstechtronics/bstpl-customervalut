@@ -154,6 +154,9 @@ class UserOut(BaseModel):
     can_delete: Optional[bool] = False
     password: Optional[str] = None
     permissions: Optional[dict[str, bool]] = None
+    previous_name: Optional[str] = None
+    theme_palette: Optional[str] = None
+    theme_mode: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -410,6 +413,13 @@ class UserUpdate(BaseModel):
 
 class UserNameUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
+    confirm_name: Optional[str] = None
+    confirm_current_name: Optional[str] = None
+
+
+class ThemeUpdate(BaseModel):
+    palette: Optional[str] = None
+    mode: Optional[str] = None
 
 
 class PermissionsUpdate(BaseModel):

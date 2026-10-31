@@ -981,20 +981,29 @@ def bulk_add(data: schemas.BulkIn, db: Session = Depends(get_db),
             raw_iccid = str(r.iccid or "").strip()
             raw_imei = str(r.imei or "").strip()
 
+            # Skip in-file duplicate ICCIDs
+            if raw_iccid:
+                if raw_iccid in seen_in_batch_iccid or raw_iccid.lower() in seen_in_batch_iccid:
+                    skipped.append(raw_iccid)
+                    continue
+                seen_in_batch_iccid.add(raw_iccid)
+                seen_in_batch_iccid.add(raw_iccid.lower())
+
+            # Skip in-file duplicate IMEIs
+            if raw_imei:
+                if raw_imei in seen_in_batch_imei or raw_imei.lower() in seen_in_batch_imei:
+                    skipped.append(raw_imei)
+                    continue
+                seen_in_batch_imei.add(raw_imei)
+                seen_in_batch_imei.add(raw_imei.lower())
+
             # Skip existing ICCIDs in DB
             if raw_iccid and (raw_iccid in existing_iccids or raw_iccid.lower() in existing_iccids):
-                skipped.append(raw_iccid)
-                continue
-            # Skip in-file duplicate ICCIDs
-            if raw_iccid and raw_iccid in seen_in_batch_iccid:
                 skipped.append(raw_iccid)
                 continue
 
             # Skip existing IMEIs in DB
             if raw_imei and (raw_imei in existing_imeis or raw_imei.lower() in existing_imeis):
-                skipped.append(raw_imei)
-                continue
-            if raw_imei and raw_imei in seen_in_batch_imei:
                 skipped.append(raw_imei)
                 continue
 

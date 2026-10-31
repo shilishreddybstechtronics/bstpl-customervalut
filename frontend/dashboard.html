@@ -1778,7 +1778,7 @@
       }
     }
 
-    /* ===== 6 THEMES (with Light & Dark Mode Support) ===== */
+    /* ===== 7 THEMES (with Light & Dark Mode Support) ===== */
 
     /* 1. ROYAL NAVY (Default: Navy & Gold, Light Page) */
     [data-palette="royal_navy"][data-mode="light"],
@@ -2049,6 +2049,51 @@
       --danger: #f87171;
       --warn: #fbbf24;
       --cv-sidebar-bg: linear-gradient(180deg, #10021e 0%, #1a052e 100%);
+    }
+
+    /* 7. SUNSET (Burnt Orange and Warm Amber) */
+    [data-palette="sunset"][data-mode="light"],
+    [data-palette="sunset"]:not([data-mode="dark"]) {
+      --bg: #fffbf5;
+      --bg-gradient: linear-gradient(180deg, #fffbf5 0%, #fef3e2 100%);
+      --card: #ffffff;
+      --card-subtle: #fef3e2;
+      --text: #431407;
+      --text-dim: #7c2d12;
+      --ink: #431407;
+      --ink2: #7c2d12;
+      --line: #fed7aa;
+      --primary: #c2410c;
+      --primary-hover: #9a3412;
+      --accent: #f59e0b;
+      --accentd: #d97706;
+      --accent-light: #fef3c7;
+      --muted: #9a3412;
+      --ok: #16a34a;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #7c2d12 0%, #9a3412 100%);
+    }
+    [data-palette="sunset"][data-mode="dark"] {
+      --bg: #1c0f0a;
+      --bg-gradient: linear-gradient(180deg, #1c0f0a 0%, #2b170e 100%);
+      --card: #2b170e;
+      --card-subtle: #3d2014;
+      --text: #ffedd5;
+      --text-dim: #fdba74;
+      --ink: #ffedd5;
+      --ink2: #fed7aa;
+      --line: #7c2d12;
+      --primary: #ea580c;
+      --primary-hover: #f97316;
+      --accent: #f59e0b;
+      --accentd: #fbbf24;
+      --accent-light: rgba(245, 158, 11, 0.2);
+      --muted: #fdba74;
+      --ok: #34d399;
+      --danger: #f87171;
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #120906 0%, #1c0f0a 100%);
     }
 
     [data-palette] body {
@@ -4304,7 +4349,7 @@ body:not(.app-active) {
             <button class="b" id="bQs" title="Quick Search (Ctrl + K)"><span>🔎 Search</span></button>
             <button class="b" id="bRefresh" title="Reload current data">🔄 Refresh</button>
             <button class="b" id="bAl" title="Toggle Expiry Alerts">Alerts: OFF</button>
-            <button class="b" id="btnHeaderCart" title="View Cart / Recycle Bin" onclick="showContainer('box-bin')" style="font-weight:700">
+            <button class="b" id="btnHeaderCart" title="View Cart / Recycle Bin" onclick="openCartModal()" style="font-weight:700">
               🛒 Cart (<span id="headerCartCountBadge">0</span>)
             </button>
           </div>
@@ -4354,7 +4399,6 @@ body:not(.app-active) {
         <button class="tab-btn" data-target="box-exp">⚠️ Expiry Alerts</button>
         <button class="tab-btn" data-target="box-health">📈 Data Health</button>
         <button class="tab-btn cv-pill-danger" data-target="box-errors">🚨 Errored Entries (<span id="errorsCountBadge">0</span>)</button>
-        <button class="tab-btn" data-target="box-bin">🛒 Cart (<span id="cartCountBadge">0</span>)</button>
       </nav>
 
       <!-- =========================================================================
@@ -6026,73 +6070,79 @@ body:not(.app-active) {
     </section>
 
     <!-- =========================================================================
-       CONTAINER 11: SEPARATE CART (RECYCLE BIN)
+       POPUP MODAL: CART (RECYCLE BIN) - Opens as popup with Cross (X) close
        ========================================================================= -->
-    <section class="container-box" id="box-bin">
-      <div class="container-tag">🛒 Cart / Recycle Bin Container</div>
-      <div class="row">
-        <div class="grow">
-          <h2>Cart — Recover Deleted Items</h2>
-          <p class="sub" style="margin:0">Items placed in the Cart remain recoverable. Restore with 1 click or
-            permanently purge forever.</p>
+    <dialog id="dlgCartModal" class="modal-card" style="width:min(1100px, 95vw); max-height:90vh; padding:0; border-radius:18px; border:1px solid var(--line); box-shadow:0 30px 80px rgba(0,0,0,.45); overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card-subtle);position:sticky;top:0;z-index:10">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">🛒</span>
+          <div>
+            <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text)">Cart — Recover Deleted Items</h3>
+            <p class="sub" style="margin:2px 0 0;font-size:12px">Items placed in the Cart remain recoverable. Restore with 1 click or permanently purge forever.</p>
+          </div>
         </div>
-        <button class="b d" id="btnEmptyCart" hidden>Empty Cart Forever</button>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="b d" id="btnEmptyCart" hidden>Empty Cart Forever</button>
+          <button class="b ghost" id="closeDlgCart" type="button" onclick="closeCartModal()" style="font-size:18px;min-width:38px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border-radius:8px" aria-label="Close Cart">✕</button>
+        </div>
       </div>
 
-      <!-- Cart Deletion Progress Container (matches Upload Data Progress UI) -->
-      <div id="cartEmptyProgressWrap" hidden style="margin:18px 0;background:var(--card);padding:20px;border:1.5px solid var(--danger, #ef4444);border-radius:12px;box-shadow:0 6px 20px rgba(239,68,68,0.12)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <span id="cartProgSpinIcon" class="spin" style="font-size:22px">⏳</span>
-            <div>
-              <div style="display:flex;align-items:center;gap:8px">
-                <img src="logo.svg" alt="Company Logo" style="width:20px;height:20px;object-fit:contain" onerror="this.style.display='none'" />
-                <b id="cartProgTitle" style="font-size:15px;color:var(--ink)">Emptying Cart Forever (Permanent Deletion)…</b>
+      <div style="padding:20px 24px; max-height:calc(90vh - 80px); overflow-y:auto" id="box-bin">
+        <!-- Cart Deletion Progress Container (matches Upload Data Progress UI) -->
+        <div id="cartEmptyProgressWrap" hidden style="margin:0 0 18px;background:var(--card);padding:20px;border:1.5px solid var(--danger, #ef4444);border-radius:12px;box-shadow:0 6px 20px rgba(239,68,68,0.12)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span id="cartProgSpinIcon" class="spin" style="font-size:22px">⏳</span>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <img src="logo.svg" alt="Company Logo" style="width:20px;height:20px;object-fit:contain" onerror="this.style.display='none'" />
+                  <b id="cartProgTitle" style="font-size:15px;color:var(--ink)">Emptying Cart Forever (Permanent Deletion)…</b>
+                </div>
+                <div id="cartProgStatus" style="font-size:12.5px;color:var(--danger, #dc2626);font-weight:600;margin-top:2px">Preparing batches…</div>
               </div>
-              <div id="cartProgStatus" style="font-size:12.5px;color:var(--danger, #dc2626);font-weight:600;margin-top:2px">Preparing batches…</div>
+            </div>
+            <div style="text-align:right">
+              <span id="cartProgPct" style="font-size:22px;font-weight:800;color:var(--danger, #dc2626)">0%</span>
+              <div id="cartProgRowsCount" style="font-size:12px;font-weight:600;color:var(--muted)">0 / 0 records</div>
             </div>
           </div>
-          <div style="text-align:right">
-            <span id="cartProgPct" style="font-size:22px;font-weight:800;color:var(--danger, #dc2626)">0%</span>
-            <div id="cartProgRowsCount" style="font-size:12px;font-weight:600;color:var(--muted)">0 / 0 records</div>
+
+          <!-- Animated Progress Bar -->
+          <div class="progress-bar" style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;margin:10px 0;border:1px solid var(--line)">
+            <div class="progress-fill" id="cartProgBar" style="width:0%;height:100%;background:linear-gradient(90deg, #ef4444, #dc2626);transition:width 0.2s ease"></div>
+          </div>
+
+          <!-- Live Metric Counters -->
+          <div class="stats" style="margin:14px 0 10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px">
+            <div class="card stat" style="padding:10px 14px"><b id="cartProgTotalCount" style="font-size:16px">0</b><span>Total in Cart</span></div>
+            <div class="card stat" style="padding:10px 14px;border-left-color:var(--danger, #ef4444)"><b id="cartProgDeletedCount" style="font-size:16px;color:var(--danger, #dc2626)">0</b><span>Permanently Deleted</span></div>
+            <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="cartProgRemainCount" style="font-size:16px">0</b><span>Remaining in Cart</span></div>
+            <div class="card stat" style="padding:10px 14px;border-left-color:#f97316"><b id="cartProgCustsCount" style="font-size:16px">0</b><span>Customer Tables Dropped</span></div>
+            <div class="card stat" style="padding:10px 14px;border-left-color:var(--primary)"><b id="cartProgElapsed" style="font-size:16px">0.0s</b><span>Time Elapsed</span></div>
+          </div>
+
+          <!-- Live Monospace Activity Stream Log Box -->
+          <div id="cartProgLiveDetailBox" style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:12px;max-height:120px;overflow-y:auto;font-family:monospace;margin-top:10px">
+            <div style="color:var(--muted)">[Ready] Waiting to start permanent deletion…</div>
+          </div>
+
+          <!-- Completion Banner -->
+          <div id="cartProgCompleteBanner" hidden style="margin-top:14px;background:var(--ok-bg, rgba(16,185,129,0.1));border:1px solid var(--ok, #10b981);border-radius:10px;padding:14px;color:var(--ink)">
+            <div style="font-weight:700;font-size:14px;color:var(--ok, #10b981);margin-bottom:4px">✅ Cart Successfully Emptied!</div>
+            <div id="cartProgCompleteSummary" style="font-size:13px">All deleted device records and customer tables have been permanently erased from the database and TiDB Cloud.</div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="b" id="btnCloseCartProgress" type="button">✕ Dismiss Deletion Status</button>
+            <button class="b p" id="btnRefreshCart" type="button">🔄 Refresh Cart</button>
           </div>
         </div>
 
-        <!-- Animated Progress Bar -->
-        <div class="progress-bar" style="height:14px;background:var(--card-subtle);border-radius:7px;overflow:hidden;margin:10px 0;border:1px solid var(--line)">
-          <div class="progress-fill" id="cartProgBar" style="width:0%;height:100%;background:linear-gradient(90deg, #ef4444, #dc2626);transition:width 0.2s ease"></div>
-        </div>
-
-        <!-- Live Metric Counters -->
-        <div class="stats" style="margin:14px 0 10px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px">
-          <div class="card stat" style="padding:10px 14px"><b id="cartProgTotalCount" style="font-size:16px">0</b><span>Total in Cart</span></div>
-          <div class="card stat" style="padding:10px 14px;border-left-color:var(--danger, #ef4444)"><b id="cartProgDeletedCount" style="font-size:16px;color:var(--danger, #dc2626)">0</b><span>Permanently Deleted</span></div>
-          <div class="card stat" style="padding:10px 14px;border-left-color:var(--muted)"><b id="cartProgRemainCount" style="font-size:16px">0</b><span>Remaining in Cart</span></div>
-          <div class="card stat" style="padding:10px 14px;border-left-color:#f97316"><b id="cartProgCustsCount" style="font-size:16px">0</b><span>Customer Tables Dropped</span></div>
-          <div class="card stat" style="padding:10px 14px;border-left-color:var(--primary)"><b id="cartProgElapsed" style="font-size:16px">0.0s</b><span>Time Elapsed</span></div>
-        </div>
-
-        <!-- Live Monospace Activity Stream Log Box -->
-        <div id="cartProgLiveDetailBox" style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:12px;max-height:120px;overflow-y:auto;font-family:monospace;margin-top:10px">
-          <div style="color:var(--muted)">[Ready] Waiting to start permanent deletion…</div>
-        </div>
-
-        <!-- Completion Banner -->
-        <div id="cartProgCompleteBanner" hidden style="margin-top:14px;background:var(--ok-bg, rgba(16,185,129,0.1));border:1px solid var(--ok, #10b981);border-radius:10px;padding:14px;color:var(--ink)">
-          <div style="font-weight:700;font-size:14px;color:var(--ok, #10b981);margin-bottom:4px">✅ Cart Successfully Emptied!</div>
-          <div id="cartProgCompleteSummary" style="font-size:13px">All deleted device records and customer tables have been permanently erased from the database and TiDB Cloud.</div>
-        </div>
-
-        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
-          <button class="b" id="btnCloseCartProgress" type="button">✕ Dismiss Deletion Status</button>
-          <button class="b p" id="btnRefreshCart" type="button">🔄 Refresh Cart</button>
+        <div id="cartBody">
+          <div class="empty">Checking Cart items…</div>
         </div>
       </div>
-
-      <div id="cartBody">
-        <div class="empty">Checking Cart items…</div>
-      </div>
-    </section>
+    </dialog>
     </main>
   </div>
 
@@ -6839,20 +6889,95 @@ body:not(.app-active) {
     </div>
   </dialog>
 
-  <!-- Password Change Dialog -->
-  <dialog id="pwd">
-    <form id="pf">
-      <h2>Change Account Password</h2>
-      <label for="p1">Current Password</label>
-      <input type="password" id="p1" autocomplete="current-password" required />
-      <label for="p2" style="margin-top:12px">New Password (at least 8 characters)</label>
-      <input type="password" id="p2" autocomplete="new-password" minlength="8" required />
-      <label for="p3" style="margin-top:12px">Repeat New Password</label>
-      <input type="password" id="p3" autocomplete="new-password" required />
-      <p class="err" id="pe" role="alert"></p>
-      <div class="row" style="margin:16px 0 0; justify-content: flex-end;">
-        <button class="b" type="button" id="pc">Cancel</button>
-        <button class="b p" type="submit">Update Password</button>
+  <!-- =========================================================================
+     POPUP: EDIT EMPLOYEE NAME (Present Name, New Name, Confirm New Name + Cross (X) Close)
+     ========================================================================= -->
+  <dialog id="dlgEditName" class="modal-card" style="width:min(480px, 94vw); padding:0; border-radius:18px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.35); overflow:hidden">
+    <div style="padding:16px 22px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); background:var(--card-subtle)">
+      <div style="display:flex; align-items:center; gap:10px">
+        <span style="font-size:22px">✏️</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text)">Edit Employee Name</h3>
+          <span style="font-size:12px; color:var(--muted)">Change your account display name across the platform</span>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgEditName" type="button" onclick="closeEditNameModal()" style="font-size:18px; min-width:38px; min-height:38px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; border-radius:8px" aria-label="Close">✕</button>
+    </div>
+
+    <form id="formEditName" style="padding:20px 24px; margin:0">
+      <!-- 1. Current Name (Text box down of that showing the present name) -->
+      <div style="margin-bottom:16px">
+        <label for="editNameCurrent" style="display:block; font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:6px">Current Name</label>
+        <input type="text" id="editNameCurrent" readonly disabled style="width:100%; box-sizing:border-box; background:var(--card-subtle); color:var(--text); font-weight:700; opacity:0.95; cursor:not-allowed; border:1.5px solid var(--line); border-radius:8px; padding:10px 12px; font-size:14px" />
+        <span style="display:block; font-size:11px; color:var(--muted); margin-top:4px">Your present registered display name</span>
+      </div>
+
+      <!-- 2. Updated Name (Text box to enter name externally by user) -->
+      <div style="margin-bottom:16px">
+        <label for="editNameUpdated" style="display:block; font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:6px">Updated Name <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="editNameUpdated" placeholder="Enter updated employee name" required autocomplete="name" style="width:100%; box-sizing:border-box; background:var(--card); color:var(--text); border:1.5px solid var(--line); border-radius:8px; padding:10px 12px; font-size:14px" />
+      </div>
+
+      <!-- 3. Confirm Name (Text box given by user to confirm updated name) -->
+      <div style="margin-bottom:16px">
+        <label for="editNameConfirm" style="display:block; font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:6px">Confirm Name <span style="color:var(--danger)">*</span></label>
+        <input type="text" id="editNameConfirm" placeholder="Re-enter updated employee name to confirm" required autocomplete="off" style="width:100%; box-sizing:border-box; background:var(--card); color:var(--text); border:1.5px solid var(--line); border-radius:8px; padding:10px 12px; font-size:14px" />
+      </div>
+
+      <p class="err" id="editNameError" role="alert" style="margin:8px 0 14px; font-size:12.5px; font-weight:600; color:var(--danger)" hidden></p>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px">
+        <button class="b" type="button" onclick="closeEditNameModal()">Cancel</button>
+        <button class="b p" type="submit" id="btnConfirmEditName">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- =========================================================================
+     POPUP: CHANGE ACCOUNT PASSWORD (Present Password, New Password, Confirm Password + Cross (X) Close)
+     ========================================================================= -->
+  <dialog id="pwd" class="modal-card" style="width:min(480px, 94vw); padding:0; border-radius:18px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.35); overflow:hidden">
+    <div style="padding:16px 22px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); background:var(--card-subtle)">
+      <div style="display:flex; align-items:center; gap:10px">
+        <span style="font-size:22px">🔑</span>
+        <div>
+          <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text)">Change Account Password</h3>
+          <span style="font-size:12px; color:var(--muted)">Update your employee login password credentials</span>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgChangePassword" type="button" onclick="closeChangePasswordModal()" style="font-size:18px; min-width:38px; min-height:38px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; border-radius:8px" aria-label="Close">✕</button>
+    </div>
+
+    <form id="pf" style="padding:20px 24px; margin:0">
+      <div style="margin-bottom:14px">
+        <label for="p1" style="display:block; font-size:12px; font-weight:700; color:var(--text); margin-bottom:6px">Current Password <span style="color:var(--danger)">*</span></label>
+        <div style="position:relative">
+          <input type="password" id="p1" autocomplete="current-password" placeholder="Enter current registered password" required style="width:100%; box-sizing:border-box; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 38px 10px 12px; font-size:13.5px" />
+          <button type="button" class="b ghost" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:2px 6px; font-size:13px; border:none; cursor:pointer" onclick="togglePasswordInputVisibility('p1')">👁️</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label for="p2" style="display:block; font-size:12px; font-weight:700; color:var(--text); margin-bottom:6px">New Password (min. 8 characters) <span style="color:var(--danger)">*</span></label>
+        <div style="position:relative">
+          <input type="password" id="p2" autocomplete="new-password" minlength="8" placeholder="Enter new password (min. 8 characters)" required style="width:100%; box-sizing:border-box; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 38px 10px 12px; font-size:13.5px" />
+          <button type="button" class="b ghost" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:2px 6px; font-size:13px; border:none; cursor:pointer" onclick="togglePasswordInputVisibility('p2')">👁️</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label for="p3" style="display:block; font-size:12px; font-weight:700; color:var(--text); margin-bottom:6px">Confirm New Password <span style="color:var(--danger)">*</span></label>
+        <div style="position:relative">
+          <input type="password" id="p3" autocomplete="new-password" placeholder="Re-enter new password to verify" required style="width:100%; box-sizing:border-box; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 38px 10px 12px; font-size:13.5px" />
+          <button type="button" class="b ghost" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); padding:2px 6px; font-size:13px; border:none; cursor:pointer" onclick="togglePasswordInputVisibility('p3')">👁️</button>
+        </div>
+      </div>
+
+      <p class="err" id="pe" role="alert" style="margin:8px 0 14px; font-size:12.5px; font-weight:600; color:var(--danger)" hidden></p>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px">
+        <button class="b" type="button" id="pc" onclick="closeChangePasswordModal()">Cancel</button>
+        <button class="b p" type="submit" id="btnConfirmChangePw">Confirm &amp; Change Password</button>
       </div>
     </form>
   </dialog>
@@ -8066,38 +8191,187 @@ body:not(.app-active) {
         if (alertsOn && S.expiring_30_days) toast(`🔔 Attention: ${S.expiring_30_days} devices expire within 30 days.`);
         else toast(alertsOn ? '🔔 Alerts enabled' : '🔕 Alerts disabled');
       };
-      if ($('bEditMyName')) {
-        $('bEditMyName').onclick = async () => {
-          const u = getUser();
-          const p = prompt('Enter your new display name:', u.name || '');
-          if (!p || !p.trim() || p.trim() === u.name) return;
-          try {
-            const r = await api('/api/me/name', { method: 'PUT', body: JSON.stringify({ name: p.trim() }) });
-            u.name = r.name;
-            localStorage.setItem('user', JSON.stringify(u));
-            const h = new Date().getHours();
-            $('hi').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${u.name || u.user_id}`;
-        const uInitial = ((u.name || u.user_id || 'U')[0] || 'U').toUpperCase();
-        if ($('userAvatarCircle')) $('userAvatarCircle').textContent = uInitial;
-            toast('Your display name has been updated');
-            if (typeof loadUsersContainer === 'function') loadUsersContainer();
-          } catch (err) { fail(err); }
-        };
-      }
-      if ($('bPw')) $('bPw').onclick = () => { if ($('pf')) $('pf').reset(); if ($('pe')) $('pe').textContent = ''; if ($('pwd')) $('pwd').showModal(); };
-      if ($('pc')) $('pc').onclick = () => { if ($('pwd')) $('pwd').close(); };
-      if ($('pf')) $('pf').onsubmit = async e => {
-        e.preventDefault(); $('pe').textContent = '';
-        if ($('p2').value !== $('p3').value) { $('pe').textContent = 'New passwords do not match.'; return; }
+      /* ---------- Edit Employee Name Modal Controller ---------- */
+      async function openEditNameModal() {
+        const dlg = $('dlgEditName');
+        if (!dlg) return;
+        const u = getUser();
+        let currentName = (window.CU && window.CU.name) || u.name || u.user_id || '';
+
+        // Fetch fresh profile from database
         try {
-          const r = await api('/api/me/password', { method: 'POST', body: JSON.stringify({ current_password: $('p1').value, new_password: $('p2').value }) });
+          const fresh = await api('/api/me');
+          if (fresh && fresh.name) {
+            currentName = fresh.name;
+            if (window.CU) Object.assign(window.CU, fresh);
+          }
+        } catch (_) {}
+
+        if ($('editNameCurrent')) $('editNameCurrent').value = currentName;
+        if ($('editNameUpdated')) $('editNameUpdated').value = '';
+        if ($('editNameConfirm')) $('editNameConfirm').value = '';
+        if ($('editNameError')) {
+          $('editNameError').textContent = '';
+          $('editNameError').hidden = true;
+        }
+        if (!dlg.open) dlg.showModal();
+        setTimeout(() => $('editNameUpdated')?.focus(), 50);
+      }
+
+      function closeEditNameModal() {
+        const dlg = $('dlgEditName');
+        if (dlg && dlg.open) dlg.close();
+      }
+
+      async function submitEditNameModal() {
+        const errEl = $('editNameError');
+        const currentName = ($('editNameCurrent')?.value || '').trim();
+        const updatedName = ($('editNameUpdated')?.value || '').trim();
+        const confirmName = ($('editNameConfirm')?.value || '').trim();
+
+        if (errEl) { errEl.textContent = ''; errEl.hidden = true; }
+
+        if (!updatedName) {
+          if (errEl) { errEl.textContent = 'Please enter an updated name.'; errEl.hidden = false; }
+          return;
+        }
+        if (updatedName.toLowerCase() === currentName.toLowerCase()) {
+          if (errEl) { errEl.textContent = 'Updated name must be different from current name.'; errEl.hidden = false; }
+          return;
+        }
+        if (updatedName !== confirmName) {
+          if (errEl) { errEl.textContent = 'Updated name and confirm name do not match.'; errEl.hidden = false; }
+          return;
+        }
+
+        const btn = $('btnConfirmEditName');
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+        try {
+          const res = await api('/api/me/name', {
+            method: 'PUT',
+            body: JSON.stringify({ name: updatedName, confirm_name: confirmName })
+          });
+          const finalName = res.name || updatedName;
+
+          // 1. Update user state in storage & memory
+          const u = getUser();
+          u.name = finalName;
+          localStorage.setItem('user', JSON.stringify(u));
+          if (window.CU) window.CU.name = finalName;
+
+          // 2. Update Top Bar Header Greeting
+          if ($('hi')) {
+            const h = new Date().getHours();
+            $('hi').textContent = `Good ${h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening'}, ${finalName}`;
+          }
+
+          // 3. Update User Avatar circle
+          const uInitial = ((finalName[0] || 'U')[0] || 'U').toUpperCase();
+          if ($('userAvatarCircle')) $('userAvatarCircle').textContent = uInitial;
+
+          // 4. Update in Settings Modal options immediately
+          if ($('settingsAccountName')) $('settingsAccountName').textContent = finalName;
+          if ($('settingsCurrentNameVal')) $('settingsCurrentNameVal').textContent = finalName;
+          if ($('settingsUserAvatarCircle')) $('settingsUserAvatarCircle').textContent = uInitial;
+
+          // 5. Update in Manage Users table
+          if (typeof loadUsersContainer === 'function' && $('usersTableWrap')) {
+            loadUsersContainer();
+          }
+
+          closeEditNameModal();
+          toast(`Name updated successfully to "${finalName}" across settings, website & database`);
+          await updateChrome().catch(() => {});
+        } catch (err) {
+          if (errEl) {
+            errEl.textContent = err.message || 'Failed to update name.';
+            errEl.hidden = false;
+          }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+        }
+      }
+
+      if ($('bEditMyName')) $('bEditMyName').onclick = openEditNameModal;
+      if ($('formEditName')) $('formEditName').onsubmit = e => { e.preventDefault(); submitEditNameModal(); };
+      if ($('btnConfirmEditName')) $('btnConfirmEditName').onclick = submitEditNameModal;
+
+      /* ---------- Change Account Password Modal Controller ---------- *//* ---------- Change Account Password Modal Controller ---------- */
+      function togglePasswordInputVisibility(id) {
+        const el = $(id);
+        if (el) el.type = (el.type === 'password') ? 'text' : 'password';
+      }
+
+      function openChangePasswordModal() {
+        const dlg = $('pwd');
+        if (!dlg) return;
+        if ($('pf')) $('pf').reset();
+        if ($('pe')) { $('pe').textContent = ''; $('pe').hidden = true; }
+        if (!dlg.open) dlg.showModal();
+        setTimeout(() => $('p1')?.focus(), 50);
+      }
+
+      function closeChangePasswordModal() {
+        const dlg = $('pwd');
+        if (dlg && dlg.open) dlg.close();
+      }
+
+      if ($('bEditMyName')) $('bEditMyName').onclick = openEditNameModal;
+      if ($('formEditName')) $('formEditName').onsubmit = e => { e.preventDefault(); submitEditNameModal(); };
+      if ($('btnConfirmEditName')) $('btnConfirmEditName').onclick = submitEditNameModal;
+
+      if ($('bPw')) $('bPw').onclick = openChangePasswordModal;
+      if ($('pc')) $('pc').onclick = closeChangePasswordModal;
+      if ($('closeDlgChangePassword')) $('closeDlgChangePassword').onclick = closeChangePasswordModal;
+      if ($('btnConfirmChangePw')) $('btnConfirmChangePw').onclick = e => {
+        if ($('pf')) {
+          if (typeof $('pf').requestSubmit === 'function') {
+            $('pf').requestSubmit();
+          } else {
+            $('pf').dispatchEvent(new Event('submit', { cancelable: true }));
+          }
+        }
+      };
+
+      if ($('pf')) $('pf').onsubmit = async e => {
+        e.preventDefault();
+        const pe = $('pe');
+        if (pe) { pe.textContent = ''; pe.hidden = true; }
+        const curPw = $('p1')?.value || '';
+        const newPw = $('p2')?.value || '';
+        const repPw = $('p3')?.value || '';
+
+        if (!curPw) {
+          if (pe) { pe.textContent = 'Please enter your current password.'; pe.hidden = false; }
+          return;
+        }
+        if (!newPw || newPw.length < 8) {
+          if (pe) { pe.textContent = 'New password must be at least 8 characters long.'; pe.hidden = false; }
+          return;
+        }
+        if (newPw !== repPw) {
+          if (pe) { pe.textContent = 'New password and confirm new password do not match.'; pe.hidden = false; }
+          return;
+        }
+
+        const btn = $('btnConfirmChangePw');
+        if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
+
+        try {
+          const r = await api('/api/me/password', { method: 'POST', body: JSON.stringify({ current_password: curPw, new_password: newPw }) });
           if (r.access_token) { tok = r.access_token; localStorage.setItem('token', tok); }
-          $('pwd').close();
-          toast('Password changed successfully');
-        } catch (err) { $('pe').textContent = err.message; }
+          closeChangePasswordModal();
+          toast('Password updated successfully in website & database');
+        } catch (err) {
+          if (pe) { pe.textContent = err.message || 'Failed to update password.'; pe.hidden = false; }
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = 'Confirm & Change Password'; }
+        }
       };
 
       /* =========================================================================
+         CONTAINER SWITCHER:/* =========================================================================
          CONTAINER SWITCHER: Separates each container cleanly on the same webpage
          ========================================================================= */
       $('mainTabs').onclick = e => {
@@ -8121,6 +8395,10 @@ body:not(.app-active) {
         }
         if (boxId === 'box-users') {
           openManageUsersModal();
+          return;
+        }
+        if (boxId === 'box-bin') {
+          openCartModal();
           return;
         }
 
@@ -14959,7 +15237,7 @@ body:not(.app-active) {
           window._allLoadedUsers = l;
           $('usersTableWrap').innerHTML = `
       <div class="tw"><table><thead><tr>
-        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th>${isSuperAdmin ? '<th>User Password</th>' : ''}<th>Configured Permissions</th><th>Created Date</th><th>Actions</th>
+        <th>Employee Name</th><th>Login ID</th><th>Security Role & Tier</th><th>Access Role</th>${(isSuperAdmin || isMasterAdmin) ? '<th>User Password</th>' : ''}<th>Configured Permissions</th><th>Created Date</th><th>Actions</th>
       </tr></thead><tbody>
       ${l.map(u => {
             const rawId = (u.user_id || '').trim().toLowerCase();
@@ -14985,9 +15263,9 @@ body:not(.app-active) {
             // Deletion permission: computed strictly by backend RBAC logic
             const canDelete = (typeof u.can_delete === 'boolean') ? u.can_delete : false;
 
-            // Super Admin password visibility (mutual privacy: 0001 and 0007 cannot see each other's passwords)
+            // Super Admin and Master Admin password visibility (0001 and 0007 mutual privacy)
             let pwdColHtml = '';
-            if (isSuperAdmin) {
+            if (isSuperAdmin || isMasterAdmin) {
               if (isOtherSuper) {
                 pwdColHtml = `<td><span class="sub" style="font-size:11.5px;color:var(--muted);font-weight:600">🔒 Protected (Hidden)</span></td>`;
               } else if (u.password) {
@@ -15618,96 +15896,99 @@ body:not(.app-active) {
 
       /* ---------- CSV Parser Utility ---------- */
       function parseCSV(t) {
-        const R = []; let r = [], f = '', q = false;
+        const R = []; let r = [], f = "", q = false;
         for (let i = 0; i < t.length; i++) {
           const c = t[i];
           if (q) {
-            if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; }
-            else f += c;
-          } else if (c === '"') q = true;
-          else if (c === ',') { r.push(f); f = ''; }
-          else if (c === '\n' || c === '\r') {
-            if (c === '\r' && t[i + 1] === '\n') i++;
-            r.push(f); f = '';
+            if (c === '"') {
+              if (t[i + 1] === '"') { f += '"'; i++; }
+              else { q = false; }
+            } else {
+              f += c;
+            }
+          } else if (c === '"') {
+            q = true;
+          } else if (c === ",") {
+            r.push(f);
+            f = "";
+          } else if (c === "\n" || c === "\r") {
+            if (c === "\r" && t[i + 1] === "\n") i++;
+            r.push(f);
+            f = "";
             if (r.some(x => x.trim())) R.push(r);
             r = [];
-          } else f += c;
+          } else {
+            f += c;
+          }
         }
         r.push(f);
         if (r.some(x => x.trim())) R.push(r);
         return R;
       }
 
-      /* ---------- Docked Theme Manager (6 Themes + Dark/Light) ---------- */
-      function applyTheme(palette, mode) {
+      /* ---------- Theme Manager (7 Themes + Dark/Light in Settings) ---------- */
+      function applyTheme(palette, mode, persistToDb = false) {
         const pal = palette || localStorage.getItem('valut_palette') || 'royal_navy';
         const m = mode || localStorage.getItem('valut_theme_mode') || 'light';
 
         document.documentElement.setAttribute('data-palette', pal);
         document.documentElement.setAttribute('data-mode', m);
+        document.documentElement.setAttribute('data-theme', m);
 
         localStorage.setItem('valut_palette', pal);
         localStorage.setItem('valut_theme_mode', m);
+        localStorage.setItem('theme', m);
 
-        // Update active class on palette buttons
-        document.querySelectorAll('.theme-palette-opt').forEach(opt => {
-          opt.classList.toggle('active', opt.dataset.paletteVal === pal);
+        // Update active class & styles on palette buttons in Settings
+        document.querySelectorAll('#dlgSettings .theme-palette-opt').forEach(opt => {
+          const isActive = opt.dataset.paletteVal === pal;
+          opt.classList.toggle('active', isActive);
+          opt.style.borderColor = isActive ? 'var(--primary, #1d68e1)' : 'var(--line)';
+          opt.style.background = isActive ? 'rgba(29, 104, 225, 0.08)' : 'var(--card)';
         });
 
-        // Update active class on mode buttons
-        const btnDark = $('btnModeDark');
-        const btnLight = $('btnModeLight');
-        if (btnDark) btnDark.classList.toggle('active', m === 'dark');
-        if (btnLight) btnLight.classList.toggle('active', m === 'light');
+        // Update active class & styles on mode buttons in Settings
+        const btnDark = $('settingsModeDark');
+        const btnLight = $('settingsModeLight');
+        if (btnDark) {
+          const isDark = m === 'dark';
+          btnDark.classList.toggle('active', isDark);
+          btnDark.style.background = isDark ? 'var(--primary, #1d68e1)' : 'transparent';
+          btnDark.style.color = isDark ? '#ffffff' : 'var(--text)';
+        }
+        if (btnLight) {
+          const isLight = m === 'light';
+          btnLight.classList.toggle('active', isLight);
+          btnLight.style.background = isLight ? 'var(--primary, #1d68e1)' : 'transparent';
+          btnLight.style.color = isLight ? '#ffffff' : 'var(--text)';
+        }
+
+        if (persistToDb && localStorage.getItem('token')) {
+          api('/api/me/theme', {
+            method: 'PUT',
+            body: JSON.stringify({ palette: pal, mode: m })
+          }).catch(() => {});
+        }
       }
 
       function initThemeDock() {
-        const dockPanel = $('themeDockPanel');
-        const toggleBtn = $('themeDockToggleBtn');
-        const closeBtn = $('themeDockCloseBtn');
-
-        if (toggleBtn && dockPanel) {
-          toggleBtn.onclick = () => {
-            dockPanel.hidden = !dockPanel.hidden;
-          };
-        }
-        if (closeBtn && dockPanel) {
-          closeBtn.onclick = () => {
-            dockPanel.hidden = true;
-          };
-        }
-
-        // Palette selector buttons
-        document.querySelectorAll('.theme-palette-opt').forEach(btn => {
-          btn.onclick = () => {
-            const pal = btn.dataset.paletteVal;
-            const currentMode = localStorage.getItem('valut_theme_mode') || 'light';
-            applyTheme(pal, currentMode);
-            toast(`Applied theme: ${btn.querySelector('.theme-name')?.textContent || pal}`);
-          };
-        });
-
-        // Dark / Light mode buttons
-        const btnDark = $('btnModeDark');
-        const btnLight = $('btnModeLight');
-        if (btnDark) {
-          btnDark.onclick = () => {
-            const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
-            applyTheme(currentPal, 'dark');
-          };
-        }
-        if (btnLight) {
-          btnLight.onclick = () => {
-            const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
-            applyTheme(currentPal, 'light');
-          };
-        }
-
-        // Apply saved or default theme immediately
+        // Theme selection is managed directly inside Settings
         applyTheme(localStorage.getItem('valut_palette') || 'royal_navy', localStorage.getItem('valut_theme_mode') || 'light');
       }
 
-      /* ---------- Main App Initialization ---------- */
+      
+      // Logout Protection: Prevent browser Back button from accessing protected views
+      window.addEventListener('pageshow', () => {
+        if (!localStorage.getItem('token')) {
+          switchView(false);
+        }
+      });
+      window.addEventListener('popstate', () => {
+        if (!localStorage.getItem('token')) {
+          switchView(false);
+        }
+      });
+/* ---------- Main App Initialization ---------- */
       async function initApp() {
         try {
           initThemeDock();
@@ -16066,68 +16347,112 @@ body:not(.app-active) {
       function openSettingsModal() {
         const dlg = $('dlgSettings');
         if (!dlg) return;
+
+        const u = getUser();
+        const currentName = (window.CU && window.CU.name) || u.name || u.user_id || 'Employee';
+        const uInitial = ((currentName[0] || 'U')[0] || 'U').toUpperCase();
+
+        // Populate Settings profile display with updated name
+        if ($('settingsAccountName')) $('settingsAccountName').textContent = currentName;
+        if ($('settingsCurrentNameVal')) $('settingsCurrentNameVal').textContent = currentName;
+        if ($('settingsUserAvatarCircle')) $('settingsUserAvatarCircle').textContent = uInitial;
+        if ($('settingsAccountUserId')) $('settingsAccountUserId').textContent = u.user_id || '0001';
+        if ($('settingsAccountRole')) $('settingsAccountRole').textContent = myRole();
+
+        // Role-based visibility for Settings actions
+        if ($('settingsBtnManageUsers')) {
+          $('settingsBtnManageUsers').style.display = canAccessUsersManager() ? 'flex' : 'none';
+        }
+        if ($('settingsBtnLoginInv')) {
+          $('settingsBtnLoginInv').style.display = canAccessLoginInventory() ? 'flex' : 'none';
+        }
+
+        // Apply and highlight active theme in settings
         const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
         const currentMode = localStorage.getItem('valut_theme_mode') || 'light';
+        applyTheme(currentPal, currentMode);
 
-        // Highlight active palette and mode
-        document.querySelectorAll('#dlgSettings .theme-palette-opt').forEach(btn => {
-          btn.style.borderColor = (btn.dataset.paletteVal === currentPal) ? 'var(--primary, #1d68e1)' : 'var(--line)';
-          btn.style.background = (btn.dataset.paletteVal === currentPal) ? 'rgba(29, 104, 225, 0.08)' : 'var(--card)';
-        });
-        if ($('settingsModeDark')) {
-          $('settingsModeDark').style.borderColor = (currentMode === 'dark') ? 'var(--primary, #1d68e1)' : 'var(--line)';
-          $('settingsModeDark').style.background = (currentMode === 'dark') ? 'rgba(29, 104, 225, 0.12)' : 'var(--card)';
-        }
-        if ($('settingsModeLight')) {
-          $('settingsModeLight').style.borderColor = (currentMode === 'light') ? 'var(--primary, #1d68e1)' : 'var(--line)';
-          $('settingsModeLight').style.background = (currentMode === 'light') ? 'rgba(29, 104, 225, 0.12)' : 'var(--card)';
-        }
-
-        dlg.showModal();
+        if (!dlg.open) dlg.showModal();
       }
 
       if ($('closeDlgSettings')) $('closeDlgSettings').onclick = () => $('dlgSettings').close();
-
-      // Hook Settings buttons
+      if ($('btnCloseDlgSettingsFooter')) $('btnCloseDlgSettingsFooter').onclick = () => $('dlgSettings').close();
       if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openSettingsModal;
       if ($('btnHeaderSettings')) $('btnHeaderSettings').onclick = openSettingsModal;
 
-      // Settings Mode Switchers
+      // Settings Theme Mode Switchers (Light / Dark)
       if ($('settingsModeDark')) {
         $('settingsModeDark').onclick = () => {
           const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
-          applyTheme(currentPal, 'dark');
-          openSettingsModal();
+          applyTheme(currentPal, 'dark', true);
         };
       }
       if ($('settingsModeLight')) {
         $('settingsModeLight').onclick = () => {
           const currentPal = localStorage.getItem('valut_palette') || 'royal_navy';
-          applyTheme(currentPal, 'light');
-          openSettingsModal();
+          applyTheme(currentPal, 'light', true);
         };
       }
 
-      // Settings Palette Buttons
+      // Settings 7 Theme Palette Buttons
       document.querySelectorAll('#dlgSettings .theme-palette-opt').forEach(btn => {
         btn.onclick = () => {
           const pal = btn.dataset.paletteVal;
           const currentMode = localStorage.getItem('valut_theme_mode') || 'light';
-          applyTheme(pal, currentMode);
-          openSettingsModal();
-          toast('Theme updated');
+          applyTheme(pal, currentMode, true);
+          toast(`Applied theme: ${btn.querySelector('.theme-name')?.textContent || pal}`);
         };
       });
 
-      // Settings Log Out Button
-      if ($('settingsBtnLogout')) {
-        $('settingsBtnLogout').onclick = () => {
+      // Settings Actions Wiring (Edit Name, Change Password, Manage Users, Log Inventory, Logout)
+      if ($('settingsBtnEditName')) {
+        $('settingsBtnEditName').onclick = () => {
           $('dlgSettings').close();
-          if ($('bLo')) $('bLo').click();
+          openEditNameModal();
         };
       }
 
-      
+      if ($('settingsBtnPassword')) {
+        $('settingsBtnPassword').onclick = () => {
+          $('dlgSettings').close();
+          openChangePasswordModal();
+        };
+      }
+
+      if ($('settingsBtnManageUsers')) {
+        $('settingsBtnManageUsers').onclick = () => {
+          $('dlgSettings').close();
+          openManageUsersModal();
+        };
+      }
+
+      if ($('settingsBtnLoginInv')) {
+        $('settingsBtnLoginInv').onclick = () => {
+          $('dlgSettings').close();
+          openAuditLogModal();
+        };
+      }
+
+      if ($('settingsBtnLogout')) {
+        $('settingsBtnLogout').onclick = () => {
+          $('dlgSettings').close();
+          logout(true);
+        };
+      }
+
+      // Cart Popup Modal Handlers (Cart opens as popup with Cross X close)
+      function openCartModal() {
+        const dlg = $('dlgCartModal');
+        if (!dlg) return;
+        loadCartContainer();
+        if (!dlg.open) dlg.showModal();
+      }
+
+      function closeCartModal() {
+        const dlg = $('dlgCartModal');
+        if (dlg && dlg.open) dlg.close();
+      }
+
       // Large Live Updates Popup Modal Handler
       let liveUpdatesModalTimer = null;
       function closeLiveUpdatesModal() {
@@ -16196,67 +16521,6 @@ body:not(.app-active) {
       if ($('sidebarLiveUpdatesBtn')) $('sidebarLiveUpdatesBtn').onclick = openLiveUpdatesModal;
       if ($('closeDlgLiveUpdates')) $('closeDlgLiveUpdates').onclick = closeLiveUpdatesModal;
       if ($('dlgManualLiveRefresh')) $('dlgManualLiveRefresh').onclick = refreshLiveUpdatesModalData;
-
-      // Settings Modal Options Hookup
-      function openSettingsModal() {
-        const dlg = $('dlgSettings');
-        if (!dlg) return;
-        dlg.showModal();
-      }
-
-      if ($('closeDlgSettings')) $('closeDlgSettings').onclick = () => $('dlgSettings').close();
-      if ($('btnCloseDlgSettingsFooter')) $('btnCloseDlgSettingsFooter').onclick = () => $('dlgSettings').close();
-      if ($('sidebarBtnSettings')) $('sidebarBtnSettings').onclick = openSettingsModal;
-
-      // Settings Functionality Fixes (Requirement 2, 3, 4)
-      if ($('settingsBtnEditName')) {
-        $('settingsBtnEditName').onclick = () => {
-          $('dlgSettings').close();
-          const u = getUser();
-          openDlg('Edit Display Name', `
-            <label for="newName" style="font-weight:700;font-size:12.5px;display:block;margin-bottom:6px">Full Name</label>
-            <input id="newName" value="${esc(u.name || '')}" placeholder="Your display name" required style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:var(--card);color:var(--text)" />
-          `, 'Save', async () => {
-            const name = $('newName').value.trim();
-            if (!name) throw new Error('Name cannot be empty.');
-            const res = await api('/api/me/name', { method: 'PUT', body: JSON.stringify({ name }) });
-            u.name = res.name || name;
-            localStorage.setItem('user', JSON.stringify(u));
-            await updateChrome();
-            toast('Your display name has been updated');
-          });
-        };
-      }
-
-      if ($('settingsBtnPassword')) {
-        $('settingsBtnPassword').onclick = () => {
-          $('dlgSettings').close();
-          if ($('pf')) $('pf').reset();
-          if ($('pe')) $('pe').textContent = '';
-          if ($('pwd')) $('pwd').showModal();
-        };
-      }
-
-      if ($('settingsBtnManageUsers')) {
-        $('settingsBtnManageUsers').onclick = () => {
-          $('dlgSettings').close();
-          openManageUsersModal();
-        };
-      }
-
-      if ($('settingsBtnLoginInv')) {
-        $('settingsBtnLoginInv').onclick = () => {
-          $('dlgSettings').close();
-          openAuditLogModal();
-        };
-      }
-
-      if ($('settingsBtnLogout')) {
-        $('settingsBtnLogout').onclick = () => {
-          $('dlgSettings').close();
-          logout(true);
-        };
-      }
 
       // Global Expiry Banner Action Buttons
       if ($('btnViewExpiredGlobal')) {
@@ -16377,113 +16641,10 @@ body:not(.app-active) {
       });
     </script>
 
-  <!-- =========================================================================
-     DOCKED THEME SELECTOR AT RIGHT-END (6 Themes + Dark/Light Mode)
-     ========================================================================= -->
-  <div id="themeDockRightEnd" class="theme-dock-container">
-    <button id="themeDockToggleBtn" class="theme-dock-tab" type="button" title="Switch Theme (6 Styles + Dark/Light)">
-      <span class="theme-dock-icon">🎨</span>
-      <span class="theme-dock-label">THEMES</span>
-    </button>
-    <div id="themeDockPanel" class="theme-dock-panel" hidden>
-      <div class="theme-dock-header">
-        <div style="font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px">
-          <span>🎨</span> <span>Theme Selector</span>
-        </div>
-        <button class="b ghost" id="themeDockCloseBtn" type="button" style="font-size:16px;padding:2px 8px;cursor:pointer">✕</button>
-      </div>
-      <div style="padding:14px 16px">
-        <!-- Dark / Light Mode Switcher -->
-        <div style="margin-bottom:14px">
-          <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:6px">Mode Variant</label>
-          <div class="theme-mode-switch" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--bg);padding:4px;border-radius:8px;border:1px solid var(--line)">
-            <button type="button" class="theme-mode-btn" data-mode-val="dark" id="btnModeDark" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;font-size:12px;font-weight:700;border-radius:6px;border:none;cursor:pointer">
-              <span>🌙</span> <span>Dark</span>
-            </button>
-            <button type="button" class="theme-mode-btn" data-mode-val="light" id="btnModeLight" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:7px;font-size:12px;font-weight:700;border-radius:6px;border:none;cursor:pointer">
-              <span>☀️</span> <span>Light</span>
-            </button>
-          </div>
-        </div>
 
-        <!-- 6 Requested Themes Selector -->
-        <div>
-          <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);letter-spacing:0.5px;display:block;margin-bottom:8px">Theme Style</label>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <button type="button" class="theme-palette-opt" data-palette-val="royal_navy">
-              <div class="theme-swatch-group">
-                <span style="background:#0f2b5c"></span>
-                <span style="background:#d4af37"></span>
-                <span style="background:#f8fafc"></span>
-              </div>
-              <div class="theme-palette-info">
-                <div class="theme-name">Royal Navy</div>
-                <div class="theme-desc">Navy and gold (Default, Light Page)</div>
-              </div>
-            </button>
-            <button type="button" class="theme-palette-opt" data-palette-val="midnight">
-              <div class="theme-swatch-group">
-                <span style="background:#070d19"></span>
-                <span style="background:#1e3a8a"></span>
-                <span style="background:#eab308"></span>
-              </div>
-              <div class="theme-palette-info">
-                <div class="theme-name">Midnight</div>
-                <div class="theme-desc">Dark navy with soft gold</div>
-              </div>
-            </button>
-            <button type="button" class="theme-palette-opt" data-palette-val="emerald">
-              <div class="theme-swatch-group">
-                <span style="background:#065f46"></span>
-                <span style="background:#10b981"></span>
-                <span style="background:#d4af37"></span>
-              </div>
-              <div class="theme-palette-info">
-                <div class="theme-name">Emerald</div>
-                <div class="theme-desc">Deep green with gold</div>
-              </div>
-            </button>
-            <button type="button" class="theme-palette-opt" data-palette-val="crimson_vault">
-              <div class="theme-swatch-group">
-                <span style="background:#881337"></span>
-                <span style="background:#e11d48"></span>
-                <span style="background:#d4af37"></span>
-              </div>
-              <div class="theme-palette-info">
-                <div class="theme-name">Crimson Vault</div>
-                <div class="theme-desc">Wine red, close to your brand</div>
-              </div>
-            </button>
-            <button type="button" class="theme-palette-opt" data-palette-val="ocean">
-              <div class="theme-swatch-group">
-                <span style="background:#0f766e"></span>
-                <span style="background:#0284c7"></span>
-                <span style="background:#f59e0b"></span>
-              </div>
-              <div class="theme-palette-info">
-                <div class="theme-name">Ocean</div>
-                <div class="theme-desc">Teal-blue with amber</div>
-              </div>
-            </button>
-            <button type="button" class="theme-palette-opt" data-palette-val="violet">
-              <div class="theme-swatch-group">
-                <span style="background:#581c87"></span>
-                <span style="background:#7e22ce"></span>
-                <span style="background:#d4af37"></span>
-              </div>
-              <div class="theme-palette-info">
-                <div class="theme-name">Violet</div>
-                <div class="theme-desc">Rich purple with gold</div>
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- DEDICATED SETTINGS MODAL (THEMES AND LOG OUT ONLY) -->
-  <dialog id="dlgSettings" class="modal-card" style="width:min(520px, 94vw); padding:0; border-radius:20px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.35); overflow:hidden">
+  <dialog id="dlgSettings" class="modal-card" style="width:min(560px, 95vw); max-height:88vh; padding:0; border-radius:20px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.35); overflow-y:auto">
     <div style="padding:18px 24px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); background:var(--card-subtle)">
       <div style="display:flex; align-items:center; gap:10px">
         <span style="font-size:22px">⚙️</span>
@@ -16496,13 +16657,22 @@ body:not(.app-active) {
     </div>
 
     <div style="padding:22px 24px">
-      <!-- Options shifted from top bar into Settings (Themes option removed) -->
+      <!-- Signed-in Account Profile Banner (Updated name visible in settings option) -->
+      <div id="settingsUserHeaderCard" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--card-subtle); border:1px solid var(--line); border-radius:12px; margin-bottom:16px">
+        <div id="settingsUserAvatarCircle" style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--primary), var(--accent)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px">U</div>
+        <div style="flex:1">
+          <div id="settingsAccountName" style="font-weight:800; font-size:15px; color:var(--text)">Employee</div>
+          <div style="font-size:12px; color:var(--muted)">Signed-in as: <b id="settingsAccountUserId" style="color:var(--primary)">0001</b> &bull; <span id="settingsAccountRole" style="font-weight:600">Admin</span></div>
+        </div>
+      </div>
+
+      <!-- Options shifted from top bar into Settings<!-- Options shifted from top bar into Settings (Themes option removed) -->
       <div class="settings-action-list">
         <button type="button" class="settings-action-item" id="settingsBtnEditName">
           <div class="settings-action-icon" style="background:#e0f2fe;color:#0284c7">✏️</div>
           <div class="settings-action-text">
             <div class="settings-action-title">Edit Name</div>
-            <div class="settings-action-desc">Change your account display name</div>
+            <div class="settings-action-desc" id="settingsEditNameDesc">Current: <b id="settingsCurrentNameVal" style="color:var(--primary)">—</b> &bull; Change display name</div>
           </div>
           <span class="settings-action-arrow">›</span>
         </button>
@@ -16534,7 +16704,113 @@ body:not(.app-active) {
           <span class="settings-action-arrow">›</span>
         </button>
 
-        <hr style="border:none; border-top:1px solid var(--line); margin:6px 0" />
+        <!-- Themes & Look (7 Themes + Light/Dark Mode) -->
+        <div style="margin-top:14px; border-top:1px solid var(--line); padding-top:14px">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+            <div>
+              <div style="font-weight:700; font-size:13px; color:var(--text)">🎨 Theme &amp; Look</div>
+              <div style="font-size:11.5px; color:var(--muted)">7 Custom themes with Light &amp; Dark mode</div>
+            </div>
+            <!-- Mode Switcher -->
+            <div style="display:inline-flex; gap:4px; background:var(--bg); padding:3px; border-radius:8px; border:1px solid var(--line)">
+              <button type="button" class="theme-mode-btn" data-mode-val="light" id="settingsModeLight" style="display:flex; align-items:center; gap:4px; padding:5px 10px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid transparent; cursor:pointer">
+                <span>☀️</span> <span>Light</span>
+              </button>
+              <button type="button" class="theme-mode-btn" data-mode-val="dark" id="settingsModeDark" style="display:flex; align-items:center; gap:4px; padding:5px 10px; font-size:12px; font-weight:700; border-radius:6px; border:1px solid transparent; cursor:pointer">
+                <span>🌙</span> <span>Dark</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 7 Theme Choices -->
+          <div style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; padding-right:4px">
+            <button type="button" class="theme-palette-opt" data-palette-val="royal_navy" style="display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); cursor:pointer; text-align:left; transition:all 0.15s ease">
+              <div class="theme-swatch-group" style="display:inline-flex; gap:3px">
+                <span style="width:14px; height:14px; border-radius:50%; background:#0f2b5c; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#d4af37; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#f8fafc; border:1px solid #cbd5e1; display:inline-block"></span>
+              </div>
+              <div class="theme-palette-info" style="flex:1">
+                <div class="theme-name" style="font-weight:700; font-size:12.5px; color:var(--text)">Royal Navy</div>
+                <div class="theme-desc" style="font-size:11px; color:var(--muted)">The default: navy and gold, light page</div>
+              </div>
+            </button>
+
+            <button type="button" class="theme-palette-opt" data-palette-val="midnight" style="display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); cursor:pointer; text-align:left; transition:all 0.15s ease">
+              <div class="theme-swatch-group" style="display:inline-flex; gap:3px">
+                <span style="width:14px; height:14px; border-radius:50%; background:#070d19; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#1e3a8a; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#eab308; display:inline-block"></span>
+              </div>
+              <div class="theme-palette-info" style="flex:1">
+                <div class="theme-name" style="font-weight:700; font-size:12.5px; color:var(--text)">Midnight</div>
+                <div class="theme-desc" style="font-size:11px; color:var(--muted)">Dark navy with soft gold</div>
+              </div>
+            </button>
+
+            <button type="button" class="theme-palette-opt" data-palette-val="emerald" style="display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); cursor:pointer; text-align:left; transition:all 0.15s ease">
+              <div class="theme-swatch-group" style="display:inline-flex; gap:3px">
+                <span style="width:14px; height:14px; border-radius:50%; background:#065f46; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#10b981; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#d4af37; display:inline-block"></span>
+              </div>
+              <div class="theme-palette-info" style="flex:1">
+                <div class="theme-name" style="font-weight:700; font-size:12.5px; color:var(--text)">Emerald</div>
+                <div class="theme-desc" style="font-size:11px; color:var(--muted)">Deep green with gold</div>
+              </div>
+            </button>
+
+            <button type="button" class="theme-palette-opt" data-palette-val="crimson_vault" style="display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); cursor:pointer; text-align:left; transition:all 0.15s ease">
+              <div class="theme-swatch-group" style="display:inline-flex; gap:3px">
+                <span style="width:14px; height:14px; border-radius:50%; background:#881337; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#e11d48; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#d4af37; display:inline-block"></span>
+              </div>
+              <div class="theme-palette-info" style="flex:1">
+                <div class="theme-name" style="font-weight:700; font-size:12.5px; color:var(--text)">Crimson Vault</div>
+                <div class="theme-desc" style="font-size:11px; color:var(--muted)">Wine red, close to your current brand</div>
+              </div>
+            </button>
+
+            <button type="button" class="theme-palette-opt" data-palette-val="ocean" style="display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); cursor:pointer; text-align:left; transition:all 0.15s ease">
+              <div class="theme-swatch-group" style="display:inline-flex; gap:3px">
+                <span style="width:14px; height:14px; border-radius:50%; background:#0f766e; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#0284c7; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#f59e0b; display:inline-block"></span>
+              </div>
+              <div class="theme-palette-info" style="flex:1">
+                <div class="theme-name" style="font-weight:700; font-size:12.5px; color:var(--text)">Ocean</div>
+                <div class="theme-desc" style="font-size:11px; color:var(--muted)">Teal-blue with amber</div>
+              </div>
+            </button>
+
+            <button type="button" class="theme-palette-opt" data-palette-val="violet" style="display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); cursor:pointer; text-align:left; transition:all 0.15s ease">
+              <div class="theme-swatch-group" style="display:inline-flex; gap:3px">
+                <span style="width:14px; height:14px; border-radius:50%; background:#581c87; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#7e22ce; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#d4af37; display:inline-block"></span>
+              </div>
+              <div class="theme-palette-info" style="flex:1">
+                <div class="theme-name" style="font-weight:700; font-size:12.5px; color:var(--text)">Violet</div>
+                <div class="theme-desc" style="font-size:11px; color:var(--muted)">Rich purple with gold</div>
+              </div>
+            </button>
+
+            <button type="button" class="theme-palette-opt" data-palette-val="sunset" style="display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:10px; border:1.5px solid var(--line); background:var(--card); cursor:pointer; text-align:left; transition:all 0.15s ease">
+              <div class="theme-swatch-group" style="display:inline-flex; gap:3px">
+                <span style="width:14px; height:14px; border-radius:50%; background:#c2410c; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#ea580c; display:inline-block"></span>
+                <span style="width:14px; height:14px; border-radius:50%; background:#f59e0b; display:inline-block"></span>
+              </div>
+              <div class="theme-palette-info" style="flex:1">
+                <div class="theme-name" style="font-weight:700; font-size:12.5px; color:var(--text)">Sunset</div>
+                <div class="theme-desc" style="font-size:11px; color:var(--muted)">Burnt orange and warm amber</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--line); margin:12px 0 6px" />
 
         <button type="button" class="settings-action-item danger" id="settingsBtnLogout">
           <div class="settings-action-icon" style="background:#fee2e2;color:#dc2626">🚪</div>

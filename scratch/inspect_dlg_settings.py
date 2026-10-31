@@ -1,9 +1,7 @@
-with open("frontend/index.html", "r", encoding="utf-8") as f:
+with open('frontend/index.html', 'r', encoding='utf-8') as f:
     lines = f.readlines()
-
 for i, l in enumerate(lines):
-    if "dlgSettings" in l:
-        print(f"Line {i+1}:")
-        print("".join(lines[i:i+65]))
+    if 'id="dlgSettings"' in l:
+        for j in range(i, min(len(lines), i+80)):
+            print(f'{j+1}: {lines[j].rstrip()}')
         break
-

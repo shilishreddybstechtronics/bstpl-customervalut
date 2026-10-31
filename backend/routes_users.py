@@ -41,6 +41,7 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
         actor_cat = get_user_category(actor)["category"]
         target_cat = cat["category"]
         is_actor_super = actor_norm in MASTER_SUPER_ADMIN_IDS or actor_cat == "super_admin"
+        is_actor_master = actor_norm in MASTER_ADMIN_IDS or actor_cat in ("master_admin", "super_admin")
         is_target_super = target_norm in MASTER_SUPER_ADMIN_IDS or target_cat == "super_admin"
         if is_actor_super:
             if is_target_super and target_norm != actor_norm:
@@ -49,6 +50,15 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
             else:
                 # Super Admins can see everybody else's passwords (and their own)
                 pwd = u.plain_password
+        elif is_actor_master:
+            # Master Admins can see everyone's password
+            pwd = u.plain_password
+
+    perms_meta = dict(u.permissions or {})
+    prev_name = perms_meta.get("previous_name")
+    theme_pal = perms_meta.get("theme_palette", "royal_navy")
+    theme_md = perms_meta.get("theme_mode", "light")
+
     return {
         "id": u.id,
         "name": u.name,
@@ -63,8 +73,18 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
         "can_modify": can_mod,
         "password": pwd,
         "permissions": get_user_permissions(u),
+        "previous_name": prev_name,
+        "theme_palette": theme_pal,
+        "theme_mode": theme_md,
         "created_at": u.created_at
     }
+
+
+@router.get("/me")
+@router.get("/users/me")
+def get_me(current_user: models.User = Depends(get_current_user)):
+    """Returns the authenticated user's current profile."""
+    return user_out(current_user, actor=current_user)
 
 
 @router.post("/me/password")
@@ -84,17 +104,73 @@ def change_password(data: schemas.PasswordIn, request: Request, db: Session = De
 
 @router.put("/me/name")
 @router.put("/users/me")
-def update_my_name(data: schemas.UserNameUpdate, db: Session = Depends(get_db),
+def update_my_name(data: schemas.UserNameUpdate, request: Request, db: Session = Depends(get_db),
                    current_user: models.User = Depends(get_current_user)):
     """Allows any logged-in employee to edit their own display name."""
     new_name = (data.name or "").strip()
     if not new_name:
-        raise HTTPException(400, "Name cannot be empty.")
+        raise HTTPException(400, "Updated name cannot be empty.")
+
+    # Validation: confirm_name must match updated name
+    if data.confirm_name is not None and data.confirm_name.strip():
+        if data.confirm_name.strip() != new_name:
+            raise HTTPException(400, "Updated name and confirm name do not match.")
+
+    # Validation: confirm_current_name must match existing name if provided
+    if data.confirm_current_name is not None and data.confirm_current_name.strip():
+        entered_confirm = data.confirm_current_name.strip()
+        if entered_confirm.lower() != current_user.name.strip().lower():
+            raise HTTPException(400, f"Confirmed current name does not match registered name '{current_user.name}'.")
+
+    # Validation: new name must be different from current registered name
+    if new_name.lower() == current_user.name.strip().lower():
+        raise HTTPException(400, "Updated name must be different from your current registered name.")
+
+    perms_meta = dict(current_user.permissions or {})
+    old_name = current_user.name
+    perms_meta["previous_name"] = old_name
+    current_user.permissions = perms_meta
     current_user.name = new_name
-    log_activity(db, "user_update", f"Updated own display name to {new_name}", user=current_user)
+
+    log_activity(db, "user_update", f"Updated own display name from '{old_name}' to '{new_name}'", user=current_user, request=request)
     db.commit()
     db.refresh(current_user)
-    return {"ok": True, "name": current_user.name, "user": user_out(current_user, actor=current_user)}
+    return {
+        "ok": True,
+        "message": f"Name successfully updated to '{new_name}'.",
+        "previous_name": old_name,
+        "name": new_name,
+        "user": user_out(current_user, actor=current_user)
+    }
+
+
+@router.put("/me/theme")
+def update_my_theme(data: schemas.ThemeUpdate, db: Session = Depends(get_db),
+                    current_user: models.User = Depends(get_current_user)):
+    """Persists user theme palette and mode preferences to the database."""
+    perms = dict(current_user.permissions or {})
+    if data.palette:
+        perms["theme_palette"] = data.palette
+    if data.mode:
+        perms["theme_mode"] = data.mode
+    current_user.permissions = perms
+    db.commit()
+    db.refresh(current_user)
+    return {
+        "ok": True,
+        "palette": perms.get("theme_palette", "royal_navy"),
+        "mode": perms.get("theme_mode", "light")
+    }
+
+
+@router.get("/me/theme")
+def get_my_theme(current_user: models.User = Depends(get_current_user)):
+    """Retrieves user theme preferences."""
+    perms = dict(current_user.permissions or {})
+    return {
+        "palette": perms.get("theme_palette", "royal_navy"),
+        "mode": perms.get("theme_mode", "light")
+    }
 
 
 @router.get("/users")

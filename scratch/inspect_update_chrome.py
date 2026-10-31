@@ -1,7 +1,7 @@
-with open("frontend/index.html", "r", encoding="utf-8") as f:
+with open('frontend/index.html', 'r', encoding='utf-8') as f:
     lines = f.readlines()
-
-for i in range(7980, 8010):
-    if i < len(lines):
-        print(f"{i+1}: {lines[i]}", end="")
-
+for i, l in enumerate(lines):
+    if 'function updateChrome' in l:
+        for j in range(i, min(len(lines), i+60)):
+            print(f'{j+1}: {lines[j].rstrip()}')
+        break

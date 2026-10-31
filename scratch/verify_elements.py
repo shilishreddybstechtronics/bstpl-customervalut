@@ -1,0 +1,16 @@
+with open('frontend/index.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+print('themeDockRightEnd present:', 'themeDockRightEnd' in html)
+print('themeDockToggleBtn present:', 'themeDockToggleBtn' in html)
+print('themeDockPanel present:', 'themeDockPanel' in html)
+print('dlgEditName present:', 'dlgEditName' in html)
+print('closeDlgEditName present:', 'closeDlgEditName' in html)
+print('editNamePresent present:', 'editNamePresent' in html)
+print('editNameNew present:', 'editNameNew' in html)
+print('editNameConfirm present:', 'editNameConfirm' in html)
+print('btnConfirmEditName present:', 'btnConfirmEditName' in html)
+print('closeDlgChangePassword present:', 'closeDlgChangePassword' in html)
+print('btnConfirmChangePw present:', 'btnConfirmChangePw' in html)
+print('sunset theme CSS present:', 'data-palette="sunset"' in html)
+print('sunset theme button present:', 'data-palette-val="sunset"' in html)
+
