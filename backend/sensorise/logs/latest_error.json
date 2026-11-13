@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-11-13T14:54:40.069859",
+  "formatted_time": "2026-11-13 14:54:40",
+  "status_code": 200,
+  "endpoint": "checkSIMBulk/v2/",
+  "url": "https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/",
+  "method": "POST",
+  "outbound_ip": "115.246.247.210",
+  "relation_id": "SENSE1019",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "relationId": "SENSE1019",
+    "apiToken": "$2a$10...SnXq (Length: 60)"
+  },
+  "payload": {
+    "iccids": [
+      "8991200050059481429",
+      "8991200050059480611",
+      "8991200050059480686",
+      "8991200050059481478",
+      "89914909100031489491",
+      "8991200050059480801",
+      "8991200050059480637",
+      "89914909100031489509",
+      "8991200050059480587",
+      "8991200050059480504",
+      "8991200050059480645",
+      "8991200050059480975",
+      "8991200050059481247"
+    ]
+  },
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "response_data": {
+    "apiResponseCode": "LCM_818",
+    "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+    "simDetailEnitycount": 0,
+    "simDetailEntity": []
+  },
+  "diagnosis": {
+    "title": "API Token Quota Reached (LCM_818)",
+    "meaning": "The active Sensorise API token has reached its 100 API calls transactions quota.",
+    "root_cause": "Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.",
+    "common_reasons": "Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.",
+    "action_items": "\u2022 A fresh API token is automatically generated via /generateAPIToken.\n\u2022 All subsequent requests automatically use the newly generated token."
+  }
+}

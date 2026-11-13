@@ -1,0 +1,63 @@
+
+================================================================================
+[2026-11-13 14:54:40] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-13 14:54:40
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...SnXq (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059481429",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481478",
+    "89914909100031489491",
+    "8991200050059480801",
+    "8991200050059480637",
+    "89914909100031489509",
+    "8991200050059480587",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059481247"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      807.48 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================

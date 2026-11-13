@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BSTPL CustomerVault — Secure Smart Connected Surface Online</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+
+  <!-- WHAT IS HAPPENING BELOW: Global Branded Auth Loader and Early Theme Detection (Default Light Mode) -->
+  <script>
+    function showAuthLoader(msg) {
+      let loader = document.getElementById('cvGlobalLoader');
+      if (!loader) {
+        loader = document.createElement('div');
+        loader.id = 'cvGlobalLoader';
+        loader.className = 'cv-global-loader';
+        loader.innerHTML = `
+          <div class="cv-loader-backdrop"></div>
+          <div class="cv-loader-card">
+            <div class="cv-loader-logo-3d"><img src="logo.svg" alt="BSTPL Logo" style="width:100%;height:100%;object-fit:contain;border-radius:14px" /></div>
+            <div class="cv-loader-brand-title">BSTPL <span>CustomerVault</span></div>
+            <div class="cv-loader-brand-sub">SECURE SMART CONNECTED SURFACE ONLINE</div>
+            <div class="cv-loader-msg" id="cvLoaderMsg">${msg}</div>
+            <div class="cv-loader-progress"><div class="cv-loader-progress-bar"></div></div>
+          </div>
+        `;
+        document.body.appendChild(loader);
+      }
+      const msgEl = document.getElementById('cvLoaderMsg');
+      if (msgEl) msgEl.textContent = msg;
+      loader.style.display = 'flex';
+    }
+
+    function hideAuthLoader() {
+      const loader = document.getElementById('cvGlobalLoader');
+      if (loader) loader.style.display = 'none';
+    }
+
+    /* Immediately initialize theme before DOM paint to prevent screen flash. Default mode is 'light'. */
+    (function() {
+      try {
+        var m = localStorage.getItem('valut_theme_mode') || localStorage.getItem('theme') || 'light';
+        var p = localStorage.getItem('valut_palette') || 'royal_navy';
+        document.documentElement.setAttribute('data-theme', m);
+        document.documentElement.setAttribute('data-mode', m);
+        document.documentElement.setAttribute('data-palette', p);
+        var f = localStorage.getItem('valut_font') || 'plus_jakarta_sans';
+        document.documentElement.setAttribute('data-font', f);
+      } catch(e) {}
+    })();
+  </script>
+
+  <!-- WHAT IS HAPPENING BELOW: CSS Palette Definitions (Royal Navy, Midnight, Emerald, Crimson Vault) & Responsive Form Styles -->
+  <style>
+    /* Reset & Box Sizing */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 1. ROYAL NAVY PALETTE (Default) */
+    [data-palette="royal_navy"][data-mode="light"],
+    [data-palette="royal_navy"]:not([data-mode="dark"]),
+    :root:not([data-palette]) {
+      --bg: #f8fafc;
+      --bg-gradient: radial-gradient(1200px circle at 15% 15%, #e2e8f0 0%, #f8fafc 70%), radial-gradient(800px circle at 85% 85%, #e0e7ff 0%, #f8fafc 60%);
+      --card: #ffffff;
+      --card-subtle: #f1f5f9;
+      --card-border: #cbd5e1;
+      --card-border-focus: #2563eb;
+      --text: #0f172a;
+      --text-dim: #475569;
+      --text-muted: #64748b;
+      --primary: #0f2b5c;
+      --primary-hover: #1d4ed8;
+      --primary-gradient: linear-gradient(135deg, #0f2b5c 0%, #1e40af 50%, #2563eb 100%);
+      --accent: #d4af37;
+      --accent-light: rgba(212, 175, 55, 0.15);
+      --input-bg: #f8fafc;
+      --input-border: #cbd5e1;
+      --ok: #16a34a;
+      --ok-bg: rgba(22, 163, 74, 0.1);
+      --danger: #dc2626;
+      --danger-bg: rgba(220, 38, 38, 0.08);
+      --font: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --shadow: 0 12px 36px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+      --shadow-hover: 0 20px 48px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+    [data-palette="royal_navy"][data-mode="dark"],
+    [data-mode="dark"]:not([data-palette]) {
+      --bg: #070d19;
+      --bg-gradient: radial-gradient(circle at 20% 20%, #0d1e3d 0%, #060b14 100%);
+      --card: #0e1b33;
+      --card-subtle: #142546;
+      --card-border: rgba(56, 189, 248, 0.2);
+      --card-border-focus: #38bdf8;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --text-muted: #64748b;
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --primary-gradient: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      --accent: #d4af37;
+      --accent-light: rgba(212, 175, 55, 0.15);
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.15);
+      --ok: #34d399;
+      --ok-bg: rgba(52, 211, 153, 0.12);
+      --danger: #f87171;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --font: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    /* 2. MIDNIGHT PALETTE */
+    [data-palette="midnight"][data-mode="light"] {
+      --bg: #f1f5f9;
+      --bg-gradient: radial-gradient(circle at 15% 15%, #e2e8f0 0%, #f1f5f9 100%);
+      --card: #ffffff;
+      --card-subtle: #f8fafc;
+      --card-border: #cbd5e1;
+      --card-border-focus: #2563eb;
+      --text: #0f172a;
+      --text-dim: #475569;
+      --text-muted: #64748b;
+      --primary: #1e3a8a;
+      --primary-hover: #1d4ed8;
+      --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+      --accent: #eab308;
+      --accent-light: rgba(234, 179, 8, 0.15);
+      --input-bg: #f8fafc;
+      --input-border: #cbd5e1;
+      --ok: #059669;
+      --ok-bg: rgba(5, 150, 105, 0.1);
+      --danger: #dc2626;
+      --danger-bg: rgba(220, 38, 38, 0.08);
+      --font: 'Manrope', sans-serif;
+      --shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
+      --shadow-hover: 0 20px 48px rgba(15, 23, 42, 0.12);
+    }
+    [data-palette="midnight"][data-mode="dark"] {
+      --bg: #070d19;
+      --bg-gradient: radial-gradient(circle at 15% 15%, #0f1a2e 0%, #070d19 100%);
+      --card: #0f1a2e;
+      --card-subtle: #16243d;
+      --card-border: rgba(59, 130, 246, 0.25);
+      --card-border-focus: #3b82f6;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+      --text-muted: #64748b;
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --primary-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      --accent: #eab308;
+      --accent-light: rgba(234, 179, 8, 0.15);
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.15);
+      --ok: #34d399;
+      --ok-bg: rgba(52, 211, 153, 0.12);
+      --danger: #f87171;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --font: 'Manrope', sans-serif;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    /* 3. EMERALD PALETTE */
+    [data-palette="emerald"][data-mode="light"] {
+      --bg: #f2fbf6;
+      --bg-gradient: radial-gradient(circle at 15% 15%, #d1fae5 0%, #f2fbf6 100%);
+      --card: #ffffff;
+      --card-subtle: #ecfdf5;
+      --card-border: #a7f3d0;
+      --card-border-focus: #059669;
+      --text: #064e3b;
+      --text-dim: #047857;
+      --text-muted: #059669;
+      --primary: #065f46;
+      --primary-hover: #047857;
+      --primary-gradient: linear-gradient(135deg, #065f46 0%, #059669 100%);
+      --accent: #d97706;
+      --accent-light: rgba(217, 119, 6, 0.15);
+      --input-bg: #f8fafc;
+      --input-border: #cbd5e1;
+      --ok: #059669;
+      --ok-bg: rgba(5, 150, 105, 0.1);
+      --danger: #dc2626;
+      --danger-bg: rgba(220, 38, 38, 0.08);
+      --font: 'Manrope', sans-serif;
+      --shadow: 0 12px 36px rgba(6, 78, 59, 0.08);
+      --shadow-hover: 0 20px 48px rgba(6, 78, 59, 0.12);
+    }
+    [data-palette="emerald"][data-mode="dark"] {
+      --bg: #031a14;
+      --bg-gradient: radial-gradient(circle at 15% 15%, #062c21 0%, #031a14 100%);
+      --card: #062c21;
+      --card-subtle: #093d2e;
+      --card-border: rgba(16, 185, 129, 0.25);
+      --card-border-focus: #10b981;
+      --text: #ecfdf5;
+      --text-dim: #a7f3d0;
+      --text-muted: #6ee7b7;
+      --primary: #10b981;
+      --primary-hover: #34d399;
+      --primary-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      --accent: #fbbf24;
+      --accent-light: rgba(251, 191, 36, 0.15);
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.15);
+      --ok: #34d399;
+      --ok-bg: rgba(52, 211, 153, 0.12);
+      --danger: #f87171;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --font: 'Manrope', sans-serif;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    /* 4. CRIMSON VAULT PALETTE */
+    [data-palette="crimson_vault"][data-mode="light"] {
+      --bg: #fff5f5;
+      --bg-gradient: radial-gradient(circle at 15% 15%, #ffe4e6 0%, #fff5f5 100%);
+      --card: #ffffff;
+      --card-subtle: #fff1f2;
+      --card-border: #fecdd3;
+      --card-border-focus: #e11d48;
+      --text: #881337;
+      --text-dim: #9f1239;
+      --text-muted: #be123c;
+      --primary: #9f1239;
+      --primary-hover: #be123c;
+      --primary-gradient: linear-gradient(135deg, #9f1239 0%, #e11d48 100%);
+      --accent: #d97706;
+      --accent-light: rgba(217, 119, 6, 0.15);
+      --input-bg: #ffffff;
+      --input-border: #fecdd3;
+      --ok: #059669;
+      --ok-bg: rgba(5, 150, 105, 0.1);
+      --danger: #dc2626;
+      --danger-bg: rgba(220, 38, 38, 0.08);
+      --font: 'Manrope', sans-serif;
+      --shadow: 0 12px 36px rgba(136, 19, 55, 0.08);
+      --shadow-hover: 0 20px 48px rgba(136, 19, 55, 0.12);
+    }
+    [data-palette="crimson_vault"][data-mode="dark"] {
+      --bg: #1a080c;
+      --bg-gradient: radial-gradient(circle at 15% 15%, #2a0b12 0%, #1a080c 100%);
+      --card: #240c13;
+      --card-subtle: #301018;
+      --card-border: rgba(244, 63, 94, 0.25);
+      --card-border-focus: #f43f5e;
+      --text: #ffe4e6;
+      --text-dim: #fda4af;
+      --text-muted: #fb7185;
+      --primary: #f43f5e;
+      --primary-hover: #fb7185;
+      --primary-gradient: linear-gradient(135deg, #be123c 0%, #f43f5e 100%);
+      --accent: #fbbf24;
+      --accent-light: rgba(251, 191, 36, 0.15);
+      --input-bg: rgba(255, 255, 255, 0.04);
+      --input-border: rgba(255, 255, 255, 0.15);
+      --ok: #34d399;
+      --ok-bg: rgba(52, 211, 153, 0.12);
+      --danger: #f87171;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --font: 'Manrope', sans-serif;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    
+    /* Typography System & Dynamic Font Switching */
+    :root {
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    [data-font="plus_jakarta_sans"], :root:not([data-font]) {
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    [data-font="inter"] {
+      --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    [data-font="outfit"] {
+      --font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    }
+    [data-font="manrope"] {
+      --font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    }
+    [data-font="system"] {
+      --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body, input, button, select, textarea, label {
+      font-family: var(--font-family) !important;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      background-image: var(--bg-gradient);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Subtle background grid texture */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: linear-gradient(rgba(15, 43, 92, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(15, 43, 92, 0.03) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    [data-mode="dark"] body::before {
+      background-image: linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+    }
+
+    /* Top Navigation Header Bar */
+    .index-top-bar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 36px;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    [data-mode="dark"] .index-top-bar {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 20, 40, 0.4);
+    }
+
+    .cv-brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .cv-brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 2px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--card-border);
+    }
+    .cv-brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .cv-brand-sub {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .tagline-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--card-subtle);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+    }
+    .system-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--ok-bg);
+      border: 1px solid var(--ok);
+      color: var(--ok);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 8px var(--ok);
+      animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.2); }
+    }
+
+    /* Main Container Split View: Form on LEFT, Hero on RIGHT */
+    .index-main {
+      position: relative;
+      z-index: 10;
+      max-width: 1240px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 28px 48px;
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      align-items: center;
+      gap: 56px;
+      flex-grow: 1;
+    }
+
+    /* Left Auth Card */
+    .auth-card-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    .auth-card {
+      width: 100%;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
+      border-radius: 24px;
+      padding: 38px 34px 32px;
+      box-shadow: var(--shadow);
+      position: relative;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .auth-card:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .auth-header {
+      margin-bottom: 26px;
+      text-align: center;
+    }
+    .card-brand-crest {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: var(--card-subtle);
+      border: 1px solid var(--card-border);
+    }
+    .card-brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 2px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-brand-text {
+      text-align: left;
+    }
+    .card-brand-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .card-brand-sub {
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: var(--primary);
+    }
+
+    .auth-header h2 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .auth-header p {
+      font-size: 13.5px;
+      color: var(--text-dim);
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-ico {
+      position: absolute;
+      left: 14px;
+      font-size: 16px;
+      color: var(--text-dim);
+      pointer-events: none;
+      user-select: none;
+    }
+    .auth-input {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px 0 42px;
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .auth-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      background: #ffffff;
+    }
+    [data-mode="dark"] .auth-input:focus {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+    .auth-input::placeholder {
+      color: var(--text-muted);
+      opacity: 0.7;
+      font-weight: 500;
+    }
+    .eye-btn {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text-dim);
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: background 0.15s ease;
+    }
+    .eye-btn:hover {
+      background: var(--card-subtle);
+    }
+
+    /* Notifications & Alert Banners */
+    .auth-success-box {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--ok-bg);
+      border: 1.5px solid var(--ok);
+      color: var(--ok);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .auth-success-box.show {
+      display: flex;
+    }
+    .auth-error-box {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--danger-bg);
+      border: 1.5px solid var(--danger);
+      color: var(--danger);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .auth-error-box.show {
+      display: flex;
+    }
+
+    /* Submit Button */
+    .auth-submit-btn {
+      width: 100%;
+      height: 50px;
+      border: none;
+      border-radius: 12px;
+      background: var(--primary-gradient);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(15, 43, 92, 0.22);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .auth-submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(15, 43, 92, 0.32);
+      filter: brightness(1.05);
+    }
+    .auth-submit-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .auth-submit-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    /* Switch wrap */
+    .auth-switch-wrap {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+    .auth-switch-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-weight: 800;
+      cursor: pointer;
+      margin-left: 4px;
+      text-decoration: underline;
+      font-family: inherit;
+      font-size: 13px;
+      transition: color 0.15s ease;
+    }
+    .auth-switch-btn:hover {
+      color: var(--primary-hover);
+    }
+
+    /* Right Hero Branding Column */
+    .hero-col {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      background: var(--card-subtle);
+      border: 1.5px solid var(--card-border);
+      color: var(--primary);
+      width: fit-content;
+    }
+    .hero-headline {
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.8px;
+      color: var(--text);
+    }
+    .hero-highlight {
+      background: linear-gradient(90deg, #0284c7 0%, #2563eb 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    [data-mode="dark"] .hero-highlight {
+      background: linear-gradient(90deg, #38bdf8 0%, #818cf8 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 16px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      max-width: 580px;
+    }
+
+    /* 4 Feature Cards Grid */
+    .hero-features-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .feature-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .feature-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--primary);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.09);
+    }
+    .feature-ico-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--card-subtle);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .feature-card h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+    .feature-card p {
+      font-size: 12.5px;
+      color: var(--text-dim);
+      line-height: 1.45;
+    }
+
+    /* Branded 3D Loader */
+    .cv-global-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.25s ease;
+    }
+    .cv-loader-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .cv-loader-card {
+      position: relative;
+      z-index: 2;
+      background: var(--card, #ffffff);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px 42px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 380px;
+      animation: cvCardPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes cvCardPop {
+      0% { opacity: 0; transform: scale(0.9) translateY(12px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .cv-loader-logo-3d {
+      width: 56px;
+      height: 56px;
+      background: #ffffff;
+      padding: 3px;
+      overflow: hidden;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(15, 43, 92, 0.2);
+      border: 1px solid var(--card-border);
+      margin-bottom: 14px;
+      animation: cvLogoPulse 1.8s ease-in-out infinite alternate;
+    }
+    @keyframes cvLogoPulse {
+      0% { transform: scale(0.96) rotate(-2deg); }
+      100% { transform: scale(1.05) rotate(2deg); }
+    }
+    .cv-loader-brand-title {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+    .cv-loader-brand-title span { color: var(--primary); }
+    .cv-loader-brand-sub {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .cv-loader-msg {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .cv-loader-progress {
+      width: 220px;
+      height: 6px;
+      background: var(--card-subtle);
+      border-radius: 99px;
+      overflow: hidden;
+      position: relative;
+    }
+    .cv-loader-progress-bar {
+      position: absolute;
+      left: -40%;
+      width: 40%;
+      height: 100%;
+      background: var(--primary-gradient);
+      border-radius: 99px;
+      animation: cvProgressIndeterminate 1.2s ease-in-out infinite;
+    }
+    @keyframes cvProgressIndeterminate {
+      0% { left: -40%; width: 40%; }
+      50% { width: 60%; }
+      100% { left: 100%; width: 40%; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .index-main {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding: 32px 20px;
+      }
+      .hero-headline {
+        font-size: 34px;
+      }
+      .hero-features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 640px) {
+      .index-top-bar {
+        padding: 12px 18px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .top-bar-right {
+        margin-left: auto;
+      }
+      .auth-card {
+        padding: 26px 20px;
+      }
+      .hero-headline {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WHAT IS HAPPENING BELOW: Top Navigation Header with Corporate Logo, Title and Live Services Indicator -->
+  <header class="index-top-bar">
+    <a href="index.html" class="cv-brand-wrap" title="BSTPL CustomerVault Portal">
+      <div class="cv-brand-icon"><img src="logo.svg" alt="BSTPL Logo" style="width:100%;height:100%;object-fit:contain;border-radius:10px" /></div>
+      <div class="cv-brand-text">
+        <div class="cv-brand-title">BSTPL CustomerVault</div>
+        <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
+      </div>
+    </a>
+    <div class="top-bar-right">
+      <div class="tagline-pill">Secure Smart Connected Surface Online</div>
+      <div class="system-status-pill">
+        <span class="status-dot"></span>
+        <span>Services Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- WHAT IS HAPPENING BELOW: Main Split Layout — Authentication Form on Left & Enterprise Highlights on Right -->
+  <main class="index-main">
+    
+    <!-- Left Authentication Form Card -->
+    <div class="auth-card-wrap">
+      <div class="auth-card">
+        
+        <div class="auth-header">
+          <div class="card-brand-crest">
+            <div class="card-brand-icon"><img src="logo.svg" alt="BSTPL Logo" style="width:100%;height:100%;object-fit:contain;border-radius:8px" /></div>
+            <div class="card-brand-text">
+              <div class="card-brand-title">BSTPL CustomerVault</div>
+              <div class="card-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
+            </div>
+          </div>
+          <h2 id="authTitle">Sign In</h2>
+          <p id="authSub">Access your account to continue</p>
+        </div>
+
+        <form id="authForm" novalidate autocomplete="on">
+          <!-- Full name input (used when switching to register mode) -->
+          <div class="form-group" id="authNameWrap" hidden>
+            <label for="authName">Full Name</label>
+            <div class="input-wrapper">
+              <span class="input-ico">📇</span>
+              <input type="text" id="authName" class="auth-input" placeholder="Your full name" autocomplete="name" />
+            </div>
+          </div>
+
+          <!-- Username / Employee ID -->
+          <div class="form-group">
+            <label for="authId">Username</label>
+            <div class="input-wrapper">
+              <span class="input-ico">👤</span>
+              <input type="text" id="authId" class="auth-input" placeholder="Username or Employee ID" autocomplete="username" spellcheck="false" autocapitalize="none" required />
+            </div>
+          </div>
+
+          <!-- Password with show/hide toggle -->
+          <div class="form-group">
+            <label for="authPw">Password</label>
+            <div class="input-wrapper">
+              <span class="input-ico">🔒</span>
+              <input type="password" id="authPw" class="auth-input" placeholder="Password" autocomplete="current-password" required />
+              <button type="button" class="eye-btn" id="authPwToggle" title="Show password" aria-label="Show password">👁️</button>
+            </div>
+          </div>
+
+          <!-- Success Notification Banner for Logout or Registration -->
+          <div class="auth-success-box" id="authSuccessBox" role="status">
+            <span>✓</span>
+            <span id="authSuccessText">You have been successfully signed out of BSTPL CustomerVault.</span>
+          </div>
+
+          <!-- Error Alert Banner -->
+          <div class="auth-error-box" id="authErrBox" role="alert">
+            <span>⚠️</span>
+            <span id="authErr">Invalid credentials</span>
+          </div>
+
+          <!-- Submit Action Button -->
+          <button type="submit" class="auth-submit-btn" id="authSubmit">
+            <span id="authSubmitLabel">Login</span>
+            <span>→</span>
+          </button>
+        </form>
+
+        <!-- Mode switch between login and register -->
+        <div class="auth-switch-wrap" id="authSwitchWrap">
+          <span id="authSwitchText">New to BSTPL CustomerVault?</span>
+          <button type="button" class="auth-switch-btn" id="authSwitchBtn">Create your ID</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Right Branding Column: Secure Smart Connected Surface Online & 4 Core Capability Badges -->
+    <div class="hero-col">
+      <div class="hero-tag">🌐 Secure Smart Connected Surface Online</div>
+      <h1 class="hero-headline">
+        Secure Smart Connected<br>
+        <span class="hero-highlight">Surface Online</span>
+      </h1>
+      <p class="hero-sub">
+        Your Customer Data, Our Priority. Manage, fetch, edit and track your customer data and inventory &mdash; all in one place with high-speed telemetrics and enterprise security.
+      </p>
+
+      <!-- 4 Core Capabilities Grid (☁️ 👤 📝 🛢️) -->
+      <div class="hero-features-grid">
+        <div class="feature-card">
+          <div class="feature-ico-box">☁️</div>
+          <div>
+            <h4>Smart Fetch &amp; SIM Upload</h4>
+            <p>Multi-sheet Excel ingestion with auto E-SIM / Plastic SIM classification and validation.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-ico-box">👤</div>
+          <div>
+            <h4>Customer Inventory</h4>
+            <p>Comprehensive customer portfolios, active device accounts, and instant query debouncing.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-ico-box">📝</div>
+          <div>
+            <h4>Edit &amp; Track by IMEI</h4>
+            <p>Single &amp; bulk IMEI operations, dynamic column registration, and recycle cart protection.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-ico-box">🛢️</div>
+          <div>
+            <h4>Inventory Vault &amp; Alerts</h4>
+            <p>Automated 30-day SIM expiration diagnostics, data health audits, and live telemetry feeds.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- WHAT IS HAPPENING BELOW: Client-side Authentication, Session Validation & Form Submission Handling -->
+  <script>
+    const API_BASE = window.location.origin;
+    let authMode = 'login';
+
+    const $ = id => document.getElementById(id);
+
+    // Prevent navigating back to authenticated pages after logout
+    if (window.history && window.history.replaceState) {
+      if (window.location.search && window.location.search.includes('logout=1')) {
+        window.history.replaceState(null, '', 'index.html?logout=1');
+      }
+    }
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted || (window.performance && window.performance.navigation && window.performance.navigation.type === 2)) {
+        if (window.location.search && window.location.search.includes('logout=1')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+    });
+
+    // Check existing session
+    (async function checkExistingSession() {
+      const existingToken = localStorage.getItem('token');
+      const hasLogoutParam = !!(window.location && window.location.search && window.location.search.includes('logout=1'));
+      if (hasLogoutParam) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if ($('authSuccessBox')) $('authSuccessBox').classList.add('show');
+      }
+      if (existingToken && !hasLogoutParam) {
+        try {
+          const res = await fetch(API_BASE + '/api/me', {
+            headers: { 'Authorization': 'Bearer ' + existingToken }
+          });
+          if (res.ok) {
+            window.location.replace('home.html');
+          } else if (res.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        } catch(e) {}
+      }
+    })();
+
+    // Password visibility toggle
+    if ($('authPwToggle')) {
+      $('authPwToggle').onclick = () => {
+        const inp = $('authPw');
+        const isPw = inp.type === 'password';
+        inp.type = isPw ? 'text' : 'password';
+        $('authPwToggle').textContent = isPw ? '🙈' : '👁️';
+        $('authPwToggle').setAttribute('title', isPw ? 'Hide password' : 'Show password');
+      };
+    }
+
+    // Toggle mode between Sign In and Create your ID
+    if ($('authSwitchBtn')) {
+      $('authSwitchBtn').onclick = () => {
+        authMode = authMode === 'login' ? 'register' : 'login';
+        $('authNameWrap').hidden = (authMode === 'login');
+        $('authTitle').textContent = authMode === 'login' ? 'Sign In' : 'Create your ID';
+        $('authSub').textContent = authMode === 'login' ? 'Access your account to continue' : 'Register a new employee profile in CustomerVault';
+        $('authSubmitLabel').textContent = authMode === 'login' ? 'Login' : 'Create Account';
+        $('authSwitchText').textContent = authMode === 'login' ? 'New to BSTPL CustomerVault?' : 'Already have an ID?';
+        $('authSwitchBtn').textContent = authMode === 'login' ? 'Create your ID' : 'Sign In';
+        clearError();
+      };
+    }
+
+    function showError(msg) {
+      const box = $('authErrBox');
+      const text = $('authErr');
+      if (box && text) {
+        text.textContent = msg;
+        box.classList.add('show');
+      }
+    }
+
+    function clearError() {
+      const box = $('authErrBox');
+      if (box) box.classList.remove('show');
+    }
+
+    // Form submission
+    if ($('authForm')) {
+      $('authForm').onsubmit = async e => {
+        e.preventDefault();
+        clearError();
+        const userId = ($('authId')?.value || '').trim();
+        const password = $('authPw')?.value || '';
+        const name = ($('authName')?.value || '').trim();
+
+        if (!userId) {
+          showError('Please enter your Username or Employee ID.');
+          $('authId')?.focus();
+          return;
+        }
+        if (!password) {
+          showError('Please enter your password.');
+          $('authPw')?.focus();
+          return;
+        }
+
+        const btn = $('authSubmit');
+        const lbl = $('authSubmitLabel');
+        btn.disabled = true;
+        lbl.textContent = 'Authenticating…';
+        showAuthLoader('Signing in to BSTPL CustomerVault…');
+
+        try {
+          const endpoint = authMode === 'login' ? '/auth/login' : '/auth/register';
+          const payload = authMode === 'login' ? { user_id: userId, password } : { name: name || userId, user_id: userId, password };
+
+          let res;
+          try {
+            res = await fetch(API_BASE + endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (res.status === 404 && authMode === 'login') {
+              res = await fetch(API_BASE + '/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            }
+          } catch(netErr) {
+            throw new Error('Cannot reach CustomerVault backend server. Please verify the backend is running.');
+          }
+
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(data.detail || data.message || 'Authentication failed. Please verify your credentials.');
+          }
+
+          if (!data.access_token) {
+            throw new Error('Server returned invalid authentication payload (missing access_token).');
+          }
+
+          localStorage.setItem('token', data.access_token);
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
+
+          lbl.textContent = 'Success! Opening Home Overview…';
+          showAuthLoader('Welcome back! Opening Home Overview…');
+          setTimeout(() => {
+            window.location.replace('home.html');
+          }, 200);
+        } catch(err) {
+          hideAuthLoader();
+          showError(err.message || 'Login failed. Please verify your credentials.');
+        } finally {
+          btn.disabled = false;
+          if (lbl.textContent !== 'Success! Opening Home Overview…') {
+            lbl.textContent = authMode === 'login' ? 'Login' : 'Create Account';
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>
