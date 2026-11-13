@@ -1,0 +1,8 @@
+/auth/*      https://bstpl-customervalut-6-g6a8.onrender.com/auth/:splat      200!
+/health      https://bstpl-customervalut-6-g6a8.onrender.com/health           200!
+/health/*    https://bstpl-customervalut-6-g6a8.onrender.com/health/:splat     200!
+/api/*       https://bstpl-customervalut-6-g6a8.onrender.com/api/:splat      200!
+/sensorise/* https://bstpl-customervalut-6-g6a8.onrender.com/sensorise/:splat 200!
+/sim-upload.html  /home.html  301!
+/sim-upload       /home.html  301!
+/dashboard        /dashboard.html  200
