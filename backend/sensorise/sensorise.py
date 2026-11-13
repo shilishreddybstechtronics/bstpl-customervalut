@@ -210,17 +210,17 @@ class SensoriseClient:
     def is_token_exhausted_or_expired(api_code: Any, api_msg: Any = "", status_code: int = 200) -> bool:
         code_str = str(api_code or "").upper().strip()
         msg_str = str(api_msg or "").lower()
-        if code_str in ("LCM_818", "LCM_819", "LCM_804", "LCM_811", "LCM_805"):
+        # Daily call quota reached: generating a fresh token does not reset the 100 calls/day limit on Sensorise server
+        if code_str in ("LCM_818", "LCM_819") or "maximum 100" in msg_str or "allowed per day" in msg_str:
+            return False
+        if code_str in ("LCM_804", "LCM_811", "LCM_805"):
             return True
         if status_code in (401, 403):
             return True
         if any(phrase in msg_str for phrase in [
-            "maximum 100",
-            "allowed per day",
             "token expired",
             "invalid token",
-            "unauthorized",
-            "quota"
+            "unauthorized"
         ]):
             return True
         return False
