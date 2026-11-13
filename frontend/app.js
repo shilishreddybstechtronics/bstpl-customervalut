@@ -1,4 +1,4 @@
-const RENDER_BACKEND_URL = "https://bstpl-customervalut-2-jm3t.onrender.com";
+const RENDER_BACKEND_URL = "https://bstpl-customervalut-6-g6a8.onrender.com";
 const isLocal = window.location.protocol === "file:" ||
   ((window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") && window.location.port !== "8000");
 const API_URL = window.API_URL || localStorage.getItem("API_URL") || (

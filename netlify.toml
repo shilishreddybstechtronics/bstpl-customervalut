@@ -4,25 +4,31 @@
 # Proxy API, Auth, Health, and Sensorise requests directly to the live Render backend
 [[redirects]]
   from = "/auth/*"
-  to = "https://bstpl-customervalut-2-jm3t.onrender.com/auth/:splat"
+  to = "https://bstpl-customervalut-6-g6a8.onrender.com/auth/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "https://bstpl-customervalut-6-g6a8.onrender.com/health"
   status = 200
   force = true
 
 [[redirects]]
   from = "/health/*"
-  to = "https://bstpl-customervalut-2-jm3t.onrender.com/health/:splat"
+  to = "https://bstpl-customervalut-6-g6a8.onrender.com/health/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/api/*"
-  to = "https://bstpl-customervalut-2-jm3t.onrender.com/api/:splat"
+  to = "https://bstpl-customervalut-6-g6a8.onrender.com/api/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/sensorise/*"
-  to = "https://bstpl-customervalut-2-jm3t.onrender.com/sensorise/:splat"
+  to = "https://bstpl-customervalut-6-g6a8.onrender.com/sensorise/:splat"
   status = 200
   force = true
 
