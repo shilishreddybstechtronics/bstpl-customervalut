@@ -824,8 +824,8 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
 
         return {
             "success": True,
-            "source": "sensorise_server" if (web_m1 or web_m2 or web_act or web_exp) else ("website_database" if db_rec else "website"),
-            "data_source": "sensorise_server" if (web_m1 or web_m2 or web_act or web_exp) else ("website_database" if db_rec else "website"),
+            "source": "sensorise" if (web_m1 or web_m2 or web_act or web_exp) else "website_database",
+            "data_source": "sensorise" if (web_m1 or web_m2 or web_act or web_exp) else "website_database",
             "found_in_sensorise": bool(web_m1 or web_m2 or web_act or web_exp),
             "found_in_database": True if db_rec else False,
             "iccid": iccid_clean,
