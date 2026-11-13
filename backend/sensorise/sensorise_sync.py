@@ -165,6 +165,7 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
                 entities = bulk_res.get("simDetailEntity") or bulk_res.get("sim_entity") or []
                 for ent in entities:
                     if isinstance(ent, dict):
+                        ent["_from_sensorise_server"] = True
                         ent_iccid = _extract_numeric_iccid(ent.get("iccid"))
                         if ent_iccid:
                             telematics_results[ent_iccid] = ent
@@ -182,7 +183,8 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
         if raw_clean not in telematics_results and num_iccid in telematics_results:
             telematics_results[raw_clean] = telematics_results[num_iccid]
         elif raw_clean not in telematics_results and num_iccid in getattr(sensorise_client, "raw_telematics_cache", {}):
-            ent = sensorise_client.raw_telematics_cache[num_iccid]
+            ent = dict(sensorise_client.raw_telematics_cache[num_iccid])
+            ent["_from_sensorise_server"] = True
             telematics_results[raw_clean] = ent
             telematics_results[num_iccid] = ent
 
@@ -204,7 +206,8 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
                             "primaryMSISDN": str(row[0] or "").strip(),
                             "fallbackMSISDN": str(row[1] or "").strip(),
                             "commercialActivationDate": str(row[2] or "").strip(),
-                            "commercialExpiryDate": str(row[3] or "").strip()
+                            "commercialExpiryDate": str(row[3] or "").strip(),
+                            "_from_sensorise_server": False
                         }
                         telematics_results[clean_raw] = ent
                         num_ic = _extract_numeric_iccid(clean_raw)
@@ -278,7 +281,13 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
     4. Updates and persists them in the database (`sim_devices` & customer tables).
     5. Leaves all other selected columns intact.
     """
-    if not devices or not sensorise_client:
+    if not devices:
+        return devices
+    if not sensorise_client:
+        for dev in devices:
+            if not hasattr(dev, "source") or not dev.source:
+                dev.source = "website"
+                dev.data_source = "website"
         return devices
 
     # 1. Collect ICCIDs
@@ -300,11 +309,19 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
             iccid_to_devices.setdefault(num_ic, []).append(d)
 
     if not raw_iccids:
+        for dev in devices:
+            if not hasattr(dev, "source") or not dev.source:
+                dev.source = "website"
+                dev.data_source = "website"
         return devices
 
     # 2. Fetch from Sensorise server
     telematics_map = fetch_sensorise_telematics_for_iccids(raw_iccids)
     if not telematics_map:
+        for dev in devices:
+            if not hasattr(dev, "source") or not dev.source:
+                dev.source = "website"
+                dev.data_source = "website"
         return devices
 
     # 3. Replace values on models and update database
@@ -313,6 +330,7 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
 
     for iccid_key, dev_list in iccid_to_devices.items():
         ent = telematics_map.get(iccid_key)
+        is_from_server = bool(ent and ent.get("_from_sensorise_server"))
 
         web_m1 = _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1")) if ent else ""
         web_m2 = _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2")) if ent else ""
@@ -321,6 +339,8 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
 
         web_ad = _parse_sensorise_date(raw_ad)
         web_ed = _parse_sensorise_date(raw_ed)
+
+        has_server_telematics = bool(is_from_server and (web_m1 or web_m2 or web_ad or web_ed))
 
         db_stored = None
         for dev in dev_list:
@@ -345,6 +365,16 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
                     dev_ad = db_stored["act_date"]
                 if not dev_ed and db_stored.get("expiry_date"):
                     dev_ed = db_stored["expiry_date"]
+
+            if has_server_telematics:
+                dev.source = "sensorise_server"
+                dev.data_source = "sensorise_server"
+            elif dev_ad or dev_ed or dev_m1 or dev_m2:
+                dev.source = "website_database"
+                dev.data_source = "website_database"
+            else:
+                dev.source = "website"
+                dev.data_source = "website"
 
             final_m1 = web_m1 if web_m1 else (dev_m1 if dev_m1 else None)
             final_m2 = web_m2 if web_m2 else (dev_m2 if dev_m2 else None)
@@ -411,6 +441,11 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
             db.rollback()
             logger.error(f"Error committing Sensorise telematics to database: {commit_err}")
 
+    for dev in devices:
+        if not hasattr(dev, "source") or not dev.source:
+            dev.source = "website"
+            dev.data_source = "website"
+
     return devices
 
 
@@ -426,7 +461,13 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
     3. Replaces these values in the dictionaries for the website response.
     4. Updates and persists them in the database (`sim_devices` & customer tables).
     """
-    if not records or not sensorise_client:
+    if not records:
+        return records
+    if not sensorise_client:
+        for r in records:
+            if "source" not in r or not r["source"]:
+                r["source"] = "website"
+                r["data_source"] = "website"
         return records
 
     raw_iccids = []
@@ -447,10 +488,18 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
             iccid_to_records.setdefault(num_ic, []).append(r)
 
     if not raw_iccids:
+        for r in records:
+            if "source" not in r or not r["source"]:
+                r["source"] = "website"
+                r["data_source"] = "website"
         return records
 
     telematics_map = fetch_sensorise_telematics_for_iccids(raw_iccids)
     if not telematics_map:
+        for r in records:
+            if "source" not in r or not r["source"]:
+                r["source"] = "website"
+                r["data_source"] = "website"
         return records
 
     updated_count = 0
@@ -458,6 +507,7 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
 
     for iccid_key, r_list in iccid_to_records.items():
         ent = telematics_map.get(iccid_key)
+        is_from_server = bool(ent and ent.get("_from_sensorise_server"))
 
         web_m1 = _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1")) if ent else ""
         web_m2 = _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2")) if ent else ""
@@ -466,6 +516,8 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
 
         ad_date = _parse_sensorise_date(raw_ad)
         ed_date = _parse_sensorise_date(raw_ed)
+
+        has_server_telematics = bool(is_from_server and (web_m1 or web_m2 or ad_date or ed_date))
 
         ad_str = ad_date.isoformat() if ad_date else ""
         ed_str = ed_date.isoformat() if ed_date else ""
@@ -497,6 +549,16 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                 if not dict_ed and db_stored.get("expiry_date"):
                     ed_val = db_stored["expiry_date"]
                     dict_ed = ed_val.isoformat() if hasattr(ed_val, "isoformat") else str(ed_val)
+
+            if has_server_telematics:
+                r["source"] = "sensorise_server"
+                r["data_source"] = "sensorise_server"
+            elif dict_ad or dict_ed or dict_m1 or dict_m2:
+                r["source"] = "website_database"
+                r["data_source"] = "website_database"
+            else:
+                r["source"] = "website"
+                r["data_source"] = "website"
 
             # Rule: If website has no value, use database stored value. If not in DB or website, print blank!
             final_m1 = web_m1 if web_m1 else (dict_m1 if dict_m1 else "")
@@ -594,6 +656,11 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
         except Exception as commit_err:
             db.rollback()
             logger.error(f"Error committing Sensorise telematics for dicts: {commit_err}")
+
+    for r in records:
+        if "source" not in r or not r["source"]:
+            r["source"] = "website"
+            r["data_source"] = "website"
 
     return records
 

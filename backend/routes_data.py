@@ -199,8 +199,11 @@ def out(d: Device) -> dict:
         if exp_d.lower() == p: exp_d = ""
         if disp_d.lower() == p: disp_d = ""
 
+    src = getattr(d, "source", None) or getattr(d, "data_source", None) or "website"
+
     return {
         "id": d.id, "customer_id": d.customer_id,
+        "source": src, "data_source": src,
         "customer_name": d.customer.name if d.customer else "",
         "device_sr_no": d.device_sr_no or "", "imei": d.imei or "", "iccid": d.iccid or "",
         "msisdn1": m1, "msisdn2": m2,
@@ -2108,6 +2111,8 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
                     extra_exact_records.append({
                         "id": f"sensorise_{b_row[2]}",
                         "customer_id": 0,
+                        "source": "website_database",
+                        "data_source": "website_database",
                         "customer_name": "Sensorise SIM Inventory",
                         "device_sr_no": b_row[0] or "",
                         "imei": b_row[1] or "",
@@ -2306,6 +2311,8 @@ def fetch_sync(data: schemas.FetchSyncIn, db: Session = Depends(get_db),
                 "expiry_date": ed_val,
                 "sim_provider": matched_dev.sim_provider or "",
                 "model": matched_dev.model or "",
+                "source": getattr(matched_dev, "source", "website"),
+                "data_source": getattr(matched_dev, "data_source", "website"),
                 "status": "SUCCESS"
             })
         else:
@@ -2347,6 +2354,8 @@ def fetch_sync(data: schemas.FetchSyncIn, db: Session = Depends(get_db),
                     "expiry_date": b_ed,
                     "sim_provider": "Sensorise",
                     "model": "",
+                    "source": "website_database",
+                    "data_source": "website_database",
                     "status": "SUCCESS"
                 })
             else:

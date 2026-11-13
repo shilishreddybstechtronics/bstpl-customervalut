@@ -3052,6 +3052,7 @@
 
     const COLS = [
       ['customer_name', 'Customer Name'],
+      ['source', 'Data Source'],
       ['device_sr_no', 'Device SR No'],
       ['imei', 'IMEI'],
       ['iccid', 'ICCID / CCID Dispatched'],
@@ -3075,8 +3076,24 @@
       return `<span class="tag ok">${d.days_left}d left</span>`;
     };
 
+    const renderSourceBadge = d => {
+      if (!d) return '';
+      const src = String((d.source || d.data_source) || '').toLowerCase().trim();
+      const idStr = String(d.id || '');
+      if (src.includes('sensorise_server') || src === 'sensorise' || src.includes('server')) {
+        return `<span class="badge" style="background:#e0e7ff;color:#4338ca;border:1px solid #c7d2fe;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" title="Data fetched live from Sensorise Server"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4f46e5"></span>📡 Sensorise Server</span>`;
+      }
+      if (src.includes('database') || src === 'db' || idStr.startsWith('sensorise_')) {
+        return `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" title="Data fetched from Website Database"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#d97706"></span>💾 Website Database</span>`;
+      }
+      return `<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" title="Data from Website Inventory"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#16a34a"></span>🌐 Website</span>`;
+    };
+
     const cell = (d, k) => {
       const val = d[k];
+      if (k === 'source' || k === 'data_source') {
+        return renderSourceBadge(d);
+      }
       if (['msisdn1', 'msisdn2', 'act_date', 'activation_date'].includes(k)) {
         return (val && val !== '—' && val !== 'None' && val !== 'null') ? esc(val) : '';
       }
@@ -3129,7 +3146,12 @@
         ${act ? '<th>Actions</th>' : ''}
       </tr></thead><tbody>
       ${list.map(d => `<tr>
-        <td><b>${d.id}</b></td>
+        <td>
+          <div style="display:inline-flex;flex-direction:column;gap:3px;align-items:flex-start">
+            <b>${d.id}</b>
+            ${renderSourceBadge(d)}
+          </div>
+        </td>
         ${COLS.map(c => `<td>${cell(d, c[0])}</td>`).join('')}
         ${activeUCols.map(c => {
           const val = devValue(d, c.key);
@@ -4313,7 +4335,7 @@
       if ($('btnDlgFetchPresetSim')) {
         $('btnDlgFetchPresetSim').onclick = () => {
           activeKeys.clear();
-          ['customer_name', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type'].forEach(k => activeKeys.add(k));
+          ['customer_name', 'source', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type'].forEach(k => activeKeys.add(k));
           renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
         };
       }
@@ -4465,7 +4487,7 @@
         }
         if ($('btnNfColsSim')) {
           $('btnNfColsSim').onclick = () => {
-            const simKeys = new Set(['customer_name', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type']);
+            const simKeys = new Set(['customer_name', 'source', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type']);
             document.querySelectorAll('.nf-col-chk').forEach(c => {
               c.checked = simKeys.has(c.value);
               const chip = c.closest('.col-pill-chip');
@@ -4761,6 +4783,13 @@
 
       function devValue(dev, key) {
         if (!dev) return '';
+        if (key === 'source' || key === 'data_source') {
+          const src = String((dev.source || dev.data_source) || '').toLowerCase().trim();
+          const idStr = String(dev.id || '');
+          if (src.includes('sensorise_server') || src === 'sensorise' || src.includes('server')) return 'Sensorise Server';
+          if (src.includes('database') || src === 'db' || idStr.startsWith('sensorise_')) return 'Website Database';
+          return 'Website';
+        }
         if (['msisdn1', 'msisdn2', 'act_date', 'activation_date', 'expiry_date'].includes(key)) {
           let v = dev[key];
           if (v == null || v === '' || v === '—' || v === 'None' || v === 'null') {
@@ -4875,12 +4904,18 @@
           <tbody>
             ${items.map(dev => `
               <tr>
-                <td><b>${dev.id}</b></td>
+                <td>
+                  <div style="display:inline-flex;flex-direction:column;gap:3px;align-items:flex-start">
+                    <b>${dev.id}</b>
+                    ${renderSourceBadge(dev)}
+                  </div>
+                </td>
                 ${displayCols.map(c => {
                   if (c.key === 'customer_name') {
                     return `<td><span style="display:inline-flex;align-items:center;gap:6px"><b>${esc(dev.customer_name || '—')}</b>
                       <button class="b" data-nf-rename-cust="${dev.customer_id}" data-cust-name="${esc(dev.customer_name || '')}" style="padding:0 4px;height:20px;font-size:11px" title="Rename Customer">✏️</button></span></td>`;
                   }
+                  if (c.key === 'source' || c.key === 'data_source') return `<td>${renderSourceBadge(dev)}</td>`;
                   if (c.key === 'expiry_date') return `<td>${cell(dev, 'expiry_date')}</td>`;
                   if (c.key === 'sim_type') return `<td><span class="badge" style="background:${dev.sim_type === 'E-SIM' ? '#38bdf8' : '#a855f7'};color:#fff">${esc(dev.sim_type || '—')}</span></td>`;
                   if (['msisdn1', 'msisdn2', 'act_date', 'activation_date'].includes(c.key)) {
@@ -5089,7 +5124,7 @@
       function renderBfOutputColumns() {
         const listEl = $('bfOutputColsList');
         if (!listEl) return;
-        const defaults = new Set(['customer_name', 'imei', 'iccid', 'msisdn1', 'act_date', 'expiry_date', 'sim_type', 'sim_provider', 'model']);
+        const defaults = new Set(['customer_name', 'source', 'imei', 'iccid', 'msisdn1', 'act_date', 'expiry_date', 'sim_type', 'sim_provider', 'model']);
 
         const custSel = $('bfCustFilter');
         const cid = custSel ? custSel.value : '';

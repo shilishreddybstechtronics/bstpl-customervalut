@@ -717,7 +717,8 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
             updated_table = get_sensorise_basic_records(limit=80, fetch_all=True)
             return {
                 "success": True,
-                "source": "database",
+                "source": "website_database",
+                "data_source": "website_database",
                 "found_in_sensorise": False,
                 "found_in_database": True,
                 "iccid": clean_field_val(db_rec.get("iccid")) or iccid_clean,
@@ -743,6 +744,7 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
             return {
                 "success": False,
                 "source": "none",
+                "data_source": "none",
                 "found_in_sensorise": False,
                 "found_in_database": False,
                 "iccid": iccid_clean,
@@ -822,7 +824,8 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
 
         return {
             "success": True,
-            "source": "sensorise" if (web_m1 or web_m2 or web_act or web_exp) else "database",
+            "source": "sensorise_server" if (web_m1 or web_m2 or web_act or web_exp) else ("website_database" if db_rec else "website"),
+            "data_source": "sensorise_server" if (web_m1 or web_m2 or web_act or web_exp) else ("website_database" if db_rec else "website"),
             "found_in_sensorise": bool(web_m1 or web_m2 or web_act or web_exp),
             "found_in_database": True if db_rec else False,
             "iccid": iccid_clean,
