@@ -216,6 +216,55 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
     return telematics_results
 
 
+def _clean_str(val: Any) -> str:
+    """Cleans a string and returns empty string if missing, none, or placeholder."""
+    if val is None:
+        return ""
+    s = str(val).strip()
+    if s.lower() in ("none", "null", "nan", "nat", "-", "—", "n/a", "0000-00-00", "00-00-0000", "1970-01-01"):
+        return ""
+    return s
+
+
+def _get_stored_db_telematics(db: Session, iccid: str) -> Dict[str, Any]:
+    """Retrieves stored telematics for an ICCID from database (sim_devices or sensorise_sims_basic)."""
+    clean_ic = _clean_iccid_term(iccid)
+    num_ic = _extract_numeric_iccid(clean_ic)
+    res = {"msisdn1": "", "msisdn2": "", "act_date": None, "expiry_date": None}
+    if not clean_ic:
+        return res
+    try:
+        # 1. Check sim_devices
+        row = db.execute(text("""
+            SELECT msisdn1, msisdn2, act_date, expiry_date
+            FROM sim_devices
+            WHERE deleted_at IS NULL AND (iccid = :ic OR iccid = :ic_f OR iccid = :num_ic)
+            LIMIT 1
+        """), {"ic": clean_ic, "ic_f": clean_ic + "F", "num_ic": num_ic}).first()
+        if row:
+            if row[0]: res["msisdn1"] = _clean_str(row[0])
+            if row[1]: res["msisdn2"] = _clean_str(row[1])
+            if row[2]: res["act_date"] = row[2]
+            if row[3]: res["expiry_date"] = row[3]
+
+        # 2. Fallback to sensorise_sims_basic for any remaining missing field
+        if not res["msisdn1"] or not res["msisdn2"] or not res["act_date"] or not res["expiry_date"]:
+            b_row = db.execute(text("""
+                SELECT msisdn1, msisdn2, activation_date, expiry_date
+                FROM sensorise_sims_basic
+                WHERE iccid = :ic OR iccid = :ic_f OR iccid = :num_ic
+                LIMIT 1
+            """), {"ic": clean_ic, "ic_f": clean_ic + "F", "num_ic": num_ic}).first()
+            if b_row:
+                if not res["msisdn1"] and b_row[0]: res["msisdn1"] = _clean_str(b_row[0])
+                if not res["msisdn2"] and b_row[1]: res["msisdn2"] = _clean_str(b_row[1])
+                if not res["act_date"] and b_row[2]: res["act_date"] = _parse_sensorise_date(b_row[2])
+                if not res["expiry_date"] and b_row[3]: res["expiry_date"] = _parse_sensorise_date(b_row[3])
+    except Exception:
+        pass
+    return res
+
+
 def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
     """
     Given a list of Device ORM models:
@@ -264,45 +313,56 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
 
     for iccid_key, dev_list in iccid_to_devices.items():
         ent = telematics_map.get(iccid_key)
-        if not ent:
-            continue
 
-        m1 = ent.get("primaryMSISDN") or ent.get("msisdn1") or ""
-        m2 = ent.get("fallbackMSISDN") or ent.get("msisdn2") or ""
-        raw_ad = ent.get("commercialActivationDate") or ent.get("activationDate") or ent.get("activation_date")
-        raw_ed = ent.get("commercialExpiryDate") or ent.get("expiryDate") or ent.get("expiry_date")
+        web_m1 = _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1")) if ent else ""
+        web_m2 = _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2")) if ent else ""
+        raw_ad = (ent.get("commercialActivationDate") or ent.get("activationDate") or ent.get("activation_date")) if ent else None
+        raw_ed = (ent.get("commercialExpiryDate") or ent.get("expiryDate") or ent.get("expiry_date")) if ent else None
 
-        ad = _parse_sensorise_date(raw_ad)
-        ed = _parse_sensorise_date(raw_ed)
+        web_ad = _parse_sensorise_date(raw_ad)
+        web_ed = _parse_sensorise_date(raw_ed)
 
+        db_stored = None
         for dev in dev_list:
             if dev.id in updated_device_ids:
                 continue
             updated_device_ids.add(dev.id)
 
+            # Check database stored values if website didn't provide one
+            dev_m1 = _clean_str(getattr(dev, "msisdn1", None))
+            dev_m2 = _clean_str(getattr(dev, "msisdn2", None))
+            dev_ad = getattr(dev, "act_date", None)
+            dev_ed = getattr(dev, "expiry_date", None)
+
+            if not dev_m1 or not dev_m2 or not dev_ad or not dev_ed:
+                if db_stored is None:
+                    db_stored = _get_stored_db_telematics(db, iccid_key)
+                if not dev_m1 and db_stored.get("msisdn1"):
+                    dev_m1 = db_stored["msisdn1"]
+                if not dev_m2 and db_stored.get("msisdn2"):
+                    dev_m2 = db_stored["msisdn2"]
+                if not dev_ad and db_stored.get("act_date"):
+                    dev_ad = db_stored["act_date"]
+                if not dev_ed and db_stored.get("expiry_date"):
+                    dev_ed = db_stored["expiry_date"]
+
+            final_m1 = web_m1 if web_m1 else (dev_m1 if dev_m1 else None)
+            final_m2 = web_m2 if web_m2 else (dev_m2 if dev_m2 else None)
+            final_ad = web_ad if web_ad else (dev_ad if dev_ad else None)
+            final_ed = web_ed if web_ed else (dev_ed if dev_ed else None)
+
             changed = False
-            # Replace MSISDN1
-            if m1 and str(m1).strip():
-                clean_m1 = str(m1).strip()
-                if getattr(dev, "msisdn1", None) != clean_m1:
-                    dev.msisdn1 = clean_m1
-                    changed = True
-
-            # Replace MSISDN2
-            if m2 and str(m2).strip():
-                clean_m2 = str(m2).strip()
-                if getattr(dev, "msisdn2", None) != clean_m2:
-                    dev.msisdn2 = clean_m2
-                    changed = True
-
-            # Replace Act Date
-            if ad and getattr(dev, "act_date", None) != ad:
-                dev.act_date = ad
+            if final_m1 != getattr(dev, "msisdn1", None):
+                dev.msisdn1 = final_m1
                 changed = True
-
-            # Replace Expiry Date
-            if ed and getattr(dev, "expiry_date", None) != ed:
-                dev.expiry_date = ed
+            if final_m2 != getattr(dev, "msisdn2", None):
+                dev.msisdn2 = final_m2
+                changed = True
+            if final_ad != getattr(dev, "act_date", None):
+                dev.act_date = final_ad
+                changed = True
+            if final_ed != getattr(dev, "expiry_date", None):
+                dev.expiry_date = final_ed
                 changed = True
 
             if changed:
@@ -398,20 +458,19 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
 
     for iccid_key, r_list in iccid_to_records.items():
         ent = telematics_map.get(iccid_key)
-        if not ent:
-            continue
 
-        m1 = ent.get("primaryMSISDN") or ent.get("msisdn1") or ""
-        m2 = ent.get("fallbackMSISDN") or ent.get("msisdn2") or ""
-        raw_ad = ent.get("commercialActivationDate") or ent.get("activationDate") or ent.get("activation_date")
-        raw_ed = ent.get("commercialExpiryDate") or ent.get("expiryDate") or ent.get("expiry_date")
+        web_m1 = _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1")) if ent else ""
+        web_m2 = _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2")) if ent else ""
+        raw_ad = (ent.get("commercialActivationDate") or ent.get("activationDate") or ent.get("activation_date")) if ent else None
+        raw_ed = (ent.get("commercialExpiryDate") or ent.get("expiryDate") or ent.get("expiry_date")) if ent else None
 
         ad_date = _parse_sensorise_date(raw_ad)
         ed_date = _parse_sensorise_date(raw_ed)
 
-        ad_str = ad_date.isoformat() if ad_date else (str(raw_ad) if raw_ad else "")
-        ed_str = ed_date.isoformat() if ed_date else (str(raw_ed) if raw_ed else "")
+        ad_str = ad_date.isoformat() if ad_date else ""
+        ed_str = ed_date.isoformat() if ed_date else ""
 
+        db_stored = None
         for r in r_list:
             imei = r.get("imei")
             if imei and imei in updated_imeis:
@@ -419,56 +478,87 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
             if imei:
                 updated_imeis.add(imei)
 
+            dict_m1 = _clean_str(r.get("msisdn1"))
+            dict_m2 = _clean_str(r.get("msisdn2"))
+            dict_ad = _clean_str(r.get("act_date"))
+            dict_ed = _clean_str(r.get("expiry_date"))
+
+            # Fallback to database stored values if missing
+            if not dict_m1 or not dict_m2 or not dict_ad or not dict_ed:
+                if db_stored is None:
+                    db_stored = _get_stored_db_telematics(db, iccid_key)
+                if not dict_m1 and db_stored.get("msisdn1"):
+                    dict_m1 = db_stored["msisdn1"]
+                if not dict_m2 and db_stored.get("msisdn2"):
+                    dict_m2 = db_stored["msisdn2"]
+                if not dict_ad and db_stored.get("act_date"):
+                    ad_val = db_stored["act_date"]
+                    dict_ad = ad_val.isoformat() if hasattr(ad_val, "isoformat") else str(ad_val)
+                if not dict_ed and db_stored.get("expiry_date"):
+                    ed_val = db_stored["expiry_date"]
+                    dict_ed = ed_val.isoformat() if hasattr(ed_val, "isoformat") else str(ed_val)
+
+            # Rule: If website has no value, use database stored value. If not in DB or website, print blank!
+            final_m1 = web_m1 if web_m1 else (dict_m1 if dict_m1 else "")
+            final_m2 = web_m2 if web_m2 else (dict_m2 if dict_m2 else "")
+            final_ad_str = ad_str if ad_str else (dict_ad if dict_ad else "")
+            final_ed_str = ed_str if ed_str else (dict_ed if dict_ed else "")
+            final_ed_date = ed_date or _parse_sensorise_date(final_ed_str)
+
             changed = False
-            if m1 and str(m1).strip():
-                clean_m1 = str(m1).strip()
-                if r.get("msisdn1") != clean_m1:
-                    r["msisdn1"] = clean_m1
-                    changed = True
-
-            if m2 and str(m2).strip():
-                clean_m2 = str(m2).strip()
-                if r.get("msisdn2") != clean_m2:
-                    r["msisdn2"] = clean_m2
-                    changed = True
-
-            if ad_str and r.get("act_date") != ad_str:
-                r["act_date"] = ad_str
+            if r.get("msisdn1") != final_m1:
+                r["msisdn1"] = final_m1
+                changed = True
+            if r.get("msisdn2") != final_m2:
+                r["msisdn2"] = final_m2
+                changed = True
+            if r.get("act_date") != final_ad_str:
+                r["act_date"] = final_ad_str
+                changed = True
+            if r.get("expiry_date") != final_ed_str:
+                r["expiry_date"] = final_ed_str
                 changed = True
 
-            if ed_str and r.get("expiry_date") != ed_str:
-                r["expiry_date"] = ed_str
-                changed = True
-                if ed_date:
-                    r["days_left"] = (ed_date - date.today()).days
+            if final_ed_date:
+                r["days_left"] = (final_ed_date - date.today()).days
+            else:
+                r["days_left"] = ""
 
             if changed:
                 updated_count += 1
-                # Update in database
+                # Update in database with final non-empty values
+                ad_obj_to_save = ad_date or _parse_sensorise_date(final_ad_str)
+                ed_obj_to_save = final_ed_date
                 try:
                     dev_id = r.get("id")
                     if dev_id:
                         db.execute(text("""
                             UPDATE sim_devices
-                            SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                            SET msisdn1 = COALESCE(NULLIF(:m1, ''), msisdn1),
+                                msisdn2 = COALESCE(NULLIF(:m2, ''), msisdn2),
+                                act_date = COALESCE(:ad, act_date),
+                                expiry_date = COALESCE(:ed, expiry_date)
                             WHERE id = :id
                         """), {
-                            "m1": r.get("msisdn1"),
-                            "m2": r.get("msisdn2"),
-                            "ad": ad_date,
-                            "ed": ed_date,
+                            "m1": final_m1,
+                            "m2": final_m2,
+                            "ad": ad_obj_to_save,
+                            "ed": ed_obj_to_save,
                             "id": dev_id
                         })
                     elif imei:
                         db.execute(text("""
                             UPDATE sim_devices
-                            SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                            SET msisdn1 = COALESCE(NULLIF(:m1, ''), msisdn1),
+                                msisdn2 = COALESCE(NULLIF(:m2, ''), msisdn2),
+                                act_date = COALESCE(:ad, act_date),
+                                expiry_date = COALESCE(:ed, expiry_date)
                             WHERE imei = :im
                         """), {
-                            "m1": r.get("msisdn1"),
-                            "m2": r.get("msisdn2"),
-                            "ad": ad_date,
-                            "ed": ed_date,
+                            "m1": final_m1,
+                            "m2": final_m2,
+                            "ad": ad_obj_to_save,
+                            "ed": ed_obj_to_save,
                             "im": imei
                         })
                 except Exception as db_err:
@@ -482,13 +572,16 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                         if t_name:
                             db.execute(text(f"""
                                 UPDATE `{t_name}`
-                                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                                SET msisdn1 = COALESCE(NULLIF(:m1, ''), msisdn1),
+                                    msisdn2 = COALESCE(NULLIF(:m2, ''), msisdn2),
+                                    act_date = COALESCE(:ad, act_date),
+                                    expiry_date = COALESCE(:ed, expiry_date)
                                 WHERE imei = :im
                             """), {
-                                "m1": r.get("msisdn1"),
-                                "m2": r.get("msisdn2"),
-                                "ad": ad_date,
-                                "ed": ed_date,
+                                "m1": final_m1,
+                                "m2": final_m2,
+                                "ad": ad_obj_to_save,
+                                "ed": ed_obj_to_save,
                                 "im": imei
                             })
                     except Exception as cust_err:

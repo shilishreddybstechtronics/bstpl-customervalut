@@ -41,6 +41,16 @@ MONTH_NAMES = {
     "dec": 12, "december": 12,
 }
 
+def clean_field_val(val: Any) -> str:
+    """Returns a cleaned non-empty string or blank string."""
+    if val is None:
+        return ""
+    s = str(val).strip()
+    if s.lower() in ("none", "null", "nan", "nat", "-", "—", "n/a", "0000-00-00", "00-00-0000", "1970-01-01"):
+        return ""
+    return s
+
+
 def format_to_dmy(val: Any) -> str:
     """
     Arranges any date value strictly into DAY-MONTH-YEAR (DD-MM-YYYY) format.
@@ -521,7 +531,10 @@ def fetch_and_update_basic_sims_telematics() -> Dict[str, Any]:
 
             update_sql = """
                 UPDATE sensorise_sims_basic
-                SET msisdn1 = %s, msisdn2 = %s, activation_date = %s, expiry_date = %s
+                SET msisdn1 = COALESCE(NULLIF(%s, ''), msisdn1),
+                    msisdn2 = COALESCE(NULLIF(%s, ''), msisdn2),
+                    activation_date = COALESCE(NULLIF(%s, ''), activation_date),
+                    expiry_date = COALESCE(NULLIF(%s, ''), expiry_date)
                 WHERE id = %s AND iccid = %s;
             """
 
@@ -707,20 +720,20 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
                 "source": "database",
                 "found_in_sensorise": False,
                 "found_in_database": True,
-                "iccid": db_rec.get("iccid") or iccid_clean,
-                "customer_name": db_rec.get("customer_name") or "",
-                "device_sr_no": db_rec.get("device_sr_no") or "",
-                "imei": db_rec.get("imei") or "",
-                "msisdn1": db_rec.get("msisdn1") or "",
-                "msisdn2": db_rec.get("msisdn2") or "",
-                "activation_date": db_rec.get("activation_date") or "",
-                "expiry_date": db_rec.get("expiry_date") or "",
-                "model": db_rec.get("model") or "",
-                "sim_provider": db_rec.get("sim_provider") or "",
-                "activation_plan": db_rec.get("activation_plan") or "",
-                "firmware": db_rec.get("firmware") or "",
-                "flash": db_rec.get("flash") or "",
-                "sim_type": db_rec.get("sim_type") or "",
+                "iccid": clean_field_val(db_rec.get("iccid")) or iccid_clean,
+                "customer_name": clean_field_val(db_rec.get("customer_name")),
+                "device_sr_no": clean_field_val(db_rec.get("device_sr_no")),
+                "imei": clean_field_val(db_rec.get("imei")),
+                "msisdn1": clean_field_val(db_rec.get("msisdn1")),
+                "msisdn2": clean_field_val(db_rec.get("msisdn2")),
+                "activation_date": clean_field_val(db_rec.get("activation_date")),
+                "expiry_date": clean_field_val(db_rec.get("expiry_date")),
+                "model": clean_field_val(db_rec.get("model")),
+                "sim_provider": clean_field_val(db_rec.get("sim_provider")),
+                "activation_plan": clean_field_val(db_rec.get("activation_plan")),
+                "firmware": clean_field_val(db_rec.get("firmware")),
+                "flash": clean_field_val(db_rec.get("flash")),
+                "sim_type": clean_field_val(db_rec.get("sim_type")),
                 "extra": db_rec.get("extra") or {},
                 "headers": updated_table.get("headers", []),
                 "rows": updated_table.get("rows", []),
@@ -732,14 +745,34 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
                 "source": "none",
                 "found_in_sensorise": False,
                 "found_in_database": False,
+                "iccid": iccid_clean,
+                "customer_name": "",
+                "device_sr_no": "",
+                "imei": "",
+                "msisdn1": "",
+                "msisdn2": "",
+                "activation_date": "",
+                "expiry_date": "",
                 "message": f"ICCID '{iccid_clean}' was not found on Sensorise server or in CustomerVault database."
             }
 
-    # Step 3: Found on Sensorise -> Extract values, update database, and return
-    msisdn1 = telematics.get("msisdn1") or telematics.get("primaryMSISDN") or ""
-    msisdn2 = telematics.get("msisdn2") or telematics.get("fallbackMSISDN") or ""
-    activation_date = format_to_dmy(telematics.get("activation_date") or telematics.get("commercialActivationDate"))
-    expiry_date = format_to_dmy(telematics.get("expiry_date") or telematics.get("commercialExpiryDate"))
+    # Step 3: Extract live telematics from Sensorise and combine with database stored values
+    # Rule: If the given ICCID value has no expiry date, activation date, msisdn1, msisdn2 on Sensorise (website),
+    # print our database stored values. If at all not there in our database or website, print blank ("") for that column.
+    web_m1 = clean_field_val(telematics.get("msisdn1") if telematics else None) or clean_field_val(telematics.get("primaryMSISDN") if telematics else None)
+    web_m2 = clean_field_val(telematics.get("msisdn2") if telematics else None) or clean_field_val(telematics.get("fallbackMSISDN") if telematics else None)
+    web_act = clean_field_val(format_to_dmy(telematics.get("activation_date") or telematics.get("commercialActivationDate")) if telematics else "")
+    web_exp = clean_field_val(format_to_dmy(telematics.get("expiry_date") or telematics.get("commercialExpiryDate")) if telematics else "")
+
+    db_m1 = clean_field_val(db_rec.get("msisdn1")) if db_rec else ""
+    db_m2 = clean_field_val(db_rec.get("msisdn2")) if db_rec else ""
+    db_act = clean_field_val(db_rec.get("activation_date")) if db_rec else ""
+    db_exp = clean_field_val(db_rec.get("expiry_date")) if db_rec else ""
+
+    final_m1 = web_m1 if web_m1 else (db_m1 if db_m1 else "")
+    final_m2 = web_m2 if web_m2 else (db_m2 if db_m2 else "")
+    final_act = web_act if web_act else (db_act if db_act else "")
+    final_exp = web_exp if web_exp else (db_exp if db_exp else "")
 
     try:
         conn = get_connection()
@@ -753,23 +786,28 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
                         UPDATE sensorise_sims_basic
                         SET msisdn1 = %s, msisdn2 = %s, activation_date = %s, expiry_date = %s
                         WHERE iccid = %s;
-                    """, (msisdn1, msisdn2, activation_date, expiry_date, iccid_clean))
+                    """, (final_m1, final_m2, final_act, final_exp, iccid_clean))
                 else:
                     cursor.execute("""
                         INSERT INTO sensorise_sims_basic (device_sr_no, imei, iccid, msisdn1, msisdn2, activation_date, expiry_date)
                         VALUES (%s, %s, %s, %s, %s, %s, %s);
                     """, (
-                        db_rec.get("device_sr_no") if db_rec else "",
-                        db_rec.get("imei") if db_rec else "",
-                        iccid_clean, msisdn1, msisdn2, activation_date, expiry_date
+                        clean_field_val(db_rec.get("device_sr_no")) if db_rec else "",
+                        clean_field_val(db_rec.get("imei")) if db_rec else "",
+                        iccid_clean, final_m1, final_m2, final_act, final_exp
                     ))
 
-                # Also update sim_devices if present
+                # Also update sim_devices if present with non-empty values
+                act_sql_val = final_act if final_act else None
+                exp_sql_val = final_exp if final_exp else None
                 cursor.execute("""
                     UPDATE sim_devices
-                    SET msisdn1 = %s, msisdn2 = %s, act_date = %s, expiry_date = %s
+                    SET msisdn1 = COALESCE(NULLIF(%s, ''), msisdn1),
+                        msisdn2 = COALESCE(NULLIF(%s, ''), msisdn2),
+                        act_date = COALESCE(STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y'), act_date),
+                        expiry_date = COALESCE(STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y'), expiry_date)
                     WHERE iccid = %s OR iccid = %s;
-                """, (msisdn1, msisdn2, activation_date or None, expiry_date or None, iccid_clean, iccid_clean + 'F'))
+                """, (final_m1, final_m2, act_sql_val, exp_sql_val, iccid_clean, iccid_clean + 'F'))
 
                 conn.commit()
             conn.close()
@@ -784,29 +822,29 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
 
         return {
             "success": True,
-            "source": "sensorise",
-            "found_in_sensorise": True,
+            "source": "sensorise" if (web_m1 or web_m2 or web_act or web_exp) else "database",
+            "found_in_sensorise": bool(web_m1 or web_m2 or web_act or web_exp),
             "found_in_database": True if db_rec else False,
             "iccid": iccid_clean,
-            "customer_name": db_rec.get("customer_name") if db_rec else "",
-            "device_sr_no": db_rec.get("device_sr_no") if db_rec else "",
-            "imei": db_rec.get("imei") if db_rec else "",
-            "msisdn1": msisdn1,
-            "msisdn2": msisdn2,
-            "activation_date": activation_date,
-            "expiry_date": expiry_date,
-            "model": db_rec.get("model") if db_rec else "",
-            "sim_provider": db_rec.get("sim_provider") if db_rec else "",
-            "activation_plan": db_rec.get("activation_plan") if db_rec else "",
-            "firmware": db_rec.get("firmware") if db_rec else "",
-            "flash": db_rec.get("flash") if db_rec else "",
-            "sim_type": db_rec.get("sim_type") if db_rec else "",
+            "customer_name": clean_field_val(db_rec.get("customer_name")) if db_rec else "",
+            "device_sr_no": clean_field_val(db_rec.get("device_sr_no")) if db_rec else "",
+            "imei": clean_field_val(db_rec.get("imei")) if db_rec else "",
+            "msisdn1": final_m1,
+            "msisdn2": final_m2,
+            "activation_date": final_act,
+            "expiry_date": final_exp,
+            "model": clean_field_val(db_rec.get("model")) if db_rec else "",
+            "sim_provider": clean_field_val(db_rec.get("sim_provider")) if db_rec else "",
+            "activation_plan": clean_field_val(db_rec.get("activation_plan")) if db_rec else "",
+            "firmware": clean_field_val(db_rec.get("firmware")) if db_rec else "",
+            "flash": clean_field_val(db_rec.get("flash")) if db_rec else "",
+            "sim_type": clean_field_val(db_rec.get("sim_type")) if db_rec else "",
             "headers": updated_table.get("headers", []),
             "rows": updated_table.get("rows", []),
             "token_regenerated": bool(regen_res.get("success")),
             "apiToken": regen_res.get("apiToken") or sensorise_client.auth_token,
             "tokenExpiry": regen_res.get("tokenExpiry") or sensorise_client.get_token_expiry(),
-            "message": f"Successfully fetched live MSISDN1, MSISDN2, Act Date, Expiry Date for ICCID {iccid_clean} from Sensorise server and updated database!"
+            "message": f"Successfully matched ICCID '{iccid_clean}' — telematics merged with database and displayed."
         }
     except Exception as e:
         logger.error(f"Error searching and updating ICCID {iccid_clean}: {e}")
@@ -869,8 +907,19 @@ def sync_and_match_iccids_from_server(iccids: Optional[List[str]] = None) -> Dic
             with conn.cursor() as cursor:
                 update_sql = """
                     UPDATE sensorise_sims_basic
-                    SET msisdn1 = %s, msisdn2 = %s, activation_date = %s, expiry_date = %s
-                    WHERE iccid = %s;
+                    SET msisdn1 = COALESCE(NULLIF(%s, ''), msisdn1),
+                        msisdn2 = COALESCE(NULLIF(%s, ''), msisdn2),
+                        activation_date = COALESCE(NULLIF(%s, ''), activation_date),
+                        expiry_date = COALESCE(NULLIF(%s, ''), expiry_date)
+                    WHERE iccid = %s OR iccid = %s;
+                """
+                update_dev_sql = """
+                    UPDATE sim_devices
+                    SET msisdn1 = COALESCE(NULLIF(%s, ''), msisdn1),
+                        msisdn2 = COALESCE(NULLIF(%s, ''), msisdn2),
+                        act_date = COALESCE(STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y'), act_date),
+                        expiry_date = COALESCE(STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y'), expiry_date)
+                    WHERE iccid = %s OR iccid = %s;
                 """
                 for rec in matched_records:
                     iccid = str(rec.get("iccid") or "").strip()
@@ -879,9 +928,10 @@ def sync_and_match_iccids_from_server(iccids: Optional[List[str]] = None) -> Dic
                     act = format_to_dmy(rec.get("activation_date") or "")
                     exp = format_to_dmy(rec.get("expiry_date") or "")
                     if m1 or m2 or act or exp:
-                        update_params.append((m1, m2, act, exp, iccid))
+                        update_params.append((m1, m2, act, exp, iccid, iccid + 'F'))
                 if update_params:
                     cursor.executemany(update_sql, update_params)
+                    cursor.executemany(update_dev_sql, update_params)
                     conn.commit()
             conn.close()
         except Exception as e:
@@ -1127,13 +1177,13 @@ def get_sensorise_basic_records(limit: int = 500, page: int = 1, search: str = "
         rows = []
         for r in db_rows:
             rows.append([
-                r.get("device_sr_no") or "",
-                r.get("imei") or "",
-                r.get("iccid") or "",
-                r.get("msisdn1") or "",
-                r.get("msisdn2") or "",
-                format_to_dmy(r.get("activation_date") or ""),
-                format_to_dmy(r.get("expiry_date") or "")
+                clean_field_val(r.get("device_sr_no")),
+                clean_field_val(r.get("imei")),
+                clean_field_val(r.get("iccid")),
+                clean_field_val(r.get("msisdn1")),
+                clean_field_val(r.get("msisdn2")),
+                clean_field_val(format_to_dmy(r.get("activation_date") or "")),
+                clean_field_val(format_to_dmy(r.get("expiry_date") or ""))
             ])
 
         return {

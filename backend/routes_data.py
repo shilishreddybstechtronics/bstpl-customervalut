@@ -185,19 +185,33 @@ def out(d: Device) -> dict:
             extra_data = json.loads(extra_data)
         except Exception:
             extra_data = {}
+
+    m1 = str(d.msisdn1 or "").strip()
+    m2 = str(d.msisdn2 or "").strip()
+    act_d = d.act_date.isoformat() if d.act_date else ""
+    exp_d = d.expiry_date.isoformat() if d.expiry_date else ""
+    disp_d = d.dispatched_date.isoformat() if d.dispatched_date else ""
+
+    for p in ("none", "null", "nan", "nat", "-", "—", "n/a", "0000-00-00", "00-00-0000", "1970-01-01"):
+        if m1.lower() == p: m1 = ""
+        if m2.lower() == p: m2 = ""
+        if act_d.lower() == p: act_d = ""
+        if exp_d.lower() == p: exp_d = ""
+        if disp_d.lower() == p: disp_d = ""
+
     return {
         "id": d.id, "customer_id": d.customer_id,
-        "customer_name": d.customer.name if d.customer else None,
-        "device_sr_no": d.device_sr_no, "imei": d.imei, "iccid": d.iccid,
-        "msisdn1": d.msisdn1, "msisdn2": d.msisdn2,
-        "act_date": d.act_date, "expiry_date": d.expiry_date, "dispatched_date": d.dispatched_date,
-        "model": d.model, "sim_provider": d.sim_provider, "activation_plan": d.activation_plan,
-        "firmware": d.firmware, "flash": d.flash, "sim_type": stype,
+        "customer_name": d.customer.name if d.customer else "",
+        "device_sr_no": d.device_sr_no or "", "imei": d.imei or "", "iccid": d.iccid or "",
+        "msisdn1": m1, "msisdn2": m2,
+        "act_date": act_d, "expiry_date": exp_d, "dispatched_date": disp_d,
+        "model": d.model or "", "sim_provider": d.sim_provider or "", "activation_plan": d.activation_plan or "",
+        "firmware": d.firmware or "", "flash": d.flash or "", "sim_type": stype,
         "extra": extra_data,
-        "days_left": (d.expiry_date - date.today()).days if d.expiry_date else None,
-        "expiry_status": compute_expiry_status(d.expiry_date, 30),
+        "days_left": (d.expiry_date - date.today()).days if d.expiry_date else "",
+        "expiry_status": compute_expiry_status(d.expiry_date, 30) if d.expiry_date else "",
         "added_by": d.added_by, "created_at": d.created_at, "deleted_at": d.deleted_at,
-        "deleted_by": d.deleted_by, "delete_reason": d.delete_reason,
+        "deleted_by": d.deleted_by or "", "delete_reason": d.delete_reason or "",
     }
 
 
@@ -2062,6 +2076,64 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
                 matched_term_set.add(t)
 
     unmatched_terms = [t for t in terms if t not in matched_term_set]
+    extra_exact_records = []
+    if field in ("iccid", "ccid", "all") and unmatched_terms:
+        for ut in list(unmatched_terms):
+            clean_ut = clean_iccid(ut)
+            if not clean_ut or len(clean_ut) < 6:
+                continue
+            try:
+                b_row = db.execute(text("""
+                    SELECT device_sr_no, imei, iccid, msisdn1, msisdn2, activation_date, expiry_date
+                    FROM sensorise_sims_basic
+                    WHERE iccid = :t OR iccid = :t_f OR iccid = :t_strip
+                    LIMIT 1
+                """), {
+                    "t": ut,
+                    "t_f": clean_ut + "F",
+                    "t_strip": clean_ut.rstrip("F")
+                }).first()
+                if b_row:
+                    matched_term_set.add(ut)
+                    b_m1 = str(b_row[3] or "").strip()
+                    b_m2 = str(b_row[4] or "").strip()
+                    b_ad = str(b_row[5] or "").strip()
+                    b_ed = str(b_row[6] or "").strip()
+                    for p in ("none", "null", "nan", "nat", "-", "—", "n/a", "0000-00-00", "00-00-0000", "1970-01-01"):
+                        if b_m1.lower() == p: b_m1 = ""
+                        if b_m2.lower() == p: b_m2 = ""
+                        if b_ad.lower() == p: b_ad = ""
+                        if b_ed.lower() == p: b_ed = ""
+
+                    extra_exact_records.append({
+                        "id": f"sensorise_{b_row[2]}",
+                        "customer_id": 0,
+                        "customer_name": "Sensorise SIM Inventory",
+                        "device_sr_no": b_row[0] or "",
+                        "imei": b_row[1] or "",
+                        "iccid": b_row[2] or ut,
+                        "msisdn1": b_m1,
+                        "msisdn2": b_m2,
+                        "act_date": b_ad,
+                        "expiry_date": b_ed,
+                        "dispatched_date": "",
+                        "model": "",
+                        "sim_provider": "Sensorise",
+                        "activation_plan": "",
+                        "firmware": "",
+                        "flash": "",
+                        "sim_type": "E-SIM",
+                        "extra": {},
+                        "days_left": "",
+                        "expiry_status": "",
+                        "is_exact": True,
+                        "has_duplicates": False,
+                        "duplicate_fields": []
+                    })
+            except Exception:
+                pass
+
+    unmatched_terms = [t for t in terms if t not in matched_term_set]
     similar_items = []
     similar_terms_to_check = unmatched_terms[:300] if getattr(data, "include_similar", True) else []
 
@@ -2115,7 +2187,7 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
         res["duplicate_fields"] = [f for f, is_dup in [("IMEI", d.imei in dup_imeis), ("ICCID", d.iccid in dup_iccids), ("Sr No", d.device_sr_no in dup_srnos)] if is_dup]
         return res
 
-    exact_res = [format_item(d, True) for d in exact_items]
+    exact_res = [format_item(d, True) for d in exact_items] + extra_exact_records
     similar_res = [format_item(d, False) for d in similar_items]
 
     return {
@@ -2197,17 +2269,43 @@ def fetch_sync(data: schemas.FetchSyncIn, db: Session = Depends(get_db),
                         if val_str:
                             setattr(matched_dev, f_name, val)
 
+            m1_val = (matched_dev.msisdn1 or "").strip()
+            m2_val = (matched_dev.msisdn2 or "").strip()
+            ad_val = matched_dev.act_date.isoformat() if matched_dev.act_date else ""
+            ed_val = matched_dev.expiry_date.isoformat() if matched_dev.expiry_date else ""
+
+            # Check database table sensorise_sims_basic if sim_devices is missing any
+            if (not m1_val or not m2_val or not ad_val or not ed_val) and matched_dev.iccid:
+                try:
+                    b_row = db.execute(text("""
+                        SELECT msisdn1, msisdn2, activation_date, expiry_date
+                        FROM sensorise_sims_basic
+                        WHERE iccid = :t OR iccid = :t_f OR iccid = :t_strip
+                        LIMIT 1
+                    """), {
+                        "t": matched_dev.iccid,
+                        "t_f": matched_dev.iccid + "F",
+                        "t_strip": matched_dev.iccid.rstrip("F")
+                    }).first()
+                    if b_row:
+                        if not m1_val and b_row[0]: m1_val = str(b_row[0]).strip()
+                        if not m2_val and b_row[1]: m2_val = str(b_row[1]).strip()
+                        if not ad_val and b_row[2]: ad_val = str(b_row[2]).strip()
+                        if not ed_val and b_row[3]: ed_val = str(b_row[3]).strip()
+                except Exception:
+                    pass
+
             successful_records.append({
                 "id": matched_dev.id,
                 "customer_name": matched_dev.customer.name if matched_dev.customer else "General_Customer",
-                "imei": matched_dev.imei,
-                "iccid": matched_dev.iccid,
-                "msisdn1": matched_dev.msisdn1 or "—",
-                "msisdn2": matched_dev.msisdn2 or "—",
-                "act_date": matched_dev.act_date.isoformat() if matched_dev.act_date else "—",
-                "expiry_date": matched_dev.expiry_date.isoformat() if matched_dev.expiry_date else "—",
-                "sim_provider": matched_dev.sim_provider or "—",
-                "model": matched_dev.model or "—",
+                "imei": matched_dev.imei or "",
+                "iccid": matched_dev.iccid or "",
+                "msisdn1": m1_val,
+                "msisdn2": m2_val,
+                "act_date": ad_val,
+                "expiry_date": ed_val,
+                "sim_provider": matched_dev.sim_provider or "",
+                "model": matched_dev.model or "",
                 "status": "SUCCESS"
             })
         else:
@@ -2228,17 +2326,27 @@ def fetch_sync(data: schemas.FetchSyncIn, db: Session = Depends(get_db),
                 pass
 
             if basic_row:
+                b_m1 = str(basic_row[3] or "").strip()
+                b_m2 = str(basic_row[4] or "").strip()
+                b_ad = str(basic_row[5] or "").strip()
+                b_ed = str(basic_row[6] or "").strip()
+                for placeholder in ("none", "null", "nan", "nat", "-", "—", "n/a", "0000-00-00", "00-00-0000", "1970-01-01"):
+                    if b_m1.lower() == placeholder: b_m1 = ""
+                    if b_m2.lower() == placeholder: b_m2 = ""
+                    if b_ad.lower() == placeholder: b_ad = ""
+                    if b_ed.lower() == placeholder: b_ed = ""
+
                 successful_records.append({
                     "id": f"sensorise_{basic_row[2]}",
                     "customer_name": "Sensorise SIM Inventory",
-                    "imei": basic_row[1] or "—",
+                    "imei": basic_row[1] or "",
                     "iccid": basic_row[2] or term,
-                    "msisdn1": basic_row[3] or "—",
-                    "msisdn2": basic_row[4] or "—",
-                    "act_date": str(basic_row[5] or "—"),
-                    "expiry_date": str(basic_row[6] or "—"),
+                    "msisdn1": b_m1,
+                    "msisdn2": b_m2,
+                    "act_date": b_ad,
+                    "expiry_date": b_ed,
                     "sim_provider": "Sensorise",
-                    "model": "—",
+                    "model": "",
                     "status": "SUCCESS"
                 })
             else:

@@ -2976,8 +2976,11 @@
 
     const cell = (d, k) => {
       const val = d[k];
+      if (['msisdn1', 'msisdn2', 'act_date', 'activation_date'].includes(k)) {
+        return (val && val !== '—' && val !== 'None' && val !== 'null') ? esc(val) : '';
+      }
       if (k === 'expiry_date') {
-        return val ? `${esc(val)} ${expTag(d)}` : '<span style="color:var(--muted)">—</span>';
+        return (val && val !== '—' && val !== 'None' && val !== 'null') ? `${esc(val)} ${expTag(d)}` : '';
       }
       if (k === 'customer_name') {
         return val ? `<b style="color:var(--text)">${esc(val)}</b>` : '<span style="color:var(--muted)">—</span>';

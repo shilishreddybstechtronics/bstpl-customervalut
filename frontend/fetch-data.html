@@ -3077,8 +3077,11 @@
 
     const cell = (d, k) => {
       const val = d[k];
+      if (['msisdn1', 'msisdn2', 'act_date', 'activation_date'].includes(k)) {
+        return (val && val !== '—' && val !== 'None' && val !== 'null') ? esc(val) : '';
+      }
       if (k === 'expiry_date') {
-        return val ? `${esc(val)} ${expTag(d)}` : '<span style="color:var(--muted)">—</span>';
+        return (val && val !== '—' && val !== 'None' && val !== 'null') ? `${esc(val)} ${expTag(d)}` : '';
       }
       if (k === 'customer_name') {
         return val ? `<b style="color:var(--text)">${esc(val)}</b>` : '<span style="color:var(--muted)">—</span>';
@@ -4758,6 +4761,16 @@
 
       function devValue(dev, key) {
         if (!dev) return '';
+        if (['msisdn1', 'msisdn2', 'act_date', 'activation_date', 'expiry_date'].includes(key)) {
+          let v = dev[key];
+          if (v == null || v === '' || v === '—' || v === 'None' || v === 'null') {
+            let extra = dev.extra;
+            if (typeof extra === 'string') { try { extra = JSON.parse(extra); } catch(_) { extra = null; } }
+            if (extra && typeof extra === 'object' && extra[key] != null) v = extra[key];
+          }
+          if (v == null || v === '' || v === '—' || v === 'None' || v === 'null') return '';
+          return v;
+        }
         if (key in dev && dev[key] != null && dev[key] !== '') return dev[key];
         let extra = dev.extra;
         if (typeof extra === 'string') {
@@ -4870,6 +4883,10 @@
                   }
                   if (c.key === 'expiry_date') return `<td>${cell(dev, 'expiry_date')}</td>`;
                   if (c.key === 'sim_type') return `<td><span class="badge" style="background:${dev.sim_type === 'E-SIM' ? '#38bdf8' : '#a855f7'};color:#fff">${esc(dev.sim_type || '—')}</span></td>`;
+                  if (['msisdn1', 'msisdn2', 'act_date', 'activation_date'].includes(c.key)) {
+                    const v = devValue(dev, c.key);
+                    return `<td>${(v && v !== '—' && v !== 'None' && v !== 'null') ? esc(v) : ''}</td>`;
+                  }
                   const v = devValue(dev, c.key);
                   return `<td>${v === '' ? '—' : esc(v)}</td>`;
                 }).join('')}
