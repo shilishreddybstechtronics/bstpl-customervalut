@@ -1310,6 +1310,34 @@
       margin-bottom: 20px;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
     }
+    .exp-mode-btn {
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1.5px solid var(--line);
+      background: var(--card-subtle);
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .exp-mode-btn:hover {
+      border-color: var(--primary);
+      color: var(--text);
+      background: var(--card);
+    }
+    .exp-mode-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+    }
+    .exp-subview {
+      animation: cvPage3dEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
     .exp-header-top {
       display: flex;
       align-items: center;
@@ -1800,7 +1828,7 @@
               </p>
             </div>
             <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap">
-              <div>
+              <div id="expThresholdWrap">
                 <label for="expRange" style="font-size:11.5px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; display:block">
                   Threshold Window
                 </label>
@@ -1815,23 +1843,44 @@
               <button class="b p" id="dlAlerts" style="height:38px; padding:0 16px; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #2563eb, #1d4ed8); border-color:#2563eb; color:#fff; box-shadow:0 3px 12px rgba(37,99,235,0.25)">
                 📥 Export Alerts (.xlsx)
               </button>
-              <button class="b" id="printExpReport" style="height:38px; padding:0 14px; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px">
+              <button class="b" id="printExpReport" style="height:38px; padding:0 14px; font-size:13px; font-weight:700; display:none; align-items:center; gap:6px">
                 🖨️ Print Customer Report
               </button>
             </div>
           </div>
         </div>
 
-        <!-- 4-KPI Executive Metric Ribbon -->
-        <div id="expKpiRibbon" class="exp-kpi-grid"></div>
-
-        <!-- Expiry Table Container -->
-        <div id="expTable">
-          <div class="empty">Loading alerts…</div>
+        <!-- Single-View Selector Bar: ONLY ONE TABLE AT A TIME -->
+        <div style="margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:10px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.02)">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+            <span style="font-size:11.5px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.6px">Select View:</span>
+            <button type="button" class="exp-mode-btn active" id="btnModeDevices" data-expmode="devices" title="View individual SIM device records (100 per page)">
+              🚨 SIM Expiry Alerts (Device View)
+            </button>
+            <button type="button" class="exp-mode-btn" id="btnModeCustomers" data-expmode="customers" title="View customer-by-customer portfolio summary">
+              🏢 Per-Customer Fleet Breakdown
+            </button>
+          </div>
+          <div id="expModeContextNote" style="font-size:12.5px; font-weight:700; color:var(--muted)">
+            Showing individual SIM device expiry records (100 per page)
+          </div>
         </div>
 
-        <!-- Per-Customer Expiry Inventory Summary Section -->
-        <div id="expCustomerReport"></div>
+        <!-- VIEW 1: Device Expiry Alerts (100 rows per page) -->
+        <div id="expViewDevices" class="exp-subview" style="display:block">
+          <!-- 4-KPI Executive Metric Ribbon -->
+          <div id="expKpiRibbon" class="exp-kpi-grid"></div>
+
+          <!-- Expiry Table Container -->
+          <div id="expTable">
+            <div class="empty">Loading alerts…</div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: Per-Customer Fleet Breakdown (Only shown when selected) -->
+        <div id="expViewCustomers" class="exp-subview" style="display:none">
+          <div id="expCustomerReport"></div>
+        </div>
       </section>
     </main>
   </div>
@@ -1935,6 +1984,12 @@
     let expFilterQuery = '';
     let expCustomerReportList = [];
     let custRepSearchQuery = '';
+    let expViewMode = (() => {
+      try {
+        const v = (new URLSearchParams(location.search).get('view') || 'devices').toLowerCase();
+        return ['devices', 'customers'].includes(v) ? v : 'devices';
+      } catch (_) { return 'devices'; }
+    })();
     // dashboard buttons open alerts.html?tab=expired / ?tab=expiring
     let expTab = (() => {
       try {
@@ -3061,6 +3116,44 @@
     }
 
 
+function switchExpiryView(mode) {
+  expViewMode = (mode === 'customers') ? 'customers' : 'devices';
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set('view', expViewMode);
+    history.replaceState(null, '', url.toString());
+  } catch (_) {}
+
+  const vDev = $('expViewDevices');
+  const vCust = $('expViewCustomers');
+  const btnDev = $('btnModeDevices');
+  const btnCust = $('btnModeCustomers');
+  const noteEl = $('expModeContextNote');
+  const threshWrap = $('expThresholdWrap');
+  const dlAlertsBtn = $('dlAlerts');
+  const printExpBtn = $('printExpReport');
+
+  if (expViewMode === 'devices') {
+    if (vDev) vDev.style.display = 'block';
+    if (vCust) vCust.style.display = 'none';
+    if (btnDev) btnDev.classList.add('active');
+    if (btnCust) btnCust.classList.remove('active');
+    if (noteEl) noteEl.textContent = 'Showing individual SIM device expiry records (100 per page)';
+    if (threshWrap) threshWrap.style.display = 'block';
+    if (dlAlertsBtn) dlAlertsBtn.style.display = 'inline-flex';
+    if (printExpBtn) printExpBtn.style.display = 'none';
+  } else {
+    if (vDev) vDev.style.display = 'none';
+    if (vCust) vCust.style.display = 'block';
+    if (btnCust) btnCust.classList.add('active');
+    if (btnDev) btnDev.classList.remove('active');
+    if (noteEl) noteEl.textContent = 'Showing account-by-account customer portfolio summary';
+    if (threshWrap) threshWrap.style.display = 'none';
+    if (dlAlertsBtn) dlAlertsBtn.style.display = 'none';
+    if (printExpBtn) printExpBtn.style.display = 'inline-flex';
+  }
+}
+
 function getFilteredExpiryList() {
   let list = expAllList || [];
   const q = (expFilterQuery || '').trim().toLowerCase();
@@ -3232,7 +3325,13 @@ function renderExpiryTable() {
 
     <div class="meta" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <span>${alertSummary(expAllList)} · <b>${total.toLocaleString()}</b> ${expFilterQuery ? 'matching' : ''} devices ${tabWord} (soonest first)</span>
-      ${expFilterQuery ? `<span style="font-size:12px;color:var(--muted)">Filtered by "${esc(expFilterQuery)}" · <a href="javascript:void(0)" id="expResetFilterLnk" style="color:var(--primary);font-weight:700">Clear filter</a></span>` : ''}
+      ${expFilterQuery ? `
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.25);border-radius:8px;padding:4px 10px">
+          <span>Filtered for: <b>${esc(expFilterQuery)}</b></span>
+          <button type="button" class="b" id="expBackToCustBtn" style="height:24px;padding:0 8px;font-size:11px;font-weight:700">🏢 Back to Portfolios</button>
+          <a href="javascript:void(0)" id="expResetFilterLnk" style="color:var(--primary);font-weight:700">Clear</a>
+        </div>
+      ` : ''}
     </div>
 
     ${topBar}
@@ -3266,6 +3365,13 @@ function renderExpiryTable() {
       expFilterQuery = '';
       expPage = 1;
       renderExpiryTable();
+    };
+  }
+  const backBtn = $('expBackToCustBtn');
+  if (backBtn) {
+    backBtn.onclick = () => {
+      expFilterQuery = '';
+      switchExpiryView('customers');
     };
   }
 }
@@ -3460,6 +3566,7 @@ function renderCustomerReport() {
       const custName = btn.dataset.filtercust;
       expFilterQuery = custName;
       expPage = 1;
+      switchExpiryView('devices');
       renderExpiryTable();
       $('expTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -3495,6 +3602,10 @@ async function loadExpiryContainer() {
     renderExpKpiRibbon();
     renderExpiryTable();
     renderCustomerReport();
+
+    if ($('btnModeDevices')) $('btnModeDevices').onclick = () => switchExpiryView('devices');
+    if ($('btnModeCustomers')) $('btnModeCustomers').onclick = () => switchExpiryView('customers');
+    switchExpiryView(expViewMode);
 
     $('expTable').onclick = async e => {
       const nextBtn = e.target.closest('#expTopNextBtn, #expBottomNextBtn');
