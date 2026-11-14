@@ -766,15 +766,40 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
     web_act = clean_field_val(format_to_dmy(telematics.get("activation_date") or telematics.get("commercialActivationDate")) if telematics else "")
     web_exp = clean_field_val(format_to_dmy(telematics.get("expiry_date") or telematics.get("commercialExpiryDate")) if telematics else "")
 
-    db_m1 = clean_field_val(db_rec.get("msisdn1")) if db_rec else ""
-    db_m2 = clean_field_val(db_rec.get("msisdn2")) if db_rec else ""
-    db_act = clean_field_val(db_rec.get("activation_date")) if db_rec else ""
-    db_exp = clean_field_val(db_rec.get("expiry_date")) if db_rec else ""
+    if telematics:
+        card_state = str(telematics.get("cardState") or telematics.get("cardStatus") or "").strip().lower()
+        active_profiles = telematics.get("activeProfiles")
+        try:
+            active_profiles_num = int(active_profiles) if active_profiles is not None else None
+        except Exception:
+            active_profiles_num = None
 
-    final_m1 = web_m1 if web_m1 else (db_m1 if db_m1 else "")
-    final_m2 = web_m2 if web_m2 else (db_m2 if db_m2 else "")
-    final_act = web_act if web_act else (db_act if db_act else "")
-    final_exp = web_exp if web_exp else (db_exp if db_exp else "")
+        p_status = str(telematics.get("primaryStatus") or "").strip().lower()
+        f_status = str(telematics.get("fallbackStatus") or "").strip().lower()
+        inactive_statuses = {"permanent disconnection", "terminated", "inactive", "deactivated", "disconnected", "not available", "none", "null"}
+
+        if (card_state in ("allocated", "provisioned") and (active_profiles_num == 0 or active_profiles_num is None)) or active_profiles_num == 0:
+            web_m1 = ""
+            web_m2 = ""
+        else:
+            if p_status in inactive_statuses: web_m1 = ""
+            if f_status in inactive_statuses: web_m2 = ""
+
+        # Strictly show details only if they exist in portal; if not, leave blank!
+        final_m1 = web_m1 if web_m1 else ""
+        final_m2 = web_m2 if web_m2 else ""
+        final_act = web_act if web_act else ""
+        final_exp = web_exp if web_exp else ""
+    else:
+        db_m1 = clean_field_val(db_rec.get("msisdn1")) if db_rec else ""
+        db_m2 = clean_field_val(db_rec.get("msisdn2")) if db_rec else ""
+        db_act = clean_field_val(db_rec.get("activation_date")) if db_rec else ""
+        db_exp = clean_field_val(db_rec.get("expiry_date")) if db_rec else ""
+
+        final_m1 = db_m1 if db_m1 else ""
+        final_m2 = db_m2 if db_m2 else ""
+        final_act = db_act if db_act else ""
+        final_exp = db_exp if db_exp else ""
 
     try:
         conn = get_connection()
@@ -804,10 +829,10 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
                 exp_sql_val = final_exp if final_exp else None
                 cursor.execute("""
                     UPDATE sim_devices
-                    SET msisdn1 = COALESCE(NULLIF(%s, ''), msisdn1),
-                        msisdn2 = COALESCE(NULLIF(%s, ''), msisdn2),
-                        act_date = COALESCE(STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y'), act_date),
-                        expiry_date = COALESCE(STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y'), expiry_date)
+                    SET msisdn1 = NULLIF(%s, ''),
+                        msisdn2 = NULLIF(%s, ''),
+                        act_date = STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y'),
+                        expiry_date = STR_TO_DATE(NULLIF(%s, ''), '%%d-%%m-%%Y')
                     WHERE iccid = %s OR iccid = %s;
                 """, (final_m1, final_m2, act_sql_val, exp_sql_val, iccid_clean, iccid_clean + 'F'))
 

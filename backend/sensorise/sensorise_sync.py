@@ -11,7 +11,7 @@ Firmware, Flash, SIM Type, etc.) remain intact.
 
 import logging
 import re
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, Tuple
 from datetime import datetime, date
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -219,6 +219,38 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
     return telematics_results
 
 
+def _extract_active_sensorise_msisdns(ent: Optional[Dict[str, Any]]) -> Tuple[str, str]:
+    """
+    Extracts only active MSISDNs from a Sensorise entity.
+    If the SIM card is Allocated/Provisioned with 0 active profiles, or if the profile
+    status is Permanent Disconnection, Inactive, Terminated, Deactivated, or Disconnected,
+    returns an empty string so non-existent portal MSISDNs are not displayed.
+    """
+    if not ent:
+        return "", ""
+    card_state = str(ent.get("cardState") or ent.get("cardStatus") or "").strip().lower()
+    active_profiles = ent.get("activeProfiles")
+    try:
+        active_profiles_num = int(active_profiles) if active_profiles is not None else None
+    except Exception:
+        active_profiles_num = None
+
+    if card_state in ("allocated", "provisioned") and (active_profiles_num == 0 or active_profiles_num is None):
+        return "", ""
+
+    p_status = str(ent.get("primaryStatus") or "").strip().lower()
+    f_status = str(ent.get("fallbackStatus") or "").strip().lower()
+    inactive_statuses = {"permanent disconnection", "terminated", "inactive", "deactivated", "disconnected", "not available", "none", "null"}
+
+    m1 = "" if p_status in inactive_statuses else _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1"))
+    m2 = "" if f_status in inactive_statuses else _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2"))
+
+    if active_profiles_num == 0:
+        m1, m2 = "", ""
+
+    return m1, m2
+
+
 def _clean_str(val: Any) -> str:
     """Cleans a string and returns empty string if missing, none, or placeholder."""
     if val is None:
@@ -332,8 +364,7 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
         ent = telematics_map.get(iccid_key)
         is_from_server = bool(ent and ent.get("_from_sensorise_server"))
 
-        web_m1 = _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1")) if ent else ""
-        web_m2 = _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2")) if ent else ""
+        web_m1, web_m2 = _extract_active_sensorise_msisdns(ent)
         raw_ad = (ent.get("commercialActivationDate") or ent.get("activationDate") or ent.get("activation_date")) if ent else None
         raw_ed = (ent.get("commercialExpiryDate") or ent.get("expiryDate") or ent.get("expiry_date")) if ent else None
 
@@ -370,14 +401,19 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
             if has_server_telematics or ent:
                 dev.source = "sensorise"
                 dev.data_source = "sensorise"
+                # STRICT USER RULE: Give details ONLY if they exist in portal; if not, leave blank spaces!
+                final_m1 = web_m1 if web_m1 else None
+                final_m2 = web_m2 if web_m2 else None
+                final_ad = web_ad if web_ad else None
+                final_ed = web_ed if web_ed else None
             else:
                 dev.source = "website_database"
                 dev.data_source = "website_database"
-
-            final_m1 = web_m1 if web_m1 else (dev_m1 if dev_m1 else None)
-            final_m2 = web_m2 if web_m2 else (dev_m2 if dev_m2 else None)
-            final_ad = web_ad if web_ad else (dev_ad if dev_ad else None)
-            final_ed = web_ed if web_ed else (dev_ed if dev_ed else None)
+                # Pure website database: use database stored values; if missing in database, leave blank!
+                final_m1 = dev_m1 if dev_m1 else None
+                final_m2 = dev_m2 if dev_m2 else None
+                final_ad = dev_ad if dev_ad else None
+                final_ed = dev_ed if dev_ed else None
 
             changed = False
             if final_m1 != getattr(dev, "msisdn1", None):
@@ -507,8 +543,7 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
         ent = telematics_map.get(iccid_key)
         is_from_server = bool(ent and ent.get("_from_sensorise_server"))
 
-        web_m1 = _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1")) if ent else ""
-        web_m2 = _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2")) if ent else ""
+        web_m1, web_m2 = _extract_active_sensorise_msisdns(ent)
         raw_ad = (ent.get("commercialActivationDate") or ent.get("activationDate") or ent.get("activation_date")) if ent else None
         raw_ed = (ent.get("commercialExpiryDate") or ent.get("expiryDate") or ent.get("expiry_date")) if ent else None
 
@@ -551,16 +586,21 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
             if has_server_telematics or ent:
                 r["source"] = "sensorise"
                 r["data_source"] = "sensorise"
+                # STRICT USER RULE: Give details ONLY if they exist in portal; if not, leave blank!
+                final_m1 = web_m1 if web_m1 else ""
+                final_m2 = web_m2 if web_m2 else ""
+                final_ad_str = ad_str if ad_str else ""
+                final_ed_str = ed_str if ed_str else ""
+                final_ed_date = ed_date
             else:
                 r["source"] = "website_database"
                 r["data_source"] = "website_database"
-
-            # Rule: If website has no value, use database stored value. If not in DB or website, print blank!
-            final_m1 = web_m1 if web_m1 else (dict_m1 if dict_m1 else "")
-            final_m2 = web_m2 if web_m2 else (dict_m2 if dict_m2 else "")
-            final_ad_str = ad_str if ad_str else (dict_ad if dict_ad else "")
-            final_ed_str = ed_str if ed_str else (dict_ed if dict_ed else "")
-            final_ed_date = ed_date or _parse_sensorise_date(final_ed_str)
+                # Pure website database: use database stored values; if missing in database, leave blank!
+                final_m1 = dict_m1 if dict_m1 else ""
+                final_m2 = dict_m2 if dict_m2 else ""
+                final_ad_str = dict_ad if dict_ad else ""
+                final_ed_str = dict_ed if dict_ed else ""
+                final_ed_date = _parse_sensorise_date(final_ed_str)
 
             changed = False
             if r.get("msisdn1") != final_m1:
@@ -580,25 +620,27 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                 r["days_left"] = (final_ed_date - date.today()).days
             else:
                 r["days_left"] = ""
+                r["expiry_status"] = ""
 
             if changed:
                 updated_count += 1
-                # Update in database with final non-empty values
-                ad_obj_to_save = ad_date or _parse_sensorise_date(final_ad_str)
+                ad_obj_to_save = _parse_sensorise_date(final_ad_str)
                 ed_obj_to_save = final_ed_date
+                m1_to_save = final_m1 if final_m1 else None
+                m2_to_save = final_m2 if final_m2 else None
                 try:
                     dev_id = r.get("id")
                     if dev_id:
                         db.execute(text("""
                             UPDATE sim_devices
-                            SET msisdn1 = COALESCE(NULLIF(:m1, ''), msisdn1),
-                                msisdn2 = COALESCE(NULLIF(:m2, ''), msisdn2),
-                                act_date = COALESCE(:ad, act_date),
-                                expiry_date = COALESCE(:ed, expiry_date)
+                            SET msisdn1 = :m1,
+                                msisdn2 = :m2,
+                                act_date = :ad,
+                                expiry_date = :ed
                             WHERE id = :id
                         """), {
-                            "m1": final_m1,
-                            "m2": final_m2,
+                            "m1": m1_to_save,
+                            "m2": m2_to_save,
                             "ad": ad_obj_to_save,
                             "ed": ed_obj_to_save,
                             "id": dev_id
@@ -606,14 +648,14 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                     elif imei:
                         db.execute(text("""
                             UPDATE sim_devices
-                            SET msisdn1 = COALESCE(NULLIF(:m1, ''), msisdn1),
-                                msisdn2 = COALESCE(NULLIF(:m2, ''), msisdn2),
-                                act_date = COALESCE(:ad, act_date),
-                                expiry_date = COALESCE(:ed, expiry_date)
+                            SET msisdn1 = :m1,
+                                msisdn2 = :m2,
+                                act_date = :ad,
+                                expiry_date = :ed
                             WHERE imei = :im
                         """), {
-                            "m1": final_m1,
-                            "m2": final_m2,
+                            "m1": m1_to_save,
+                            "m2": m2_to_save,
                             "ad": ad_obj_to_save,
                             "ed": ed_obj_to_save,
                             "im": imei
@@ -629,14 +671,14 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                         if t_name:
                             db.execute(text(f"""
                                 UPDATE `{t_name}`
-                                SET msisdn1 = COALESCE(NULLIF(:m1, ''), msisdn1),
-                                    msisdn2 = COALESCE(NULLIF(:m2, ''), msisdn2),
-                                    act_date = COALESCE(:ad, act_date),
-                                    expiry_date = COALESCE(:ed, expiry_date)
+                                SET msisdn1 = :m1,
+                                    msisdn2 = :m2,
+                                    act_date = :ad,
+                                    expiry_date = :ed
                                 WHERE imei = :im
                             """), {
-                                "m1": final_m1,
-                                "m2": final_m2,
+                                "m1": m1_to_save,
+                                "m2": m2_to_save,
                                 "ad": ad_obj_to_save,
                                 "ed": ed_obj_to_save,
                                 "im": imei
