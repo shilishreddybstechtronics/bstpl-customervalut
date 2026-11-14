@@ -4793,12 +4793,14 @@ async function loadInventoryContainer() {
       async function fetchInventoryRows() {
         try {
           const expFilter = ($('invExpiryFilter') ? $('invExpiryFilter').value : 'all') || 'all';
+          const isExpFiltered = (expFilter !== 'all');
+          const invPageSize = isExpFiltered ? 100 : 10;
           showBstplLoader('Fetching inventory records from database…');
 
           const activeSortCol = (expFilter !== 'all' && (!sortCol || sortCol === 'id')) ? 'expiry_date' : sortCol;
           const activeSortDir = (expFilter !== 'all' && (!sortCol || sortCol === 'id')) ? 'asc' : sortDir;
           const [d, expSummary] = await Promise.all([
-            api(`/api/devices?page=${invPage}&page_size=10&q=${encodeURIComponent(invQ)}&column=${invCol}&expiry_filter=${expFilter}&sort_by=${activeSortCol}&sort_dir=${activeSortDir}${invCid ? '&customer_id=' + invCid : ''}`),
+            api(`/api/devices?page=${invPage}&page_size=${invPageSize}&q=${encodeURIComponent(invQ)}&column=${invCol}&expiry_filter=${expFilter}&sort_by=${activeSortCol}&sort_dir=${activeSortDir}${invCid ? '&customer_id=' + invCid : ''}`),
             api(`/api/devices/expiry-summary${invCid ? '?customer_id=' + invCid : ''}`).catch(() => null)
           ]);
 
@@ -4820,7 +4822,7 @@ async function loadInventoryContainer() {
             $('invExpiryAlertText').textContent = 'Could not load SIM expiry counts.';
           }
 
-          const s = (d.page - 1) * 10;
+          const s = (d.page - 1) * invPageSize;
           const staff = canDeleteValidInventory();
           const act = dev => `
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
@@ -4831,11 +4833,11 @@ async function loadInventoryContainer() {
 
           $('invTableWrap').innerHTML = `
       <div class="meta">
-        <span>${d.total.toLocaleString()} records · showing ${d.total ? s + 1 : 0}–${s + d.items.length}</span>
+        <span>${d.total.toLocaleString()} records · showing ${d.total ? s + 1 : 0}–${s + d.items.length}${isExpFiltered ? ` (${invPageSize} per page)` : ''}</span>
         <div class="pg">
-          <button class="b" id="invPrev" ${invPage < 2 ? 'disabled' : ''}>Prev</button>
+          <button class="b" id="invPrev" ${invPage < 2 ? 'disabled' : ''}>${isExpFiltered ? '⬅ Prev 100' : 'Prev'}</button>
           <span>Page ${d.page} of ${d.pages}</span>
-          <button class="b" id="invNext" ${invPage >= d.pages ? 'disabled' : ''}>Next</button>
+          <button class="b" id="invNext" ${invPage >= d.pages ? 'disabled' : ''}>${isExpFiltered ? 'Next 100 ➔' : 'Next'}</button>
         </div>
       </div>
       ${renderTable(d.items, act)}`;

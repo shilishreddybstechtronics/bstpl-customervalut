@@ -1685,6 +1685,10 @@
     let tok = localStorage.getItem('token') || '';
     let S = {}, CU = [], XC = [];
     let expDays = 30;
+    let expPage = 1;
+    const expPageSize = 100;
+    let expAllList = [];
+    let expSummaryData = null;
     // dashboard buttons open alerts.html?tab=expired / ?tab=expiring
     let expTab = (() => {
       try {
@@ -2811,96 +2815,162 @@
     }
 
 
+function renderExpiryTable() {
+  const l = expAllList || [];
+  const total = l.length;
+  const totalPages = Math.max(1, Math.ceil(total / expPageSize));
+  if (expPage > totalPages) expPage = totalPages;
+  if (expPage < 1) expPage = 1;
+
+  const startIdx = (expPage - 1) * expPageSize;
+  const endIdx = Math.min(startIdx + expPageSize, total);
+  const pageItems = l.slice(startIdx, endIdx);
+
+  const staff = canDeleteValidInventory();
+  const act = dev => `
+    <div style="display:flex;gap:4px">
+      <button class="b" data-expedit="${dev.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit this record">Edit</button>
+      ${staff ? `<button class="b d" data-del="${dev.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move to Cart">Delete</button>` : ''}
+    </div>
+  `;
+
+  const sum = expSummaryData;
+  const nExpired = sum ? (Number(sum.expired_count) || 0) : null;
+  const nSoon = sum ? (Number(sum.expiring_30_days) || 0) : null;
+  const nAll = (nExpired != null && nSoon != null) ? nExpired + nSoon : null;
+  const nTab = expTab === 'expired' ? nExpired : expTab === 'expiring' ? nSoon : nAll;
+  const fmtN = n => (n == null ? '' : ` (${Number(n).toLocaleString()})`);
+  const tabBtn = (k, label, n) => `<button type="button" class="b${expTab === k ? ' p' : ''}" data-exptab="${k}" style="height:32px;padding:0 12px;font-size:12.5px">${label}${fmtN(n)}</button>`;
+  const tabWord = expTab === 'expired' ? 'already expired' : expTab === 'expiring' ? `expiring within ${expDays} days` : 'need attention';
+  const capNote = (nTab != null && nTab > total) ? ` · showing ${total.toLocaleString()} of ${nTab.toLocaleString()}` : '';
+
+  const renderPaginationControls = (idPrefix) => `
+    <div class="dh-pagination-bar" style="margin:8px 0 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--card-subtle);padding:10px 14px;border-radius:8px;border:1px solid var(--line)">
+      <div style="font-size:13px;font-weight:600;color:var(--text)">
+        Showing <span style="color:var(--primary);font-weight:700">${total ? (startIdx + 1).toLocaleString() : 0}–${endIdx.toLocaleString()}</span> of <span style="font-weight:700">${total.toLocaleString()}</span> devices (${expPageSize} rows per page)
+      </div>
+      <div class="dh-pagination-controls" style="display:flex;align-items:center;gap:8px">
+        <button type="button" class="b dh-page-btn" id="${idPrefix}PrevBtn" ${expPage <= 1 ? 'disabled' : ''} title="Previous ${expPageSize} records">
+          ⬅ Prev ${expPageSize}
+        </button>
+        <span class="dh-page-info" style="font-size:13px;font-weight:700;padding:0 8px;color:var(--muted)">
+          Page <strong style="color:var(--text)">${expPage}</strong> of <strong>${totalPages}</strong>
+        </span>
+        <button type="button" class="b dh-page-btn" id="${idPrefix}NextBtn" ${expPage >= totalPages ? 'disabled' : ''} title="Next ${expPageSize} records">
+          Next ${expPageSize} ➔
+        </button>
+      </div>
+    </div>
+  `;
+
+  const topBar = total > 0 ? renderPaginationControls('expTop') : '';
+  const bottomBar = total > expPageSize ? renderPaginationControls('expBottom') : '';
+
+  $('expTable').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+      ${tabBtn('all', 'All', nAll)}
+      ${tabBtn('expired', '⚠️ Expired', nExpired)}
+      ${tabBtn('expiring', '⏳ Expiring Soon', nSoon)}
+    </div>
+    <div class="meta" style="margin-bottom:6px">
+      <span>${alertSummary(l)} · ${total.toLocaleString()} devices ${tabWord} (soonest first)${capNote}</span>
+    </div>
+    ${topBar}
+    ${renderTable(pageItems, act, [], false)}
+    ${bottomBar}
+  `;
+}
+
 async function loadExpiryContainer() {
-        if ($('expRange')) {
-          $('expRange').value = String(expDays);
-          $('expRange').onchange = e => { expDays = +e.target.value || 30; loadExpiryContainer(); };
+  if ($('expRange')) {
+    $('expRange').value = String(expDays);
+    $('expRange').onchange = e => { expDays = +e.target.value || 30; expPage = 1; loadExpiryContainer(); };
+  }
+  try {
+    // the customer summary needs the "download" permission; a refusal must not hide the alerts list
+    const [rawL, repRaw, sum] = await Promise.all([
+      api('/api/alerts/expiry?days=' + expDays + '&status=' + expTab + '&limit=50000'),
+      api('/api/inventory/report').catch(() => []),
+      api('/api/devices/expiry-summary?days=' + expDays).catch(() => null)
+    ]);
+    const rep = Array.isArray(repRaw) ? repRaw : [];
+    // Requirement 1: SIM Expiry sorting ascending by days remaining (fewest days left first, expired first)
+    const l = (Array.isArray(rawL) ? rawL : []).filter(d =>
+      expTab === 'expired' ? (d.days_left != null && d.days_left < 0)
+      : expTab === 'expiring' ? (d.days_left != null && d.days_left >= 0)
+      : true
+    ).sort((a, b) => {
+      const d1 = (a.days_left != null) ? a.days_left : 999999;
+      const d2 = (b.days_left != null) ? b.days_left : 999999;
+      return d1 - d2;
+    });
+
+    expAllList = l;
+    expSummaryData = sum;
+
+    renderExpiryTable();
+
+    $('expTable').onclick = async e => {
+      const nextBtn = e.target.closest('#expTopNextBtn, #expBottomNextBtn');
+      if (nextBtn && !nextBtn.disabled) {
+        const totalPages = Math.max(1, Math.ceil(expAllList.length / expPageSize));
+        if (expPage < totalPages) {
+          expPage++;
+          renderExpiryTable();
+          const el = $('expTable');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+        return;
+      }
+      const prevBtn = e.target.closest('#expTopPrevBtn, #expBottomPrevBtn');
+      if (prevBtn && !prevBtn.disabled) {
+        if (expPage > 1) {
+          expPage--;
+          renderExpiryTable();
+          const el = $('expTable');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+      }
+      const tabEl = e.target.closest('[data-exptab]');
+      if (tabEl) {
+        expTab = tabEl.dataset.exptab;
+        expPage = 1;
+        try { history.replaceState(null, '', '?tab=' + expTab); } catch (_) { }
+        loadExpiryContainer();
+        return;
+      }
+      const editBtn = e.target.closest('[data-expedit]');
+      if (editBtn) {
+        openEditDeviceModal(editBtn.dataset.expedit);
+        return;
+      }
+      const delBtn = e.target.closest('[data-del]');
+      if (delBtn) {
+        if (!canDeleteValidInventory()) {
+          toast('Access Denied: Master Admins do not have permission to delete inventory records.');
+          return;
+        }
+        const devId = delBtn.dataset.del;
+        const ok = await cv.confirm('Delete this device record and move it to the Cart (Recycle Bin)?', {
+          title: 'Move Record to Cart',
+          confirmText: 'Move to Cart',
+          danger: true
+        });
+        if (!ok) return;
+
         try {
-          // the customer summary needs the "download" permission; a refusal must not hide the alerts list
-          const [rawL, repRaw, sum] = await Promise.all([
-            api('/api/alerts/expiry?days=' + expDays + '&status=' + expTab),
-            api('/api/inventory/report').catch(() => []),
-            api('/api/devices/expiry-summary?days=' + expDays).catch(() => null)
-          ]);
-          const rep = Array.isArray(repRaw) ? repRaw : [];
-          // Requirement 1: SIM Expiry sorting ascending by days remaining (fewest days left first, expired first)
-          const l = (Array.isArray(rawL) ? rawL : []).filter(d =>
-            expTab === 'expired' ? (d.days_left != null && d.days_left < 0)
-            : expTab === 'expiring' ? (d.days_left != null && d.days_left >= 0)
-            : true
-          ).sort((a, b) => {
-            const d1 = (a.days_left != null) ? a.days_left : 999999;
-            const d2 = (b.days_left != null) ? b.days_left : 999999;
-            return d1 - d2;
-          });
+          toast('Moving record to Cart…');
+          await api('/api/devices/' + devId, { method: 'DELETE' });
+          toast('✓ Device record moved to Cart successfully');
+          await loadExpiryContainer();
+          if (typeof updateChrome === 'function') await updateChrome();
+        } catch (err) { fail(err); }
+        return;
+      }
+    };
 
-          const staff = canDeleteValidInventory();
-          const act = dev => `
-      <div style="display:flex;gap:4px">
-        <button class="b" data-expedit="${dev.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit this record">Edit</button>
-        ${staff ? `<button class="b d" data-del="${dev.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move to Cart">Delete</button>` : ''}
-      </div>
-    `;
-
-          const nExpired = sum ? (Number(sum.expired_count) || 0) : null;
-          const nSoon = sum ? (Number(sum.expiring_30_days) || 0) : null;   // = SIMs expiring inside the chosen window
-          const nAll = (nExpired != null && nSoon != null) ? nExpired + nSoon : null;
-          const nTab = expTab === 'expired' ? nExpired : expTab === 'expiring' ? nSoon : nAll;
-          const fmtN = n => (n == null ? '' : ` (${Number(n).toLocaleString()})`);
-          const tabBtn = (k, label, n) => `<button type="button" class="b${expTab === k ? ' p' : ''}" data-exptab="${k}" style="height:32px;padding:0 12px;font-size:12.5px">${label}${fmtN(n)}</button>`;
-          const tabWord = expTab === 'expired' ? 'already expired' : expTab === 'expiring' ? `expiring within ${expDays} days` : 'need attention';
-          const capNote = (nTab != null && nTab > l.length) ? ` · showing the first ${l.length.toLocaleString()} of ${nTab.toLocaleString()}` : '';
-
-          $('expTable').innerHTML = `
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-        ${tabBtn('all', 'All', nAll)}
-        ${tabBtn('expired', '⚠️ Expired', nExpired)}
-        ${tabBtn('expiring', '⏳ Expiring Soon', nSoon)}
-      </div>
-      <div class="meta"><span>${alertSummary(l)} · ${l.length.toLocaleString()} devices ${tabWord} (soonest first)${capNote}</span></div>
-      ${renderTable(l, act, [], false)}
-    `;
-
-          $('expTable').onclick = async e => {
-            const tabEl = e.target.closest('[data-exptab]');
-            if (tabEl) {
-              expTab = tabEl.dataset.exptab;
-              try { history.replaceState(null, '', '?tab=' + expTab); } catch (_) { }
-              loadExpiryContainer();
-              return;
-            }
-            const editBtn = e.target.closest('[data-expedit]');
-            if (editBtn) {
-              openEditDeviceModal(editBtn.dataset.expedit);
-              return;
-            }
-            const delBtn = e.target.closest('[data-del]');
-            if (delBtn) {
-              if (!canDeleteValidInventory()) {
-                toast('Access Denied: Master Admins do not have permission to delete inventory records.');
-                return;
-              }
-              const devId = delBtn.dataset.del;
-              const ok = await cv.confirm('Delete this device record and move it to the Cart (Recycle Bin)?', {
-                title: 'Move Record to Cart',
-                confirmText: 'Move to Cart',
-                danger: true
-              });
-              if (!ok) return;
-
-              try {
-                toast('Moving record to Cart…');
-                await api('/api/devices/' + devId, { method: 'DELETE' });
-                toast('✓ Device record moved to Cart successfully');
-                await loadExpiryContainer();
-                if (typeof updateChrome === 'function') await updateChrome();
-              } catch (err) { fail(err); }
-              return;
-            }
-          };
-
-          $('expCustomerReport').innerHTML = `
+    $('expCustomerReport').innerHTML = `
       <h4>🏢 Per-Customer Expiry Inventory Summary</h4>
       ${rep.length ? `
         <div class="tw"><table><thead><tr>
@@ -2916,15 +2986,15 @@ async function loadExpiryContainer() {
         </tbody></table></div>` : '<div class="empty">No customer summary available.</div>'}
     `;
 
-          $('dlAlerts').onclick = () => {
-            const headers = ['ID', ...COLS.map(c => c[1]), ...XC];
-            const rows = l.map(dev => [dev.id, ...COLS.map(c => dev[c[0]] || ''), ...XC.map(c => (dev.extra || {})[c] || '')]);
-            exportExcel(`Expiry_${expTab}_${expDays}d`, headers, rows);
-          };
+    $('dlAlerts').onclick = () => {
+      const headers = ['ID', ...COLS.map(c => c[1]), ...XC];
+      const rows = expAllList.map(dev => [dev.id, ...COLS.map(c => dev[c[0]] || ''), ...XC.map(c => (dev.extra || {})[c] || '')]);
+      exportExcel(`Expiry_${expTab}_${expDays}d`, headers, rows);
+    };
 
-          $('printExpReport').onclick = () => window.print();
-        } catch (err) { $('expTable').innerHTML = `<div class="empty err">${esc(err.message)}</div>`; }
-      }
+    $('printExpReport').onclick = () => window.print();
+  } catch (err) { $('expTable').innerHTML = `<div class="empty err">${esc(err.message)}</div>`; }
+}
 
       /* =========================================================================
          CONTAINER 9: SEPARATE DATA HEALTH & INTEGRITY

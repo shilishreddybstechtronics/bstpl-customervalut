@@ -2932,7 +2932,7 @@ def delete_device(device_id: int, db: Session = Depends(get_db),
 # ---------- expiry alerts ----------
 @router.get("/alerts/expiry", dependencies=[Depends(require_permission("view"))])
 def expiry_alerts(days: int = Query(30, ge=0, le=365), customer_id: Optional[int] = None,
-                  limit: int = Query(5000, ge=1, le=20000),
+                  limit: int = Query(50000, ge=1, le=100000),
                   status: str = Query("all", description="all | expired | expiring"),
                   db: Session = Depends(get_db)):
     """status=expired -> already expired; status=expiring -> expires today .. today+days; all -> both (old behaviour).
