@@ -33,6 +33,18 @@ def name_taken(db: Session, name: str, ignore_ids=()) -> bool:
 ALLOWED_IMG = ("data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,")
 
 
+# ---------- deleted customers (bin) ----------
+# Defined BEFORE /{cid} so /api/customers/bin is not shadowed by parameterized customer ID route
+@router.get("/bin", dependencies=[Depends(require_staff), Depends(require_permission("view"))])
+def bin_customers(db: Session = Depends(get_db)):
+    rows = (db.query(Customer, func.count(Device.id))
+            .outerjoin(Device, Device.customer_id == Customer.id)
+            .filter(Customer.deleted_at.isnot(None))
+            .group_by(Customer.id).order_by(Customer.deleted_at.desc()).all())
+    return [{"id": c.id, "name": c.name, "devices": n, "deleted_at": c.deleted_at, "deleted_by": c.deleted_by}
+            for c, n in rows]
+
+
 @router.get("/{cid}", dependencies=[Depends(require_permission("view"))])
 def get_customer(cid: int, db: Session = Depends(get_db)):
     c = db.query(Customer).filter(Customer.id == cid, Customer.deleted_at.is_(None)).first()
@@ -209,17 +221,7 @@ def delete_customer(cid: int, db: Session = Depends(get_db), admin: models.User 
     return {"moved_to_bin": c.id, "devices": n}
 
 
-# ---------- deleted customers ----------
-@router.get("/bin", dependencies=[Depends(require_staff), Depends(require_permission("view"))])
-def bin_customers(db: Session = Depends(get_db)):
-    rows = (db.query(Customer, func.count(Device.id))
-            .outerjoin(Device, Device.customer_id == Customer.id)
-            .filter(Customer.deleted_at.isnot(None))
-            .group_by(Customer.id).order_by(Customer.deleted_at.desc()).all())
-    return [{"id": c.id, "name": c.name, "devices": n, "deleted_at": c.deleted_at, "deleted_by": c.deleted_by}
-            for c, n in rows]
-
-
+# ---------- restore & purge deleted customers ----------
 @router.post("/{cid}/restore", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
 def restore_customer(cid: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     c = db.get(Customer, cid)

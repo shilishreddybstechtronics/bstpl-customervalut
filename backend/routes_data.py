@@ -3491,6 +3491,27 @@ def bulk_push_errors_to_customer(data: schemas.BulkPushErrorsIn, db: Session = D
     return {"pushed_count": pushed, "customer_name": cust.name}
 
 
+@router.delete("/errors/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
+def direct_delete_all_errors_permanent(limit: int = 0, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Directly and permanently deletes errored entries from the database forever."""
+    total_remaining = db.query(models.ErroredRecord).count()
+    if limit > 0:
+        err_ids = [r.id for r in db.query(models.ErroredRecord.id).order_by(models.ErroredRecord.id.asc()).limit(limit).all()]
+        if err_ids:
+            count = db.query(models.ErroredRecord).filter(models.ErroredRecord.id.in_(err_ids)).delete(synchronize_session=False)
+        else:
+            count = 0
+        db.commit()
+        remaining = max(0, total_remaining - count)
+        log_activity(db, "errors_permanent_purge", f"Permanently deleted {count} errored entries from database", user=user)
+        return {"deleted_count": count, "remaining_count": remaining, "deleted_forever": count}
+    else:
+        count = db.query(models.ErroredRecord).delete(synchronize_session=False)
+        db.commit()
+        log_activity(db, "errors_permanent_purge", f"Permanently deleted all {count} errored entries from database", user=user)
+        return {"deleted_count": count, "remaining_count": 0, "deleted_forever": count}
+
+
 @router.delete("/errors/{error_id:int}", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
 def move_error_to_cart(error_id: int, permanent: bool = False, db: Session = Depends(get_db),
                        user: models.User = Depends(get_current_user)):
@@ -3588,27 +3609,6 @@ def move_all_errors_to_cart(limit: int = 0, db: Session = Depends(get_db), user:
     remaining = max(0, total_remaining - count)
     log_activity(db, "errors_trash_all", f"Moved {count} errored entries to Cart", user=user)
     return {"moved_count": count, "remaining_count": remaining, "moved_all_to_cart": count}
-
-
-@router.delete("/errors/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
-def direct_delete_all_errors_permanent(limit: int = 0, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    """Directly and permanently deletes errored entries from the database forever."""
-    total_remaining = db.query(models.ErroredRecord).count()
-    if limit > 0:
-        err_ids = [r.id for r in db.query(models.ErroredRecord.id).order_by(models.ErroredRecord.id.asc()).limit(limit).all()]
-        if err_ids:
-            count = db.query(models.ErroredRecord).filter(models.ErroredRecord.id.in_(err_ids)).delete(synchronize_session=False)
-        else:
-            count = 0
-        db.commit()
-        remaining = max(0, total_remaining - count)
-        log_activity(db, "errors_permanent_purge", f"Permanently deleted {count} errored entries from database", user=user)
-        return {"deleted_count": count, "remaining_count": remaining, "deleted_forever": count}
-    else:
-        count = db.query(models.ErroredRecord).delete(synchronize_session=False)
-        db.commit()
-        log_activity(db, "errors_permanent_purge", f"Permanently deleted all {count} errored entries from database", user=user)
-        return {"deleted_count": count, "remaining_count": 0, "deleted_forever": count}
 
 
 @router.delete("/errors/{error_id}/permanent", dependencies=[Depends(require_staff), Depends(require_permission("delete_invalid"))])
