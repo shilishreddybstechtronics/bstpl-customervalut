@@ -1300,6 +1300,228 @@
     }
 
     /* =========================================================================
+       PROFESSIONAL EXPIRY DASHBOARD & CUSTOMER REPORT STYLING
+       ========================================================================= */
+    .exp-header-panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    }
+    .exp-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .exp-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(217, 119, 6, 0.12);
+      border: 1px solid rgba(217, 119, 6, 0.3);
+      color: var(--warn, #d97706);
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .exp-kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .exp-kpi-card {
+      background: var(--card);
+      border: 1.5px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      position: relative;
+    }
+    .exp-kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      border-color: var(--primary);
+    }
+    .exp-kpi-card.active {
+      border-color: var(--primary);
+      background: var(--card-subtle);
+      box-shadow: 0 0 0 1.5px var(--primary);
+    }
+    .exp-kpi-card.expired.active {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 1.5px #ef4444;
+    }
+    .exp-kpi-card.expiring.active {
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 1.5px #f59e0b;
+    }
+    .exp-kpi-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .exp-kpi-icon.all { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
+    .exp-kpi-icon.expired { background: rgba(239, 68, 68, 0.14); color: #ef4444; }
+    .exp-kpi-icon.expiring { background: rgba(245, 158, 11, 0.15); color: #d97706; }
+    .exp-kpi-icon.healthy { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+
+    .exp-tab-bar {
+      display: inline-flex;
+      background: var(--card-subtle);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .exp-tab-btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+    }
+    .exp-tab-btn:hover {
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.04);
+    }
+    .exp-tab-btn.active {
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+    .exp-tab-btn.active.tab-expired {
+      color: #dc2626;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .exp-tab-btn.active.tab-expiring {
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .exp-cust-card {
+      background: var(--card);
+      border: 1.5px solid var(--line);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-top: 28px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    .exp-cust-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .exp-cust-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .exp-cust-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(79, 70, 229, 0.12));
+      border: 1px solid rgba(37, 99, 235, 0.25);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .exp-health-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 140px;
+    }
+    .exp-health-bar-track {
+      height: 7px;
+      border-radius: 99px;
+      background: var(--line);
+      overflow: hidden;
+      display: flex;
+      width: 100%;
+    }
+    .exp-health-seg {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    .exp-health-seg.active { background: #10b981; }
+    .exp-health-seg.expiring { background: #f59e0b; }
+    .exp-health-seg.expired { background: #ef4444; }
+    .exp-cust-table-wrap {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+    .exp-cust-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    .exp-cust-table th {
+      background: var(--card-subtle);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 14px;
+      border-bottom: 1.5px solid var(--line);
+      white-space: nowrap;
+    }
+    .exp-cust-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--text);
+      vertical-align: middle;
+    }
+    .exp-cust-table tbody tr:hover {
+      background: rgba(37, 99, 235, 0.04);
+    }
+    .exp-cust-table tfoot td {
+      background: var(--card-subtle);
+      font-weight: 800;
+      border-top: 2px solid var(--line);
+      border-bottom: none;
+      padding: 14px;
+    }
+
+    /* =========================================================================
        MINIMAL 3D PAGE TRANSITIONS & DEPTH EFFECTS
        ========================================================================= */
     @keyframes cvPage3dEnter {
@@ -1563,32 +1785,53 @@
     <main class="cv-main-panel" id="cvMainPanel">
 
 <!-- WHAT IS HAPPENING BELOW: Expiry Threshold Selection, Excel Export & Report Printing Controls -->
-      <section class="container-box active" id="box-exp" style="display:block;; display:block;">
-        <div class="container-tag">⚠️ Contract &amp; Expiry Container</div>
-        <div class="row">
-          <div class="grow">
-            <h2>Expiry Alerts &amp; Reports</h2>
-            <p class="sub" style="margin:0">Active devices approaching contract or subscription expiration. Export or print customer audit.</p>
-          </div>
-          <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+      <section class="container-box active" id="box-exp" style="display:block;">
+        <div class="exp-header-panel">
+          <div class="exp-header-top">
             <div>
-              <label for="expRange">Threshold Window</label>
-              <select id="expRange">
-                <option value="7">Next 7 Days</option>
-                <option value="15">Next 15 Days</option>
-                <option value="30" selected>Next 30 Days</option>
-                <option value="60">Next 60 Days</option>
-                <option value="90">Next 90 Days</option>
-              </select>
+              <div class="exp-badge-pill">
+                <span>⏱️</span> Contract &amp; Lifecycle Intelligence
+              </div>
+              <h2 style="margin:0 0 4px; font-size:22px; font-weight:800; letter-spacing:-0.4px">
+                Expiry Alerts &amp; Reports
+              </h2>
+              <p class="sub" style="margin:0; font-size:13.5px">
+                Active devices approaching contract or subscription expiration. Audit impending renewals, investigate expired units, and audit customer fleets.
+              </p>
             </div>
-            <button class="b p" id="dlAlerts" style="margin-top:auto">📥 Export Alerts (.xlsx)</button>
-            <button class="b" id="printExpReport" style="margin-top:auto">🖨️ Print Customer Report</button>
+            <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap">
+              <div>
+                <label for="expRange" style="font-size:11.5px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; display:block">
+                  Threshold Window
+                </label>
+                <select id="expRange" style="height:38px; padding:0 12px; font-size:13px; font-weight:700; border-radius:9px; border:1.5px solid var(--line); background:var(--card); color:var(--text); cursor:pointer">
+                  <option value="7">Next 7 Days</option>
+                  <option value="15">Next 15 Days</option>
+                  <option value="30" selected>Next 30 Days (Standard)</option>
+                  <option value="60">Next 60 Days</option>
+                  <option value="90">Next 90 Days</option>
+                </select>
+              </div>
+              <button class="b p" id="dlAlerts" style="height:38px; padding:0 16px; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg, #2563eb, #1d4ed8); border-color:#2563eb; color:#fff; box-shadow:0 3px 12px rgba(37,99,235,0.25)">
+                📥 Export Alerts (.xlsx)
+              </button>
+              <button class="b" id="printExpReport" style="height:38px; padding:0 14px; font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px">
+                🖨️ Print Customer Report
+              </button>
+            </div>
           </div>
         </div>
+
+        <!-- 4-KPI Executive Metric Ribbon -->
+        <div id="expKpiRibbon" class="exp-kpi-grid"></div>
+
+        <!-- Expiry Table Container -->
         <div id="expTable">
           <div class="empty">Loading alerts…</div>
         </div>
-        <div id="expCustomerReport" style="margin-top:24px"></div>
+
+        <!-- Per-Customer Expiry Inventory Summary Section -->
+        <div id="expCustomerReport"></div>
       </section>
     </main>
   </div>
@@ -1689,6 +1932,9 @@
     const expPageSize = 100;
     let expAllList = [];
     let expSummaryData = null;
+    let expFilterQuery = '';
+    let expCustomerReportList = [];
+    let custRepSearchQuery = '';
     // dashboard buttons open alerts.html?tab=expired / ?tab=expiring
     let expTab = (() => {
       try {
@@ -2815,8 +3061,103 @@
     }
 
 
+function getFilteredExpiryList() {
+  let list = expAllList || [];
+  const q = (expFilterQuery || '').trim().toLowerCase();
+  if (q) {
+    list = list.filter(d => {
+      const matchBasic = (
+        String(d.id || '').toLowerCase().includes(q) ||
+        String(d.customer_name || '').toLowerCase().includes(q) ||
+        String(d.imei || '').toLowerCase().includes(q) ||
+        String(d.iccid || '').toLowerCase().includes(q) ||
+        String(d.sim_no || '').toLowerCase().includes(q) ||
+        String(d.msisdn1 || '').toLowerCase().includes(q) ||
+        String(d.msisdn2 || '').toLowerCase().includes(q) ||
+        String(d.vehicle_reg_no || '').toLowerCase().includes(q) ||
+        String(d.model || '').toLowerCase().includes(q) ||
+        String(d.operator || '').toLowerCase().includes(q) ||
+        String(d.sim_status || '').toLowerCase().includes(q)
+      );
+      if (matchBasic) return true;
+      if (d.extra && typeof d.extra === 'object') {
+        return Object.values(d.extra).some(v => String(v || '').toLowerCase().includes(q));
+      }
+      return false;
+    });
+  }
+  return list;
+}
+
+function renderExpKpiRibbon() {
+  const ribbonEl = $('expKpiRibbon');
+  if (!ribbonEl) return;
+  const sum = expSummaryData;
+  const nTotal = sum ? (Number(sum.total_count) || expAllList.length) : expAllList.length;
+  const nExpired = sum ? (Number(sum.expired_count) || 0) : expAllList.filter(d => d.days_left != null && d.days_left < 0).length;
+  const nSoon = sum ? (Number(sum.expiring_30_days) || 0) : expAllList.filter(d => d.days_left != null && d.days_left >= 0 && d.days_left <= expDays).length;
+  const nHealthy = sum && sum.active_count != null ? Number(sum.active_count) : Math.max(0, nTotal - nExpired - nSoon);
+
+  ribbonEl.innerHTML = `
+    <div class="exp-kpi-card all ${expTab === 'all' ? 'active' : ''}" data-kpitab="all" title="View all evaluated devices">
+      <div class="exp-kpi-icon all">📋</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Total Monitored</div>
+        <div style="font-size:24px;font-weight:800;color:var(--text);line-height:1.2">${nTotal.toLocaleString()}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">All active devices evaluated</div>
+      </div>
+    </div>
+
+    <div class="exp-kpi-card expired ${expTab === 'expired' ? 'active' : ''}" data-kpitab="expired" title="Filter to already expired SIMs">
+      <div class="exp-kpi-icon expired">⚠️</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:0.5px">Already Expired</span>
+          <span style="font-size:10px;font-weight:800;padding:1px 6px;border-radius:99px;background:rgba(239,68,68,0.15);color:#ef4444">Urgent</span>
+        </div>
+        <div style="font-size:24px;font-weight:800;color:#ef4444;line-height:1.2">${nExpired.toLocaleString()}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Contract end-date passed</div>
+      </div>
+    </div>
+
+    <div class="exp-kpi-card expiring ${expTab === 'expiring' ? 'active' : ''}" data-kpitab="expiring" title="Filter to SIMs expiring inside threshold window">
+      <div class="exp-kpi-icon expiring">⏳</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;font-weight:800;color:#d97706;text-transform:uppercase;letter-spacing:0.5px">Expiring Soon</span>
+          <span style="font-size:10px;font-weight:800;padding:1px 6px;border-radius:99px;background:rgba(245,158,11,0.15);color:#d97706">&le;${expDays}d</span>
+        </div>
+        <div style="font-size:24px;font-weight:800;color:#d97706;line-height:1.2">${nSoon.toLocaleString()}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Impending contract expiry</div>
+      </div>
+    </div>
+
+    <div class="exp-kpi-card healthy" title="Healthy SIMs beyond threshold window">
+      <div class="exp-kpi-icon healthy">🛡️</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11.5px;font-weight:800;color:#10b981;text-transform:uppercase;letter-spacing:0.5px">Active / Healthy</span>
+          <span style="font-size:10px;font-weight:800;padding:1px 6px;border-radius:99px;background:rgba(16,185,129,0.15);color:#10b981">Safe</span>
+        </div>
+        <div style="font-size:24px;font-weight:800;color:#10b981;line-height:1.2">${nHealthy.toLocaleString()}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Valid beyond ${expDays} days</div>
+      </div>
+    </div>
+  `;
+
+  ribbonEl.onclick = e => {
+    const kpiEl = e.target.closest('[data-kpitab]');
+    if (kpiEl) {
+      expTab = kpiEl.dataset.kpitab;
+      expPage = 1;
+      try { history.replaceState(null, '', '?tab=' + expTab); } catch (_) { }
+      loadExpiryContainer();
+    }
+  };
+}
+
 function renderExpiryTable() {
-  const l = expAllList || [];
+  const l = getFilteredExpiryList();
   const total = l.length;
   const totalPages = Math.max(1, Math.ceil(total / expPageSize));
   if (expPage > totalPages) expPage = totalPages;
@@ -2829,8 +3170,8 @@ function renderExpiryTable() {
   const staff = canDeleteValidInventory();
   const act = dev => `
     <div style="display:flex;gap:4px">
-      <button class="b" data-expedit="${dev.id}" style="height:28px;padding:0 8px;font-size:12px" title="Edit this record">Edit</button>
-      ${staff ? `<button class="b d" data-del="${dev.id}" style="height:28px;padding:0 8px;font-size:12px" title="Move to Cart">Delete</button>` : ''}
+      <button class="b" data-expedit="${dev.id}" style="height:28px;padding:0 8px;font-size:12px;font-weight:700" title="Edit this record">Edit</button>
+      ${staff ? `<button class="b d" data-del="${dev.id}" style="height:28px;padding:0 8px;font-size:12px;font-weight:700" title="Move to Cart">Delete</button>` : ''}
     </div>
   `;
 
@@ -2838,25 +3179,23 @@ function renderExpiryTable() {
   const nExpired = sum ? (Number(sum.expired_count) || 0) : null;
   const nSoon = sum ? (Number(sum.expiring_30_days) || 0) : null;
   const nAll = (nExpired != null && nSoon != null) ? nExpired + nSoon : null;
-  const nTab = expTab === 'expired' ? nExpired : expTab === 'expiring' ? nSoon : nAll;
   const fmtN = n => (n == null ? '' : ` (${Number(n).toLocaleString()})`);
-  const tabBtn = (k, label, n) => `<button type="button" class="b${expTab === k ? ' p' : ''}" data-exptab="${k}" style="height:32px;padding:0 12px;font-size:12.5px">${label}${fmtN(n)}</button>`;
-  const tabWord = expTab === 'expired' ? 'already expired' : expTab === 'expiring' ? `expiring within ${expDays} days` : 'need attention';
-  const capNote = (nTab != null && nTab > total) ? ` · showing ${total.toLocaleString()} of ${nTab.toLocaleString()}` : '';
+  const tabWord = expTab === 'expired' ? 'already expired' : expTab === 'expiring' ? `expiring within ${expDays} days` : 'monitored';
 
   const renderPaginationControls = (idPrefix) => `
-    <div class="dh-pagination-bar" style="margin:8px 0 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--card-subtle);padding:10px 14px;border-radius:8px;border:1px solid var(--line)">
-      <div style="font-size:13px;font-weight:600;color:var(--text)">
-        Showing <span style="color:var(--primary);font-weight:700">${total ? (startIdx + 1).toLocaleString() : 0}–${endIdx.toLocaleString()}</span> of <span style="font-weight:700">${total.toLocaleString()}</span> devices (${expPageSize} rows per page)
+    <div class="dh-pagination-bar" style="margin:10px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--card-subtle);padding:10px 16px;border-radius:10px;border:1px solid var(--line)">
+      <div style="font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--primary)"></span>
+        Showing <strong style="color:var(--primary)">${total ? (startIdx + 1).toLocaleString() : 0}–${endIdx.toLocaleString()}</strong> of <strong>${total.toLocaleString()}</strong> devices (${expPageSize} records per page)
       </div>
       <div class="dh-pagination-controls" style="display:flex;align-items:center;gap:8px">
-        <button type="button" class="b dh-page-btn" id="${idPrefix}PrevBtn" ${expPage <= 1 ? 'disabled' : ''} title="Previous ${expPageSize} records">
+        <button type="button" class="b dh-page-btn" id="${idPrefix}PrevBtn" ${expPage <= 1 ? 'disabled' : ''} style="height:32px;padding:0 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;border-radius:8px">
           ⬅ Prev ${expPageSize}
         </button>
-        <span class="dh-page-info" style="font-size:13px;font-weight:700;padding:0 8px;color:var(--muted)">
+        <span class="dh-page-info" style="font-size:13px;font-weight:700;padding:4px 10px;background:var(--card);border:1px solid var(--line);border-radius:6px">
           Page <strong style="color:var(--text)">${expPage}</strong> of <strong>${totalPages}</strong>
         </span>
-        <button type="button" class="b dh-page-btn" id="${idPrefix}NextBtn" ${expPage >= totalPages ? 'disabled' : ''} title="Next ${expPageSize} records">
+        <button type="button" class="b dh-page-btn" id="${idPrefix}NextBtn" ${expPage >= totalPages ? 'disabled' : ''} style="height:32px;padding:0 14px;font-weight:700;display:inline-flex;align-items:center;gap:6px;border-radius:8px">
           Next ${expPageSize} ➔
         </button>
       </div>
@@ -2867,18 +3206,264 @@ function renderExpiryTable() {
   const bottomBar = total > expPageSize ? renderPaginationControls('expBottom') : '';
 
   $('expTable').innerHTML = `
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
-      ${tabBtn('all', 'All', nAll)}
-      ${tabBtn('expired', '⚠️ Expired', nExpired)}
-      ${tabBtn('expiring', '⏳ Expiring Soon', nSoon)}
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+      <!-- Segmented pill control -->
+      <div class="exp-tab-bar">
+        <button type="button" class="exp-tab-btn ${expTab === 'all' ? 'active' : ''}" data-exptab="all">
+          📋 All Monitored ${fmtN(nAll)}
+        </button>
+        <button type="button" class="exp-tab-btn tab-expired ${expTab === 'expired' ? 'active' : ''}" data-exptab="expired">
+          ⚠️ Already Expired ${fmtN(nExpired)}
+        </button>
+        <button type="button" class="exp-tab-btn tab-expiring ${expTab === 'expiring' ? 'active' : ''}" data-exptab="expiring">
+          ⏳ Expiring Soon ${fmtN(nSoon)}
+        </button>
+      </div>
+
+      <!-- Quick Search within Filtered Table -->
+      <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:400px;min-width:240px">
+        <div class="cv-search-container" style="width:100%">
+          <span class="cv-search-icon-left">🔎</span>
+          <input id="expSearchInput" class="cv-search-input" value="${esc(expFilterQuery)}" placeholder="Search IMEI, SIM, Customer, Vehicle…" autocomplete="off" />
+          <button type="button" class="cv-search-clear-btn" id="expSearchClearBtn" title="Clear search" style="${expFilterQuery ? 'display:block' : 'display:none'}">✕</button>
+        </div>
+      </div>
     </div>
-    <div class="meta" style="margin-bottom:6px">
-      <span>${alertSummary(l)} · ${total.toLocaleString()} devices ${tabWord} (soonest first)${capNote}</span>
+
+    <div class="meta" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span>${alertSummary(expAllList)} · <b>${total.toLocaleString()}</b> ${expFilterQuery ? 'matching' : ''} devices ${tabWord} (soonest first)</span>
+      ${expFilterQuery ? `<span style="font-size:12px;color:var(--muted)">Filtered by "${esc(expFilterQuery)}" · <a href="javascript:void(0)" id="expResetFilterLnk" style="color:var(--primary);font-weight:700">Clear filter</a></span>` : ''}
     </div>
+
     ${topBar}
     ${renderTable(pageItems, act, [], false)}
     ${bottomBar}
   `;
+
+  // Wire search input events
+  const sInput = $('expSearchInput');
+  if (sInput) {
+    sInput.oninput = e => {
+      expFilterQuery = e.target.value;
+      expPage = 1;
+      renderExpiryTable();
+      const el = $('expSearchInput');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    };
+  }
+  const sClear = $('expSearchClearBtn');
+  if (sClear) {
+    sClear.onclick = () => {
+      expFilterQuery = '';
+      expPage = 1;
+      renderExpiryTable();
+      $('expSearchInput')?.focus();
+    };
+  }
+  const resetLnk = $('expResetFilterLnk');
+  if (resetLnk) {
+    resetLnk.onclick = () => {
+      expFilterQuery = '';
+      expPage = 1;
+      renderExpiryTable();
+    };
+  }
+}
+
+function renderCustomerReport() {
+  const container = $('expCustomerReport');
+  if (!container) return;
+  const rawRep = expCustomerReportList || [];
+  const q = (custRepSearchQuery || '').trim().toLowerCase();
+  const rep = q ? rawRep.filter(r => (r.name || '').toLowerCase().includes(q)) : rawRep;
+
+  let totUnits = 0, totActive = 0, totExpiring = 0, totExpired = 0;
+  rawRep.forEach(r => {
+    totUnits += (r.total || 0);
+    totActive += (r.active || 0);
+    totExpiring += (r.expiring_30 || 0);
+    totExpired += (r.expired || 0);
+  });
+  const overallHealthPct = totUnits ? Math.round((totActive / totUnits) * 100) : 100;
+
+  const tableRows = rep.length ? rep.map((r, idx) => {
+    const total = r.total || 0;
+    const safeTotal = total || 1;
+    const pctActive = Math.round((r.active / safeTotal) * 100);
+    const pctExpiring = Math.round((r.expiring_30 / safeTotal) * 100);
+    const pctExpired = Math.round((r.expired / safeTotal) * 100);
+    const initial = (r.name || 'C').charAt(0).toUpperCase();
+
+    return `
+      <tr>
+        <td style="color:var(--muted);font-weight:700;width:40px">${idx + 1}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg, rgba(37,99,235,0.12), rgba(30,41,59,0.12));border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--primary);flex-shrink:0">
+              ${initial}
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:13.5px;color:var(--text)">${esc(r.name)}</div>
+              <div style="font-size:11px;color:var(--muted)">Portfolio ID: #${r.id || (idx + 1)}</div>
+            </div>
+          </div>
+        </td>
+        <td style="font-weight:800;font-size:13.5px">${total.toLocaleString()}</td>
+        <td><span class="tag ok" style="font-weight:800;padding:3px 10px;border-radius:20px;font-size:11.5px">${r.active.toLocaleString()}</span></td>
+        <td>
+          ${r.expiring_30 ? `<span class="tag warn" style="font-weight:800;padding:3px 10px;border-radius:20px;font-size:11.5px">⏳ ${r.expiring_30.toLocaleString()}</span>` : '<span style="color:var(--muted)">0</span>'}
+        </td>
+        <td>
+          ${r.expired ? `<span class="tag bad" style="font-weight:800;padding:3px 10px;border-radius:20px;font-size:11.5px">⚠️ ${r.expired.toLocaleString()}</span>` : '<span style="color:var(--muted)">0</span>'}
+        </td>
+        <td style="min-width:180px">
+          <div class="exp-health-bar-wrap">
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700">
+              <span style="color:var(--ok)">${pctActive}% Healthy</span>
+              <span style="color:${pctExpired ? '#ef4444' : 'var(--muted)'}">${pctExpired ? `${pctExpired}% Expired` : ''}</span>
+            </div>
+            <div class="exp-health-bar-track">
+              <div class="exp-health-seg active" style="width:${pctActive}%" title="Active: ${r.active} (${pctActive}%)"></div>
+              <div class="exp-health-seg expiring" style="width:${pctExpiring}%" title="Expiring: ${r.expiring_30} (${pctExpiring}%)"></div>
+              <div class="exp-health-seg expired" style="width:${pctExpired}%" title="Expired: ${r.expired} (${pctExpired}%)"></div>
+            </div>
+          </div>
+        </td>
+        <td style="text-align:right">
+          <button type="button" class="b" data-filtercust="${esc(r.name)}" style="height:28px;padding:0 10px;font-size:11.5px;font-weight:700;border-radius:6px" title="Filter alerts table for this customer">
+            Filter Alerts ➔
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('') : `
+    <tr>
+      <td colspan="8" style="text-align:center;padding:32px 16px;color:var(--muted)">
+        <div style="font-size:24px;margin-bottom:6px">🏢</div>
+        <div style="font-weight:700;font-size:14px">No customer portfolios matching "${esc(custRepSearchQuery)}"</div>
+        <div style="font-size:12px;margin-top:2px">Try clearing your search keyword.</div>
+      </td>
+    </tr>
+  `;
+
+  container.innerHTML = `
+    <div class="exp-cust-card">
+      <div class="exp-cust-header">
+        <div class="exp-cust-title-wrap">
+          <div class="exp-cust-icon">🏢</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text);letter-spacing:-0.3px">
+                Per-Customer Expiry &amp; Portfolio Breakdown
+              </h3>
+              <span style="font-size:11.5px;font-weight:800;padding:2px 10px;border-radius:99px;background:rgba(37,99,235,0.1);color:var(--primary);border:1px solid rgba(37,99,235,0.25)">
+                ${rawRep.length} Portfolios
+              </span>
+            </div>
+            <p class="sub" style="margin:3px 0 0;font-size:13px">
+              Account-by-account distribution of active contracts, impending expirations, and expired units
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div class="cv-search-container" style="max-width:280px;min-width:200px">
+            <span class="cv-search-icon-left">🔎</span>
+            <input id="custRepSearch" class="cv-search-input" value="${esc(custRepSearchQuery)}" placeholder="Filter customer portfolios…" autocomplete="off" />
+            <button type="button" class="cv-search-clear-btn" id="custRepClearBtn" title="Clear customer search" style="${custRepSearchQuery ? 'display:block' : 'display:none'}">✕</button>
+          </div>
+          <button type="button" class="b" id="dlCustRepBtn" style="height:36px;padding:0 14px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;border-radius:8px">
+            📥 Export Summary (.xlsx)
+          </button>
+        </div>
+      </div>
+
+      <div class="exp-cust-table-wrap">
+        <table class="exp-cust-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Customer Portfolio</th>
+              <th>Total Units</th>
+              <th>Active (&gt;30d)</th>
+              <th>Expiring Soon (&le;30d)</th>
+              <th>Expired</th>
+              <th>Account Health Status</th>
+              <th style="text-align:right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>—</td>
+              <td><b>TOTAL FLEET (${rawRep.length} Portfolios)</b></td>
+              <td><b>${totUnits.toLocaleString()}</b></td>
+              <td><span class="tag ok" style="font-weight:800;padding:3px 10px;border-radius:20px">${totActive.toLocaleString()}</span></td>
+              <td><span class="tag warn" style="font-weight:800;padding:3px 10px;border-radius:20px">${totExpiring.toLocaleString()}</span></td>
+              <td><span class="tag bad" style="font-weight:800;padding:3px 10px;border-radius:20px">${totExpired.toLocaleString()}</span></td>
+              <td>
+                <div style="font-size:12px;font-weight:800;color:var(--text)">
+                  Overall Fleet: <strong style="color:var(--ok)">${overallHealthPct}%</strong> Active
+                </div>
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // Wire search input events
+  const searchEl = $('custRepSearch');
+  if (searchEl) {
+    searchEl.oninput = e => {
+      custRepSearchQuery = e.target.value;
+      renderCustomerReport();
+      const el = $('custRepSearch');
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    };
+  }
+  const clearEl = $('custRepClearBtn');
+  if (clearEl) {
+    clearEl.onclick = () => {
+      custRepSearchQuery = '';
+      renderCustomerReport();
+      $('custRepSearch')?.focus();
+    };
+  }
+
+  // Wire export customer summary
+  const dlBtn = $('dlCustRepBtn');
+  if (dlBtn) {
+    dlBtn.onclick = () => {
+      const headers = ['#', 'Customer Portfolio', 'Total Units', 'Active (>30d)', 'Expiring Soon (<=30d)', 'Expired', 'Health Rate %'];
+      const rows = rawRep.map((r, i) => [
+        i + 1,
+        r.name,
+        r.total,
+        r.active,
+        r.expiring_30,
+        r.expired,
+        `${Math.round((r.active / (r.total || 1)) * 100)}%`
+      ]);
+      exportExcel('Customer_Expiry_Summary', headers, rows);
+    };
+  }
+
+  // Wire Filter Alerts button
+  container.onclick = e => {
+    const btn = e.target.closest('[data-filtercust]');
+    if (btn) {
+      const custName = btn.dataset.filtercust;
+      expFilterQuery = custName;
+      expPage = 1;
+      renderExpiryTable();
+      $('expTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 }
 
 async function loadExpiryContainer() {
@@ -2887,14 +3472,12 @@ async function loadExpiryContainer() {
     $('expRange').onchange = e => { expDays = +e.target.value || 30; expPage = 1; loadExpiryContainer(); };
   }
   try {
-    // the customer summary needs the "download" permission; a refusal must not hide the alerts list
     const [rawL, repRaw, sum] = await Promise.all([
       api('/api/alerts/expiry?days=' + expDays + '&status=' + expTab + '&limit=50000'),
       api('/api/inventory/report').catch(() => []),
       api('/api/devices/expiry-summary?days=' + expDays).catch(() => null)
     ]);
     const rep = Array.isArray(repRaw) ? repRaw : [];
-    // Requirement 1: SIM Expiry sorting ascending by days remaining (fewest days left first, expired first)
     const l = (Array.isArray(rawL) ? rawL : []).filter(d =>
       expTab === 'expired' ? (d.days_left != null && d.days_left < 0)
       : expTab === 'expiring' ? (d.days_left != null && d.days_left >= 0)
@@ -2907,18 +3490,21 @@ async function loadExpiryContainer() {
 
     expAllList = l;
     expSummaryData = sum;
+    expCustomerReportList = rep;
 
+    renderExpKpiRibbon();
     renderExpiryTable();
+    renderCustomerReport();
 
     $('expTable').onclick = async e => {
       const nextBtn = e.target.closest('#expTopNextBtn, #expBottomNextBtn');
       if (nextBtn && !nextBtn.disabled) {
-        const totalPages = Math.max(1, Math.ceil(expAllList.length / expPageSize));
+        const filtered = getFilteredExpiryList();
+        const totalPages = Math.max(1, Math.ceil(filtered.length / expPageSize));
         if (expPage < totalPages) {
           expPage++;
           renderExpiryTable();
-          const el = $('expTable');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          $('expTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         return;
       }
@@ -2927,8 +3513,7 @@ async function loadExpiryContainer() {
         if (expPage > 1) {
           expPage--;
           renderExpiryTable();
-          const el = $('expTable');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          $('expTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         return;
       }
@@ -2969,22 +3554,6 @@ async function loadExpiryContainer() {
         return;
       }
     };
-
-    $('expCustomerReport').innerHTML = `
-      <h4>🏢 Per-Customer Expiry Inventory Summary</h4>
-      ${rep.length ? `
-        <div class="tw"><table><thead><tr>
-          <th>Customer Name</th><th>Total Devices</th><th>Active (&gt;30d)</th><th>Expiring Soon (&le;30d)</th><th>Expired</th>
-        </tr></thead><tbody>
-        ${rep.map(r => `<tr>
-          <td><b>${esc(r.name)}</b></td>
-          <td><b>${r.total}</b></td>
-          <td><span class="tag ok">${r.active}</span></td>
-          <td>${r.expiring_30 ? `<span class="tag warn">${r.expiring_30}</span>` : '0'}</td>
-          <td>${r.expired ? `<span class="tag bad">${r.expired}</span>` : '0'}</td>
-        </tr>`).join('')}
-        </tbody></table></div>` : '<div class="empty">No customer summary available.</div>'}
-    `;
 
     $('dlAlerts').onclick = () => {
       const headers = ['ID', ...COLS.map(c => c[1]), ...XC];
