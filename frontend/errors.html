@@ -2946,8 +2946,10 @@ async function loadErrorsContainer() {
       function isInvalidEntry(err) {
         const r = (err.error_reason || '').toLowerCase();
         const imei = String(err.imei || '').trim();
-        if (r.includes('invalid') || r.includes('format') || r.includes('checksum') || r.includes('luhn') || r.includes('missing imei') || r.includes('corrupt')) return true;
+        const iccid = String(err.iccid || '').trim();
+        if (r.includes('invalid') || r.includes('format') || r.includes('checksum') || r.includes('luhn') || r.includes('missing imei') || r.includes('corrupt') || r.includes('improper') || r.includes('too short') || r.includes('too long')) return true;
         if (!imei || imei.length !== 15 || !/^\d{15}$/.test(imei)) return true;
+        if (iccid && (iccid.length !== 19 && iccid.length !== 20 || !/^\d{19,20}$/.test(iccid))) return true;
         return false;
       }
 

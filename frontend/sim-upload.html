@@ -2302,6 +2302,115 @@
     </div>
   </dialog>
 
+  <!-- Modal Dialog: Improper IMEI / ICCID Length Alert & Rectification -->
+  <dialog id="dlgImproperLengthAlert" class="dlg modal-card"
+    style="max-width:1050px;width:95vw;max-height:92vh;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,0.4);padding:0;overflow:hidden;border:1.5px solid var(--line);z-index:99999">
+    <div
+      style="padding:18px 24px;background:linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(245, 158, 11, 0.08));border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div
+          style="width:42px;height:42px;border-radius:12px;background:rgba(239, 68, 68, 0.15);color:#ef4444;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0">
+          ⚠️
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text)">Improper IMEI / ICCID Length Detected</h3>
+            <span id="improperBadgeCount" style="font-size:12px;background:#ef4444;color:#fff;font-weight:800;padding:2px 10px;border-radius:12px">0 Records</span>
+          </div>
+          <p style="margin:3px 0 0;font-size:12px;color:var(--muted)">Standard exact lengths: <b>IMEI must be 15 digits</b> &bull; <b>ICCID must be 19 or 20 digits</b>. Choose how to handle these before uploading.</p>
+        </div>
+      </div>
+      <button type="button" class="b ghost" id="btnCloseImproperTop"
+        style="font-size:22px;padding:2px 10px;cursor:pointer;border-radius:8px;line-height:1" title="Cancel upload">&times;</button>
+    </div>
+
+    <!-- Option Cards (Push to Errors vs Rectify & Update) -->
+    <div style="padding:16px 24px;background:var(--card);border-bottom:1px solid var(--line)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:14px">
+        <!-- Option 1 Card -->
+        <div style="border:1.5px solid rgba(239, 68, 68, 0.4);background:rgba(239, 68, 68, 0.03);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#dc2626;margin-bottom:6px">
+              <span style="font-size:16px">📦</span> <span>Option 1: Push to Errored Entries</span>
+            </div>
+            <p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.45">
+              Safely isolate all flawed records and send them to the <b>Errored Entries</b> container with detailed error reasons logged. The remaining <b><span id="improperRemainingValidCount">0</span> valid records</b> will continue uploading to the database.
+            </p>
+          </div>
+          <button type="button" id="btnPushAllToErrorsModal" class="b d"
+            style="margin-top:12px;width:100%;font-size:13px;font-weight:800;padding:9px 14px;background:#dc2626;color:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(220, 38, 38, 0.25)">
+            <span>⚠️</span> <span>Push <span id="improperPushBtnCount">0</span> to Errored Entries &amp; Continue</span>
+          </button>
+        </div>
+
+        <!-- Option 2 Card -->
+        <div style="border:1.5px solid rgba(16, 185, 129, 0.4);background:rgba(16, 185, 129, 0.03);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;justify-content:space-between">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#059669;margin-bottom:6px">
+              <span style="font-size:16px">✏️</span> <span>Option 2: Rectify &amp; Update Numbers Inline</span>
+            </div>
+            <p style="margin:0;font-size:12.5px;color:var(--muted);line-height:1.45">
+              Directly type and fix the missing or excess digits in the table below. Live digit counters turn <b style="color:#059669">green ✅</b> once the exact length is met. Then save to include them in the upload!
+            </p>
+          </div>
+          <button type="button" id="btnFocusRectifyTable" class="b p"
+            style="margin-top:12px;width:100%;font-size:13px;font-weight:800;padding:9px 14px;background:linear-gradient(135deg, #10b981, #059669);color:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(16, 185, 129, 0.25)">
+            <span>✏️</span> <span>Rectify Improper Numbers in Table Below</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Rectification Table -->
+    <div style="padding:16px 24px;max-height:42vh;overflow-y:auto;background:var(--bg)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+        <div style="font-weight:800;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px">
+          <span>📋 Records Requiring Rectification (<span id="improperTableCount">0</span>)</span>
+          <span style="font-size:11px;font-weight:600;color:var(--muted);background:var(--card-subtle);padding:2px 8px;border-radius:6px;border:1px solid var(--line)">Digits only &bull; live length indicators</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="text" id="filterImproperTable" placeholder="Filter by Row, IMEI, Customer…"
+            style="padding:4px 10px;font-size:12px;border-radius:6px;border:1px solid var(--line);background:var(--card);width:210px" />
+        </div>
+      </div>
+
+      <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.04);background:var(--card)">
+        <table class="data-table" style="font-size:12px;margin:0;width:100%">
+          <thead>
+            <tr style="background:var(--card-subtle)">
+              <th style="width:55px;text-align:center">Row #</th>
+              <th style="width:140px">Customer Name</th>
+              <th style="width:230px">IMEI (Exact 15 Digits)</th>
+              <th style="width:250px">ICCID (Exact 19–20 Digits)</th>
+              <th>Detected Discrepancy</th>
+              <th style="width:90px;text-align:center">Action</th>
+            </tr>
+          </thead>
+          <tbody id="improperTableBody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="padding:14px 24px;background:var(--card-subtle);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <button type="button" class="b" id="btnCancelImproperUpload" style="padding:9px 18px;font-weight:600;cursor:pointer">
+        ❌ Cancel Upload
+      </button>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button type="button" class="b d" id="btnPushImproperFooter"
+          style="background:#dc2626;color:#fff;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer">
+          ⚠️ Push to Errored Entries (<span id="improperFooterPushCount">0</span>)
+        </button>
+        <button type="button" class="b p" id="btnSaveRectifiedAndUpload"
+          style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:800;padding:9px 22px;border-radius:8px;cursor:pointer;box-shadow:0 2px 10px rgba(16, 185, 129, 0.3)">
+          ✅ Save Rectifications &amp; Continue Upload
+        </button>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="dlgEventPopup" class="modal-card"
     style="width:min(520px, 92vw); padding:0; border-radius:16px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,0.45); overflow:hidden; z-index:999999">
     <div id="dlgEventPopupHeader"
@@ -3395,6 +3504,65 @@
       }
     }
 
+    function normalizeExcelRow(r) {
+      const norm = {}, extra = {};
+      const HMAP = {
+        devicesrno: 'device_sr_no', srno: 'device_sr_no', serialno: 'device_sr_no', deviceserialnumber: 'device_sr_no', deviceserialno: 'device_sr_no',
+        imei: 'imei', imeino: 'imei',
+        iccid: 'iccid', iccidno: 'iccid', iccidnumber: 'iccid', iccidnum: 'iccid',
+        ccid: 'iccid', ccidno: 'iccid', ccidnumber: 'iccid', ccidnum: 'iccid',
+        simiccid: 'iccid', simccid: 'iccid', simno: 'iccid', simnumber: 'iccid', simnum: 'iccid',
+        esimiccid: 'iccid', esimccid: 'iccid',
+        msisdn1: 'msisdn1', msisdn2: 'msisdn2',
+        actdate: 'act_date', activationdate: 'act_date', activatedon: 'act_date', activation: 'act_date', activateddate: 'act_date',
+        expiry: 'expiry_date', expirydate: 'expiry_date', expdate: 'expiry_date', exp: 'expiry_date', validity: 'expiry_date', validtill: 'expiry_date', validupto: 'expiry_date', expiredate: 'expiry_date',
+        dispatcheddate: 'dispatched_date', dispatchdate: 'dispatched_date',
+        model: 'model', devicemodel: 'model', simprovider: 'sim_provider', provider: 'sim_provider',
+        activationplan: 'activation_plan', plan: 'activation_plan', firmware: 'firmware', firmwareversion: 'firmware',
+        flash: 'flash', flashtype: 'flash', customer: 'customer_name', customername: 'customer_name', custname: 'customer_name', client: 'customer_name', clientname: 'customer_name'
+      };
+
+      const IGNORE_COLS = new Set(['simtype', 'sim', 'typeofsim']);
+
+      Object.keys(r).forEach(k => {
+        const cleanKey = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (IGNORE_COLS.has(cleanKey)) return;
+
+        const mapped = HMAP[cleanKey];
+        let val = r[k];
+        if (val === null || val === undefined) val = '';
+        else val = String(val).trim();
+        if (val.toLowerCase() === 'nan' || val.toLowerCase() === 'null' || val.toLowerCase() === 'undefined') val = '';
+
+        if (mapped === 'imei' || mapped === 'iccid' || mapped === 'msisdn1' || mapped === 'msisdn2' || mapped === 'device_sr_no') {
+          if (val.endsWith('.0') && /^\d+\.0$/.test(val)) val = val.slice(0, -2);
+          if (/[eE]\+?/.test(val)) {
+            try {
+              const num = Number(val);
+              if (!isNaN(num) && Number.isFinite(num)) val = BigInt(Math.round(num)).toString();
+            } catch { }
+          }
+        }
+
+        if (mapped === 'iccid') {
+          val = val.replace(/[\s\-_]+/g, '').toUpperCase();
+        }
+
+        if (mapped === 'act_date' || mapped === 'expiry_date' || mapped === 'dispatched_date') {
+          val = (typeof parseExcelDate === 'function') ? parseExcelDate(val) : val;
+        }
+
+        if (mapped) {
+          norm[mapped] = val;
+        } else if (val) {
+          extra[k.trim()] = val;
+        }
+      });
+
+      norm.extra = Object.keys(extra).length ? extra : null;
+      return norm;
+    }
+
     function initBulkUploadContainer() {
       loadCustomModels();
 
@@ -3999,13 +4167,370 @@
         $('valReviewLimit').onchange = () => applyPreviewFilter(activeValFilter);
       }
 
+      // Detection & Inspection of improper IMEI / ICCID lengths
+      function findImproperLengthRows(rows) {
+        const improper = [];
+        if (!rows || !rows.length) return improper;
+
+        rows.forEach((r, idx) => {
+          const rawImei = String(r.imei || '').trim();
+          const cleanImei = rawImei.replace(/\D/g, '');
+          const rawIccid = String(r.iccid || '').trim();
+          const cleanIccid = rawIccid.replace(/\D/g, '');
+
+          let isImeiBad = false;
+          let imeiMsg = '';
+          let isIccidBad = false;
+          let iccidMsg = '';
+
+          // 1. IMEI must be exactly 15 digits
+          if (!rawImei) {
+            isImeiBad = true;
+            imeiMsg = 'Missing IMEI (exact 15 digits required)';
+          } else if (cleanImei.length !== 15 || rawImei !== cleanImei) {
+            isImeiBad = true;
+            if (cleanImei.length < 15) imeiMsg = `IMEI too short: ${cleanImei.length} digits (expected exact 15)`;
+            else if (cleanImei.length > 15) imeiMsg = `IMEI too long: ${cleanImei.length} digits (expected exact 15)`;
+            else imeiMsg = 'IMEI contains invalid non-numeric characters (expected 15 digits)';
+          }
+
+          // 2. ICCID: if present, must be exact 19 or 20 digits (standard telecom SIM)
+          if (rawIccid) {
+            if ((cleanIccid.length !== 19 && cleanIccid.length !== 20) || rawIccid !== cleanIccid) {
+              isIccidBad = true;
+              if (cleanIccid.length < 19) iccidMsg = `ICCID too short: ${cleanIccid.length} digits (expected exact 19–20)`;
+              else if (cleanIccid.length > 20) iccidMsg = `ICCID too long: ${cleanIccid.length} digits (expected exact 19–20)`;
+              else iccidMsg = 'ICCID contains invalid non-numeric characters (expected 19–20 digits)';
+            }
+          }
+
+          if (isImeiBad || isIccidBad) {
+            const combinedReasons = [imeiMsg, iccidMsg].filter(Boolean).join('; ');
+            improper.push({
+              rowIdx: idx,
+              rowNum: idx + 1,
+              record: r,
+              customerName: r.customer_name || 'General_Customer',
+              rawImei,
+              cleanImei,
+              isImeiBad,
+              imeiMsg,
+              rawIccid,
+              cleanIccid,
+              isIccidBad,
+              iccidMsg,
+              combinedReasons,
+              rectifiedImei: cleanImei,
+              rectifiedIccid: cleanIccid,
+              pushToErrorsOnly: false
+            });
+          }
+        });
+
+        return improper;
+      }
+
+      function promptImproperLengthModal(improperList, allRows) {
+        return new Promise((resolve) => {
+          const dlg = $('dlgImproperLengthAlert');
+          if (!dlg) {
+            console.warn('dlgImproperLengthAlert modal not found in DOM');
+            resolve({ action: 'cancel' });
+            return;
+          }
+
+          const badgeCount = $('improperBadgeCount');
+          const pushBtnCount = $('improperPushBtnCount');
+          const footerPushCount = $('improperFooterPushCount');
+          const remainingValidCount = $('improperRemainingValidCount');
+          const tableCount = $('improperTableCount');
+          const tbody = $('improperTableBody');
+          const filterInput = $('filterImproperTable');
+
+          const totalImproper = improperList.length;
+          const validRemaining = Math.max(0, allRows.length - totalImproper);
+
+          if (badgeCount) badgeCount.textContent = `${totalImproper} Record${totalImproper === 1 ? '' : 's'}`;
+          if (pushBtnCount) pushBtnCount.textContent = totalImproper.toString();
+          if (footerPushCount) footerPushCount.textContent = totalImproper.toString();
+          if (remainingValidCount) remainingValidCount.textContent = validRemaining.toLocaleString();
+          if (tableCount) tableCount.textContent = totalImproper.toString();
+
+          function renderTableRows(filterText = '') {
+            if (!tbody) return;
+            const ft = (filterText || '').trim().toLowerCase();
+            const filtered = ft ? improperList.filter(item => {
+              return String(item.rowNum).includes(ft) ||
+                     (item.customerName || '').toLowerCase().includes(ft) ||
+                     (item.rawImei || '').toLowerCase().includes(ft) ||
+                     (item.rawIccid || '').toLowerCase().includes(ft) ||
+                     (item.combinedReasons || '').toLowerCase().includes(ft);
+            }) : improperList;
+
+            if (!filtered.length) {
+              tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">No matching records found.</td></tr>`;
+              return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+              const idx = item.rowIdx;
+              const curImei = (item.rectifiedImei !== undefined ? item.rectifiedImei : item.cleanImei);
+              const curIccid = (item.rectifiedIccid !== undefined ? item.rectifiedIccid : item.cleanIccid);
+              const imeiLen = curImei.length;
+              const iccidLen = curIccid.length;
+              const isImeiExact = (imeiLen === 15);
+              const isIccidExact = (iccidLen === 0 || iccidLen === 19 || iccidLen === 20);
+
+              return `
+                <tr id="improperRow_${idx}" data-idx="${idx}" class="${item.pushToErrorsOnly ? 'row-marked-error' : ''}" style="${item.pushToErrorsOnly ? 'opacity:0.6;background:rgba(239,68,68,0.06)' : ''}">
+                  <td style="text-align:center;font-weight:700">#${item.rowNum}</td>
+                  <td><b>${esc(item.customerName)}</b></td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <input type="text" class="inp imei-input-rect" data-idx="${idx}" value="${esc(curImei)}" maxlength="15"
+                        placeholder="15-digit IMEI"
+                        style="width:140px;font-family:monospace;font-size:12px;padding:4px 8px;border-radius:6px;border:1.5px solid ${isImeiExact ? 'var(--ok)' : '#ef4444'};background:var(--card)"
+                        ${item.pushToErrorsOnly ? 'disabled' : ''} />
+                      <span class="imei-badge-${idx}" style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;font-family:monospace;background:${isImeiExact ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};color:${isImeiExact ? '#059669' : '#dc2626'}">
+                        ${imeiLen}/15 ${isImeiExact ? '✅' : '❌'}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <input type="text" class="inp iccid-input-rect" data-idx="${idx}" value="${esc(curIccid)}" maxlength="20"
+                        placeholder="20-digit ICCID"
+                        style="width:160px;font-family:monospace;font-size:12px;padding:4px 8px;border-radius:6px;border:1.5px solid ${isIccidExact ? 'var(--ok)' : '#ef4444'};background:var(--card)"
+                        ${item.pushToErrorsOnly ? 'disabled' : ''} />
+                      <span class="iccid-badge-${idx}" style="font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;font-family:monospace;background:${isIccidExact ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)'};color:${isIccidExact ? '#059669' : '#dc2626'}">
+                        ${iccidLen}/20 ${isIccidExact ? '✅' : '❌'}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <span style="font-size:11.5px;color:#dc2626;font-weight:600;line-height:1.3;display:block">
+                      ${esc(item.combinedReasons || 'Improper length')}
+                    </span>
+                  </td>
+                  <td style="text-align:center">
+                    <button type="button" class="b btn-toggle-row-err" data-idx="${idx}"
+                      style="font-size:11px;padding:3px 8px;border-radius:5px;cursor:pointer;background:${item.pushToErrorsOnly ? '#dc2626' : 'var(--card-subtle)'};color:${item.pushToErrorsOnly ? '#fff' : 'inherit'}"
+                      title="${item.pushToErrorsOnly ? 'Undo error push' : 'Mark to push to errored entries'}">
+                      ${item.pushToErrorsOnly ? 'Will Push' : 'Push'}
+                    </button>
+                  </td>
+                </tr>
+              `;
+            }).join('');
+
+            tbody.querySelectorAll('.imei-input-rect').forEach(inp => {
+              inp.oninput = (e) => {
+                const clean = e.target.value.replace(/\D/g, '');
+                e.target.value = clean;
+                const idx = parseInt(e.target.dataset.idx, 10);
+                const item = improperList.find(i => i.rowIdx === idx);
+                if (item) item.rectifiedImei = clean;
+
+                const isExact = (clean.length === 15);
+                e.target.style.borderColor = isExact ? 'var(--ok)' : '#ef4444';
+                const badge = tbody.querySelector(`.imei-badge-${idx}`);
+                if (badge) {
+                  badge.textContent = `${clean.length}/15 ${isExact ? '✅' : '❌'}`;
+                  badge.style.background = isExact ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+                  badge.style.color = isExact ? '#059669' : '#dc2626';
+                }
+              };
+            });
+
+            tbody.querySelectorAll('.iccid-input-rect').forEach(inp => {
+              inp.oninput = (e) => {
+                const clean = e.target.value.replace(/\D/g, '');
+                e.target.value = clean;
+                const idx = parseInt(e.target.dataset.idx, 10);
+                const item = improperList.find(i => i.rowIdx === idx);
+                if (item) item.rectifiedIccid = clean;
+
+                const isExact = (clean.length === 0 || clean.length === 19 || clean.length === 20);
+                e.target.style.borderColor = isExact ? 'var(--ok)' : '#ef4444';
+                const badge = tbody.querySelector(`.iccid-badge-${idx}`);
+                if (badge) {
+                  badge.textContent = `${clean.length}/20 ${isExact ? '✅' : '❌'}`;
+                  badge.style.background = isExact ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+                  badge.style.color = isExact ? '#059669' : '#dc2626';
+                }
+              };
+            });
+
+            tbody.querySelectorAll('.btn-toggle-row-err').forEach(btn => {
+              btn.onclick = () => {
+                const idx = parseInt(btn.dataset.idx, 10);
+                const item = improperList.find(i => i.rowIdx === idx);
+                if (item) {
+                  item.pushToErrorsOnly = !item.pushToErrorsOnly;
+                  renderTableRows(filterInput ? filterInput.value : '');
+                }
+              };
+            });
+          }
+
+          renderTableRows();
+
+          if (filterInput) {
+            filterInput.value = '';
+            filterInput.oninput = () => renderTableRows(filterInput.value);
+          }
+
+          const handlePushAllToErrors = async () => {
+            const btn1 = $('btnPushAllToErrorsModal');
+            const btn2 = $('btnPushImproperFooter');
+            if (btn1) { btn1.disabled = true; btn1.textContent = 'Staging to Errored Entries…'; }
+            if (btn2) { btn2.disabled = true; btn2.textContent = 'Staging…'; }
+
+            try {
+              const records = improperList.map(item => ({
+                customer_name: item.record.customer_name || 'General_Customer',
+                imei: item.record.imei || '',
+                device_sr_no: item.record.device_sr_no || '',
+                iccid: item.record.iccid || '',
+                msisdn1: item.record.msisdn1 || '',
+                msisdn2: item.record.msisdn2 || '',
+                act_date: item.record.act_date || null,
+                expiry_date: item.record.expiry_date || null,
+                dispatched_date: item.record.dispatched_date || null,
+                model: item.record.model || '',
+                sim_provider: item.record.sim_provider || '',
+                activation_plan: item.record.activation_plan || '',
+                firmware: item.record.firmware || '',
+                flash: item.record.flash || '',
+                sim_type: item.record.sim_type || '',
+                extra: item.record.extra || null,
+                error_reason: item.combinedReasons || 'Improper IMEI or ICCID length'
+              }));
+
+              await api('/api/errors', {
+                method: 'POST',
+                body: JSON.stringify({ records })
+              });
+
+              toast(`⚠️ Staged ${records.length} improper-length record(s) to Errored Entries.`);
+              closeModal('dlgImproperLengthAlert');
+              resolve({
+                action: 'push_errors',
+                stagedIndices: new Set(improperList.map(i => i.rowIdx))
+              });
+            } catch (err) {
+              toast(`⚠️ Failed to stage to Errored Entries: ${err.message}`);
+              if (btn1) { btn1.disabled = false; btn1.textContent = `⚠️ Push ${totalImproper} to Errored Entries & Continue`; }
+              if (btn2) { btn2.disabled = false; btn2.textContent = `⚠️ Push to Errored Entries (${totalImproper})`; }
+            }
+          };
+
+          if ($('btnPushAllToErrorsModal')) $('btnPushAllToErrorsModal').onclick = handlePushAllToErrors;
+          if ($('btnPushImproperFooter')) $('btnPushImproperFooter').onclick = handlePushAllToErrors;
+
+          if ($('btnFocusRectifyTable')) {
+            $('btnFocusRectifyTable').onclick = () => {
+              const firstInp = tbody ? tbody.querySelector('.imei-input-rect') : null;
+              if (firstInp) firstInp.focus();
+            };
+          }
+
+          if ($('btnSaveRectifiedAndUpload')) {
+            $('btnSaveRectifiedAndUpload').onclick = async () => {
+              const unrectified = [];
+              const rectified = [];
+
+              improperList.forEach(item => {
+                if (item.pushToErrorsOnly) {
+                  unrectified.push(item);
+                  return;
+                }
+                const cleanImei = (item.rectifiedImei !== undefined ? item.rectifiedImei : item.cleanImei).trim();
+                const cleanIccid = (item.rectifiedIccid !== undefined ? item.rectifiedIccid : item.cleanIccid).trim();
+
+                const isImeiValid = (cleanImei.length === 15);
+                const isIccidValid = (cleanIccid.length === 0 || cleanIccid.length === 19 || cleanIccid.length === 20);
+
+                if (isImeiValid && isIccidValid) {
+                  rectified.push({ item, cleanImei, cleanIccid });
+                } else {
+                  unrectified.push(item);
+                }
+              });
+
+              if (unrectified.length > 0) {
+                const proceed = confirm(
+                  `Notice: ${rectified.length} record(s) have valid rectified numbers, but ${unrectified.length} record(s) still have improper lengths.\n\n` +
+                  `Would you like to save the ${rectified.length} rectified record(s) to upload, and push the remaining ${unrectified.length} improper record(s) to Errored Entries?`
+                );
+                if (!proceed) return;
+
+                const unrectRecords = unrectified.map(u => ({
+                  customer_name: u.record.customer_name || 'General_Customer',
+                  imei: u.record.imei || '',
+                  device_sr_no: u.record.device_sr_no || '',
+                  iccid: u.record.iccid || '',
+                  msisdn1: u.record.msisdn1 || '',
+                  msisdn2: u.record.msisdn2 || '',
+                  act_date: u.record.act_date || null,
+                  expiry_date: u.record.expiry_date || null,
+                  dispatched_date: u.record.dispatched_date || null,
+                  model: u.record.model || '',
+                  sim_provider: u.record.sim_provider || '',
+                  activation_plan: u.record.activation_plan || '',
+                  firmware: u.record.firmware || '',
+                  flash: u.record.flash || '',
+                  sim_type: u.record.sim_type || '',
+                  extra: u.record.extra || null,
+                  error_reason: u.combinedReasons || 'Improper IMEI or ICCID length'
+                }));
+
+                try {
+                  await api('/api/errors', {
+                    method: 'POST',
+                    body: JSON.stringify({ records: unrectRecords })
+                  });
+                } catch (e) {
+                  console.warn('Could not stage unrectified records:', e);
+                }
+              }
+
+              rectified.forEach(({ item, cleanImei, cleanIccid }) => {
+                if (allRows[item.rowIdx]) {
+                  allRows[item.rowIdx].imei = cleanImei;
+                  if (cleanIccid) allRows[item.rowIdx].iccid = cleanIccid;
+                }
+              });
+
+              const stagedIndices = new Set(unrectified.map(u => u.rowIdx));
+              toast(`✅ Saved ${rectified.length} rectified record(s)! Continuing upload...`);
+              closeModal('dlgImproperLengthAlert');
+              resolve({
+                action: 'rectified',
+                rectifiedCount: rectified.length,
+                stagedIndices
+              });
+            };
+          }
+
+          const handleCancel = () => {
+            closeModal('dlgImproperLengthAlert');
+            resolve({ action: 'cancel' });
+          };
+          if ($('btnCancelImproperUpload')) $('btnCancelImproperUpload').onclick = handleCancel;
+          if ($('btnCloseImproperTop')) $('btnCloseImproperTop').onclick = handleCancel;
+
+          openModal('dlgImproperLengthAlert');
+        });
+      }
+
       async function validateAndPreview(rows) {
         if (!rows.length) {
-          $('valSummaryWrap').hidden = true;
+          if ($('valSummaryWrap')) $('valSummaryWrap').hidden = true;
           return;
         }
-        $('valSummaryWrap').hidden = false;
-        $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and segregating into New, Updated, and Existing records…</div>';
+        if ($('valSummaryWrap')) $('valSummaryWrap').hidden = false;
+        if ($('valPreviewTable')) $('valPreviewTable').innerHTML = '<div class="empty">Validating against database and segregating into New, Updated, and Existing records…</div>';
         showBstplLoader(`Validating ${rows.length.toLocaleString()} entries against database…`, 0);
 
         try {
@@ -4261,6 +4786,20 @@
           return;
         }
 
+        // Pre-upload check: Detect any rows with improper IMEI or ICCID lengths
+        const improperRecords = findImproperLengthRows(parsedRows);
+        let stagedImproperIndices = new Set();
+        if (improperRecords.length > 0) {
+          const modalRes = await promptImproperLengthModal(improperRecords, parsedRows);
+          if (modalRes.action === 'cancel') {
+            toast('Upload cancelled.');
+            return;
+          }
+          if (modalRes.stagedIndices && modalRes.stagedIndices.size > 0) {
+            stagedImproperIndices = modalRes.stagedIndices;
+          }
+        }
+
         const mode = $('dupMode').value;
         const validRowsToUpload = [];
         const duplicatesToStage = [];
@@ -4292,6 +4831,10 @@
         const seenIccids = new Set();
 
         parsedRows.forEach((r, idx) => {
+          if (stagedImproperIndices.has(idx)) {
+            duplicateRecordsSkipped++;
+            return; // Already staged to Errored Entries via modal; do NOT insert to database
+          }
           const rawImei = String(r.imei || '').trim();
           const rawSr = String(r.device_sr_no || '').trim();
           const rawIccid = String(r.iccid || '').trim();
@@ -4381,7 +4924,11 @@
         });
 
         if (!validRowsToUpload.length && !duplicatesToStage.length) {
-          toast('⚠️ No device records found to upload.');
+          if (stagedImproperIndices.size > 0) {
+            toast(`All ${stagedImproperIndices.size} improper-length record(s) were saved to Errored Entries. No valid records to upload.`);
+          } else {
+            toast('⚠️ No device records found to upload.');
+          }
           return;
         }
 
@@ -5788,6 +6335,25 @@
           sim_provider: rowProv || chosenProvider || null
         });
       });
+
+      // Check fullPayload for improper IMEI / ICCID lengths before pushing
+      const improperSimPush = findImproperLengthRows(fullPayload);
+      if (improperSimPush.length > 0) {
+        const modalRes = await promptImproperLengthModal(improperSimPush, fullPayload);
+        if (modalRes.action === 'cancel') {
+          toast('Upload cancelled.');
+          return;
+        }
+        if (modalRes.stagedIndices && modalRes.stagedIndices.size > 0) {
+          const remaining = fullPayload.filter((_, idx) => !modalRes.stagedIndices.has(idx));
+          fullPayload.length = 0;
+          fullPayload.push(...remaining);
+        }
+        if (!fullPayload.length) {
+          toast('All records had improper lengths and were saved to Errored Entries.');
+          return;
+        }
+      }
 
       const progressWrap = $('simPushProgressWrap');
       const progressBar = $('simPushBar');
