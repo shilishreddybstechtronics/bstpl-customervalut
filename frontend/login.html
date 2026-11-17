@@ -1239,6 +1239,7 @@
             headers: { 'Authorization': 'Bearer ' + existingToken }
           });
           if (res.ok) {
+            localStorage.setItem('cv_sidebar_open', 'true');
             window.location.replace('home.html');
           } else if (res.status === 401) {
             localStorage.removeItem('token');
@@ -1347,7 +1348,9 @@
           localStorage.setItem('token', data.access_token);
           if (data.user) {
             localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
           }
+          localStorage.setItem('cv_sidebar_open', 'true');
 
           lbl.textContent = 'Success! Opening Home Overview…';
           showAuthLoader('Welcome back! Opening Home Overview…');

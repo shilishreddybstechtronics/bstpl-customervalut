@@ -281,7 +281,7 @@
     }
 
     /* Sidebar Navigation — Controlled exclusively by the Home Icon */
-    .cv-sidebar {
+    body:not(.sidebar-open) .cv-sidebar {
       width: 0 !important;
       min-width: 0 !important;
       max-width: 0 !important;
@@ -293,6 +293,9 @@
       visibility: hidden !important;
       pointer-events: none !important;
       box-shadow: none !important;
+    }
+
+    .cv-sidebar {
       transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
         padding 0.32s cubic-bezier(0.16, 1, 0.3, 1),
         opacity 0.22s ease,
@@ -1972,7 +1975,7 @@
   </script>
 </head>
 
-<body class="app-active">
+<body class="app-active sidebar-open">
   <div id="dashboardWrap" class="cv-app-shell" style="display:flex">
 
     <aside class="cv-sidebar" id="cvSidebar">
@@ -2741,17 +2744,17 @@
       try { localStorage.setItem('cv_sidebar_open', open ? 'true' : 'false'); } catch (e) { }
     }
 
-    // Initialize sidebar state on page load: Starts closed
+    // Initialize sidebar state on page load: Home Overview and nav bar are visible
     (function initSidebarState() {
       try {
         const saved = localStorage.getItem('cv_sidebar_open');
-        if (saved === 'true') {
-          setSidebarOpen(true);
-        } else {
+        if (saved === 'false') {
           setSidebarOpen(false);
+        } else {
+          setSidebarOpen(true);
         }
       } catch (e) {
-        setSidebarOpen(false);
+        setSidebarOpen(true);
       }
 
       // If user chooses the Home option inside the open navbar, close it

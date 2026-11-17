@@ -838,7 +838,7 @@ body.sidebar-open .header-bstpl-brand {
 }
 
 /* Sidebar zero-width collapse and open states across all pages */
-.cv-sidebar {
+body:not(.sidebar-open) .cv-sidebar {
   width: 0 !important;
   min-width: 0 !important;
   max-width: 0 !important;
@@ -850,6 +850,9 @@ body.sidebar-open .header-bstpl-brand {
   visibility: hidden !important;
   pointer-events: none !important;
   box-shadow: none !important;
+}
+
+.cv-sidebar {
   transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
               padding 0.32s cubic-bezier(0.16, 1, 0.3, 1),
               opacity 0.22s ease,

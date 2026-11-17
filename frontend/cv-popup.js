@@ -520,11 +520,17 @@ if (!window.openCartModal) {
     updateUniversalUserGreeting();
     syncTopHeaderPageIcon();
 
-    // Auto-close sidebar on initial page boot so destination pages always open fully
-    document.body.classList.remove('sidebar-open');
-    try {
-      localStorage.setItem('cv_sidebar_open', 'false');
-    } catch (e) { }
+    // Sidebar state initialization:
+    // On Home Overview (after login or direct navigation), Home Overview and the nav bar are visible!
+    // On destination tool pages (Customer Inventory, Fetch Data, etc.), the page opens fully with sidebar closed.
+    const curPage = getCurrentPageName();
+    const isHomeOverview = (curPage === 'home.html' || curPage === 'dashboard.html');
+
+    if (isHomeOverview) {
+      setSidebarOpen(true);
+    } else {
+      setSidebarOpen(false);
+    }
 
     // Wire #bQs (Quick Search)
     const qs = document.getElementById('bQs');
@@ -608,15 +614,25 @@ if (!window.openCartModal) {
   }
   window.logout = window.logout || universalLogout;
 
-  // Auto-close sidebar on ANY sidebar navigation item selection and open destination page fully
+  // Auto-close sidebar on tool navigation item selection so tools open fully,
+  // but keep nav bar open when selecting Home Overview so Home Overview and nav bar are visible!
   document.addEventListener('click', function (e) {
     const navItem = e.target.closest('.cv-sidebar-menu a, .cv-nav-item');
     if (navItem) {
-      // Immediately close the sidebar
-      setSidebarOpen(false);
-      try {
-        localStorage.setItem('cv_sidebar_open', 'false');
-      } catch (err) { }
+      const href = (navItem.getAttribute('href') || '').toLowerCase();
+      const isNavigatingToHome = href.includes('home.html') || href.includes('dashboard.html');
+      if (isNavigatingToHome) {
+        setSidebarOpen(true);
+        try {
+          localStorage.setItem('cv_sidebar_open', 'true');
+        } catch (err) { }
+      } else {
+        // Immediately close the sidebar so destination tool page opens fully
+        setSidebarOpen(false);
+        try {
+          localStorage.setItem('cv_sidebar_open', 'false');
+        } catch (err) { }
+      }
     }
   }, true);
 
