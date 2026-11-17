@@ -325,6 +325,129 @@
       display: none !important;
     }
 
+        /* ========================================================================= */
+    /* TOP NAVIGATION HEADER BAR & BRAND ARRANGEMENT                             */
+    /* ========================================================================= */
+    .index-top-bar {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #ffffff;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+    }
+
+    /* Left Brand Wrap: Logo + Title + Subtitle */
+    .cv-brand-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+      transition: opacity 0.15s ease;
+    }
+    .cv-brand-wrap:hover {
+      opacity: 0.92;
+    }
+
+    .cv-brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 3px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      border: 1.5px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+    .cv-brand-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 9px;
+      display: block;
+    }
+
+    .cv-brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cv-brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .cv-brand-sub {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.9px;
+      color: #2563eb;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* Right Side: Tagline Pill & Services Online Indicator */
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .tagline-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 16px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
+    .system-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 15px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(22, 163, 74, 0.08);
+      border: 1px solid rgba(22, 163, 74, 0.3);
+      color: #16a34a;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #16a34a;
+      box-shadow: 0 0 8px rgba(22, 163, 74, 0.7);
+      animation: pulseDot 2s infinite ease-in-out;
+      flex-shrink: 0;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.25); }
+    }
+
     /* Main Container Split View: Form on LEFT, Hero on RIGHT */
     .index-main {
       position: relative;
@@ -806,16 +929,22 @@
 <body>
 
   <!-- WHAT IS HAPPENING BELOW: Top Navigation Header with Corporate Logo, Title and Live Services Indicator -->
+    <!-- Top Navigation Header with Corporate Logo, Title, Tagline and Live Services Indicator -->
   <header class="index-top-bar">
     <a href="index.html" class="cv-brand-wrap" title="BSTPL CustomerVault Portal">
-      <div class="cv-brand-icon"><img src="logo.svg" alt="BSTPL Logo" style="width:100%;height:100%;object-fit:contain;border-radius:10px" /></div>
+      <div class="cv-brand-icon">
+        <img src="logo.svg" alt="BSTPL Logo" />
+      </div>
       <div class="cv-brand-text">
         <div class="cv-brand-title">BSTPL CustomerVault</div>
         <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
       </div>
     </a>
     <div class="top-bar-right">
-      <div class="tagline-pill">Secure Smart Connected Surface Online</div>
+      <div class="tagline-pill">
+        <span>🌐</span>
+        <span>Secure Smart Connected Surface Online</span>
+      </div>
       <div class="system-status-pill">
         <span class="status-dot"></span>
         <span>Services Online</span>
