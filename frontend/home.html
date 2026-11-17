@@ -361,6 +361,67 @@
       transform: scale(1.15);
     }
 
+    /* BSTPL Logo beside Home Icon — Off when navbar is open, Visible when navbar is closed */
+    .header-bstpl-brand {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      transform: translateX(-4px);
+      user-select: none;
+      flex-shrink: 0;
+    }
+    body.sidebar-collapsed .header-bstpl-brand {
+      display: inline-flex;
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .header-bstpl-brand .header-logo-icon {
+      width: 40px;
+      height: 40px;
+      background: #ffffff;
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      flex-shrink: 0;
+    }
+    .header-bstpl-brand .header-logo-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .header-bstpl-brand .header-logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+    .header-bstpl-brand .header-logo-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+    .header-bstpl-brand .header-logo-sub {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .header-bstpl-brand .header-logo-text {
+        display: none;
+      }
+    }
+
     /* Close button inside sidebar brand header */
     .cv-sidebar-close-btn {
       margin-left: auto;
@@ -1717,6 +1778,17 @@
             <button type="button" id="sidebarToggleHomeBtn" class="cv-home-nav-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation Sidebar" title="Toggle Navigation Sidebar (Home)">
               <span class="home-btn-icon">🏠</span>
             </button>
+
+            <!-- BSTPL Logo Beside Home Icon (Visible when sidebar closes, Off when sidebar opens) -->
+            <div class="header-bstpl-brand" id="headerBstplBrand" title="BSTPL CustomerVault">
+              <div class="header-logo-icon">
+                <img src="logo.svg" alt="BSTPL Logo" />
+              </div>
+              <div class="header-logo-text">
+                <span class="header-logo-title">BSTPL CustomerVault</span>
+                <span class="header-logo-sub">DEVICE &amp; INVENTORY SYSTEMS</span>
+              </div>
+            </div>
 
             <div class="cv-avatar-circle" id="userAvatarCircle" title="User Settings &amp; Preferences" onclick="location.href='settings.html'" style="cursor:pointer;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary,#1d68e1),var(--accent,#fca311));color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.18)">S</div>
             <div class="user-badge" id="uBadge" style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:var(--card-subtle);border:1px solid var(--line);border-radius:99px;font-weight:700;font-size:13.5px">
