@@ -5066,6 +5066,21 @@
 
     syncGlobalMetricsAndChrome();
 
+    
+    // Live sidebar telemetry updater
+    async function updateSidebarStats() {
+      try {
+        const statsRes = await api('/api/stats').catch(() => null);
+        if (statsRes) {
+          const devTotal = statsRes.total_devices != null ? statsRes.total_devices : (statsRes.devices || 0);
+          const custTotal = statsRes.total_customers != null ? statsRes.total_customers : (statsRes.customers || 0);
+          if ($('sbLiveDevCount') && devTotal) $('sbLiveDevCount').textContent = Number(devTotal).toLocaleString('en-US');
+          if ($('sbLiveCustCount') && custTotal) $('sbLiveCustCount').textContent = Number(custTotal).toLocaleString('en-US');
+        }
+      } catch (e) {}
+    }
+    window.updateSidebarStats = updateSidebarStats;
+
     const toggleLiveBtn = $('sidebarToggleLiveBtn');
     if (toggleLiveBtn) {
       toggleLiveBtn.onclick = function () {

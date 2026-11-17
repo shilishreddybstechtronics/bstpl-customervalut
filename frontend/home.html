@@ -542,6 +542,11 @@
       box-shadow: 0 0 8px #10b981;
       animation: dotPulse 1.6s infinite;
     }
+    .cv-live-dot-pulse.paused {
+      background: #94a3b8 !important;
+      box-shadow: none !important;
+      animation: none !important;
+    }
     @keyframes dotPulse {
       0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
       70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
@@ -2955,11 +2960,58 @@
     function updateLiveStreamClock() {
       const el = $('sbLiveTime');
       if (!el) return;
+      if (typeof livePolling !== 'undefined' && !livePolling) return;
       const now = new Date();
       el.textContent = 'Live • ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
     if (typeof setInterval === 'function') setInterval(updateLiveStreamClock, 1000);
     updateLiveStreamClock();
+
+    // Dedicated Sidebar Stats Updater (Works dynamically and reliably)
+    async function updateSidebarStats() {
+      try {
+        const [statsRes, insightsRes] = await Promise.all([
+          api('/api/stats').catch(() => null),
+          api('/api/inventory/insights').catch(() => null)
+        ]);
+
+        let devTotal = 0;
+        let custTotal = 0;
+
+        if (insightsRes && typeof insightsRes === 'object') {
+          devTotal = Number(insightsRes.total_devices) || 0;
+          custTotal = Number(insightsRes.total_customers) || 0;
+        }
+
+        if ((!devTotal || !custTotal) && statsRes && typeof statsRes === 'object') {
+          devTotal = Number(statsRes.total_devices != null ? statsRes.total_devices : (statsRes.devices || 0));
+          custTotal = Number(statsRes.total_customers != null ? statsRes.total_customers : (statsRes.customers || 0));
+        }
+
+        if ($('sbLiveDevCount') && devTotal) {
+          $('sbLiveDevCount').textContent = Number(devTotal).toLocaleString('en-US');
+        }
+        if ($('sbLiveCustCount') && custTotal) {
+          $('sbLiveCustCount').textContent = Number(custTotal).toLocaleString('en-US');
+        }
+
+        if (statsRes) {
+          const errTotal = statsRes.errored_records != null ? statsRes.errored_records : 0;
+          const cartTotal = statsRes.deleted_devices != null ? statsRes.deleted_devices : (statsRes.deleted || 0);
+
+          if ($('sidebarErrorsBadge')) {
+            $('sidebarErrorsBadge').textContent = Number(errTotal).toLocaleString('en-US');
+            $('sidebarErrorsBadge').style.display = errTotal > 0 ? 'inline-block' : 'none';
+          }
+          if ($('sidebarCartCountBadge')) {
+            $('sidebarCartCountBadge').textContent = Number(cartTotal).toLocaleString('en-US');
+          }
+        }
+      } catch (err) {
+        console.error('Error updating sidebar stats:', err);
+      }
+    }
+    window.updateSidebarStats = updateSidebarStats;
 
 
     // --- Universal Inter-Page Interlinking & Data Synchronization System ---
@@ -3101,17 +3153,29 @@
     const toggleLiveBtn = $('sidebarToggleLiveBtn');
     if (toggleLiveBtn) {
       toggleLiveBtn.onclick = function() {
+        const dot = document.querySelector('.cv-live-dot-pulse');
+        const foot = $('sbLiveTime');
         if (this.classList.contains('on')) {
           this.classList.remove('on');
           this.classList.add('off');
           this.textContent = 'OFF';
+          this.title = 'Live stream paused. Click to resume';
+          livePolling = false;
+          if (typeof liveTimer !== 'undefined' && liveTimer) clearTimeout(liveTimer);
+          if (dot) dot.classList.add('paused');
+          if (foot) foot.textContent = 'Paused • Telemetry idle';
           toast('Live stream paused');
         } else {
           this.classList.remove('off');
           this.classList.add('on');
           this.textContent = 'ON';
+          this.title = 'Live stream active. Click to pause';
+          livePolling = true;
+          if (dot) dot.classList.remove('paused');
+          updateLiveStreamClock();
           toast('Live stream active');
           updateSidebarStats();
+          if (typeof runLiveCycle === 'function') runLiveCycle(true);
         }
       };
     }
@@ -3604,6 +3668,14 @@
               <div class="card stat" style="border-left-color:var(--danger)"><b>${Number(ins.expired || 0).toLocaleString('en-US')}</b><span>Expired Devices</span></div>
               <div class="card stat" style="border-left-color:var(--ok)"><b>${completenessAvg}%</b><span>Data Health Score</span></div>
             `;
+          }
+
+          // Synchronize Sidebar Live Widget Metrics with incoming telemetry
+          if ($('sbLiveDevCount') && ins.total_devices != null) {
+            $('sbLiveDevCount').textContent = Number(ins.total_devices).toLocaleString('en-US');
+          }
+          if ($('sbLiveCustCount') && ins.total_customers != null) {
+            $('sbLiveCustCount').textContent = Number(ins.total_customers).toLocaleString('en-US');
           }
 
           // 2. Live Feed Table
