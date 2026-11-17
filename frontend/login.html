@@ -45,7 +45,7 @@
     /* Immediately initialize theme before DOM paint to prevent screen flash. Default mode is 'light'. */
     (function() {
       try {
-        var m = 'light';
+        var m = localStorage.getItem('valut_theme_mode') || localStorage.getItem('theme') || 'light';
         var p = localStorage.getItem('valut_palette') || 'royal_navy';
         document.documentElement.setAttribute('data-theme', m);
         document.documentElement.setAttribute('data-mode', m);
@@ -69,7 +69,7 @@
     [data-palette="royal_navy"][data-mode="light"],
     [data-palette="royal_navy"]:not([data-mode="dark"]),
     :root:not([data-palette]) {
-      --bg: #ffffff;
+      --bg: #f0f4f9;
       --bg-gradient: none;
       --card: #ffffff;
       --card-subtle: #f1f5f9;
@@ -174,7 +174,7 @@
 
     /* 3. EMERALD PALETTE */
     [data-palette="emerald"][data-mode="light"] {
-      --bg: #f2fbf6;
+      --bg: #f0fdf7;
       --bg-gradient: radial-gradient(circle at 15% 15%, #d1fae5 0%, #f2fbf6 100%);
       --card: #ffffff;
       --card-subtle: #ecfdf5;
@@ -226,7 +226,7 @@
 
     /* 4. CRIMSON VAULT PALETTE */
     [data-palette="crimson_vault"][data-mode="light"] {
-      --bg: #fff5f5;
+      --bg: #fff5f7;
       --bg-gradient: radial-gradient(circle at 15% 15%, #ffe4e6 0%, #fff5f5 100%);
       --card: #ffffff;
       --card-subtle: #fff1f2;
@@ -301,26 +301,27 @@
       font-family: var(--font-family) !important;
     }
 
-        html {
-      background: #ffffff !important;
-      background-color: #ffffff !important;
+            html {
+      background-color: var(--bg);
+      background-image: none !important;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
 
     body {
       font-family: var(--font);
-      background: #ffffff !important;
-      background-color: #ffffff !important;
+      background-color: var(--bg) !important;
       background-image: none !important;
-      color: var(--text, #0f172a);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
       overflow-x: hidden;
       position: relative;
+      transition: background-color 0.25s ease, color 0.25s ease;
     }
 
-    /* Clean white background - remove dark/grey grid overlay */
+    /* Clean single solid color background - no texture overlay */
     body::before {
       display: none !important;
     }
@@ -335,9 +336,10 @@
       align-items: center;
       justify-content: space-between;
       padding: 16px 40px;
-      border-bottom: 1px solid #e2e8f0;
-      background: #ffffff;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--card);
       box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
     }
 
     /* Left Brand Wrap: Logo + Title + Subtitle */
@@ -403,6 +405,107 @@
       gap: 12px;
       flex-wrap: wrap;
       margin-left: auto;
+    }
+
+        /* Interactive Theme Selector Pill */
+    .theme-switcher-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .theme-switcher-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--card-subtle);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-switcher-btn:hover {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .theme-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 230px;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
+      border-radius: 16px;
+      padding: 8px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .theme-menu-dropdown.show {
+      display: flex;
+    }
+    .theme-menu-title {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      padding: 6px 10px 4px;
+    }
+    .theme-opt-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+      width: 100%;
+      transition: background 0.15s ease;
+    }
+    .theme-opt-item:hover {
+      background: var(--card-subtle);
+    }
+    .theme-opt-item.active {
+      background: var(--primary-gradient);
+      color: #ffffff;
+    }
+    .theme-dot-badge {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .theme-mode-row {
+      margin-top: 4px;
+      padding-top: 6px;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px 4px;
+    }
+    .theme-mode-btn {
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--card-subtle);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .theme-mode-btn:hover {
+      border-color: var(--primary);
     }
 
     .tagline-pill {
@@ -471,13 +574,13 @@
     }
     .auth-card {
       width: 100%;
-      background: #ffffff;
-      border: 1.5px solid #e2e8f0;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
       border-radius: 24px;
       padding: 38px 34px 32px;
-      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
+      box-shadow: var(--shadow);
       position: relative;
-      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+      transition: box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
     }
     .auth-card:hover {
       box-shadow: var(--shadow-hover);
@@ -757,8 +860,8 @@
       align-items: flex-start;
       gap: 14px;
       padding: 16px 18px;
-      background: #ffffff;
-      border: 1.5px solid #e2e8f0;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
       border-radius: 16px;
       box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -941,6 +1044,37 @@
       </div>
     </a>
     <div class="top-bar-right">
+      <!-- Theme Switcher Pill -->
+      <div class="theme-switcher-wrap" id="themeSwitcherWrap">
+        <button type="button" class="theme-switcher-btn" id="btnThemeSwitcher" title="Change Theme Palette & Mode">
+          <span>🎨</span>
+          <span id="themePillLabel">Theme</span>
+          <span style="font-size:8px">▼</span>
+        </button>
+        <div class="theme-menu-dropdown" id="themeMenuDropdown">
+          <div class="theme-menu-title">Theme Palette</div>
+          <button type="button" class="theme-opt-item" data-pal="royal_navy">
+            <span class="theme-dot-badge" style="background:#2563eb"></span>
+            <span>Royal Navy (Soft Ice)</span>
+          </button>
+          <button type="button" class="theme-opt-item" data-pal="midnight">
+            <span class="theme-dot-badge" style="background:#64748b"></span>
+            <span>Midnight (Light Slate)</span>
+          </button>
+          <button type="button" class="theme-opt-item" data-pal="emerald">
+            <span class="theme-dot-badge" style="background:#059669"></span>
+            <span>Emerald (Light Mint)</span>
+          </button>
+          <button type="button" class="theme-opt-item" data-pal="crimson_vault">
+            <span class="theme-dot-badge" style="background:#e11d48"></span>
+            <span>Crimson (Light Blush)</span>
+          </button>
+          <div class="theme-mode-row">
+            <span style="font-size:11px;font-weight:700;color:var(--text-muted)">Mode:</span>
+            <button type="button" class="theme-mode-btn" id="btnThemeModeToggle">🌙 Dark Mode</button>
+          </div>
+        </div>
+      </div>
       <div class="tagline-pill">
         <span>🌐</span>
         <span>Secure Smart Connected Surface Online</span>
@@ -1240,6 +1374,74 @@
         }
       };
     }
+  </script>
+
+  <!-- WHAT IS HAPPENING BELOW: Theme Switcher Synchronization with localStorage -->
+  <script>
+    (function initLoginThemeControls() {
+      const btn = document.getElementById('btnThemeSwitcher');
+      const dropdown = document.getElementById('themeMenuDropdown');
+      const label = document.getElementById('themePillLabel');
+      const modeBtn = document.getElementById('btnThemeModeToggle');
+
+      const paletteNames = {
+        'royal_navy': 'Royal Navy',
+        'midnight': 'Midnight',
+        'emerald': 'Emerald',
+        'crimson_vault': 'Crimson'
+      };
+
+      function updateUI() {
+        const curPal = localStorage.getItem('valut_palette') || 'royal_navy';
+        const curMode = localStorage.getItem('valut_theme_mode') || localStorage.getItem('theme') || 'light';
+
+        document.documentElement.setAttribute('data-palette', curPal);
+        document.documentElement.setAttribute('data-mode', curMode);
+        document.documentElement.setAttribute('data-theme', curMode);
+
+        if (label) label.textContent = paletteNames[curPal] || 'Theme';
+        if (modeBtn) modeBtn.textContent = curMode === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+
+        document.querySelectorAll('.theme-opt-item').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-pal') === curPal);
+        });
+      }
+
+      if (btn && dropdown) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          dropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', function() {
+          dropdown.classList.remove('show');
+        });
+        dropdown.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+
+        document.querySelectorAll('.theme-opt-item').forEach(b => {
+          b.addEventListener('click', function() {
+            const chosen = this.getAttribute('data-pal');
+            localStorage.setItem('valut_palette', chosen);
+            updateUI();
+            dropdown.classList.remove('show');
+          });
+        });
+
+        if (modeBtn) {
+          modeBtn.addEventListener('click', function() {
+            const curMode = localStorage.getItem('valut_theme_mode') || 'light';
+            const nextMode = curMode === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('valut_theme_mode', nextMode);
+            localStorage.setItem('theme', nextMode);
+            updateUI();
+          });
+        }
+      }
+
+      // Initial UI sync
+      updateUI();
+    })();
   </script>
 </body>
 </html>
