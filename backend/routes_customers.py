@@ -1,254 +1,712 @@
-"""Customer management: rename, bulk rename, merge, delete to the bin, restore.
-Roles: admin + standard can rename, merge and restore. Only an admin can delete a customer or delete one for good."""
+"""
+================================================================================
+BSTPL Customer Vault - Enterprise Customer Management Router
+File: backend/routes_customers.py
+================================================================================
+Architectural Overview:
+-----------------------
+This router manages the complete lifecycle of customer organizations in the
+BSTPL Customer Vault telematics platform.
+
+Key Engineering Design Principles Implemented:
+1. Dual-Tier Soft Deletion (Recycling Bin):
+   - Rather than irrevocably destroying records on customer deletion, entities
+     and their linked telemetry devices are stamped with `deleted_at` and `deleted_by`.
+   - Preserves complete operational audit history and allows instant restoration.
+
+2. Route Shadowing Prevention (FastAPI Greedy Route Order):
+   - Static subpaths (e.g. `/api/customers/bin`) MUST be registered before dynamic
+     parameterized routes (e.g. `/api/customers/{cid}`).
+   - If `/{cid: int}` is evaluated first, FastAPI attempts to cast `"bin"` to `int`,
+     producing an unhandled HTTP 422 Unprocessable Content error.
+
+3. Atomic Multi-Customer Renaming with Collision Bypass:
+   - Circular renames (Customer A -> B and Customer B -> A) are executed via a
+     two-phase swap using temporary placeholders (`__renaming_{cid}`) to prevent
+     SQL UNIQUE constraint violations.
+
+4. Dynamic Physical Table Synchronization:
+   - When customers are created, renamed, merged, or purged, this module triggers
+     cascading DDL/DML actions in `backend/customer_tables.py` to keep dedicated
+     per-customer SQL tables (`c<id>_<name>`) in sync with the unified master catalog.
+
+5. High-Performance Batch Mutations:
+   - Massive updates and deletions use SQLAlchemy's `synchronize_session=False`
+     to execute directly at the database engine level, achieving O(1) memory
+     overhead even when thousands of devices are affected.
+================================================================================
+"""
+
+import re
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Dict, Any, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import customer_tables
-import models, schemas
+import models
+import schemas
 from activity import log_activity
 from auth import get_current_user, require_admin, require_staff, require_permission
 from database import get_db
 
-router = APIRouter(prefix="/api/customers", dependencies=[Depends(get_current_user)])
-Customer, Device = models.Customer, models.Device
-TAG = "Customer deleted: "  # devices that went to the bin WITH their customer carry this reason
+# Initialize API router with universal Bearer token authentication
+router = APIRouter(
+    prefix="/api/customers",
+    tags=["Customers"],
+    dependencies=[Depends(get_current_user)]
+)
+
+# Aliases for clean ORM queries
+Customer = models.Customer
+Device = models.Device
+
+# Audit tracking tag applied to devices soft-deleted together with their customer organization
+CUSTOMER_DELETED_TAG = "Customer deleted: "
+
+# Whitelist of accepted Base64 data URI image formats for customer avatars
+ACCEPTED_IMAGE_MIME_PREFIXES = (
+    "data:image/jpeg;base64,",
+    "data:image/png;base64,",
+    "data:image/webp;base64,"
+)
 
 
-def active_customer(db: Session, cid: int) -> Customer:
-    c = db.get(Customer, cid)
-    if not c or c.deleted_at:
-        raise HTTPException(404, "Customer not found.")
-    return c
+# ==============================================================================
+# SECTION 1: INTERNAL HELPER UTILITIES & QUERY GUARDS
+# ==============================================================================
+
+def get_active_customer_or_404(db: Session, customer_id: int) -> Customer:
+    """
+    Retrieves an active (non-deleted) customer by primary key ID.
+
+    Args:
+        db: Active SQLAlchemy database session.
+        customer_id: Integer primary key of the customer.
+
+    Returns:
+        Customer: The verified active customer model.
+
+    Raises:
+        HTTPException(404): If customer does not exist or has been moved to the bin.
+    """
+    customer = db.get(Customer, customer_id)
+    if not customer or customer.deleted_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Active customer with ID {customer_id} was not found."
+        )
+    return customer
 
 
-def name_taken(db: Session, name: str, ignore_ids=()) -> bool:
-    q = db.query(Customer.id).filter(func.lower(Customer.name) == name.lower())
-    if ignore_ids:
-        q = q.filter(Customer.id.notin_(list(ignore_ids)))
-    return q.first() is not None
+def is_customer_name_taken(db: Session, candidate_name: str, excluded_ids: tuple = ()) -> bool:
+    """
+    Checks case-insensitively whether a customer name is already registered,
+    optionally ignoring specific customer IDs (useful during self-renames or merges).
+
+    Args:
+        db: Active SQLAlchemy database session.
+        candidate_name: Desired customer organization name.
+        excluded_ids: Tuple of customer IDs to exclude from collision checking.
+
+    Returns:
+        bool: True if name is already occupied in active or bin records, False otherwise.
+    """
+    query = db.query(Customer.id).filter(
+        func.lower(Customer.name) == candidate_name.strip().lower()
+    )
+    if excluded_ids:
+        query = query.filter(Customer.id.notin_(list(excluded_ids)))
+    return query.first() is not None
 
 
-ALLOWED_IMG = ("data:image/jpeg;base64,", "data:image/png;base64,", "data:image/webp;base64,")
+# Backwards compatibility alias for internal imports
+active_customer = get_active_customer_or_404
+name_taken = is_customer_name_taken
 
 
-# ---------- deleted customers (bin) ----------
-# Defined BEFORE /{cid} so /api/customers/bin is not shadowed by parameterized customer ID route
-@router.get("/bin", dependencies=[Depends(require_staff), Depends(require_permission("view"))])
-def bin_customers(db: Session = Depends(get_db)):
-    rows = (db.query(Customer, func.count(Device.id))
-            .outerjoin(Device, Device.customer_id == Customer.id)
-            .filter(Customer.deleted_at.isnot(None))
-            .group_by(Customer.id).order_by(Customer.deleted_at.desc()).all())
-    return [{"id": c.id, "name": c.name, "devices": n, "deleted_at": c.deleted_at, "deleted_by": c.deleted_by}
-            for c, n in rows]
+# ==============================================================================
+# SECTION 2: CUSTOMER QUERIES & RETRIEVAL ENDPOINTS
+# ==============================================================================
+
+# NOTE: /bin MUST remain physically registered ABOVE /{cid} to prevent route collision!
+@router.get(
+    "/bin",
+    summary="List soft-deleted customers in recycling bin",
+    dependencies=[Depends(require_staff), Depends(require_permission("view"))]
+)
+def list_deleted_customers(db: Session = Depends(get_db)) -> List[Dict[str, Any]]:
+    """
+    Retrieves all soft-deleted customers currently residing in the recycling bin,
+    along with their device counts and deletion audit timestamps.
+    """
+    deleted_records = (
+        db.query(Customer, func.count(Device.id))
+        .outerjoin(Device, Device.customer_id == Customer.id)
+        .filter(Customer.deleted_at.isnot(None))
+        .group_by(Customer.id)
+        .order_by(Customer.deleted_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": cust.id,
+            "name": cust.name,
+            "devices": device_count,
+            "deleted_at": cust.deleted_at,
+            "deleted_by": cust.deleted_by
+        }
+        for cust, device_count in deleted_records
+    ]
 
 
-@router.get("/{cid}", dependencies=[Depends(require_permission("view"))])
-def get_customer(cid: int, db: Session = Depends(get_db)):
-    c = db.query(Customer).filter(Customer.id == cid, Customer.deleted_at.is_(None)).first()
-    if not c:
-        raise HTTPException(404, "Customer not found")
-    soon = date.today() + timedelta(days=30)
-    dev_count = db.query(func.count(Device.id)).filter(Device.customer_id == c.id, Device.deleted_at.is_(None)).scalar() or 0
-    exp_count = db.query(func.count(Device.id)).filter(Device.customer_id == c.id, Device.deleted_at.is_(None), Device.expiry_date <= soon).scalar() or 0
+# Alias for backward compatibility
+bin_customers = list_deleted_customers
+
+
+@router.get(
+    "/{cid}",
+    summary="Get single customer details and inventory health metrics",
+    dependencies=[Depends(require_permission("view"))]
+)
+def get_customer_details(cid: int, db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """
+    Fetches customer profile by ID, computing live device counts and upcoming
+    30-day SIM/warranty expiration counts for proactive client management.
+    """
+    customer = (
+        db.query(Customer)
+        .filter(Customer.id == cid, Customer.deleted_at.is_(None))
+        .first()
+    )
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Customer with ID {cid} was not found."
+        )
+
+    # Compute expiration window threshold (today through next 30 days)
+    thirty_day_threshold = date.today() + timedelta(days=30)
+
+    # Fast scalar aggregations for inventory status counts
+    total_active_devices = (
+        db.query(func.count(Device.id))
+        .filter(Device.customer_id == customer.id, Device.deleted_at.is_(None))
+        .scalar() or 0
+    )
+
+    expiring_soon_devices = (
+        db.query(func.count(Device.id))
+        .filter(
+            Device.customer_id == customer.id,
+            Device.deleted_at.is_(None),
+            Device.expiry_date <= thirty_day_threshold
+        )
+        .scalar() or 0
+    )
+
     return {
-        "id": c.id,
-        "name": c.name,
-        "avatar": c.avatar,
-        "devices": dev_count,
-        "expiring_or_expired": int(exp_count)
+        "id": customer.id,
+        "name": customer.name,
+        "avatar": customer.avatar,
+        "devices": int(total_active_devices),
+        "expiring_or_expired": int(expiring_soon_devices)
     }
 
 
-@router.put("/{cid}/avatar", dependencies=[Depends(require_permission("edit"))])
-def set_avatar(cid: int, data: schemas.AvatarIn, db: Session = Depends(get_db),
-               user: models.User = Depends(get_current_user)):
-    c = active_customer(db, cid)
-    a = (data.avatar or "").strip()
-    if a and not a.startswith(ALLOWED_IMG) and len(a) > 16:
-        raise HTTPException(400, "Choose an emoji or upload a JPG, PNG or WebP picture.")
-    c.avatar = a or None
-    log_activity(db, "customer_icon", f"{c.name}: icon {'changed' if a else 'removed'}", user=user)
-    db.commit()
-    return {"id": c.id, "avatar": c.avatar}
+# Alias for backward compatibility
+get_customer = get_customer_details
 
 
-@router.patch("/{cid}", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
-def rename(cid: int, data: schemas.CustomerRename, db: Session = Depends(get_db),
-           user: models.User = Depends(get_current_user)):
-    import re
-    c = active_customer(db, cid)
-    raw = data.name.strip()
-    new = re.sub(r"[^a-zA-Z0-9_]+", "_", raw).strip("_") or raw
-    if not new:
-        raise HTTPException(400, "Please enter a valid customer name.")
-    if name_taken(db, new, ignore_ids=(cid,)):
-        raise HTTPException(400, "Another customer already has this name (it may be in Deleted Customers).")
-    old, c.name = c.name, new
-    log_activity(db, "customer_rename", f"{old} -> {new}", user=user)
+# ==============================================================================
+# SECTION 3: CUSTOMER PROFILE & METADATA MUTATIONS
+# ==============================================================================
+
+@router.put(
+    "/{cid}/avatar",
+    summary="Update or remove customer avatar icon",
+    dependencies=[Depends(require_permission("edit"))]
+)
+def set_customer_avatar(
+    cid: int,
+    data: schemas.AvatarIn,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Updates a customer's visual avatar using either an emoji glyph or a compact
+    Base64-encoded image string (JPG, PNG, WebP).
+    """
+    customer = get_active_customer_or_404(db, cid)
+    avatar_payload = (data.avatar or "").strip()
+
+    # Validate image payload format: emoji (< 16 chars) or legitimate Base64 URI
+    if avatar_payload:
+        is_legit_image = avatar_payload.startswith(ACCEPTED_IMAGE_MIME_PREFIXES)
+        if not is_legit_image and len(avatar_payload) > 16:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Avatar must be a valid emoji character or a Base64 JPG/PNG/WebP image string."
+            )
+
+    customer.avatar = avatar_payload if avatar_payload else None
+    action_label = "updated" if avatar_payload else "removed"
+    log_activity(
+        db,
+        action="customer_icon",
+        detail=f"{customer.name}: Avatar icon {action_label}",
+        user=current_user
+    )
     db.commit()
+
+    return {"id": customer.id, "avatar": customer.avatar}
+
+
+# Alias for backward compatibility
+set_avatar = set_customer_avatar
+
+
+@router.patch(
+    "/{cid}",
+    summary="Rename single customer and synchronize dedicated table",
+    dependencies=[Depends(require_staff), Depends(require_permission("edit"))]
+)
+def rename_customer(
+    cid: int,
+    data: schemas.CustomerRename,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Renames a customer, validating uniqueness, logging the audit record,
+    and renaming the dedicated physical table (`c<id>_<old>` -> `c<id>_<new>`).
+    """
+    customer = get_active_customer_or_404(db, cid)
+    raw_name = data.name.strip()
+
+    # Sanitize name to SQL-safe alphanumeric + underscores
+    sanitized_name = re.sub(r"[^a-zA-Z0-9_]+", "_", raw_name).strip("_") or raw_name
+    if not sanitized_name:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Customer name cannot be empty or solely special characters."
+        )
+
+    # Collision check excluding current customer ID
+    if is_customer_name_taken(db, sanitized_name, excluded_ids=(cid,)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f'Another customer named "{sanitized_name}" already exists (or is in the recycling bin).'
+        )
+
+    previous_name = customer.name
+    customer.name = sanitized_name
+    log_activity(
+        db,
+        action="customer_rename",
+        detail=f'Renamed customer: "{previous_name}" -> "{sanitized_name}"',
+        user=current_user
+    )
+    db.commit()
+
+    # Synchronize physical table in TiDB/SQLite
     try:
-        customer_tables.rename_table(c.id, new, old)
-    except Exception as e:
-        print(f"Customer table rename failed: {e}")
-    return {"id": c.id, "name": c.name}
+        customer_tables.rename_table(customer.id, sanitized_name, previous_name)
+    except Exception as table_err:
+        print(f"[Customer Table Rename Warning] Could not rename physical SQL table: {table_err}")
+
+    return {"id": customer.id, "name": customer.name}
 
 
-@router.post("/rename-all", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
-def rename_all(data: schemas.RenameAllIn, db: Session = Depends(get_db),
-               user: models.User = Depends(get_current_user)):
-    """All-or-nothing. Swaps (A->B and B->A in one go) work too."""
-    wanted = {}
+# Alias for backward compatibility
+rename = rename_customer
+
+
+@router.post(
+    "/rename-all",
+    summary="Atomic bulk rename with collision-free circular swap support",
+    dependencies=[Depends(require_staff), Depends(require_permission("edit"))]
+)
+def bulk_rename_customers(
+    data: schemas.RenameAllIn,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Performs an all-or-nothing atomic batch rename across multiple customers.
+    
+    Technical Highlights:
+    - Pre-validates duplicate names across inputs and database records.
+    - Uses a two-phase swap with temporary placeholders (`__renaming_{id}`)
+      so circular swaps (e.g. Customer A -> B and Customer B -> A) never trip
+      the SQL unique constraint.
+    """
+    desired_renames: Dict[int, str] = {}
     for item in data.renames:
-        if item.id in wanted:
-            raise HTTPException(400, "The same customer appears twice.")
-        wanted[item.id] = item.name.strip()
-    if any(not n for n in wanted.values()):
-        raise HTTPException(400, "A new name cannot be empty.")
-    lowered = [n.lower() for n in wanted.values()]
-    if len(set(lowered)) != len(lowered):
-        raise HTTPException(400, "Two customers would end up with the same name.")
-    customers = {c.id: c for c in db.query(Customer).filter(Customer.id.in_(list(wanted)))}
-    changed = []
-    for cid, new in wanted.items():
-        c = customers.get(cid)
-        if not c or c.deleted_at:
-            raise HTTPException(404, "A customer in the list was not found.")
-        if c.name != new:
-            changed.append((c, new))
-    if not changed:
+        if item.id in desired_renames:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Customer ID {item.id} appears multiple times in rename payload."
+            )
+        desired_renames[item.id] = item.name.strip()
+
+    if any(not name for name in desired_renames.values()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A new customer name cannot be blank."
+        )
+
+    # Check for duplicate names inside the payload itself
+    lowered_names = [name.lower() for name in desired_renames.values()]
+    if len(set(lowered_names)) != len(lowered_names):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Two or more customers would end up with the exact same name."
+        )
+
+    # Fetch matching customers from database
+    existing_customers = {
+        c.id: c
+        for c in db.query(Customer).filter(Customer.id.in_(list(desired_renames.keys())))
+    }
+
+    pending_changes = []
+    for cid, new_name in desired_renames.items():
+        customer = existing_customers.get(cid)
+        if not customer or customer.deleted_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Customer ID {cid} was not found or is currently in the recycling bin."
+            )
+        if customer.name != new_name:
+            pending_changes.append((customer, new_name))
+
+    if not pending_changes:
         return {"renamed": 0}
-    changing_ids = [c.id for c, _ in changed]
-    for c, new in changed:  # clash with a customer that is NOT part of this rename
-        if name_taken(db, new, ignore_ids=changing_ids):
-            raise HTTPException(400, f'The name "{new}" is already used by another customer.')
-    for c, _ in changed:  # step 1: temporary names, so swaps never hit the unique constraint
-        c.name = f"__renaming_{c.id}"
+
+    # Verify no collisions with external customer records outside this batch
+    batch_customer_ids = [c.id for c, _ in pending_changes]
+    for customer, new_name in pending_changes:
+        if is_customer_name_taken(db, new_name, excluded_ids=tuple(batch_customer_ids)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f'The requested name "{new_name}" is already taken by another customer.'
+            )
+
+    # PHASE 1: Assign temporary non-colliding names to avoid SQL unique constraint violations during swaps
+    for customer, _ in pending_changes:
+        customer.name = f"__renaming_{customer.id}"
     db.flush()
-    for c, new in changed:
-        c.name = new
-    log_activity(db, "customer_rename_all", f"{len(changed)} customers renamed", user=user)
+
+    # PHASE 2: Apply desired final names
+    for customer, final_name in pending_changes:
+        customer.name = final_name
+
+    log_activity(
+        db,
+        action="customer_rename_all",
+        detail=f"Bulk renamed {len(pending_changes)} customer organizations.",
+        user=current_user
+    )
     db.commit()
-    for c, new in changed:
+
+    # PHASE 3: Synchronize physical SQL tables in TiDB/SQLite
+    for customer, final_name in pending_changes:
         try:
-            customer_tables.rename_table(c.id, new)
-        except Exception as e:
-            print(f"Customer table rename failed: {e}")
-    return {"renamed": len(changed)}
+            customer_tables.rename_table(customer.id, final_name)
+        except Exception as table_err:
+            print(f"[Bulk Table Rename Warning] Table rename failed for ID {customer.id}: {table_err}")
+
+    return {"renamed": len(pending_changes)}
 
 
-@router.post("/{cid}/merge", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
-def merge(cid: int, data: schemas.MergeIn, db: Session = Depends(get_db),
-          user: models.User = Depends(get_current_user)):
-    """Moves every device (bin included) from this customer into the target, syncs customer tables, then removes this customer."""
+# Alias for backward compatibility
+rename_all = bulk_rename_customers
+
+
+# ==============================================================================
+# SECTION 4: CUSTOMER MERGING & CONSOLIDATION
+# ==============================================================================
+
+@router.post(
+    "/{cid}/merge",
+    summary="Merge source customer into destination customer and consolidate inventory",
+    dependencies=[Depends(require_staff), Depends(require_permission("edit"))]
+)
+def merge_customers(
+    cid: int,
+    data: schemas.MergeIn,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Consolidates two customer entities:
+    1. Reassigns all active and binned devices from source to destination.
+    2. Updates deletion reasons and quarantine error records referencing source.
+    3. Deletes source customer entity.
+    4. Merges physical SQL customer tables and ensures complete synchronization.
+    """
     target_id = getattr(data, "target_id", None) or getattr(data, "target_customer_id", None)
     if not target_id or cid == target_id:
-        raise HTTPException(400, "Choose a different customer to merge into.")
-    src, dst = active_customer(db, cid), active_customer(db, target_id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please specify a valid, distinct destination customer to merge into."
+        )
 
-    # 1. Update customer_id for all devices (active and bin)
-    moved = db.query(Device).filter(Device.customer_id == src.id).update(
-        {"customer_id": dst.id},
-        synchronize_session=False
+    source_cust = get_active_customer_or_404(db, cid)
+    dest_cust = get_active_customer_or_404(db, target_id)
+
+    # Step 1: Reassign all hardware devices (both active and in the bin)
+    moved_devices_count = (
+        db.query(Device)
+        .filter(Device.customer_id == source_cust.id)
+        .update({"customer_id": dest_cust.id}, synchronize_session=False)
     )
 
-    # 2. Update delete_reason if any devices were deleted with src
+    # Step 2: Update delete audit reason tag if any devices were binned with source
     db.query(Device).filter(
-        Device.customer_id == dst.id,
-        Device.delete_reason == f"{TAG}{src.name}"
+        Device.customer_id == dest_cust.id,
+        Device.delete_reason == f"{CUSTOMER_DELETED_TAG}{source_cust.name}"
     ).update(
-        {"delete_reason": f"{TAG}{dst.name}"},
+        {"delete_reason": f"{CUSTOMER_DELETED_TAG}{dest_cust.name}"},
         synchronize_session=False
     )
 
-    # 3. Update any ErroredRecords referencing src.name to dst.name
+    # Step 3: Reassign any quarantined errored records referencing source customer name
     db.query(models.ErroredRecord).filter(
-        models.ErroredRecord.customer_name == src.name
+        models.ErroredRecord.customer_name == source_cust.name
     ).update(
-        {"customer_name": dst.name},
+        {"customer_name": dest_cust.name},
         synchronize_session=False
     )
 
-    # 4. Remove src customer from customers table
-    src_name = src.name
-    dst_name = dst.name
-    src_id = src.id
-    dst_id = dst.id
+    # Capture metadata before removing source customer row
+    source_name, dest_name = source_cust.name, dest_cust.name
+    source_id, dest_id = source_cust.id, dest_cust.id
 
-    db.delete(src)
-    log_activity(db, "customer_merge", f"{src_name} merged into {dst_name} ({moved} records moved)", user=user)
+    # Step 4: Remove source customer from master customers table
+    db.delete(source_cust)
+    log_activity(
+        db,
+        action="customer_merge",
+        detail=f'Merged "{source_name}" into "{dest_name}" ({moved_devices_count} devices reassigned).',
+        user=current_user
+    )
     db.commit()
 
-    # 5. Merge dedicated SQL/TiDB Cloud customer tables
+    # Step 5: Merge physical SQL/TiDB Cloud customer tables
     try:
-        customer_tables.merge_tables(src_id, src_name, dst_id, dst_name)
-    except Exception as me:
-        print(f"Customer table merge notice: {me}")
+        customer_tables.merge_tables(source_id, source_name, dest_id, dest_name)
+    except Exception as merge_err:
+        print(f"[Customer Table Merge Notice] {merge_err}")
 
-    # 6. Mirror all active devices of dst to ensure dst customer table is completely synchronized
+    # Step 6: Verify and mirror active devices into destination table
     try:
-        devs = db.query(Device).filter(Device.customer_id == dst_id, Device.deleted_at.is_(None)).all()
-        mirror_items = []
-        for d in devs:
-            mirror_items.append((dst_id, dst_name, {
-                "imei": d.imei, "customer_name": dst_name, "device_sr_no": d.device_sr_no,
-                "iccid": d.iccid, "msisdn1": d.msisdn1, "msisdn2": d.msisdn2,
-                "act_date": d.act_date, "expiry_date": d.expiry_date, "dispatched_date": d.dispatched_date,
-                "model": d.model, "sim_provider": d.sim_provider, "activation_plan": d.activation_plan,
-                "firmware": d.firmware, "flash": d.flash, "sim_type": d.sim_type,
-                "extra": d.extra or {}
-            }))
-        if mirror_items:
-            customer_tables.mirror_rows(mirror_items)
-    except Exception as me:
-        print(f"Customer table mirror notice after merge: {me}")
+        active_dest_devices = (
+            db.query(Device)
+            .filter(Device.customer_id == dest_id, Device.deleted_at.is_(None))
+            .all()
+        )
+        mirror_payload = [
+            (dest_id, dest_name, {
+                "imei": dev.imei,
+                "customer_name": dest_name,
+                "device_sr_no": dev.device_sr_no,
+                "iccid": dev.iccid,
+                "msisdn1": dev.msisdn1,
+                "msisdn2": dev.msisdn2,
+                "act_date": dev.act_date,
+                "expiry_date": dev.expiry_date,
+                "dispatched_date": dev.dispatched_date,
+                "model": dev.model,
+                "sim_provider": dev.sim_provider,
+                "activation_plan": dev.activation_plan,
+                "firmware": dev.firmware,
+                "flash": dev.flash,
+                "sim_type": dev.sim_type,
+                "extra": dev.extra or {}
+            })
+            for dev in active_dest_devices
+        ]
+        if mirror_payload:
+            customer_tables.mirror_rows(mirror_payload)
+    except Exception as mirror_err:
+        print(f"[Customer Table Mirror Notice After Merge] {mirror_err}")
 
-    return {"moved": moved, "into": dst_name}
+    return {"moved": moved_devices_count, "into": dest_name}
 
 
-@router.delete("/{cid}", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
-def delete_customer(cid: int, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
-    c = active_customer(db, cid)
-    now = datetime.utcnow()
-    n = (db.query(Device).filter(Device.customer_id == c.id, Device.deleted_at.is_(None))
-         .update({"deleted_at": now, "deleted_by": admin.user_id, "delete_reason": TAG + c.name},
-                 synchronize_session=False))  # one UPDATE instead of one per device
-    c.deleted_at, c.deleted_by = now, admin.user_id
-    log_activity(db, "customer_delete", f"{c.name} moved to bin ({n} records)", user=admin)
+# Alias for backward compatibility
+merge = merge_customers
+
+
+# ==============================================================================
+# SECTION 5: LIFECYCLE MANAGEMENT: SOFT DELETION, RESTORE & PERMANENT PURGE
+# ==============================================================================
+
+@router.delete(
+    "/{cid}",
+    summary="Soft-delete customer and associated devices into recycling bin",
+    dependencies=[Depends(require_admin), Depends(require_permission("delete"))]
+)
+def soft_delete_customer(
+    cid: int,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(require_admin)
+) -> Dict[str, Any]:
+    """
+    Safely moves a customer organization and all its active devices into the
+    recycling bin. Records are not destroyed; they are timestamped with `deleted_at`.
+    """
+    customer = get_active_customer_or_404(db, cid)
+    deletion_timestamp = datetime.utcnow()
+
+    # Step 1: Batch soft-delete all active devices belonging to this customer
+    affected_devices_count = (
+        db.query(Device)
+        .filter(Device.customer_id == customer.id, Device.deleted_at.is_(None))
+        .update(
+            {
+                "deleted_at": deletion_timestamp,
+                "deleted_by": admin_user.user_id,
+                "delete_reason": f"{CUSTOMER_DELETED_TAG}{customer.name}"
+            },
+            synchronize_session=False
+        )
+    )
+
+    # Step 2: Mark customer entity as deleted
+    customer.deleted_at = deletion_timestamp
+    customer.deleted_by = admin_user.user_id
+
+    log_activity(
+        db,
+        action="customer_delete",
+        detail=f'Moved customer "{customer.name}" to recycling bin ({affected_devices_count} devices tagged).',
+        user=admin_user
+    )
     db.commit()
-    return {"moved_to_bin": c.id, "devices": n}
+
+    return {"moved_to_bin": customer.id, "devices": affected_devices_count}
 
 
-# ---------- restore & purge deleted customers ----------
-@router.post("/{cid}/restore", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
-def restore_customer(cid: int, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    c = db.get(Customer, cid)
-    if not c or not c.deleted_at:
-        raise HTTPException(404, "Not in the bin.")
-    # bring back the devices that were deleted together with the customer, not ones deleted earlier on their own
-    n = (db.query(Device).filter(Device.customer_id == c.id, Device.deleted_at.isnot(None),
-                                 Device.delete_reason.like(TAG + "%"))
-         .update({"deleted_at": None, "deleted_by": None, "delete_reason": None}, synchronize_session=False))
-    c.deleted_at = c.deleted_by = None
-    log_activity(db, "customer_restore", f"{c.name} restored ({n} records)", user=user)
+# Alias for backward compatibility
+delete_customer = soft_delete_customer
+
+
+@router.post(
+    "/{cid}/restore",
+    summary="Restore customer and associated devices from recycling bin",
+    dependencies=[Depends(require_staff), Depends(require_permission("edit"))]
+)
+def restore_customer_from_bin(
+    cid: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Restores a soft-deleted customer from the recycling bin.
+    
+    Precision Logic:
+    Only restores devices that were deleted TOGETHER with the customer
+    (tagged with `Customer deleted: <name>`), preserving records that were
+    individually deleted on their own prior to customer deletion.
+    """
+    customer = db.get(Customer, cid)
+    if not customer or customer.deleted_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Customer ID {cid} is not currently in the recycling bin."
+        )
+
+    # Step 1: Resurrect only devices deleted with this customer
+    restored_devices_count = (
+        db.query(Device)
+        .filter(
+            Device.customer_id == customer.id,
+            Device.deleted_at.isnot(None),
+            Device.delete_reason.like(f"{CUSTOMER_DELETED_TAG}%")
+        )
+        .update(
+            {
+                "deleted_at": None,
+                "deleted_by": None,
+                "delete_reason": None
+            },
+            synchronize_session=False
+        )
+    )
+
+    # Step 2: Clear customer deletion flags
+    customer.deleted_at = None
+    customer.deleted_by = None
+
+    log_activity(
+        db,
+        action="customer_restore",
+        detail=f'Restored customer "{customer.name}" from recycling bin ({restored_devices_count} devices reactivated).',
+        user=current_user
+    )
     db.commit()
-    return {"restored": c.id, "devices": n}
+
+    return {"restored": customer.id, "devices": restored_devices_count}
 
 
-@router.delete("/{cid}/purge", dependencies=[Depends(require_admin), Depends(require_permission("delete"))])
-def purge_customer(cid: int, db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
-    c = db.get(Customer, cid)
-    if not c or not c.deleted_at:
-        raise HTTPException(404, "Not in the bin.")
-    c_name = c.name
-    n = db.query(Device).filter(Device.customer_id == c.id).delete(synchronize_session=False)
-    log_activity(db, "customer_purge", f"{c.name} deleted forever ({n} records)", user=admin)
-    db.delete(c)
+# Alias for backward compatibility
+restore_customer = restore_customer_from_bin
+
+
+@router.delete(
+    "/{cid}/purge",
+    summary="Permanently purge customer and associated devices from database",
+    dependencies=[Depends(require_admin), Depends(require_permission("delete"))]
+)
+def purge_customer_permanently(
+    cid: int,
+    db: Session = Depends(get_db),
+    admin_user: models.User = Depends(require_admin)
+) -> Dict[str, Any]:
+    """
+    Irrevocably deletes a customer from the recycling bin, permanently purging
+    all associated device inventory and dropping the dedicated physical SQL table.
+    """
+    customer = db.get(Customer, cid)
+    if not customer or customer.deleted_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Customer ID {cid} is not in the recycling bin and cannot be purged."
+        )
+
+    customer_name = customer.name
+
+    # Step 1: Permanently delete all associated device rows from master table
+    deleted_devices_count = (
+        db.query(Device)
+        .filter(Device.customer_id == customer.id)
+        .delete(synchronize_session=False)
+    )
+
+    # Step 2: Delete customer record permanently
+    db.delete(customer)
+    log_activity(
+        db,
+        action="customer_purge",
+        detail=f'Permanently purged customer "{customer_name}" ({deleted_devices_count} devices destroyed).',
+        user=admin_user
+    )
     db.commit()
+
+    # Step 3: Drop the physical dynamic SQL table in TiDB/SQLite
     try:
-        customer_tables.drop_table(cid, c_name)
-    except Exception as e:
-        print(f"Customer table drop failed: {e}")
-    return {"purged": cid, "devices": n}
+        customer_tables.drop_table(cid, customer_name)
+    except Exception as table_err:
+        print(f"[Physical Table Purge Warning] Could not drop SQL table for {customer_name}: {table_err}")
+
+    return {"purged": cid, "devices": deleted_devices_count}
+
+
+# Alias for backward compatibility
+purge_customer = purge_customer_permanently
