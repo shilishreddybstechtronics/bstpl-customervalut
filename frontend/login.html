@@ -301,18 +301,11 @@
       font-family: var(--font-family) !important;
     }
 
-        /* ========================================================================= */
-    /* LUMINOUS LIGHT COLOR BACKGROUND THEMES FOR LOGIN PORTAL                   */
-    /* ========================================================================= */
     body {
       font-family: var(--font);
-      background-color: #edf5ff;
-      background-image: 
-        radial-gradient(circle at 10% 15%, rgba(219, 234, 254, 0.9) 0%, transparent 45%),
-        radial-gradient(circle at 90% 15%, rgba(224, 242, 254, 0.8) 0%, transparent 45%),
-        radial-gradient(circle at 50% 85%, rgba(238, 242, 255, 0.95) 0%, transparent 55%),
-        linear-gradient(135deg, #f0f7ff 0%, #e6f1fe 50%, #f4f8ff 100%);
-      color: var(--text, #0f172a);
+      background: var(--bg);
+      background-image: var(--bg-gradient);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -321,92 +314,23 @@
       position: relative;
     }
 
-    /* Light Theme Color Presets */
-    body[data-light-theme="ice_blue"], body:not([data-light-theme]) {
-      background-color: #edf5ff;
-      background-image: 
-        radial-gradient(circle at 10% 15%, rgba(219, 234, 254, 0.9) 0%, transparent 45%),
-        radial-gradient(circle at 90% 15%, rgba(224, 242, 254, 0.8) 0%, transparent 45%),
-        radial-gradient(circle at 50% 85%, rgba(238, 242, 255, 0.95) 0%, transparent 55%),
-        linear-gradient(135deg, #f0f7ff 0%, #e6f1fe 50%, #f4f8ff 100%);
-    }
-
-    body[data-light-theme="pearl_white"] {
-      background-color: #f8fafc;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(241, 245, 249, 0.95) 0%, transparent 50%),
-        radial-gradient(circle at 85% 85%, rgba(226, 232, 240, 0.8) 0%, transparent 50%),
-        linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    }
-
-    body[data-light-theme="soft_cream"] {
-      background-color: #faf8f5;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(254, 243, 199, 0.55) 0%, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(255, 237, 213, 0.55) 0%, transparent 45%),
-        linear-gradient(135deg, #fdfbf7 0%, #f5efe6 100%);
-    }
-
-    body[data-light-theme="mint_frost"] {
-      background-color: #f0fdf7;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(209, 250, 229, 0.7) 0%, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(204, 251, 241, 0.65) 0%, transparent 45%),
-        linear-gradient(135deg, #f0fdf7 0%, #e6f7ef 100%);
-    }
-
-    body[data-light-theme="lavender_mist"] {
-      background-color: #f5f3ff;
-      background-image: 
-        radial-gradient(circle at 15% 15%, rgba(237, 233, 254, 0.75) 0%, transparent 45%),
-        radial-gradient(circle at 85% 85%, rgba(224, 231, 255, 0.65) 0%, transparent 45%),
-        linear-gradient(135deg, #f8f6ff 0%, #ede9fe 100%);
-    }
-
-    /* Soft modern grid overlay for crisp light textures */
+    /* Subtle background grid texture */
     body::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-image: 
-        linear-gradient(rgba(15, 43, 92, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(15, 43, 92, 0.035) 1px, transparent 1px);
+      background-image: linear-gradient(rgba(15, 43, 92, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(15, 43, 92, 0.03) 1px, transparent 1px);
       background-size: 36px 36px;
       pointer-events: none;
       z-index: 0;
     }
-
-    /* Subtle ambient light glow accents behind cards */
-    .light-ambient-glow {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(75px);
-      pointer-events: none;
-      z-index: 1;
-      opacity: 0.65;
-      animation: lightGlowPulse 14s ease-in-out infinite alternate;
-    }
-    .light-glow-1 {
-      width: 480px;
-      height: 480px;
-      top: -60px;
-      left: 10%;
-      background: radial-gradient(circle, rgba(191, 219, 254, 0.6) 0%, transparent 70%);
-    }
-    .light-glow-2 {
-      width: 520px;
-      height: 520px;
-      bottom: -80px;
-      right: 5%;
-      background: radial-gradient(circle, rgba(199, 210, 254, 0.5) 0%, transparent 70%);
-      animation-delay: -7s;
-    }
-    @keyframes lightGlowPulse {
-      0% { transform: scale(0.95) translate(0, 0); }
-      100% { transform: scale(1.08) translate(25px, 20px); }
+    [data-mode="dark"] body::before {
+      background-image: linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
     }
 
-    /* Top Bar & Card Refinements on Light Background */
+    /* Top Navigation Header Bar */
     .index-top-bar {
       position: relative;
       z-index: 10;
@@ -414,66 +338,93 @@
       align-items: center;
       justify-content: space-between;
       padding: 16px 36px;
-      border-bottom: 1px solid rgba(203, 213, 225, 0.7);
-      background: rgba(255, 255, 255, 0.88);
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.75);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
     }
-
-    .auth-card {
-      width: 100%;
-      background: #ffffff;
-      border: 1.5px solid rgba(203, 213, 225, 0.8);
-      border-radius: 24px;
-      padding: 38px 34px 32px;
-      box-shadow: 0 16px 42px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.03);
-      position: relative;
-      z-index: 10;
-      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    [data-mode="dark"] .index-top-bar {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(10, 20, 40, 0.4);
     }
 
-    .feature-card {
+    .cv-brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .cv-brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
       background: #ffffff;
-      border: 1.5px solid rgba(203, 213, 225, 0.75);
-      border-radius: 16px;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
-      position: relative;
-      z-index: 10;
+      padding: 2px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--card-border);
+    }
+    .cv-brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .cv-brand-sub {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: var(--primary);
+      text-transform: uppercase;
     }
 
-    /* Light Theme Palette Picker Pill */
-    .light-theme-picker {
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .tagline-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: 99px;
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid rgba(203, 213, 225, 0.8);
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
-    }
-    .light-theme-picker-title {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 700;
-      color: #64748b;
-      margin-right: 2px;
+      background: var(--card-subtle);
+      border: 1px solid var(--card-border);
+      color: var(--text);
     }
-    .color-swatch-btn {
-      width: 18px;
-      height: 18px;
+    .system-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--ok-bg);
+      border: 1px solid var(--ok);
+      color: var(--ok);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      border: 2px solid #ffffff;
-      box-shadow: 0 0 0 1px #cbd5e1;
-      cursor: pointer;
-      padding: 0;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      background: var(--ok);
+      box-shadow: 0 0 8px var(--ok);
+      animation: pulseDot 2s infinite;
     }
-    .color-swatch-btn:hover {
-      transform: scale(1.25);
-    }
-    .color-swatch-btn.active {
-      box-shadow: 0 0 0 2px #2563eb;
-      transform: scale(1.15);
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.2); }
     }
 
     /* Main Container Split View: Form on LEFT, Hero on RIGHT */
@@ -955,9 +906,6 @@
   </style>
 </head>
 <body>
-  <!-- Ambient Soft Light Glow Accents -->
-  <div class="light-ambient-glow light-glow-1" aria-hidden="true"></div>
-  <div class="light-ambient-glow light-glow-2" aria-hidden="true"></div>
 
   <!-- WHAT IS HAPPENING BELOW: Top Navigation Header with Corporate Logo, Title and Live Services Indicator -->
   <header class="index-top-bar">
@@ -968,16 +916,7 @@
         <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
       </div>
     </a>
-        <div class="top-bar-right">
-      <!-- Light Color Palette Selector -->
-      <div class="light-theme-picker" id="lightThemePicker" title="Choose Light Background Shade">
-        <span class="light-theme-picker-title">🎨 Light Shade:</span>
-        <button type="button" class="color-swatch-btn active" data-light="ice_blue" title="Ice Blue (Default)" style="background:#bfdbfe;"></button>
-        <button type="button" class="color-swatch-btn" data-light="pearl_white" title="Pearl White" style="background:#f1f5f9;"></button>
-        <button type="button" class="color-swatch-btn" data-light="soft_cream" title="Soft Cream" style="background:#fde68a;"></button>
-        <button type="button" class="color-swatch-btn" data-light="mint_frost" title="Mint Frost" style="background:#a7f3d0;"></button>
-        <button type="button" class="color-swatch-btn" data-light="lavender_mist" title="Lavender Mist" style="background:#ddd6fe;"></button>
-      </div>
+    <div class="top-bar-right">
       <div class="tagline-pill">Secure Smart Connected Surface Online</div>
       <div class="system-status-pill">
         <span class="status-dot"></span>
@@ -1274,34 +1213,6 @@
         }
       };
     }
-  </script>
-
-  <!-- WHAT IS HAPPENING BELOW: Interactive Light Background Palette Switcher & Persistence -->
-  <script>
-    (function initLightBackgroundTheme() {
-      function applyLightShade(shade) {
-        document.body.setAttribute('data-light-theme', shade);
-        document.documentElement.setAttribute('data-mode', 'light');
-        document.documentElement.setAttribute('data-theme', 'light');
-        localStorage.setItem('cv_login_light_theme', shade);
-
-        document.querySelectorAll('.color-swatch-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.getAttribute('data-light') === shade);
-        });
-      }
-
-      document.querySelectorAll('.color-swatch-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const shade = this.getAttribute('data-light');
-          applyLightShade(shade);
-        });
-      });
-
-      // Restore saved shade or default to soft ice_blue
-      const savedShade = localStorage.getItem('cv_login_light_theme') || 'ice_blue';
-      applyLightShade(savedShade);
-    })();
   </script>
 </body>
 </html>
