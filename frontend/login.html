@@ -301,6 +301,9 @@
       font-family: var(--font-family) !important;
     }
 
+        /* ========================================================================= */
+    /* ENHANCED HIGH-TECH BACKGROUND & AMBIENT GLOW MESH LAYER                   */
+    /* ========================================================================= */
     body {
       font-family: var(--font);
       background: var(--bg);
@@ -314,117 +317,245 @@
       position: relative;
     }
 
-    /* Subtle background grid texture */
-    body::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image: linear-gradient(rgba(15, 43, 92, 0.03) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(15, 43, 92, 0.03) 1px, transparent 1px);
-      background-size: 36px 36px;
+    /* Dynamic High-Tech Ambient Layer */
+    .cv-bg-layer {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
       pointer-events: none;
+      overflow: hidden;
       z-index: 0;
     }
-    [data-mode="dark"] body::before {
-      background-image: linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+
+    #cvInteractiveCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
     }
 
-    /* Top Navigation Header Bar */
+    /* Ambient Glowing Aurora Mesh Orbs */
+    .cv-bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.65;
+      pointer-events: none;
+      transition: all 0.6s ease;
+      animation: orbFloat 22s ease-in-out infinite alternate;
+    }
+    .cv-bg-orb-1 {
+      width: 580px;
+      height: 580px;
+      top: -120px;
+      left: -90px;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.45) 0%, rgba(2, 132, 199, 0.25) 50%, transparent 75%);
+    }
+    .cv-bg-orb-2 {
+      width: 680px;
+      height: 680px;
+      bottom: -160px;
+      right: -100px;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.35) 0%, rgba(99, 102, 241, 0.22) 50%, transparent 75%);
+      animation-duration: 26s;
+      animation-delay: -6s;
+    }
+    .cv-bg-orb-3 {
+      width: 480px;
+      height: 480px;
+      top: 35%;
+      left: 38%;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(37, 99, 235, 0.15) 50%, transparent 70%);
+      animation-duration: 20s;
+      animation-delay: -11s;
+    }
+
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(70px, 50px) scale(1.1); }
+      100% { transform: translate(-50px, 70px) scale(0.92); }
+    }
+
+    [data-mode="dark"] .cv-bg-orb-1 {
+      opacity: 0.75;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.55) 0%, rgba(14, 165, 233, 0.2) 55%, transparent 75%);
+    }
+    [data-mode="dark"] .cv-bg-orb-2 {
+      opacity: 0.65;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(99, 102, 241, 0.2) 50%, transparent 75%);
+    }
+    [data-mode="dark"] .cv-bg-orb-3 {
+      opacity: 0.5;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, rgba(37, 99, 235, 0.15) 50%, transparent 70%);
+    }
+
+    /* Cyber Circuit Grid Overlay */
+    .cv-bg-grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(37, 99, 235, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px);
+      background-size: 42px 42px;
+      pointer-events: none;
+    }
+    [data-mode="dark"] .cv-bg-grid-overlay {
+      background-image: 
+        linear-gradient(rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+    }
+
+    /* Background Modes: Cyber Grid */
+    body[data-bg-style="cyber_grid"] .cv-bg-grid-overlay {
+      background-size: 28px 28px;
+      background-image: 
+        linear-gradient(rgba(37, 99, 235, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.12) 1px, transparent 1px);
+    }
+    body[data-bg-style="cyber_grid"] .cv-bg-orb {
+      filter: blur(50px);
+      opacity: 0.8;
+    }
+
+    /* Background Modes: Minimal */
+    body[data-bg-style="minimal"] .cv-bg-orb {
+      display: none;
+    }
+    body[data-bg-style="minimal"] .cv-bg-grid-overlay {
+      background-size: 20px 20px;
+      background-image: radial-gradient(rgba(37, 99, 235, 0.12) 1px, transparent 1px);
+    }
+
+    /* Glassmorphism Refinements for Cards on new background */
     .index-top-bar {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 36px;
-      border-bottom: 1px solid var(--card-border);
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(255, 255, 255, 0.82) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      border-bottom: 1px solid rgba(203, 213, 225, 0.8) !important;
     }
     [data-mode="dark"] .index-top-bar {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(10, 20, 40, 0.4);
+      background: rgba(10, 20, 40, 0.7) !important;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.18) !important;
     }
 
-    .cv-brand-wrap {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      text-decoration: none;
-      color: inherit;
+    .auth-card {
+      background: rgba(255, 255, 255, 0.92) !important;
+      backdrop-filter: blur(24px) !important;
+      -webkit-backdrop-filter: blur(24px) !important;
+      border: 1.5px solid rgba(203, 213, 225, 0.85) !important;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1), 0 0 30px rgba(37, 99, 235, 0.06) !important;
     }
-    .cv-brand-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: #ffffff;
-      padding: 2px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-      border: 1px solid var(--card-border);
+    [data-mode="dark"] .auth-card {
+      background: rgba(14, 27, 51, 0.84) !important;
+      backdrop-filter: blur(24px) !important;
+      -webkit-backdrop-filter: blur(24px) !important;
+      border: 1.5px solid rgba(56, 189, 248, 0.28) !important;
+      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.55), 0 0 40px rgba(56, 189, 248, 0.1) !important;
     }
-    .cv-brand-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.3px;
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.88) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      border: 1.5px solid rgba(203, 213, 225, 0.8) !important;
+    }
+    [data-mode="dark"] .feature-card {
+      background: rgba(14, 27, 51, 0.72) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      border: 1.5px solid rgba(56, 189, 248, 0.22) !important;
+    }
+
+    /* Interactive Background Switcher Pill in Top Bar */
+    .bg-switcher-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .bg-switcher-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 13px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
       color: var(--text);
-      line-height: 1.2;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
     }
-    .cv-brand-sub {
-      font-size: 10.5px;
+    .bg-switcher-btn:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+      transform: translateY(-1px);
+    }
+    .bg-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 250px;
+      background: var(--card);
+      border: 1.5px solid var(--card-border);
+      border-radius: 16px;
+      padding: 8px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      animation: cvCardPop 0.2s ease forwards;
+    }
+    .bg-dropdown.show {
+      display: flex;
+    }
+    .bg-dropdown-header {
+      font-size: 10px;
       font-weight: 800;
-      letter-spacing: 1px;
-      color: var(--primary);
       text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      padding: 6px 10px 4px;
     }
-
-    .top-bar-right {
+    .bg-opt-btn {
       display: flex;
       align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-left: auto;
-    }
-    .tagline-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 99px;
-      font-size: 12px;
-      font-weight: 700;
-      background: var(--card-subtle);
-      border: 1px solid var(--card-border);
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: transparent;
+      border: none;
       color: var(--text);
-    }
-    .system-status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 99px;
+      cursor: pointer;
       font-size: 12px;
-      font-weight: 700;
-      background: var(--ok-bg);
-      border: 1px solid var(--ok);
-      color: var(--ok);
+      font-weight: 600;
+      text-align: left;
+      width: 100%;
+      transition: background 0.15s ease;
     }
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 8px var(--ok);
-      animation: pulseDot 2s infinite;
+    .bg-opt-btn:hover {
+      background: var(--card-subtle);
     }
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.45; transform: scale(1.2); }
+    .bg-opt-btn.active {
+      background: var(--primary-gradient);
+      color: #ffffff;
+    }
+    .bg-opt-btn.active .bg-opt-sub {
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .bg-opt-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+    .bg-opt-sub {
+      font-size: 10px;
+      color: var(--text-dim);
+      font-weight: 500;
     }
 
     /* Main Container Split View: Form on LEFT, Hero on RIGHT */
@@ -907,6 +1038,15 @@
 </head>
 <body>
 
+  <!-- WHAT IS HAPPENING BELOW: High-Tech Dynamic Background Canvas & Ambient Orbs Layer -->
+  <div id="cvBackgroundLayer" class="cv-bg-layer" aria-hidden="true">
+    <div class="cv-bg-orb cv-bg-orb-1"></div>
+    <div class="cv-bg-orb cv-bg-orb-2"></div>
+    <div class="cv-bg-orb cv-bg-orb-3"></div>
+    <canvas id="cvInteractiveCanvas"></canvas>
+    <div class="cv-bg-grid-overlay"></div>
+  </div>
+
   <!-- WHAT IS HAPPENING BELOW: Top Navigation Header with Corporate Logo, Title and Live Services Indicator -->
   <header class="index-top-bar">
     <a href="index.html" class="cv-brand-wrap" title="BSTPL CustomerVault Portal">
@@ -916,7 +1056,46 @@
         <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
       </div>
     </a>
-    <div class="top-bar-right">
+        <div class="top-bar-right">
+      <!-- Background Style Switcher Pill -->
+      <div class="bg-switcher-wrap">
+        <button type="button" class="bg-switcher-btn" id="btnBgSwitcher" title="Change Background Style">
+          <span>🎨</span>
+          <span id="bgSwitcherLabel">Constellation</span>
+          <span style="font-size:8px">▼</span>
+        </button>
+        <div class="bg-dropdown" id="bgDropdown">
+          <div class="bg-dropdown-header">Background Style</div>
+          <button type="button" class="bg-opt-btn active" data-bg="constellation">
+            <span class="bg-opt-icon">✨</span>
+            <div>
+              <div>Constellation</div>
+              <div class="bg-opt-sub">Interactive IoT particle mesh</div>
+            </div>
+          </button>
+          <button type="button" class="bg-opt-btn" data-bg="aurora">
+            <span class="bg-opt-icon">🌌</span>
+            <div>
+              <div>Aurora Glow</div>
+              <div class="bg-opt-sub">Ambient glowing fluid mesh</div>
+            </div>
+          </button>
+          <button type="button" class="bg-opt-btn" data-bg="cyber_grid">
+            <span class="bg-opt-icon">📐</span>
+            <div>
+              <div>Cyber Grid</div>
+              <div class="bg-opt-sub">High-tech digital matrix</div>
+            </div>
+          </button>
+          <button type="button" class="bg-opt-btn" data-bg="minimal">
+            <span class="bg-opt-icon">⚪</span>
+            <div>
+              <div>Minimal Clean</div>
+              <div class="bg-opt-sub">Refined subtle dot matrix</div>
+            </div>
+          </button>
+        </div>
+      </div>
       <div class="tagline-pill">Secure Smart Connected Surface Online</div>
       <div class="system-status-pill">
         <span class="status-dot"></span>
@@ -1213,6 +1392,175 @@
         }
       };
     }
+  </script>
+
+  <!-- WHAT IS HAPPENING BELOW: Dynamic High-Tech Background Canvas Engine (Constellation, Particles & Style Switcher) -->
+  <script>
+    (function initInteractiveBackground() {
+      const canvas = document.getElementById('cvInteractiveCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      let width = 0, height = 0;
+      let particles = [];
+      const particleCount = 65;
+      const mouse = { x: -9999, y: -9999, radius: 140 };
+      let animId = null;
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      window.addEventListener('mousemove', function(e) {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+      });
+      window.addEventListener('mouseleave', function() {
+        mouse.x = -9999;
+        mouse.y = -9999;
+      });
+
+      function createParticles() {
+        particles = [];
+        for (let i = 0; i < particleCount; i++) {
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.7,
+            vy: (Math.random() - 0.5) * 0.7,
+            radius: Math.random() * 2 + 1.2,
+            baseAlpha: Math.random() * 0.4 + 0.3
+          });
+        }
+      }
+      createParticles();
+
+      function isDarkMode() {
+        return document.documentElement.getAttribute('data-mode') === 'dark';
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        const currentStyle = document.body.getAttribute('data-bg-style') || 'constellation';
+        if (currentStyle === 'minimal') {
+          animId = requestAnimationFrame(draw);
+          return;
+        }
+
+        const dark = isDarkMode();
+        const nodeColor = dark ? '56, 189, 248' : '37, 99, 235';
+        const lineMaxDist = 125;
+
+        // Update and draw particles
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.x < 0) p.x = width;
+          else if (p.x > width) p.x = 0;
+          if (p.y < 0) p.y = height;
+          else if (p.y > height) p.y = 0;
+
+          // Mouse proximity reaction
+          const dxMouse = mouse.x - p.x;
+          const dyMouse = mouse.y - p.y;
+          const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+          let extraAlpha = 0;
+          if (distMouse < mouse.radius) {
+            extraAlpha = (1 - distMouse / mouse.radius) * 0.4;
+            // Draw line to mouse cursor
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(${nodeColor}, ${(1 - distMouse / mouse.radius) * 0.25})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${nodeColor}, ${Math.min(1, p.baseAlpha + extraAlpha)})`;
+          ctx.fill();
+
+          // Connect adjacent particles
+          if (currentStyle === 'constellation' || currentStyle === 'cyber_grid') {
+            for (let j = i + 1; j < particles.length; j++) {
+              const p2 = particles[j];
+              const dx = p.x - p2.x;
+              const dy = p.y - p2.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+
+              if (dist < lineMaxDist) {
+                const alpha = (1 - dist / lineMaxDist) * (dark ? 0.22 : 0.15);
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = `rgba(${nodeColor}, ${alpha})`;
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+              }
+            }
+          }
+        }
+
+        animId = requestAnimationFrame(draw);
+      }
+      draw();
+
+      // Style Switcher Logic
+      const btn = document.getElementById('btnBgSwitcher');
+      const dropdown = document.getElementById('bgDropdown');
+      const label = document.getElementById('bgSwitcherLabel');
+
+      function applyBgStyle(styleName) {
+        document.body.setAttribute('data-bg-style', styleName);
+        localStorage.setItem('cv_login_bg', styleName);
+
+        const names = {
+          'constellation': 'Constellation',
+          'aurora': 'Aurora Glow',
+          'cyber_grid': 'Cyber Grid',
+          'minimal': 'Minimal Clean'
+        };
+        if (label) label.textContent = names[styleName] || 'Constellation';
+
+        document.querySelectorAll('.bg-opt-btn').forEach(b => {
+          b.classList.toggle('active', b.getAttribute('data-bg') === styleName);
+        });
+      }
+
+      if (btn && dropdown) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          dropdown.classList.toggle('show');
+        });
+        document.addEventListener('click', function() {
+          dropdown.classList.remove('show');
+        });
+        dropdown.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+
+        document.querySelectorAll('.bg-opt-btn').forEach(b => {
+          b.addEventListener('click', function() {
+            const chosen = this.getAttribute('data-bg');
+            applyBgStyle(chosen);
+            dropdown.classList.remove('show');
+          });
+        });
+      }
+
+      // Initial restore from localStorage or default
+      const savedBg = localStorage.getItem('cv_login_bg') || 'constellation';
+      applyBgStyle(savedBg);
+    })();
   </script>
 </body>
 </html>
