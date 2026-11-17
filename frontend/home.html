@@ -2202,56 +2202,124 @@
             <div class="card stat" style="border-left-color:var(--ok)"><b>…</b><span>Data Health Score</span></div>
           </div>
 
-          <!-- Instant Live Search & Filters Toolbar -->
-          <div id="cardLiveMasterStream">
-            <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-              <div style="min-width:180px">
-                <label for="liveCustFilter"
-                  style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Customer
-                  Account</label>
-                <select id="liveCustFilter"
-                  style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text)">
-                  <option value="">All Customers</option>
-                </select>
-              </div>
-              <div style="min-width:160px">
-                <label for="liveFieldFilter"
-                  style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Target
-                  Column</label>
-                <select id="liveFieldFilter"
-                  style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text)">
-                  <option value="all">All Columns</option>
-                  <option value="imei">IMEI</option>
-                  <option value="iccid">ICCID / CCID</option>
-                  <option value="device_sr_no">Device SR No</option>
-                  <option value="msisdn1">MSISDN1</option>
-                  <option value="customer_name">Customer Name</option>
-                  <option value="model">Model</option>
-                  <option value="sim_provider">SIM Provider</option>
-                </select>
-              </div>
-              <div style="flex:1;min-width:240px">
-                <label for="liveSearchInput"
-                  style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Instant Live
-                  Search</label>
+          <!-- WHAT IS HAPPENING BELOW: Customer Details & Records Navigation (Customer Portfolios vs Device Records Feed) -->
+          <div class="inv-subnav" role="tablist"
+            style="display:flex;gap:10px;margin:18px 0;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap">
+            <button class="inv-sub-btn active" id="btnHomeSubCust" data-home-sub="cust" type="button"
+              title="Browse customer portfolios, profile details, and inventory files">
+              <span>📁</span> <span>Customer Portfolios &amp; Records</span> (<span id="homeCustCountBadge">0</span>)
+            </button>
+            <button class="inv-sub-btn" id="btnHomeSubDevices" data-home-sub="devices" type="button"
+              title="Explore all device records in live searchable table">
+              <span>📋</span> <span>Device Records Feed</span>
+            </button>
+          </div>
+
+          <!-- Sub-View 1: Customer Portfolios & Inventory Records of Each Customer (Cards Grid) -->
+          <div id="homeSubViewCust" class="home-sub-view">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+              <div style="flex:1;max-width:440px;min-width:240px">
+                <label for="homeCustSearch" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">
+                  Search Customer Portfolios
+                </label>
                 <div class="cv-search-container">
                   <span class="cv-search-icon-left">🔎</span>
-                  <input id="liveSearchInput" class="cv-search-input"
-                    placeholder="Search customer records across all columns…" autocomplete="off" />
-                  <span class="cv-search-spinner" id="liveSearchSpinner">🌀</span>
-                  <button type="button" class="cv-search-clear-btn" id="liveSearchClearBtn"
-                    title="Clear search">✕</button>
+                  <input id="homeCustSearch" class="cv-search-input" placeholder="Search customer cards by name or ID…" autocomplete="off" />
+                  <button type="button" class="cv-search-clear-btn" id="homeCustClearBtn" title="Clear customer search" style="display:none">✕</button>
                 </div>
               </div>
-              <div>
-                <button class="b" id="liveSearchClear"
-                  style="height:40px;padding:0 14px;border-radius:10px;font-weight:700">Clear</button>
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto">
+                <span style="font-size:12.5px;color:var(--muted);font-weight:700" id="homeCustFilterCount">Showing all customer portfolios</span>
+                <button type="button" class="b p" id="btnHomeDownloadAllCust"
+                  style="background:linear-gradient(135deg, #2563eb, #1d4ed8);border-color:#2563eb;color:#fff;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px">
+                  📥 Download All Customer Data
+                </button>
+                <a href="inventory.html" class="b" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;text-decoration:none">
+                  📋 Open Customer Inventory
+                </a>
               </div>
             </div>
 
-            <!-- Master Data Table -->
-            <div id="liveMasterTable">
-              <div class="empty">Loading master feed…</div>
+            <!-- Grid of Each Customer's Details & Records -->
+            <div id="homeCustGrid" class="customer-file-grid" style="margin-top:14px">
+              <div class="empty">Loading customer portfolios…</div>
+            </div>
+          </div>
+
+          <!-- Sub-View 2: Device Records Feed & Selected Customer Banner -->
+          <div id="homeSubViewDevices" class="home-sub-view" hidden>
+            <!-- Selected Customer Profile & Inventory Banner (shown when a customer is filtered) -->
+            <div id="homeActiveCustBanner" style="display:none;background:var(--card-subtle);border:1.5px solid var(--primary);border-radius:12px;padding:14px 18px;margin-bottom:16px;box-shadow:0 3px 12px rgba(29,104,225,0.06);align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div id="homeActiveCustAvatar" style="display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;font-size:20px;background:var(--card);border:1px solid var(--line);flex-shrink:0">🏢</div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <h4 id="homeActiveCustName" style="margin:0;font-size:16px;font-weight:800;color:var(--text)">Customer</h4>
+                    <span id="homeActiveCustId" style="font-size:11.5px;color:var(--muted);font-weight:700">#0</span>
+                  </div>
+                  <div style="font-size:12.5px;color:var(--muted);margin-top:2px">
+                    <span id="homeActiveCustDevCount">0 records</span> · <span id="homeActiveCustExpCount">0 expiring</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <button type="button" class="b p" id="btnHomeCustEntriesModal" style="font-size:12px;font-weight:700">👁️ View Records Modal</button>
+                <button type="button" class="b" id="btnHomeActiveCustDlExcel" style="font-size:12px;font-weight:700">📥 Download Excel</button>
+                <button type="button" class="b" id="btnHomeClearActiveCust" style="font-size:12px">✕ View All Customers</button>
+              </div>
+            </div>
+
+            <!-- Instant Live Search & Filters Toolbar -->
+            <div id="cardLiveMasterStream">
+              <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+                <div style="min-width:180px">
+                  <label for="liveCustFilter"
+                    style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Customer
+                    Account</label>
+                  <select id="liveCustFilter"
+                    style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text)">
+                    <option value="">All Customers</option>
+                  </select>
+                </div>
+                <div style="min-width:160px">
+                  <label for="liveFieldFilter"
+                    style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Target
+                    Column</label>
+                  <select id="liveFieldFilter"
+                    style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text)">
+                    <option value="all">All Columns</option>
+                    <option value="imei">IMEI</option>
+                    <option value="iccid">ICCID / CCID</option>
+                    <option value="device_sr_no">Device SR No</option>
+                    <option value="msisdn1">MSISDN1</option>
+                    <option value="customer_name">Customer Name</option>
+                    <option value="model">Model</option>
+                    <option value="sim_provider">SIM Provider</option>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:240px">
+                  <label for="liveSearchInput"
+                    style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Instant Live
+                    Search</label>
+                  <div class="cv-search-container">
+                    <span class="cv-search-icon-left">🔎</span>
+                    <input id="liveSearchInput" class="cv-search-input"
+                      placeholder="Search customer records across all columns…" autocomplete="off" />
+                    <span class="cv-search-spinner" id="liveSearchSpinner">🌀</span>
+                    <button type="button" class="cv-search-clear-btn" id="liveSearchClearBtn"
+                      title="Clear search">✕</button>
+                  </div>
+                </div>
+                <div>
+                  <button class="b" id="liveSearchClear"
+                    style="height:40px;padding:0 14px;border-radius:10px;font-weight:700">Clear</button>
+                </div>
+              </div>
+
+              <!-- Master Data Table -->
+              <div id="liveMasterTable">
+                <div class="empty">Loading master feed…</div>
+              </div>
             </div>
           </div>
         </div>
@@ -3813,6 +3881,275 @@
       }
     }
 
+    // --- Customer Portfolios & Records of Each Customer Engine ---
+    function switchHomeSubView(targetView) {
+      const vCust = $('homeSubViewCust'), vDev = $('homeSubViewDevices');
+      const bCust = $('btnHomeSubCust'), bDev = $('btnHomeSubDevices');
+      if (bCust) bCust.classList.toggle('active', targetView === 'cust');
+      if (bDev) bDev.classList.toggle('active', targetView === 'devices');
+      if (vCust) vCust.hidden = targetView !== 'cust';
+      if (vDev) vDev.hidden = targetView !== 'devices';
+      if (targetView === 'devices') {
+        updateHomeActiveCustomerBanner();
+        updateLiveFeedTable();
+      }
+    }
+
+    function renderHomeCustomerCards() {
+      const grid = $('homeCustGrid');
+      if (!grid) return;
+      if ($('homeCustCountBadge')) $('homeCustCountBadge').textContent = (CU || []).length.toLocaleString();
+
+      const q = ($('homeCustSearch')?.value || '').trim().toLowerCase();
+      const clearBtn = $('homeCustClearBtn');
+      if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+
+      const filtered = (CU || []).filter(c => {
+        const name = (c.name || '').toLowerCase();
+        const cid = String(c.id || '');
+        return name.includes(q) || cid.includes(q);
+      });
+
+      if ($('homeCustFilterCount')) {
+        $('homeCustFilterCount').textContent = q
+          ? `Showing ${filtered.length.toLocaleString()} of ${CU.length.toLocaleString()} portfolios`
+          : `Showing all ${CU.length.toLocaleString()} customer portfolios`;
+      }
+
+      if (!filtered.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1;width:100%">${(CU || []).length ? `No customer found matching "${esc(q)}".` : 'No customer portfolios found.'}</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(c => {
+        const devs = Number(c.devices || 0);
+        const exp = Number(c.expiring_or_expired || 0);
+        return `
+          <div class="cw customer-file-card" data-cid="${c.id}">
+            <div>
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px">
+                <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                  ${avatarHtml(c)}
+                  <div style="min-width:0">
+                    <b style="font-size:15.5px;font-weight:800;color:var(--text);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${esc(c.name)}">${esc(c.name)}</b>
+                    <span style="font-size:12px;color:var(--muted);font-weight:600">Customer ID: #${c.id}</span>
+                  </div>
+                </div>
+                <span class="tag ${devs > 0 ? 'ok' : 'mut'}" style="font-size:11px;font-weight:700;flex-shrink:0">${devs > 0 ? 'Active' : 'Empty'}</span>
+              </div>
+              <div style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.4;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="display:inline-flex;align-items:center;gap:4px;background:var(--card-subtle);padding:3px 8px;border-radius:6px;border:1px solid var(--line);font-size:12px">
+                  <span>📱</span> <b style="color:var(--text);font-weight:800">${devs.toLocaleString()}</b> records
+                </span>
+                ${exp > 0 ? `
+                <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,0.1);color:var(--warn);border:1px solid rgba(245,158,11,0.25);padding:3px 8px;border-radius:6px;font-size:12px;font-weight:700">
+                  <span>⚠️</span> ${exp.toLocaleString()} expiring
+                </span>` : ''}
+              </div>
+            </div>
+            <div class="ca" style="display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px">
+              <button class="b p" data-home-cview="${c.id}" style="font-size:12px;padding:6px 12px;font-weight:700" title="View all device records for this customer in interactive modal">👁️ Records</button>
+              <button class="b" data-home-ctable="${c.id}" style="font-size:12px;padding:6px 10px;font-weight:700" title="Switch to records table filtered to this customer">📋 Table View</button>
+              <button class="b" data-home-cdl="${c.id}" style="font-size:12px;padding:6px 10px;font-weight:700" title="Download Excel with all columns and values">📥 Download</button>
+              <a class="b" href="inventory.html" style="font-size:12px;padding:6px 8px;text-decoration:none" title="Open in Customer Inventory Hub">🔗</a>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function updateHomeActiveCustomerBanner() {
+      const banner = $('homeActiveCustBanner');
+      if (!banner) return;
+      if (!liveCid) {
+        banner.style.display = 'none';
+        return;
+      }
+      const c = (CU || []).find(x => String(x.id) === String(liveCid));
+      if (!c) {
+        banner.style.display = 'none';
+        return;
+      }
+      banner.style.display = 'flex';
+      if ($('homeActiveCustAvatar')) $('homeActiveCustAvatar').innerHTML = avatarHtml(c);
+      if ($('homeActiveCustName')) $('homeActiveCustName').textContent = c.name;
+      if ($('homeActiveCustId')) $('homeActiveCustId').textContent = '#' + c.id;
+      if ($('homeActiveCustDevCount')) $('homeActiveCustDevCount').textContent = Number(c.devices || 0).toLocaleString() + ' records';
+      if ($('homeActiveCustExpCount')) {
+        const exp = Number(c.expiring_or_expired || 0);
+        $('homeActiveCustExpCount').textContent = exp > 0 ? `${exp.toLocaleString()} expiring` : '0 expiring';
+        $('homeActiveCustExpCount').style.color = exp > 0 ? 'var(--warn)' : 'var(--muted)';
+      }
+    }
+
+    async function openHomeCustomerRecordsModal(customer) {
+      try {
+        toast(`Loading records for ${customer.name}…`);
+        if (typeof showBstplLoader === 'function') showBstplLoader(`Fetching all records for ${customer.name}…`);
+
+        const res = await api(`/api/devices?customer_id=${customer.id}&page_size=5000`);
+        const items = (res && res.items) ? res.items : [];
+
+        // Discover all dynamic columns
+        const extraKeys = new Set();
+        items.forEach(it => {
+          if (it.extra && typeof it.extra === 'object') {
+            Object.keys(it.extra).forEach(k => extraKeys.add(k));
+          }
+        });
+        const allExtras = Array.from(new Set([...XC, ...extraKeys]));
+
+        const viewCols = [
+          { key: 'id', label: 'ID' },
+          { key: 'customer_name', label: 'Customer' },
+          ...COLS.map(c => ({ key: c[0], label: c[1] })),
+          ...allExtras.map(k => ({ key: k, label: k.replace(/_/g, ' ').toUpperCase() })),
+          { key: 'added_by', label: 'Added By' },
+          { key: 'created_at', label: 'Created At' }
+        ];
+
+        const dlgHtml = `
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;border-bottom:1px solid var(--line);padding-bottom:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              ${avatarHtml(customer)}
+              <div>
+                <h4 style="margin:0;font-size:16px;color:var(--text);font-weight:800">${esc(customer.name)}</h4>
+                <span style="font-size:12.5px;color:var(--muted)">${items.length.toLocaleString()} device inventory entries · Customer #${customer.id}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <div class="cv-search-container" style="min-width:200px">
+                <span class="cv-search-icon-left">🔎</span>
+                <input id="dlgHomeCustSearch" class="cv-search-input" style="height:34px;font-size:12.5px" placeholder="Search within entries…" />
+              </div>
+              <button type="button" class="b p" id="btnDlgHomeCustDlExcel" style="font-size:12.5px;font-weight:700">📥 Download Excel</button>
+              <button type="button" class="b" id="btnDlgHomeJumpToTable" style="font-size:12.5px;font-weight:700">📋 Filter in Live Table</button>
+              <a href="inventory.html" class="b" style="font-size:12.5px;font-weight:700;text-decoration:none">📋 Open in Inventory</a>
+            </div>
+          </div>
+          <div class="tw" style="max-height:56vh;overflow:auto" id="dlgHomeCustTableWrap">
+            <table style="font-size:12px">
+              <thead>
+                <tr>
+                  ${viewCols.map(c => `<th>${esc(c.label)}</th>`).join('')}
+                </tr>
+              </thead>
+              <tbody>
+                ${items.length ? items.map(d => `
+                  <tr>
+                    <td><b>${d.id}</b></td>
+                    <td><b style="color:var(--text)">${esc(customer.name)}</b></td>
+                    ${COLS.map(c => `<td>${cell(d, c[0])}</td>`).join('')}
+                    ${allExtras.map(k => `<td>${esc((d.extra || {})[k] != null ? (d.extra || {})[k] : '')}</td>`).join('')}
+                    <td>${esc(d.added_by || '')}</td>
+                    <td>${esc(d.created_at || '')}</td>
+                  </tr>
+                `).join('') : '<tr><td colspan="30" class="empty">No device entries found for this customer.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        openDlg(`📁 Customer Entries — ${customer.name} (${items.length.toLocaleString()})`, dlgHtml, 'Close', async () => { });
+
+        if ($('dlgHomeCustSearch')) {
+          $('dlgHomeCustSearch').oninput = e => {
+            const term = e.target.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#dlgHomeCustTableWrap tbody tr');
+            rows.forEach(r => {
+              r.style.display = (!term || r.textContent.toLowerCase().includes(term)) ? '' : 'none';
+            });
+          };
+        }
+
+        if ($('btnDlgHomeCustDlExcel')) {
+          $('btnDlgHomeCustDlExcel').onclick = () => downloadHomeCustomerExcel(customer);
+        }
+
+        if ($('btnDlgHomeJumpToTable')) {
+          $('btnDlgHomeJumpToTable').onclick = () => {
+            if ($('cdlg')) $('cdlg').close();
+            if ($('liveCustFilter')) $('liveCustFilter').value = customer.id;
+            liveCid = customer.id;
+            livePage = 1;
+            switchHomeSubView('devices');
+            updateHomeActiveCustomerBanner();
+            updateLiveFeedTable();
+          };
+        }
+      } catch (err) {
+        fail(err);
+      } finally {
+        if (typeof hideBstplLoader === 'function') hideBstplLoader();
+      }
+    }
+
+    async function downloadHomeCustomerExcel(customer) {
+      try {
+        toast(`Generating Excel for ${customer.name}…`);
+        if (typeof showBstplLoader === 'function') showBstplLoader(`Generating Excel file for ${customer.name}…`);
+
+        const dlUrl = `/api/devices/export?customer_id=${customer.id}&title=${encodeURIComponent(customer.name)}`;
+        const res = await fetch(dlUrl, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          }
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          const safeName = (customer.name || 'Customer').replace(/[^a-zA-Z0-9_-]/g, '_');
+          a.download = `${safeName}_Inventory.xlsx`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(blobUrl);
+          toast(`✓ Downloaded ${customer.name} inventory.`);
+        } else {
+          throw new Error('Export download failed');
+        }
+      } catch (e) {
+        fail(e);
+      } finally {
+        if (typeof hideBstplLoader === 'function') hideBstplLoader();
+      }
+    }
+
+    async function downloadAllHomeCustomerData() {
+      try {
+        toast('Generating complete customer inventory Excel…');
+        if (typeof showBstplLoader === 'function') showBstplLoader('Exporting complete customer inventory…');
+
+        const dlUrl = `/api/devices/export?title=All_Customer_Inventory`;
+        const res = await fetch(dlUrl, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          }
+        });
+
+        if (res.ok) {
+          const blob = await res.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `All_Customer_Inventory.xlsx`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(blobUrl);
+          toast('✓ Downloaded complete customer inventory.');
+        } else {
+          throw new Error('All customer export failed');
+        }
+      } catch (e) {
+        fail(e);
+      } finally {
+        if (typeof hideBstplLoader === 'function') hideBstplLoader();
+      }
+    }
+
     // 5. Populate Customer Dropdown
     async function populateLiveCustomerDropdown() {
       const sel = $('liveCustFilter');
@@ -3824,6 +4161,8 @@
           const curVal = sel.value;
           sel.innerHTML = '<option value="">All Customers</option>' +
             custs.map(c => `<option value="${c.id}" ${String(c.id) === String(curVal) ? 'selected' : ''}>${esc(c.name || c.customer_name)}</option>`).join('');
+          renderHomeCustomerCards();
+          updateHomeActiveCustomerBanner();
         }
       } catch (e) { }
     }
@@ -4080,6 +4419,7 @@
       $('liveCustFilter').onchange = e => {
         liveCid = e.target.value;
         livePage = 1;
+        updateHomeActiveCustomerBanner();
         updateLiveFeedTable();
       };
     }
@@ -4132,9 +4472,89 @@
         if ($('liveFieldFilter')) $('liveFieldFilter').value = 'all';
         if ($('liveSearchInput')) $('liveSearchInput').value = '';
         if (liveClearBtn) liveClearBtn.style.display = 'none';
+        updateHomeActiveCustomerBanner();
         updateLiveFeedTable();
       };
     }
+
+    // Wire up Customer Portfolios & Records Tab Switching
+    if ($('btnHomeSubCust')) $('btnHomeSubCust').onclick = () => switchHomeSubView('cust');
+    if ($('btnHomeSubDevices')) $('btnHomeSubDevices').onclick = () => switchHomeSubView('devices');
+
+    if ($('homeCustSearch')) {
+      $('homeCustSearch').oninput = () => {
+        const q = ($('homeCustSearch').value || '').trim();
+        if ($('homeCustClearBtn')) $('homeCustClearBtn').style.display = q ? 'block' : 'none';
+        renderHomeCustomerCards();
+      };
+    }
+    if ($('homeCustClearBtn')) {
+      $('homeCustClearBtn').onclick = () => {
+        if ($('homeCustSearch')) $('homeCustSearch').value = '';
+        $('homeCustClearBtn').style.display = 'none';
+        renderHomeCustomerCards();
+      };
+    }
+    if ($('btnHomeDownloadAllCust')) $('btnHomeDownloadAllCust').onclick = downloadAllHomeCustomerData;
+
+    if ($('btnHomeCustEntriesModal')) {
+      $('btnHomeCustEntriesModal').onclick = () => {
+        const c = (CU || []).find(x => String(x.id) === String(liveCid));
+        if (c) openHomeCustomerRecordsModal(c);
+      };
+    }
+    if ($('btnHomeActiveCustDlExcel')) {
+      $('btnHomeActiveCustDlExcel').onclick = () => {
+        const c = (CU || []).find(x => String(x.id) === String(liveCid));
+        if (c) downloadHomeCustomerExcel(c);
+      };
+    }
+    if ($('btnHomeClearActiveCust')) {
+      $('btnHomeClearActiveCust').onclick = () => {
+        liveCid = '';
+        if ($('liveCustFilter')) $('liveCustFilter').value = '';
+        updateHomeActiveCustomerBanner();
+        updateLiveFeedTable();
+      };
+    }
+
+    // Customer Cards Grid Click Delegation
+    document.addEventListener('click', e => {
+      const viewBtn = e.target.closest('[data-home-cview]');
+      if (viewBtn) {
+        const cid = viewBtn.dataset.homeCview;
+        const cust = (CU || []).find(c => String(c.id) === String(cid));
+        if (cust) openHomeCustomerRecordsModal(cust);
+        return;
+      }
+
+      const tableBtn = e.target.closest('[data-home-ctable]');
+      if (tableBtn) {
+        const cid = tableBtn.dataset.homeCtable;
+        if ($('liveCustFilter')) $('liveCustFilter').value = cid;
+        liveCid = cid;
+        livePage = 1;
+        switchHomeSubView('devices');
+        updateHomeActiveCustomerBanner();
+        updateLiveFeedTable();
+        return;
+      }
+
+      const dlBtn = e.target.closest('[data-home-cdl]');
+      if (dlBtn) {
+        const cid = dlBtn.dataset.homeCdl;
+        const cust = (CU || []).find(c => String(c.id) === String(cid));
+        if (cust) downloadHomeCustomerExcel(cust);
+        return;
+      }
+
+      const card = e.target.closest('#homeCustGrid .customer-file-card');
+      if (card && !e.target.closest('button, a, input, select')) {
+        const cid = card.dataset.cid;
+        const cust = (CU || []).find(c => String(c.id) === String(cid));
+        if (cust) openHomeCustomerRecordsModal(cust);
+      }
+    });
 
     if ($('liveExportExcel')) {
       $('liveExportExcel').onclick = async () => {
