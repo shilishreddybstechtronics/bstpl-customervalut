@@ -314,8 +314,42 @@ if (!window.openCartModal) {
         setTimeout(() => homeBtn.classList.remove('cv-3d-pressed'), 180);
       }
 
+      // 1b. Tactile 3D feedback for BSTPL Company Symbol / Brand
+      const brandLogo = e.target.closest('.header-bstpl-brand, .cv-sidebar-brand, #headerBstplBrand, #sidebarBstplBrand');
+      if (brandLogo) {
+        brandLogo.classList.add('cv-3d-pressed');
+        setTimeout(() => brandLogo.classList.remove('cv-3d-pressed'), 200);
+      }
+
       // 2. Smooth 3D Page Transitions between pages
       const link = e.target.closest('a[href]');
+
+      // Dynamic bidirectional navigation for BSTPL Brand Symbol (Home / Inventory <-> Settings)
+      const currentPath = (window.location.pathname.split('/').pop() || 'home.html').toLowerCase();
+      if (brandLogo) {
+        let dest = 'settings.html';
+        if (currentPath === 'settings.html') {
+          dest = sessionStorage.getItem('last_home_inv_page') || 'home.html';
+        } else {
+          sessionStorage.setItem('last_home_inv_page', currentPath || 'home.html');
+          dest = 'settings.html';
+        }
+        if (link) {
+          link.setAttribute('href', dest);
+        } else {
+          // Brand symbol was clicked as non-anchor container
+          const targetPath = (dest.split('?')[0].split('#')[0].split('/').pop() || '').toLowerCase();
+          if (targetPath !== currentPath) {
+            e.preventDefault();
+            document.body.classList.add('cv-page-3d-exit');
+            setTimeout(function () {
+              window.location.href = dest;
+            }, 160);
+            return;
+          }
+        }
+      }
+
       if (!link) return;
 
       const href = link.getAttribute('href');
@@ -326,8 +360,7 @@ if (!window.openCartModal) {
         if (!href.startsWith(window.location.origin)) return;
       }
 
-      // If user clicked Home Overview while on home.html, don't reload page
-      const currentPath = (window.location.pathname.split('/').pop() || 'home.html').toLowerCase();
+      // If user clicked link to current page, don't trigger exit animation
       const targetPath = (href.split('?')[0].split('#')[0].split('/').pop() || '').toLowerCase();
       if (targetPath === currentPath) return;
 
