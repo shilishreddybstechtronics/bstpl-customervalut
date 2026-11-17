@@ -1475,7 +1475,7 @@
   <div id="dashboardWrap" class="cv-app-shell" style="display:flex">
 
     <aside class="cv-sidebar" id="cvSidebar">
-      <a class="cv-sidebar-brand" id="sidebarBstplBrand" href="home.html" title="BSTPL CustomerVault — Return to Home Inventory" style="text-decoration:none" onclick="const p = sessionStorage.getItem('last_home_inv_page'); if (p) { this.setAttribute('href', p); }">
+      <a class="cv-sidebar-brand" id="sidebarBstplBrand" href="home.html" title="BSTPL CustomerVault — Return to Home Inventory" style="text-decoration:none" onclick="this.href = sessionStorage.getItem('last_home_inv_page') || 'home.html';">
         <div class="cv-brand-icon"><img src="logo.svg" alt="BSTPL Logo" style="width:100%;height:100%;object-fit:contain;border-radius:10px" /></div>
         <div class="cv-brand-text">
           <div class="cv-brand-title">BSTPL CustomerVault</div>
@@ -1549,7 +1549,7 @@
           <div class="user-greeting-wrap"
             style="display:flex;align-items:center;gap:12px;margin-left:0;margin-right:auto;flex-shrink:0">
             <!-- BSTPL Logo on the LEFT Side (Visible when sidebar closes, Off when sidebar opens) -->
-            <a class="header-bstpl-brand" id="headerBstplBrand" href="home.html" title="BSTPL CustomerVault — Return to Previous Page" style="text-decoration:none" onclick="var p = sessionStorage.getItem('last_home_inv_page') || 'home.html'; this.href = p;">
+            <a class="header-bstpl-brand" id="headerBstplBrand" href="home.html" title="BSTPL CustomerVault — Return to Previous Page" style="text-decoration:none" onclick="this.href = sessionStorage.getItem('last_home_inv_page') || 'home.html';">
               <div class="header-logo-icon">
                 <img src="logo.svg" alt="BSTPL Logo" />
               </div>
