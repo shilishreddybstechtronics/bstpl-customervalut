@@ -296,3 +296,46 @@ if (!window.openCartModal) {
     const dlg = typeof id === 'string' ? document.getElementById(id) : id;
     if (dlg && typeof dlg.showModal === 'function') dlg.showModal();
   };
+
+  // =========================================================================
+  // 3D PAGE TRANSITION ENGINE & TACTILE DEPTH CONTROLLER
+  // =========================================================================
+  (function init3DPageTransitions() {
+    // Reset exit animation when page is revealed (handles back/forward bfcache)
+    window.addEventListener('pageshow', function () {
+      document.body.classList.remove('cv-page-3d-exit');
+    });
+
+    document.addEventListener('click', function (e) {
+      // 1. Tactile 3D feedback for Home Toggle button
+      const homeBtn = e.target.closest('#sidebarToggleHomeBtn, .cv-home-nav-btn');
+      if (homeBtn) {
+        homeBtn.classList.add('cv-3d-pressed');
+        setTimeout(() => homeBtn.classList.remove('cv-3d-pressed'), 180);
+      }
+
+      // 2. Smooth 3D Page Transitions between pages
+      const link = e.target.closest('a[href]');
+      if (!link) return;
+
+      const href = link.getAttribute('href');
+      // Skip anchors, javascript, external sites, target="_blank", or modifier-clicks
+      if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+      if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      if (href.startsWith('http://') || href.startsWith('https://')) {
+        if (!href.startsWith(window.location.origin)) return;
+      }
+
+      // If user clicked Home Overview while on home.html, don't reload page
+      const currentPath = (window.location.pathname.split('/').pop() || 'home.html').toLowerCase();
+      const targetPath = (href.split('?')[0].split('#')[0].split('/').pop() || '').toLowerCase();
+      if (targetPath === currentPath) return;
+
+      // Trigger 3D Exit Animation on the leaving page before navigating
+      e.preventDefault();
+      document.body.classList.add('cv-page-3d-exit');
+      setTimeout(function () {
+        window.location.href = href;
+      }, 160);
+    });
+  })();
