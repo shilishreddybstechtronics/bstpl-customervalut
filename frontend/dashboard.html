@@ -1779,19 +1779,19 @@
 
       <section class="container-box active" id="box-home" style="display:block;padding:0;background:transparent;border:none;box-shadow:none">
         
-        <!-- WHAT IS HAPPENING BELOW: Live Telemetry & Real-Time Intelligence Dashboard -->
-        <!-- Live Updates & Real-Time Telemetry Container -->
+        <!-- WHAT IS HAPPENING BELOW: Customer Details & Inventory Records Directory -->
+        <!-- Customer Details & Inventory Records Container -->
         <div class="card" id="homeLiveUpdateCard" style="margin-bottom:24px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,0.03)">
           
-          <!-- Master Device Stream Header (Live Updates Option Removed, Master Data Feed Visible Directly) -->
+          <!-- Customer Details & Inventory Records Header (Live Stream kept exclusively in sidebar) -->
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:14px">
             <div>
               <div style="display:flex;align-items:center;gap:8px">
-                <span style="font-size:20px">📱</span>
-                <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text)">Live Master Device Stream</h3>
-                <span class="live-badge" style="font-size:11px;padding:2px 8px"><span class="live-dot"></span> LIVE</span>
+                <span style="font-size:22px">👥</span>
+                <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text)">Customer Details &amp; Records</h3>
+                <span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--card-subtle);border:1px solid var(--line);color:var(--primary);letter-spacing:0.5px">CUSTOMER VAULT</span>
               </div>
-              <span style="font-size:13px;color:var(--muted);margin-top:2px;display:block">Real-time incoming telemetry and inventory status across all active customer accounts.</span>
+              <span style="font-size:13px;color:var(--muted);margin-top:2px;display:block">Complete directory of all registered customer device records, SIM assignments, and inventory details.</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
               <span style="font-size:12px;color:var(--muted);font-weight:700" id="liveTime"></span>
@@ -1801,7 +1801,7 @@
 
           <!-- Live Telemetry KPI Metrics -->
           <div class="stats" id="liveKpis" style="margin-top:0;margin-bottom:18px">
-            <div class="card stat"><b>…</b><span>Total Live Devices</span></div>
+            <div class="card stat" style="border-left-color:var(--primary)"><b>…</b><span>Total Devices</span></div>
             <div class="card stat"><b>…</b><span>Active Customers</span></div>
             <div class="card stat" style="border-left-color:var(--warn)"><b>…</b><span>Expiring in 30 Days</span></div>
             <div class="card stat" style="border-left-color:var(--danger)"><b>…</b><span>Expired Devices</span></div>
@@ -1834,7 +1834,7 @@
                 <label for="liveSearchInput" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Instant Live Search</label>
                 <div class="cv-search-container">
                   <span class="cv-search-icon-left">🔎</span>
-                  <input id="liveSearchInput" class="cv-search-input" placeholder="Search across records in real-time…" autocomplete="off" />
+                  <input id="liveSearchInput" class="cv-search-input" placeholder="Search customer records across all columns…" autocomplete="off" />
                   <span class="cv-search-spinner" id="liveSearchSpinner">🌀</span>
                   <button type="button" class="cv-search-clear-btn" id="liveSearchClearBtn" title="Clear search">✕</button>
                 </div>
@@ -1918,7 +1918,7 @@
 
       <!-- Live KPI Cards Ribbon -->
       <div class="stats" id="dlgLiveKpis" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:12px; margin-bottom:20px">
-        <div class="card stat" style="padding:14px 16px"><b id="kpiDev">…</b><span>Total Live Devices</span></div>
+        <div class="card stat" style="padding:14px 16px"><b id="kpiDev">…</b><span>Total Devices</span></div>
         <div class="card stat" style="padding:14px 16px"><b id="kpiCust">…</b><span>Active Customers</span></div>
         <div class="card stat" style="padding:14px 16px; border-left-color:var(--warn)"><b id="kpiExp30">…</b><span>Expiring in 30 Days</span></div>
         <div class="card stat" style="padding:14px 16px; border-left-color:var(--danger)"><b id="kpiExpired">…</b><span>Expired Devices</span></div>
