@@ -1,9 +1,9 @@
 
 ================================================================================
-[2026-11-13 14:54:40] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+[2026-11-17 16:24:54] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
 ================================================================================
 [1. REQUEST INFORMATION]
-   • Timestamp:          2026-11-13 14:54:40
+   • Timestamp:          2026-11-17 16:24:54
    • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
    • HTTP Method:        POST
    • Outbound Server IP: 115.246.247.210
@@ -13,30 +13,30 @@
       Content-Type: application/json
       Accept: application/json
       relationId: SENSE1019
-      apiToken: $2a$10...SnXq (Length: 60)
+      apiToken: $2a$10...Muwa (Length: 60)
 
 [3. REQUEST PAYLOAD / BODY SENT]
 {
   "iccids": [
-    "8991200050059481429",
-    "8991200050059480611",
-    "8991200050059480686",
-    "8991200050059481478",
-    "89914909100031489491",
     "8991200050059480801",
-    "8991200050059480637",
+    "8991200050059481247",
     "89914909100031489509",
-    "8991200050059480587",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
     "8991200050059480504",
     "8991200050059480645",
     "8991200050059480975",
-    "8991200050059481247"
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
   ]
 }
 
 [4. SERVER RESPONSE RECEIVED]
    • HTTP Status Code:   200
-   • Response Time:      807.48 ms
+   • Response Time:      556.58 ms
    • apiResponseCode:    LCM_818
    • apiResponseMsg:     Maximum 100 API calls is allowed per day
 

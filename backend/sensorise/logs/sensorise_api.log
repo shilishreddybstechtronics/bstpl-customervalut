@@ -11076,3 +11076,4278 @@ Sensorise API tokens automatically expire after 24 hours or after transaction qu
 • All subsequent requests automatically use the newly generated token.
 ================================================================================
 
+
+================================================================================
+[2026-11-17 16:05:09] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:05:09
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      374.88 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:05:28] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:05:28
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      475.78 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:05:47] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:05:47
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      393.39 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:06:06] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:06:06
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      361.57 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:06:24] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:06:24
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      379.33 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:06:45] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:06:45
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      2459.43 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:07:04] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:07:04
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      432.94 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:07:21] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:07:21
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      309.75 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:07:39] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:07:39
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      296.3 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:07:57] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:07:57
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      358.42 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:08:13] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:08:13
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10.../IuG (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480645",
+    "8991200050059480587",
+    "89914909100031489491",
+    "8991200050059480611",
+    "8991200050059480686",
+    "8991200050059481247",
+    "8991200050059480975",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480801",
+    "89914909100031489509",
+    "8991200050059480504",
+    "8991200050059480637"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      384.66 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:08:48] ❌ ERROR | SENSORISE API CALL: POST generateAPIToken
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:08:48
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/generateAPIToken
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      cryptologic: DEFAULT
+      accessKey: CA42D8...17C3 (Length: 128)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "tokenValidity": 24,
+  "tokenTransactions": 100
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      1018.95 ms
+   • apiResponseCode:    LCM_001
+   • apiResponseMsg:     Your request has been processed successfully
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_001",
+  "apiResponseMsg": "Your request has been processed successfully",
+  "apiToken": "$2a$10$NuC.sBbgVR597/jVO2nHx.d0t5gehGsgtAX2.rTrDREoCf6CNMuwa",
+  "tokenExpiry": "2026-11-18 16:08:32"
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          Success (LCM_001)
+   • Meaning:            The request was successfully processed by Sensorise.
+   • Root Cause:
+     Authentication succeeded and SIM telematics data was returned.
+
+[7. COMMON REASONS]
+All parameters, tokens, and relation ID matched correctly.
+
+[8. RECOMMENDED ACTION ITEMS]
+Data was received and updated into MySQL and the website dashboard.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:08:51] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:08:51
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      448.03 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:09:09] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:09:09
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      562.65 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:09:26] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:09:26
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      319.61 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:09:45] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:09:45
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      338.67 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:10:04] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:10:04
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      306.85 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:10:20] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:10:20
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      440.4 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:10:39] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:10:39
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      447.82 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:10:57] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:10:57
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      375.85 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:11:16] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:11:16
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      289.97 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:11:34] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:11:34
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      295.56 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:11:52] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:11:52
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      363.17 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:12:09] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:12:09
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      513.81 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:12:28] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:12:28
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      885.34 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:12:47] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:12:47
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      269.98 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:13:04] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:13:04
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      463.2 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:13:21] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:13:21
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      431.07 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:13:38] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:13:38
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      605.18 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:13:56] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:13:56
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      355.44 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:14:13] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:14:13
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      346.46 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:14:32] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:14:32
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      534.12 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:14:50] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:14:50
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      362.64 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:15:07] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:15:07
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      305.71 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:15:25] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:15:25
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      299.13 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:15:41] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:15:41
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      446.94 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:15:59] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:15:59
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      298.8 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:16:15] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:16:15
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      552.51 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:16:32] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:16:32
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      522.7 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:16:51] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:16:51
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      415.95 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:17:09] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:17:09
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      370.81 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:17:26] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:17:26
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      620.44 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:17:45] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:17:45
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      301.75 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:18:02] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:18:02
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      263.22 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:18:20] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:18:20
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      253.89 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:18:37] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:18:37
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      716.15 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:18:56] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:18:56
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      257.31 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:19:13] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:19:13
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      478.08 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:19:33] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:19:33
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      300.2 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:19:50] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:19:50
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      367.36 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:20:08] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:20:08
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      335.11 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:20:26] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:20:26
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      381.54 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:20:44] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:20:44
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      428.27 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:21:01] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:21:01
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      305.59 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:21:18] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:21:18
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      623.86 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:21:36] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:21:36
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      308.14 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:21:53] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:21:53
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      263.84 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:22:11] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:22:11
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      440.21 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:22:30] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:22:30
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      331.33 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:22:47] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:22:47
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      512.13 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:23:04] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:23:04
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      302.85 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:23:23] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:23:23
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      665.51 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:23:40] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:23:40
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      351.12 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:23:59] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:23:59
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      260.62 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:24:18] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:24:18
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      544.52 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:24:37] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:24:37
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      326.74 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
+
+================================================================================
+[2026-11-17 16:24:54] ❌ ERROR | SENSORISE API CALL: POST checkSIMBulk/v2/
+================================================================================
+[1. REQUEST INFORMATION]
+   • Timestamp:          2026-11-17 16:24:54
+   • Target Full URL:    https://senselcm.sensorise.net/sense-lcm-services-prod/checkSIMBulk/v2/
+   • HTTP Method:        POST
+   • Outbound Server IP: 115.246.247.210
+   • Relation ID:        SENSE1019
+
+[2. REQUEST HEADERS SENT]
+      Content-Type: application/json
+      Accept: application/json
+      relationId: SENSE1019
+      apiToken: $2a$10...Muwa (Length: 60)
+
+[3. REQUEST PAYLOAD / BODY SENT]
+{
+  "iccids": [
+    "8991200050059480801",
+    "8991200050059481247",
+    "89914909100031489509",
+    "8991200050059480637",
+    "8991200050059481429",
+    "8991200050059481478",
+    "8991200050059480686",
+    "8991200050059480504",
+    "8991200050059480645",
+    "8991200050059480975",
+    "8991200050059480611",
+    "8991200050059480587",
+    "89914909100031489491"
+  ]
+}
+
+[4. SERVER RESPONSE RECEIVED]
+   • HTTP Status Code:   200
+   • Response Time:      556.58 ms
+   • apiResponseCode:    LCM_818
+   • apiResponseMsg:     Maximum 100 API calls is allowed per day
+
+[5. RAW RESPONSE DATA]
+{
+  "apiResponseCode": "LCM_818",
+  "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+  "simDetailEnitycount": 0,
+  "simDetailEntity": []
+}
+
+[6. ERROR ROOT-CAUSE ANALYSIS & DIAGNOSIS]
+   • Diagnosis:          API Token Quota Reached (LCM_818)
+   • Meaning:            The active Sensorise API token has reached its 100 API calls transactions quota.
+   • Root Cause:
+     Each Sensorise SenseLCM token is granted a 100 transactions quota. Once exhausted, a fresh token is required.
+
+[7. COMMON REASONS]
+Sensorise API tokens automatically expire after 24 hours or after transaction quotas are exhausted.
+
+[8. RECOMMENDED ACTION ITEMS]
+• A fresh API token is automatically generated via /generateAPIToken.
+• All subsequent requests automatically use the newly generated token.
+================================================================================
+
