@@ -1948,11 +1948,8 @@
         </a>
       </nav>
 
-      <!-- Live Telemetry Widget in Left Sidebar -->
+      <!-- Live Telemetry Widget in Left Sidebar (Data Metrics & Dynamic Clock) -->
       <div class="cv-sidebar-live-widget" id="sidebarLiveWidget">
-          <button type="button" class="cv-sb-toggle-btn on" id="sidebarToggleLiveBtn"
-            title="Toggle Live Streaming">ON</button>
-        </div>
         <div class="cv-sb-live-metrics">
           <div class="cv-sb-metric-item">
             <span class="cv-sb-metric-val" id="sbLiveDevCount">—</span>
@@ -1969,7 +1966,7 @@
 
     <main class="cv-main-panel" id="cvMainPanel">
 
-      <section class="container-box active" id="box-inv" style="display:block;; display:block;">
+      <section class="container-box active" id="box-inv" style="display:block;">
         <div class="container-tag">📋 Customer Inventory Hub</div>
         <div class="row" style="margin-bottom:6px">
           <div class="grow">
@@ -8216,6 +8213,45 @@
           }
 
           // Download 2-Sheet Excel (Requirement 8)
+          function downloadDuplicateErrorsExcel(valResult, custSummaryList, totalCnt) {
+            if (!valResult || !valResult.duplicates || !valResult.duplicates.length) {
+              toast('No duplicate error records to download.');
+              return;
+            }
+
+            const wb = XLSX.utils.book_new();
+
+            // Sheet 1: Customers
+            const custHeaders = ['Customer Name', 'Customer Status', 'Duplicate Count', 'Total Scanned'];
+            const custRows = (custSummaryList || []).map(c => [
+              c.name || 'General_Customer',
+              c.isExisting ? 'Already Existing Customer' : 'New Customer',
+              c.duplicateCount || 0,
+              c.count || 0
+            ]);
+            const wsCust = XLSX.utils.aoa_to_sheet([custHeaders, ...custRows]);
+            XLSX.utils.book_append_sheet(wb, wsCust, 'Customers');
+
+            // Sheet 2: Entries
+            const entryHeaders = ['Row #', 'Customer Name', 'IMEI', 'Device Serial No', 'ICCID', 'MSISDN 1', 'Model', 'SIM Provider', 'Duplicate Reason'];
+            const entryRows = (valResult.duplicates || []).map(d => [
+              d.row_num || '—',
+              d.customer_name || '—',
+              d.imei || '',
+              d.device_sr_no || '',
+              d.iccid || '',
+              d.msisdn1 || '',
+              d.model || '',
+              d.sim_provider || '',
+              d.reason || 'Duplicate record conflict'
+            ]);
+            const wsEntries = XLSX.utils.aoa_to_sheet([entryHeaders, ...entryRows]);
+            XLSX.utils.book_append_sheet(wb, wsEntries, 'Entries');
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `Duplicate_Errors_Report_${dateStr}.xlsx`);
+          }
+
           if ($('btnDlSkipped')) {
             $('btnDlSkipped').hidden = (dupCnt === 0);
             $('btnDlSkipped').onclick = () => {
