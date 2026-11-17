@@ -45,7 +45,7 @@
     /* Immediately initialize theme before DOM paint to prevent screen flash. Default mode is 'light'. */
     (function() {
       try {
-        var m = localStorage.getItem('valut_theme_mode') || localStorage.getItem('theme') || 'light';
+        var m = 'light';
         var p = localStorage.getItem('valut_palette') || 'royal_navy';
         document.documentElement.setAttribute('data-theme', m);
         document.documentElement.setAttribute('data-mode', m);
@@ -69,8 +69,8 @@
     [data-palette="royal_navy"][data-mode="light"],
     [data-palette="royal_navy"]:not([data-mode="dark"]),
     :root:not([data-palette]) {
-      --bg: #f8fafc;
-      --bg-gradient: radial-gradient(1200px circle at 15% 15%, #e2e8f0 0%, #f8fafc 70%), radial-gradient(800px circle at 85% 85%, #e0e7ff 0%, #f8fafc 60%);
+      --bg: #ffffff;
+      --bg-gradient: none;
       --card: #ffffff;
       --card-subtle: #f1f5f9;
       --card-border: #cbd5e1;
@@ -301,11 +301,17 @@
       font-family: var(--font-family) !important;
     }
 
+        html {
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+    }
+
     body {
       font-family: var(--font);
-      background: var(--bg);
-      background-image: var(--bg-gradient);
-      color: var(--text);
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      background-image: none !important;
+      color: var(--text, #0f172a);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -314,117 +320,9 @@
       position: relative;
     }
 
-    /* Subtle background grid texture */
+    /* Clean white background - remove dark/grey grid overlay */
     body::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image: linear-gradient(rgba(15, 43, 92, 0.03) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(15, 43, 92, 0.03) 1px, transparent 1px);
-      background-size: 36px 36px;
-      pointer-events: none;
-      z-index: 0;
-    }
-    [data-mode="dark"] body::before {
-      background-image: linear-gradient(rgba(56, 189, 248, 0.04) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
-    }
-
-    /* Top Navigation Header Bar */
-    .index-top-bar {
-      position: relative;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 36px;
-      border-bottom: 1px solid var(--card-border);
-      background: rgba(255, 255, 255, 0.75);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-    }
-    [data-mode="dark"] .index-top-bar {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(10, 20, 40, 0.4);
-    }
-
-    .cv-brand-wrap {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      text-decoration: none;
-      color: inherit;
-    }
-    .cv-brand-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: #ffffff;
-      padding: 2px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-      border: 1px solid var(--card-border);
-    }
-    .cv-brand-title {
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing: -0.3px;
-      color: var(--text);
-      line-height: 1.2;
-    }
-    .cv-brand-sub {
-      font-size: 10.5px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      color: var(--primary);
-      text-transform: uppercase;
-    }
-
-    .top-bar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-left: auto;
-    }
-    .tagline-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 99px;
-      font-size: 12px;
-      font-weight: 700;
-      background: var(--card-subtle);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-    }
-    .system-status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 99px;
-      font-size: 12px;
-      font-weight: 700;
-      background: var(--ok-bg);
-      border: 1px solid var(--ok);
-      color: var(--ok);
-    }
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 8px var(--ok);
-      animation: pulseDot 2s infinite;
-    }
-    @keyframes pulseDot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.45; transform: scale(1.2); }
+      display: none !important;
     }
 
     /* Main Container Split View: Form on LEFT, Hero on RIGHT */
@@ -450,11 +348,11 @@
     }
     .auth-card {
       width: 100%;
-      background: var(--card);
-      border: 1.5px solid var(--card-border);
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
       border-radius: 24px;
       padding: 38px 34px 32px;
-      box-shadow: var(--shadow);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04);
       position: relative;
       transition: box-shadow 0.25s ease, border-color 0.25s ease;
     }
@@ -736,10 +634,10 @@
       align-items: flex-start;
       gap: 14px;
       padding: 16px 18px;
-      background: var(--card);
-      border: 1.5px solid var(--card-border);
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
       border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .feature-card:hover {
