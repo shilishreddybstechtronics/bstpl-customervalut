@@ -1774,12 +1774,7 @@
         <div class="cv-header-single-line" style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px">
           <!-- Left: Home Toggle Button, then Symbol FIRST, Good Morning Greeting & Role Badge -->
           <div class="user-greeting-wrap" style="display:flex;align-items:center;gap:12px;margin-left:0;margin-right:auto;flex-shrink:0">
-            <!-- Home Icon Navigation Toggle Button (Only Home Icon, Adjusted Nicely) -->
-            <button type="button" id="sidebarToggleHomeBtn" class="cv-home-nav-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation Sidebar" title="Toggle Navigation Sidebar (Home)">
-              <span class="home-btn-icon">🏠</span>
-            </button>
-
-            <!-- BSTPL Logo Beside Home Icon (Visible when sidebar closes, Off when sidebar opens) -->
+            <!-- BSTPL Logo on the LEFT Side (Visible when sidebar closes, Off when sidebar opens) -->
             <div class="header-bstpl-brand" id="headerBstplBrand" title="BSTPL CustomerVault">
               <div class="header-logo-icon">
                 <img src="logo.svg" alt="BSTPL Logo" />
@@ -1789,6 +1784,11 @@
                 <span class="header-logo-sub">DEVICE &amp; INVENTORY SYSTEMS</span>
               </div>
             </div>
+
+            <!-- Home Icon Navigation Toggle Button (Only Home Icon, Adjusted Nicely) -->
+            <button type="button" id="sidebarToggleHomeBtn" class="cv-home-nav-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation Sidebar" title="Toggle Navigation Sidebar (Home)">
+              <span class="home-btn-icon">🏠</span>
+            </button>
 
             <div class="cv-avatar-circle" id="userAvatarCircle" title="User Settings &amp; Preferences" onclick="location.href='settings.html'" style="cursor:pointer;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary,#1d68e1),var(--accent,#fca311));color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.18)">S</div>
             <div class="user-badge" id="uBadge" style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:var(--card-subtle);border:1px solid var(--line);border-radius:99px;font-weight:700;font-size:13.5px">
