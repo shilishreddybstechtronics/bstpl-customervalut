@@ -261,34 +261,29 @@
       width: 100%;
     }
 
-    /* Sidebar Navigation — Collapsible / Hidden into Home Icon Button */
+    /* Sidebar Navigation — Kept visible as usual, collapsible via Home icon */
     .cv-sidebar {
-      width: 0 !important;
-      min-width: 0 !important;
-      max-width: 0 !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      border: none !important;
-      overflow: hidden !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-      box-shadow: none !important;
-      transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-                  padding 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-                  opacity 0.22s ease,
-                  box-shadow 0.32s ease,
-                  visibility 0.32s ease !important;
+      width: 260px;
       flex-shrink: 0;
       background: var(--cv-sidebar-bg, linear-gradient(180deg, #091a38 0%, #0d2249 100%)) !important;
       color: #ffffff;
       display: flex;
       flex-direction: column;
+      padding: 24px 16px 20px;
       position: sticky;
       top: 0;
       height: 100vh;
-      z-index: 1000;
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      box-shadow: 2px 0 16px rgba(9, 19, 43, 0.15);
+      z-index: 100;
       box-sizing: border-box;
+      transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                  padding 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.22s ease,
+                  box-shadow 0.32s ease,
+                  visibility 0.32s ease !important;
     }
     .cv-sidebar::-webkit-scrollbar {
       display: none;
@@ -305,34 +300,36 @@
       box-sizing: border-box;
     }
 
-    /* Active / Visible State when Selected via Home Button */
-    body.sidebar-open .cv-sidebar {
-      width: 260px !important;
-      min-width: 260px !important;
-      max-width: 260px !important;
-      padding: 24px 16px 20px !important;
-      overflow-y: auto !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      pointer-events: auto !important;
-      box-shadow: 4px 0 24px rgba(9, 19, 43, 0.2) !important;
+    /* Collapsed state when toggled via the Home icon */
+    body.sidebar-collapsed .cv-sidebar {
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      box-shadow: none !important;
     }
 
-    /* Home Navigation Toggle Button in Top Header */
+    /* Home Icon Button in Top Header — Only the Home Icon, Adjusted Nicely (40x40) */
     .cv-home-nav-btn {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 7px 15px;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
       background: var(--card);
       border: 1.5px solid var(--line);
       border-radius: 12px;
       color: var(--text);
-      font-size: 13.5px;
-      font-weight: 700;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
       flex-shrink: 0;
       outline: none;
@@ -346,27 +343,22 @@
     .cv-home-nav-btn:active {
       transform: translateY(0);
     }
-    .cv-home-nav-btn.is-active {
-      background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%) !important;
-      color: #ffffff !important;
-      border-color: var(--primary) !important;
-      box-shadow: 0 4px 16px rgba(29, 104, 225, 0.35) !important;
+    .cv-home-nav-btn.is-active,
+    body.sidebar-collapsed .cv-home-nav-btn {
+      border-color: var(--primary);
+      background: var(--card-subtle);
+      box-shadow: 0 0 0 2px rgba(29, 104, 225, 0.2);
     }
     .cv-home-nav-btn .home-btn-icon {
-      font-size: 18px;
+      font-size: 19px;
       line-height: 1;
-      display: inline-flex;
+      display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .cv-home-nav-btn:hover .home-btn-icon {
-      transform: scale(1.18);
-    }
-    .cv-home-nav-btn .home-btn-label {
-      font-size: 13.5px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
+      transform: scale(1.15);
     }
 
     /* Close button inside sidebar brand header */
@@ -1716,10 +1708,9 @@
         <div class="cv-header-single-line" style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px">
           <!-- Left: Home Toggle Button, then Symbol FIRST, Good Morning Greeting & Role Badge -->
           <div class="user-greeting-wrap" style="display:flex;align-items:center;gap:12px;margin-left:0;margin-right:auto;flex-shrink:0">
-            <!-- Home Icon Navigation Toggle Button -->
-            <button type="button" id="sidebarToggleHomeBtn" class="cv-home-nav-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation Sidebar" title="Home Navigation (Click to view navigation menu)" aria-expanded="false">
+            <!-- Home Icon Navigation Toggle Button (Only Home Icon, Adjusted Nicely) -->
+            <button type="button" id="sidebarToggleHomeBtn" class="cv-home-nav-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation Sidebar" title="Toggle Navigation Sidebar (Home)">
               <span class="home-btn-icon">🏠</span>
-              <span class="home-btn-label">Home</span>
             </button>
 
             <div class="cv-avatar-circle" id="userAvatarCircle" title="User Settings &amp; Preferences" onclick="location.href='settings.html'" style="cursor:pointer;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary,#1d68e1),var(--accent,#fca311));color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.18)">S</div>
@@ -1786,26 +1777,20 @@
         <!-- WHAT IS HAPPENING BELOW: Live Telemetry & Real-Time Intelligence Dashboard -->
         <!-- Live Updates & Real-Time Telemetry Container -->
         <div class="card" id="homeLiveUpdateCard" style="margin-bottom:24px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,0.03)">
-          <div class="container-tag" style="display:inline-flex;margin-bottom:12px">⚡ Live Telemetry &amp; Real-Time Intelligence Container</div>
           
-          <!-- Live Updates Control Bar -->
-          <div class="live-ctrl-card" style="margin-bottom:18px">
-            <div class="live-ctrl-left">
-              <span class="live-badge"><span class="live-dot"></span> LIVE DATA STREAM</span>
-              <button class="b on" id="toggleLive">🟢 Live Updates: ON</button>
-              <div style="display:inline-flex;align-items:center;gap:6px">
-                <label style="margin:0;font-size:12px;color:var(--muted)">Frequency:</label>
-                <select id="liveIntervalSel" style="height:34px;width:auto;padding:0 8px;font-size:12px">
-                  <option value="5">Every 5s</option>
-                  <option value="10" selected>Every 10s</option>
-                  <option value="30">Every 30s</option>
-                  <option value="60">Every 60s</option>
-                </select>
+          <!-- Master Device Stream Header (Live Updates Option Removed, Master Data Feed Visible Directly) -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:14px">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:20px">📱</span>
+                <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text)">Live Master Device Stream</h3>
+                <span class="live-badge" style="font-size:11px;padding:2px 8px"><span class="live-dot"></span> LIVE</span>
               </div>
+              <span style="font-size:13px;color:var(--muted);margin-top:2px;display:block">Real-time incoming telemetry and inventory status across all active customer accounts.</span>
             </div>
-            <div class="live-ctrl-right">
+            <div style="display:flex;align-items:center;gap:10px">
               <span style="font-size:12px;color:var(--muted);font-weight:700" id="liveTime"></span>
-              <button class="b" id="manualLiveRefresh">⚡ Refresh Now</button>
+              <button class="b" id="liveExportExcel" style="font-weight:700;padding:8px 16px;border-radius:9px;background:var(--card-subtle);border:1px solid var(--line)">📥 Export to Excel</button>
             </div>
           </div>
 
@@ -1818,22 +1803,8 @@
             <div class="card stat" style="border-left-color:var(--ok)"><b>…</b><span>Data Health Score</span></div>
           </div>
 
-          <!-- WHAT IS HAPPENING BELOW: Real-Time Master Device Feed with Instant Dynamic Filter & Excel Export -->
-          <!-- Live Master Device Feed -->
-          <div class="card" id="cardLiveMasterStream" style="padding:22px 24px;border:1px solid var(--line);border-radius:16px;margin-bottom:24px;background:var(--card);box-shadow:0 4px 18px rgba(0,0,0,0.03)">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:14px">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <span style="font-size:20px">📱</span>
-                  <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text)">Live Master Device Stream</h3>
-                  <span class="live-badge" style="font-size:11px;padding:2px 8px"><span class="live-dot"></span> LIVE</span>
-                </div>
-                <span style="font-size:13px;color:var(--muted);margin-top:2px;display:block">Real-time incoming telemetry and inventory status across all active customer accounts.</span>
-              </div>
-              <button class="b" id="liveExportExcel" style="font-weight:700;padding:8px 16px;border-radius:9px;background:var(--card-subtle);border:1px solid var(--line)">📥 Export to Excel</button>
-            </div>
-
-            <!-- Instant Live Search & Filters Toolbar -->
+          <!-- Instant Live Search & Filters Toolbar -->
+          <div id="cardLiveMasterStream">
             <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:16px">
               <div style="min-width:180px">
                 <label for="liveCustFilter" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Customer Account</label>
@@ -1868,18 +1839,9 @@
               </div>
             </div>
 
+            <!-- Master Data Table -->
             <div id="liveMasterTable">
               <div class="empty">Loading master feed…</div>
-            </div>
-          </div>
-
-          <!-- WHAT IS HAPPENING BELOW: Real-Time Audit Activity Telemetry Stream -->
-          <!-- Live Telemetry Activity Stream -->
-          <div class="card" style="padding:20px;border:1px solid var(--line);background:var(--card-subtle)">
-            <h3 style="margin:0 0 6px">📡 Real-Time Audit Activity Telemetry</h3>
-            <span style="font-size:13px;color:var(--muted)">Real-time telemetry stream of user actions, sign-ins, and modifications.</span>
-            <div id="liveActivityBody" style="margin-top:14px">
-              <div class="empty">Streaming audit telemetry…</div>
             </div>
           </div>
         </div>
@@ -2172,67 +2134,55 @@
 
 
     // =========================================================================
-    // NAVIGATION SIDEBAR CONTROLLER (Hidden by default in the Home Icon Button)
+    // NAVIGATION SIDEBAR CONTROLLER (Kept visible as usual, toggleable via Home icon)
     // =========================================================================
-    function setSidebarVisible(visible) {
-      const body = document.body;
-      const btn = document.getElementById('sidebarToggleHomeBtn');
-      if (visible) {
-        body.classList.add('sidebar-open');
-        if (btn) {
-          btn.classList.add('is-active');
-          btn.setAttribute('aria-expanded', 'true');
-          btn.setAttribute('title', 'Hide Navigation Bar (Esc)');
-        }
-        try { localStorage.setItem('cv_sidebar_open', 'true'); } catch (e) {}
-      } else {
-        body.classList.remove('sidebar-open');
-        if (btn) {
-          btn.classList.remove('is-active');
-          btn.setAttribute('aria-expanded', 'false');
-          btn.setAttribute('title', 'Home Navigation (Click to view navigation menu)');
-        }
-        try { localStorage.setItem('cv_sidebar_open', 'false'); } catch (e) {}
-      }
-    }
-
     function toggleSidebar() {
-      const isOpen = document.body.classList.contains('sidebar-open');
-      setSidebarVisible(!isOpen);
+      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+      const btn = document.getElementById('sidebarToggleHomeBtn');
+      if (btn) {
+        btn.setAttribute('aria-expanded', !isCollapsed);
+        btn.setAttribute('title', isCollapsed ? 'Show Navigation Sidebar (Home)' : 'Hide Navigation Sidebar');
+        btn.classList.toggle('is-active', isCollapsed);
+      }
+      try { localStorage.setItem('cv_sidebar_collapsed', isCollapsed ? 'true' : 'false'); } catch (e) {}
     }
 
-    // Initialize sidebar state on page load: Hidden by default
+    function setSidebarVisible(visible) {
+      setSidebarCollapsed(!visible);
+    }
+
+    function setSidebarCollapsed(collapsed) {
+      if (collapsed) {
+        document.body.classList.add('sidebar-collapsed');
+      } else {
+        document.body.classList.remove('sidebar-collapsed');
+      }
+      const btn = document.getElementById('sidebarToggleHomeBtn');
+      if (btn) {
+        btn.setAttribute('aria-expanded', !collapsed);
+        btn.setAttribute('title', collapsed ? 'Show Navigation Sidebar (Home)' : 'Hide Navigation Sidebar');
+        btn.classList.toggle('is-active', collapsed);
+      }
+      try { localStorage.setItem('cv_sidebar_collapsed', collapsed ? 'true' : 'false'); } catch (e) {}
+    }
+
+    // Initialize sidebar state on page load: Visible as usual
     (function initSidebarState() {
       try {
-        const saved = localStorage.getItem('cv_sidebar_open');
+        const saved = localStorage.getItem('cv_sidebar_collapsed');
         if (saved === 'true') {
-          setSidebarVisible(true);
+          setSidebarCollapsed(true);
         } else {
-          setSidebarVisible(false);
+          setSidebarCollapsed(false);
         }
       } catch (e) {
-        setSidebarVisible(false);
+        setSidebarCollapsed(false);
       }
 
       // Close navigation on Escape key
       window.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && document.body.classList.contains('sidebar-open')) {
-          setSidebarVisible(false);
-        }
-      });
-
-      // Smooth scroll to top and collapse sidebar when clicking active Home link
-      window.addEventListener('DOMContentLoaded', function() {
-        const homeLink = document.querySelector('.cv-sidebar-menu .cv-nav-item[href="home.html"]');
-        if (homeLink) {
-          homeLink.addEventListener('click', function(e) {
-            if (window.location.pathname.endsWith('home.html') || window.location.pathname.endsWith('/') || window.location.pathname === '') {
-              e.preventDefault();
-              const mainPanel = document.getElementById('cvMainPanel');
-              if (mainPanel) mainPanel.scrollTo({ top: 0, behavior: 'smooth' });
-              setSidebarVisible(false);
-            }
-          });
+        if (e.key === 'Escape' && !document.body.classList.contains('sidebar-collapsed')) {
+          setSidebarCollapsed(true);
         }
       });
     })();
