@@ -372,3 +372,257 @@ if (!window.openCartModal) {
       }, 160);
     });
   })();
+
+  // =========================================================================
+  // UNIVERSAL NAVIGATION SIDEBAR & TOP HEADER CONTROLLER
+  // (Full-Page Open on Nav Selection, Page-Specific Toggle Icons & Universal Header)
+  // =========================================================================
+  const PAGE_CONFIG = {
+    'home.html': {
+      title: 'Home Overview',
+      btnTitle: 'Toggle Navigation Sidebar (Home Overview)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M3 10.5L12 3l9 7.5V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>'
+    },
+    'dashboard.html': {
+      title: 'Home Overview',
+      btnTitle: 'Toggle Navigation Sidebar (Home Overview)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M3 10.5L12 3l9 7.5V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>'
+    },
+    'inventory.html': {
+      title: 'Customer Inventory',
+      btnTitle: 'Toggle Navigation Sidebar (Customer Inventory)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>'
+    },
+    'fetch-data.html': {
+      title: 'Fetch Data',
+      btnTitle: 'Toggle Navigation Sidebar (Fetch Data)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>'
+    },
+    'edit-delete.html': {
+      title: 'Edit / Delete by IMEI',
+      btnTitle: 'Toggle Navigation Sidebar (Edit / Delete)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>'
+    },
+    'sim-upload.html': {
+      title: 'SIM Data Upload',
+      btnTitle: 'Toggle Navigation Sidebar (SIM Upload)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>'
+    },
+    'alerts.html': {
+      title: 'SIM Expiry Alerts',
+      btnTitle: 'Toggle Navigation Sidebar (Expiry Alerts)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
+    },
+    'errors.html': {
+      title: 'Errored Entries',
+      btnTitle: 'Toggle Navigation Sidebar (Errored Entries)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+    },
+    'cart.html': {
+      title: 'Cart & Recycle Bin',
+      btnTitle: 'Toggle Navigation Sidebar (Cart)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>'
+    },
+    'settings.html': {
+      title: 'User Settings & Preferences',
+      btnTitle: 'Toggle Navigation Sidebar (Settings)',
+      svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:block"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
+    }
+  };
+
+  function getCurrentPageName() {
+    const p = (window.location.pathname.split('/').pop() || 'home.html').toLowerCase();
+    return p || 'home.html';
+  }
+
+  function setSidebarOpen(open) {
+    if (open) {
+      document.body.classList.add('sidebar-open');
+    } else {
+      document.body.classList.remove('sidebar-open');
+    }
+    const btn = document.getElementById('sidebarToggleHomeBtn') || document.querySelector('.cv-home-nav-btn');
+    if (btn) {
+      const curPage = getCurrentPageName();
+      const cfg = PAGE_CONFIG[curPage] || PAGE_CONFIG['home.html'];
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.setAttribute('title', open ? `Close Navigation Sidebar (${cfg.title})` : cfg.btnTitle);
+      btn.classList.toggle('is-active', open);
+    }
+    try { localStorage.setItem('cv_sidebar_open', open ? 'true' : 'false'); } catch (e) { }
+  }
+  window.setSidebarOpen = setSidebarOpen;
+
+  function toggleSidebar() {
+    const isOpen = document.body.classList.toggle('sidebar-open');
+    const btn = document.getElementById('sidebarToggleHomeBtn') || document.querySelector('.cv-home-nav-btn');
+    if (btn) {
+      const curPage = getCurrentPageName();
+      const cfg = PAGE_CONFIG[curPage] || PAGE_CONFIG['home.html'];
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      btn.setAttribute('title', isOpen ? `Close Navigation Sidebar (${cfg.title})` : cfg.btnTitle);
+      btn.classList.toggle('is-active', isOpen);
+    }
+    try { localStorage.setItem('cv_sidebar_open', isOpen ? 'true' : 'false'); } catch (e) { }
+    return isOpen;
+  }
+  window.toggleSidebar = toggleSidebar;
+
+  function updateUniversalUserGreeting() {
+    try {
+      let u = null;
+      try {
+        u = JSON.parse(localStorage.getItem('currentUser') || localStorage.getItem('user') || sessionStorage.getItem('currentUser') || sessionStorage.getItem('user') || 'null');
+      } catch (e) { }
+      const now = new Date();
+      const h = now.getHours();
+      let greet = 'Good morning';
+      if (h >= 12 && h < 17) greet = 'Good afternoon';
+      else if (h >= 17) greet = 'Good evening';
+
+      const dispName = (u && (u.name || u.user_id || u.username)) ? (u.name || u.user_id || u.username) : 'Shilish Reddy';
+      const hiEl = document.getElementById('hi');
+      if (hiEl) hiEl.textContent = `${greet}, ${dispName}`;
+
+      const firstLetter = (dispName.charAt(0) || 'S').toUpperCase();
+      const avEl = document.getElementById('userAvatarCircle');
+      if (avEl) avEl.textContent = firstLetter;
+
+      const r = (u && (u.role || (u.is_admin ? 'admin' : 'standard'))) ? String(u.role || (u.is_admin ? 'admin' : 'standard')).toUpperCase() : 'ADMIN';
+      const roleEl = document.getElementById('rolePill');
+      if (roleEl) {
+        roleEl.textContent = r;
+        roleEl.className = `role-pill ${r.toLowerCase().includes('admin') ? 'admin' : 'standard'}`;
+      }
+    } catch (e) {
+      console.warn('Greeting update warning:', e);
+    }
+  }
+  window.updateUniversalUserGreeting = updateUniversalUserGreeting;
+
+  function syncTopHeaderPageIcon() {
+    try {
+      const curPage = getCurrentPageName();
+      const cfg = PAGE_CONFIG[curPage] || PAGE_CONFIG['home.html'];
+      const btn = document.getElementById('sidebarToggleHomeBtn') || document.querySelector('.cv-home-nav-btn');
+      if (btn) {
+        btn.setAttribute('aria-label', `Toggle Navigation Sidebar (${cfg.title})`);
+        btn.setAttribute('title', cfg.btnTitle);
+        const iconSpan = btn.querySelector('.home-btn-icon');
+        if (iconSpan && cfg.svg) {
+          iconSpan.innerHTML = cfg.svg;
+        }
+      }
+    } catch (e) { }
+  }
+
+  function initUniversalHeaderActions() {
+    updateUniversalUserGreeting();
+    syncTopHeaderPageIcon();
+
+    // Auto-close sidebar on initial page boot so destination pages always open fully
+    document.body.classList.remove('sidebar-open');
+    try {
+      localStorage.setItem('cv_sidebar_open', 'false');
+    } catch (e) { }
+
+    // Wire #bQs (Quick Search)
+    const qs = document.getElementById('bQs');
+    if (qs && !qs.dataset.universalBound) {
+      qs.dataset.universalBound = 'true';
+      qs.addEventListener('click', function (e) {
+        const inp = document.querySelector('#liveSearchInput, #searchInput, #imeiInput, #invSearchInput, #q, #filterQ, input[type="search"]');
+        if (inp) {
+          e.preventDefault();
+          inp.focus();
+          inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (!window.location.pathname.endsWith('fetch-data.html') && !window.location.pathname.endsWith('inventory.html')) {
+          window.location.href = 'inventory.html';
+        }
+      });
+    }
+
+    // Wire #bRefresh (Reload current data)
+    const ref = document.getElementById('bRefresh');
+    if (ref && !ref.dataset.universalBound) {
+      ref.dataset.universalBound = 'true';
+      ref.addEventListener('click', function (e) {
+        if (window.location.pathname.endsWith('home.html') || window.location.pathname.endsWith('dashboard.html')) {
+          return; // handled by page script
+        }
+        if (typeof window.toast === 'function') window.toast('Refreshing current data…');
+        if (typeof window.refreshPageData === 'function') {
+          window.refreshPageData();
+        } else if (typeof window.loadData === 'function') {
+          window.loadData();
+        } else if (typeof window.loadInventory === 'function') {
+          window.loadInventory();
+        } else if (typeof window.loadOverviewData === 'function') {
+          window.loadOverviewData();
+        } else {
+          window.location.reload();
+        }
+      });
+    }
+
+    // Wire #bAl (Toggle Expiry Alerts)
+    const al = document.getElementById('bAl');
+    if (al && !al.dataset.universalBound) {
+      al.dataset.universalBound = 'true';
+      al.addEventListener('click', function (e) {
+        if (window.location.pathname.endsWith('home.html') || window.location.pathname.endsWith('dashboard.html')) {
+          return; // handled by page script
+        }
+        window.location.href = 'alerts.html';
+      });
+    }
+
+    // Wire #bLo (Logout)
+    const lo = document.getElementById('bLo');
+    if (lo && !lo.dataset.universalBound) {
+      lo.dataset.universalBound = 'true';
+      lo.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (typeof window.logout === 'function') {
+          window.logout(true);
+        } else {
+          universalLogout(true);
+        }
+      });
+    }
+  }
+
+  async function universalLogout(confirmFirst = false) {
+    if (confirmFirst && window.cv && typeof window.cv.confirm === 'function') {
+      const ok = await window.cv.confirm('Are you sure you want to sign out of BSTPL CustomerVault?');
+      if (!ok) return;
+    }
+    try {
+      fetch('/api/logout', { method: 'POST' }).catch(() => {});
+    } catch (e) {}
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentUser');
+    sessionStorage.clear();
+    window.location.href = 'login.html';
+  }
+  window.logout = window.logout || universalLogout;
+
+  // Auto-close sidebar on ANY sidebar navigation item selection and open destination page fully
+  document.addEventListener('click', function (e) {
+    const navItem = e.target.closest('.cv-sidebar-menu a, .cv-nav-item');
+    if (navItem) {
+      // Immediately close the sidebar
+      setSidebarOpen(false);
+      try {
+        localStorage.setItem('cv_sidebar_open', 'false');
+      } catch (err) { }
+    }
+  }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initUniversalHeaderActions);
+  } else {
+    initUniversalHeaderActions();
+  }
+

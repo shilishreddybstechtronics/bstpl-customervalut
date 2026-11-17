@@ -1966,6 +1966,59 @@
 
     <main class="cv-main-panel" id="cvMainPanel">
 
+      <!-- Universal Top Navigation Header -->
+      <header class="cv-top-header">
+        <div class="cv-header-single-line"
+          style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:16px">
+          <!-- Left: Page Toggle Button, BSTPL Symbol FIRST, Good Afternoon Greeting & Role Badge -->
+          <div class="user-greeting-wrap"
+            style="display:flex;align-items:center;gap:12px;margin-left:0;margin-right:auto;flex-shrink:0">
+            <!-- BSTPL Logo on the LEFT Side (Visible when sidebar closes, Off when sidebar opens) -->
+            <a class="header-bstpl-brand" id="headerBstplBrand" href="settings.html" title="BSTPL CustomerVault — Go to Settings" style="text-decoration:none" onclick="sessionStorage.setItem('last_home_inv_page', 'inventory.html');">
+              <div class="header-logo-icon">
+                <img src="logo.svg" alt="BSTPL Logo" />
+              </div>
+              <div class="header-logo-text">
+                <span class="header-logo-title">BSTPL CustomerVault</span>
+                <span class="header-logo-sub">DEVICE &amp; INVENTORY SYSTEMS</span>
+              </div>
+            </a>
+
+            <!-- Page Icon Navigation Toggle Button (Customer Inventory Icon) -->
+            <button type="button" id="sidebarToggleHomeBtn" class="cv-home-nav-btn" onclick="toggleSidebar()"
+              aria-label="Toggle Navigation Sidebar (Customer Inventory)" title="Toggle Navigation Sidebar (Customer Inventory)">
+              <span class="home-btn-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true" style="display:block">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  <path d="M9 14l2 2 4-4"></path>
+                </svg></span>
+            </button>
+
+            <div class="cv-avatar-circle" id="userAvatarCircle" title="User Settings &amp; Preferences"
+              onclick="location.href='settings.html'"
+              style="cursor:pointer;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--primary,#1d68e1),var(--accent,#fca311));color:#fff;font-size:17px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,0.18)">
+              S</div>
+            <div class="user-badge" id="uBadge"
+              style="display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:var(--card-subtle);border:1px solid var(--line);border-radius:99px;font-weight:700;font-size:13.5px">
+              <span id="hi">Good afternoon, Shilish Reddy</span>
+              <span class="role-pill admin" id="rolePill">ADMIN</span>
+            </div>
+          </div>
+
+          <!-- Right: Remaining Items (Search, Refresh, Alerts, Logout) -->
+          <div class="cv-header-actions acts"
+            style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap">
+            <button class="b" id="bQs" title="Quick Search (Ctrl + K)"><span>🔎 Search</span></button>
+            <button class="b" id="bRefresh" title="Reload current data">🔄 Refresh</button>
+            <button class="b on" id="bAl" title="Toggle Expiry Alerts">Alerts: ON</button>
+            <button class="b b-logout" id="bLo" type="button" onclick="logout(true)" title="Sign out of your session"
+              style="font-weight:700;padding:6px 14px;border-radius:8px">Logout</button>
+          </div>
+        </div>
+      </header>
+
       <section class="container-box active" id="box-inv" style="display:block;">
         <div class="container-tag">📋 Customer Inventory Hub</div>
         <div class="row" style="margin-bottom:6px">
