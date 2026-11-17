@@ -261,29 +261,34 @@
       width: 100%;
     }
 
-    /* Sidebar Navigation — Kept visible as usual, collapsible via Home icon */
+    /* Sidebar Navigation — Controlled exclusively by the Home Icon */
     .cv-sidebar {
-      width: 260px;
-      flex-shrink: 0;
-      background: var(--cv-sidebar-bg, linear-gradient(180deg, #091a38 0%, #0d2249 100%)) !important;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      padding: 24px 16px 20px;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      box-shadow: 2px 0 16px rgba(9, 19, 43, 0.15);
-      z-index: 100;
-      box-sizing: border-box;
+      width: 0 !important;
+      min-width: 0 !important;
+      max-width: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
+      overflow: hidden !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      box-shadow: none !important;
       transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
                   padding 0.32s cubic-bezier(0.16, 1, 0.3, 1),
                   opacity 0.22s ease,
                   box-shadow 0.32s ease,
                   visibility 0.32s ease !important;
+      flex-shrink: 0;
+      background: var(--cv-sidebar-bg, linear-gradient(180deg, #091a38 0%, #0d2249 100%)) !important;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 1000;
+      box-sizing: border-box;
     }
     .cv-sidebar::-webkit-scrollbar {
       display: none;
@@ -300,22 +305,20 @@
       box-sizing: border-box;
     }
 
-    /* Collapsed state when toggled via the Home icon */
-    body.sidebar-collapsed .cv-sidebar {
-      width: 0 !important;
-      min-width: 0 !important;
-      max-width: 0 !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      border: none !important;
-      overflow: hidden !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-      box-shadow: none !important;
+    /* Open state when Home icon is pressed */
+    body.sidebar-open .cv-sidebar {
+      width: 260px !important;
+      min-width: 260px !important;
+      max-width: 260px !important;
+      padding: 24px 16px 20px !important;
+      overflow-y: auto !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      box-shadow: 4px 0 24px rgba(9, 19, 43, 0.2) !important;
     }
 
-    /* Home Icon Button in Top Header — Only the Home Icon, Adjusted Nicely (40x40) */
+    /* Home Icon Button in Top Header (40x40) */
     .cv-home-nav-btn {
       display: inline-flex;
       align-items: center;
@@ -339,19 +342,21 @@
       border-color: var(--primary);
       transform: translateY(-1px);
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      color: var(--primary);
     }
     .cv-home-nav-btn:active {
       transform: translateY(0);
     }
     .cv-home-nav-btn.is-active,
-    body.sidebar-collapsed .cv-home-nav-btn {
+    body.sidebar-open .cv-home-nav-btn {
       border-color: var(--primary);
       background: var(--card-subtle);
-      box-shadow: 0 0 0 2px rgba(29, 104, 225, 0.2);
+      box-shadow: 0 0 0 2px rgba(29, 104, 225, 0.25);
+      color: var(--primary);
     }
     .cv-home-nav-btn .home-btn-icon {
-      font-size: 19px;
-      line-height: 1;
+      width: 20px;
+      height: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -361,21 +366,21 @@
       transform: scale(1.15);
     }
 
-    /* BSTPL Logo beside Home Icon — Off when navbar is open, Visible when navbar is closed */
+    /* BSTPL Logo beside Home Icon — Visible when navbar is closed, OFF when navbar is open */
     .header-bstpl-brand {
-      display: none;
+      display: inline-flex;
       align-items: center;
       gap: 10px;
-      opacity: 0;
+      opacity: 1;
+      transform: translateX(0);
       transition: opacity 0.25s ease, transform 0.25s ease;
-      transform: translateX(-4px);
       user-select: none;
       flex-shrink: 0;
     }
-    body.sidebar-collapsed .header-bstpl-brand {
-      display: inline-flex;
-      opacity: 1;
-      transform: translateX(0);
+    body.sidebar-open .header-bstpl-brand {
+      display: none !important;
+      opacity: 0 !important;
+      transform: translateX(-4px);
     }
     .header-bstpl-brand .header-logo-icon {
       width: 40px;
@@ -1698,7 +1703,6 @@
           <div class="cv-brand-title">BSTPL CustomerVault</div>
           <div class="cv-brand-sub">DEVICE &amp; INVENTORY SYSTEMS</div>
         </div>
-        <button type="button" class="cv-sidebar-close-btn" id="sidebarCloseBtn" onclick="setSidebarVisible(false)" title="Hide Navigation Bar (Esc)" aria-label="Close Navigation">✕</button>
       </div>
 
       <nav class="cv-sidebar-menu">
@@ -1764,7 +1768,6 @@
       </div>
           </div>
     </aside>
-    <div class="cv-sidebar-backdrop" id="cvSidebarBackdrop" onclick="setSidebarVisible(false)"></div>
 
     <main class="cv-main-panel" id="cvMainPanel">
 
@@ -2211,55 +2214,55 @@
 
 
     // =========================================================================
-    // NAVIGATION SIDEBAR CONTROLLER (Kept visible as usual, toggleable via Home icon)
+    // NAVIGATION SIDEBAR CONTROLLER (Controlled EXCLUSIVELY by the Home icon)
     // =========================================================================
     function toggleSidebar() {
-      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+      const isOpen = document.body.classList.toggle('sidebar-open');
       const btn = document.getElementById('sidebarToggleHomeBtn');
       if (btn) {
-        btn.setAttribute('aria-expanded', !isCollapsed);
-        btn.setAttribute('title', isCollapsed ? 'Show Navigation Sidebar (Home)' : 'Hide Navigation Sidebar');
-        btn.classList.toggle('is-active', isCollapsed);
+        btn.setAttribute('aria-expanded', isOpen);
+        btn.setAttribute('title', isOpen ? 'Close Navigation Sidebar (Home)' : 'Open Navigation Sidebar (Home)');
+        btn.classList.toggle('is-active', isOpen);
       }
-      try { localStorage.setItem('cv_sidebar_collapsed', isCollapsed ? 'true' : 'false'); } catch (e) {}
+      try { localStorage.setItem('cv_sidebar_open', isOpen ? 'true' : 'false'); } catch (e) {}
     }
 
-    function setSidebarVisible(visible) {
-      setSidebarCollapsed(!visible);
-    }
-
-    function setSidebarCollapsed(collapsed) {
-      if (collapsed) {
-        document.body.classList.add('sidebar-collapsed');
+    function setSidebarOpen(open) {
+      if (open) {
+        document.body.classList.add('sidebar-open');
       } else {
-        document.body.classList.remove('sidebar-collapsed');
+        document.body.classList.remove('sidebar-open');
       }
       const btn = document.getElementById('sidebarToggleHomeBtn');
       if (btn) {
-        btn.setAttribute('aria-expanded', !collapsed);
-        btn.setAttribute('title', collapsed ? 'Show Navigation Sidebar (Home)' : 'Hide Navigation Sidebar');
-        btn.classList.toggle('is-active', collapsed);
+        btn.setAttribute('aria-expanded', open);
+        btn.setAttribute('title', open ? 'Close Navigation Sidebar (Home)' : 'Open Navigation Sidebar (Home)');
+        btn.classList.toggle('is-active', open);
       }
-      try { localStorage.setItem('cv_sidebar_collapsed', collapsed ? 'true' : 'false'); } catch (e) {}
+      try { localStorage.setItem('cv_sidebar_open', open ? 'true' : 'false'); } catch (e) {}
     }
 
-    // Initialize sidebar state on page load: Visible as usual
+    // Initialize sidebar state on page load: Starts closed
     (function initSidebarState() {
       try {
-        const saved = localStorage.getItem('cv_sidebar_collapsed');
+        const saved = localStorage.getItem('cv_sidebar_open');
         if (saved === 'true') {
-          setSidebarCollapsed(true);
+          setSidebarOpen(true);
         } else {
-          setSidebarCollapsed(false);
+          setSidebarOpen(false);
         }
       } catch (e) {
-        setSidebarCollapsed(false);
+        setSidebarOpen(false);
       }
 
-      // Close navigation on Escape key
-      window.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !document.body.classList.contains('sidebar-collapsed')) {
-          setSidebarCollapsed(true);
+      // If user chooses the Home option inside the open navbar, close it
+      window.addEventListener('DOMContentLoaded', function() {
+        const homeNavItem = document.querySelector('.cv-sidebar-menu .cv-nav-item[href="home.html"]');
+        if (homeNavItem) {
+          homeNavItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleSidebar();
+          });
         }
       });
     })();
