@@ -10,7 +10,7 @@
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 
   <!-- WHAT IS HAPPENING BELOW: Global Branded Auth Loader and Early Theme Detection (Default Light Mode) -->
   <script>
@@ -65,218 +65,209 @@
       padding: 0;
     }
 
-    /* 1. ROYAL NAVY PALETTE (Default) */
+    /* 4 Themed Palettes (Matching Settings & System) */
+    /* 1. ROYAL NAVY (Default) */
     [data-palette="royal_navy"][data-mode="light"],
     [data-palette="royal_navy"]:not([data-mode="dark"]),
     :root:not([data-palette]) {
-      --bg: #f0f4f9;
-      --bg-gradient: none;
+      --bg: #f8fafc;
+      --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #edf2f9 100%);
       --card: #ffffff;
       --card-subtle: #f1f5f9;
-      --card-border: #cbd5e1;
-      --card-border-focus: #2563eb;
-      --text: #0f172a;
+      --text: #0b1a30;
       --text-dim: #475569;
-      --text-muted: #64748b;
+      --ink: #0b1a30;
+      --ink2: #1e293b;
+      --line: #cbd5e1;
       --primary: #0f2b5c;
-      --primary-hover: #1d4ed8;
-      --primary-gradient: linear-gradient(135deg, #0f2b5c 0%, #1e40af 50%, #2563eb 100%);
+      --primary-hover: #0a1c3d;
       --accent: #d4af37;
-      --accent-light: rgba(212, 175, 55, 0.15);
-      --input-bg: #f8fafc;
-      --input-border: #cbd5e1;
+      --accentd: #b38f26;
+      --accent-light: #fef9ee;
+      --muted: #475569;
       --ok: #16a34a;
-      --ok-bg: rgba(22, 163, 74, 0.1);
       --danger: #dc2626;
-      --danger-bg: rgba(220, 38, 38, 0.08);
-      --font: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --shadow: 0 12px 36px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
-      --shadow-hover: 0 20px 48px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #091a38 0%, #0d2249 100%);
+      --shadow: 0 1px 3px rgba(20, 33, 61, .06), 0 18px 45px rgba(20, 33, 61, .08);
     }
     [data-palette="royal_navy"][data-mode="dark"],
     [data-mode="dark"]:not([data-palette]) {
-      --bg: #070d19;
-      --bg-gradient: radial-gradient(circle at 20% 20%, #0d1e3d 0%, #060b14 100%);
+      --bg: #080f1d;
+      --bg-gradient: linear-gradient(180deg, #080f1d 0%, #0e1b33 100%);
       --card: #0e1b33;
       --card-subtle: #142546;
-      --card-border: rgba(56, 189, 248, 0.2);
-      --card-border-focus: #38bdf8;
       --text: #f8fafc;
       --text-dim: #94a3b8;
-      --text-muted: #64748b;
+      --ink: #f8fafc;
+      --ink2: #cbd5e1;
+      --line: #1e355b;
       --primary: #38bdf8;
       --primary-hover: #0ea5e9;
-      --primary-gradient: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
       --accent: #d4af37;
+      --accentd: #f59e0b;
       --accent-light: rgba(212, 175, 55, 0.15);
-      --input-bg: rgba(255, 255, 255, 0.04);
-      --input-border: rgba(255, 255, 255, 0.15);
+      --muted: #94a3b8;
       --ok: #34d399;
-      --ok-bg: rgba(52, 211, 153, 0.12);
       --danger: #f87171;
-      --danger-bg: rgba(239, 68, 68, 0.12);
-      --font: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #040913 0%, #081224 100%);
+      --shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
     }
 
-    /* 2. MIDNIGHT PALETTE */
-    [data-palette="midnight"][data-mode="light"] {
-      --bg: #f1f5f9;
-      --bg-gradient: radial-gradient(circle at 15% 15%, #e2e8f0 0%, #f1f5f9 100%);
-      --card: #ffffff;
-      --card-subtle: #f8fafc;
-      --card-border: #cbd5e1;
-      --card-border-focus: #2563eb;
-      --text: #0f172a;
-      --text-dim: #475569;
-      --text-muted: #64748b;
-      --primary: #1e3a8a;
-      --primary-hover: #1d4ed8;
-      --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-      --accent: #eab308;
-      --accent-light: rgba(234, 179, 8, 0.15);
-      --input-bg: #f8fafc;
-      --input-border: #cbd5e1;
-      --ok: #059669;
-      --ok-bg: rgba(5, 150, 105, 0.1);
-      --danger: #dc2626;
-      --danger-bg: rgba(220, 38, 38, 0.08);
-      --font: 'Manrope', sans-serif;
-      --shadow: 0 12px 36px rgba(15, 23, 42, 0.08);
-      --shadow-hover: 0 20px 48px rgba(15, 23, 42, 0.12);
-    }
-    [data-palette="midnight"][data-mode="dark"] {
+    /* 2. MIDNIGHT */
+    [data-palette="midnight"][data-mode="dark"],
+    [data-palette="midnight"]:not([data-mode="light"]) {
       --bg: #070d19;
-      --bg-gradient: radial-gradient(circle at 15% 15%, #0f1a2e 0%, #070d19 100%);
+      --bg-gradient: linear-gradient(180deg, #070d19 0%, #0f1a2e 100%);
       --card: #0f1a2e;
       --card-subtle: #16243d;
-      --card-border: rgba(59, 130, 246, 0.25);
-      --card-border-focus: #3b82f6;
       --text: #f1f5f9;
       --text-dim: #94a3b8;
-      --text-muted: #64748b;
+      --ink: #f1f5f9;
+      --ink2: #cbd5e1;
+      --line: #1e293b;
       --primary: #3b82f6;
-      --primary-hover: #60a5fa;
-      --primary-gradient: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+      --primary-hover: #2563eb;
       --accent: #eab308;
+      --accentd: #ca8a04;
       --accent-light: rgba(234, 179, 8, 0.15);
-      --input-bg: rgba(255, 255, 255, 0.04);
-      --input-border: rgba(255, 255, 255, 0.15);
+      --muted: #94a3b8;
       --ok: #34d399;
-      --ok-bg: rgba(52, 211, 153, 0.12);
       --danger: #f87171;
-      --danger-bg: rgba(239, 68, 68, 0.12);
-      --font: 'Manrope', sans-serif;
-      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+      --warn: #eab308;
+      --cv-sidebar-bg: linear-gradient(180deg, #040811 0%, #091322 100%);
+      --shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
+    }
+    [data-palette="midnight"][data-mode="light"] {
+      --bg: #f1f5f9;
+      --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      --card: #ffffff;
+      --card-subtle: #f8fafc;
+      --text: #0f172a;
+      --text-dim: #475569;
+      --ink: #0f172a;
+      --ink2: #1e293b;
+      --line: #cbd5e1;
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --accent: #ca8a04;
+      --accentd: #a16207;
+      --accent-light: #fefce8;
+      --muted: #475569;
+      --ok: #059669;
+      --danger: #dc2626;
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #0a1122 0%, #111d38 100%);
+      --shadow: 0 1px 3px rgba(20, 33, 61, .06), 0 18px 45px rgba(20, 33, 61, .08);
     }
 
-    /* 3. EMERALD PALETTE */
-    [data-palette="emerald"][data-mode="light"] {
-      --bg: #f0fdf7;
-      --bg-gradient: radial-gradient(circle at 15% 15%, #d1fae5 0%, #f2fbf6 100%);
+    /* 3. EMERALD */
+    [data-palette="emerald"][data-mode="light"],
+    [data-palette="emerald"]:not([data-mode="dark"]) {
+      --bg: #f2fbf6;
+      --bg-gradient: linear-gradient(180deg, #f2fbf6 0%, #e6f7ee 100%);
       --card: #ffffff;
-      --card-subtle: #ecfdf5;
-      --card-border: #a7f3d0;
-      --card-border-focus: #059669;
+      --card-subtle: #e6f7ee;
       --text: #064e3b;
       --text-dim: #047857;
-      --text-muted: #059669;
+      --ink: #064e3b;
+      --ink2: #065f46;
+      --line: #a7f3d0;
       --primary: #065f46;
-      --primary-hover: #047857;
-      --primary-gradient: linear-gradient(135deg, #065f46 0%, #059669 100%);
-      --accent: #d97706;
-      --accent-light: rgba(217, 119, 6, 0.15);
-      --input-bg: #f8fafc;
-      --input-border: #cbd5e1;
+      --primary-hover: #044e39;
+      --accent: #d4af37;
+      --accentd: #b38f26;
+      --accent-light: #fef9ee;
+      --muted: #047857;
       --ok: #059669;
-      --ok-bg: rgba(5, 150, 105, 0.1);
       --danger: #dc2626;
-      --danger-bg: rgba(220, 38, 38, 0.08);
-      --font: 'Manrope', sans-serif;
-      --shadow: 0 12px 36px rgba(6, 78, 59, 0.08);
-      --shadow-hover: 0 20px 48px rgba(6, 78, 59, 0.12);
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #063d2e 0%, #084f3c 100%);
+      --shadow: 0 1px 3px rgba(6, 78, 59, .06), 0 18px 45px rgba(6, 78, 59, .08);
     }
     [data-palette="emerald"][data-mode="dark"] {
       --bg: #031a14;
-      --bg-gradient: radial-gradient(circle at 15% 15%, #062c21 0%, #031a14 100%);
+      --bg-gradient: linear-gradient(180deg, #031a14 0%, #062c21 100%);
       --card: #062c21;
       --card-subtle: #093d2e;
-      --card-border: rgba(16, 185, 129, 0.25);
-      --card-border-focus: #10b981;
       --text: #ecfdf5;
       --text-dim: #a7f3d0;
-      --text-muted: #6ee7b7;
+      --ink: #ecfdf5;
+      --ink2: #a7f3d0;
+      --line: #0f533f;
       --primary: #10b981;
-      --primary-hover: #34d399;
-      --primary-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      --primary-hover: #059669;
       --accent: #fbbf24;
+      --accentd: #f59e0b;
       --accent-light: rgba(251, 191, 36, 0.15);
-      --input-bg: rgba(255, 255, 255, 0.04);
-      --input-border: rgba(255, 255, 255, 0.15);
+      --muted: #6ee7b7;
       --ok: #34d399;
-      --ok-bg: rgba(52, 211, 153, 0.12);
       --danger: #f87171;
-      --danger-bg: rgba(239, 68, 68, 0.12);
-      --font: 'Manrope', sans-serif;
-      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #02120d 0%, #041f17 100%);
+      --shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
     }
 
-    /* 4. CRIMSON VAULT PALETTE */
-    [data-palette="crimson_vault"][data-mode="light"] {
-      --bg: #fff5f7;
-      --bg-gradient: radial-gradient(circle at 15% 15%, #ffe4e6 0%, #fff5f5 100%);
+    /* 4. CRIMSON VAULT */
+    [data-palette="crimson_vault"][data-mode="light"],
+    [data-palette="crimson_vault"]:not([data-mode="dark"]) {
+      --bg: #fff5f5;
+      --bg-gradient: linear-gradient(180deg, #fff5f5 0%, #ffe4e6 100%);
       --card: #ffffff;
-      --card-subtle: #fff1f2;
-      --card-border: #fecdd3;
-      --card-border-focus: #e11d48;
-      --text: #881337;
-      --text-dim: #9f1239;
-      --text-muted: #be123c;
-      --primary: #9f1239;
-      --primary-hover: #be123c;
-      --primary-gradient: linear-gradient(135deg, #9f1239 0%, #e11d48 100%);
-      --accent: #d97706;
-      --accent-light: rgba(217, 119, 6, 0.15);
-      --input-bg: #ffffff;
-      --input-border: #fecdd3;
+      --card-subtle: #ffe4e6;
+      --text: #4c0519;
+      --text-dim: #881337;
+      --ink: #4c0519;
+      --ink2: #881337;
+      --line: #fecdd3;
+      --primary: #881337;
+      --primary-hover: #700f2d;
+      --accent: #d4af37;
+      --accentd: #b38f26;
+      --accent-light: #fef9ee;
+      --muted: #9f1239;
       --ok: #059669;
-      --ok-bg: rgba(5, 150, 105, 0.1);
       --danger: #dc2626;
-      --danger-bg: rgba(220, 38, 38, 0.08);
-      --font: 'Manrope', sans-serif;
-      --shadow: 0 12px 36px rgba(136, 19, 55, 0.08);
-      --shadow-hover: 0 20px 48px rgba(136, 19, 55, 0.12);
+      --warn: #d97706;
+      --cv-sidebar-bg: linear-gradient(180deg, #4c0519 0%, #680822 100%);
+      --shadow: 0 1px 3px rgba(76, 5, 25, .06), 0 18px 45px rgba(76, 5, 25, .08);
     }
     [data-palette="crimson_vault"][data-mode="dark"] {
-      --bg: #1a080c;
-      --bg-gradient: radial-gradient(circle at 15% 15%, #2a0b12 0%, #1a080c 100%);
-      --card: #240c13;
-      --card-subtle: #301018;
-      --card-border: rgba(244, 63, 94, 0.25);
-      --card-border-focus: #f43f5e;
-      --text: #ffe4e6;
-      --text-dim: #fda4af;
-      --text-muted: #fb7185;
-      --primary: #f43f5e;
-      --primary-hover: #fb7185;
-      --primary-gradient: linear-gradient(135deg, #be123c 0%, #f43f5e 100%);
+      --bg: #1a050b;
+      --bg-gradient: linear-gradient(180deg, #1a050b 0%, #2c0b15 100%);
+      --card: #2c0b15;
+      --card-subtle: #3f101f;
+      --text: #fff1f2;
+      --text-dim: #fecdd3;
+      --ink: #fff1f2;
+      --ink2: #fecdd3;
+      --line: #5c1126;
+      --primary: #fb7185;
+      --primary-hover: #f43f5e;
       --accent: #fbbf24;
+      --accentd: #f59e0b;
       --accent-light: rgba(251, 191, 36, 0.15);
-      --input-bg: rgba(255, 255, 255, 0.04);
-      --input-border: rgba(255, 255, 255, 0.15);
+      --muted: #fda4af;
       --ok: #34d399;
-      --ok-bg: rgba(52, 211, 153, 0.12);
       --danger: #f87171;
-      --danger-bg: rgba(239, 68, 68, 0.12);
-      --font: 'Manrope', sans-serif;
-      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-      --shadow-hover: 0 24px 60px rgba(0, 0, 0, 0.6);
+      --warn: #fbbf24;
+      --cv-sidebar-bg: linear-gradient(180deg, #180308 0%, #22050e 100%);
+      --shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
     }
 
-    
+    /* Component Mappings & Semantic Fallbacks (100% Matching Settings & System) */
+    :root {
+      --card-border: var(--line);
+      --card-border-focus: var(--primary);
+      --text-muted: var(--muted);
+      --primary-gradient: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      --input-bg: var(--card-subtle);
+      --input-border: var(--line);
+      --ok-bg: rgba(22, 163, 74, 0.12);
+      --danger-bg: rgba(220, 38, 38, 0.12);
+    }
+
     /* Typography System & Dynamic Font Switching */
     :root {
       --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -301,16 +292,15 @@
       font-family: var(--font-family) !important;
     }
 
-            html {
-      background-color: var(--bg);
-      background-image: none !important;
-      transition: background-color 0.25s ease, color 0.25s ease;
+    html {
+      background: var(--bg-gradient, var(--bg));
+      min-height: 100%;
+      transition: background 0.25s ease, color 0.25s ease;
     }
 
     body {
-      font-family: var(--font);
-      background-color: var(--bg) !important;
-      background-image: none !important;
+      font-family: var(--font-family);
+      background: var(--bg-gradient, var(--bg)) !important;
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -318,15 +308,15 @@
       justify-content: flex-start;
       overflow-x: hidden;
       position: relative;
-      transition: background-color 0.25s ease, color 0.25s ease;
+      transition: background 0.25s ease, color 0.25s ease;
     }
 
-    /* Clean single solid color background - no texture overlay */
+    /* Clean solid background - no texture overlay */
     body::before {
       display: none !important;
     }
 
-        /* ========================================================================= */
+    /* ========================================================================= */
     /* TOP NAVIGATION HEADER BAR & BRAND ARRANGEMENT                             */
     /* ========================================================================= */
     .index-top-bar {
@@ -336,7 +326,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 16px 40px;
-      border-bottom: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--line);
       background: var(--card);
       box-shadow: 0 1px 4px rgba(15, 23, 42, 0.03);
       transition: background-color 0.25s ease, border-color 0.25s ease;
@@ -359,14 +349,14 @@
       width: 48px;
       height: 48px;
       border-radius: 12px;
-      background: #ffffff;
+      background: var(--card);
       padding: 3px;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-      border: 1.5px solid #e2e8f0;
+      box-shadow: var(--shadow);
+      border: 1.5px solid var(--line);
       flex-shrink: 0;
     }
     .cv-brand-icon img {
@@ -386,14 +376,14 @@
       font-size: 18px;
       font-weight: 800;
       letter-spacing: -0.4px;
-      color: #0f172a;
+      color: var(--text);
       line-height: 1.2;
     }
     .cv-brand-sub {
       font-size: 10px;
       font-weight: 800;
       letter-spacing: 0.9px;
-      color: #2563eb;
+      color: var(--primary);
       text-transform: uppercase;
       line-height: 1;
     }
@@ -476,7 +466,7 @@
       background: var(--card-subtle);
     }
     .theme-opt-item.active {
-      background: var(--primary-gradient);
+      background: var(--primary);
       color: #ffffff;
     }
     .theme-dot-badge {
@@ -516,9 +506,9 @@
       border-radius: 99px;
       font-size: 12px;
       font-weight: 700;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      color: #334155;
+      background: var(--card-subtle);
+      border: 1px solid var(--line);
+      color: var(--text-dim);
       letter-spacing: 0.2px;
       white-space: nowrap;
     }
@@ -752,13 +742,13 @@
       height: 50px;
       border: none;
       border-radius: 12px;
-      background: var(--primary-gradient);
+      background: var(--primary);
       color: #ffffff;
       font-size: 15px;
       font-weight: 800;
       letter-spacing: 0.2px;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(15, 43, 92, 0.22);
+      box-shadow: var(--shadow);
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       align-items: center;
@@ -766,8 +756,9 @@
       gap: 8px;
     }
     .auth-submit-btn:hover:not(:disabled) {
+      background: var(--primary-hover);
       transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(15, 43, 92, 0.32);
+      box-shadow: var(--shadow);
       filter: brightness(1.05);
     }
     .auth-submit-btn:active:not(:disabled) {
@@ -1054,23 +1045,23 @@
         <div class="theme-menu-dropdown" id="themeMenuDropdown">
           <div class="theme-menu-title">Theme Palette</div>
           <button type="button" class="theme-opt-item" data-pal="royal_navy">
-            <span class="theme-dot-badge" style="background:#2563eb"></span>
-            <span>Royal Navy (Soft Ice)</span>
+            <span class="theme-dot-badge" style="background:#0f2b5c"></span>
+            <span>Royal Navy</span>
           </button>
           <button type="button" class="theme-opt-item" data-pal="midnight">
-            <span class="theme-dot-badge" style="background:#64748b"></span>
-            <span>Midnight (Light Slate)</span>
+            <span class="theme-dot-badge" style="background:#3b82f6"></span>
+            <span>Midnight</span>
           </button>
           <button type="button" class="theme-opt-item" data-pal="emerald">
-            <span class="theme-dot-badge" style="background:#059669"></span>
-            <span>Emerald (Light Mint)</span>
+            <span class="theme-dot-badge" style="background:#065f46"></span>
+            <span>Emerald</span>
           </button>
           <button type="button" class="theme-opt-item" data-pal="crimson_vault">
-            <span class="theme-dot-badge" style="background:#e11d48"></span>
-            <span>Crimson (Light Blush)</span>
+            <span class="theme-dot-badge" style="background:#881337"></span>
+            <span>Crimson Vault</span>
           </button>
           <div class="theme-mode-row">
-            <span style="font-size:11px;font-weight:700;color:var(--text-muted)">Mode:</span>
+            <span style="font-size:11px;font-weight:700;color:var(--text-dim)">Mode:</span>
             <button type="button" class="theme-mode-btn" id="btnThemeModeToggle">🌙 Dark Mode</button>
           </div>
         </div>
@@ -1388,16 +1379,18 @@
         'royal_navy': 'Royal Navy',
         'midnight': 'Midnight',
         'emerald': 'Emerald',
-        'crimson_vault': 'Crimson'
+        'crimson_vault': 'Crimson Vault'
       };
 
       function updateUI() {
         const curPal = localStorage.getItem('valut_palette') || 'royal_navy';
         const curMode = localStorage.getItem('valut_theme_mode') || localStorage.getItem('theme') || 'light';
+        const curFont = localStorage.getItem('valut_font') || 'plus_jakarta_sans';
 
         document.documentElement.setAttribute('data-palette', curPal);
         document.documentElement.setAttribute('data-mode', curMode);
         document.documentElement.setAttribute('data-theme', curMode);
+        document.documentElement.setAttribute('data-font', curFont);
 
         if (label) label.textContent = paletteNames[curPal] || 'Theme';
         if (modeBtn) modeBtn.textContent = curMode === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
@@ -1406,6 +1399,12 @@
           b.classList.toggle('active', b.getAttribute('data-pal') === curPal);
         });
       }
+
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'valut_palette' || e.key === 'valut_theme_mode' || e.key === 'theme' || e.key === 'valut_font') {
+          updateUI();
+        }
+      });
 
       if (btn && dropdown) {
         btn.addEventListener('click', function(e) {

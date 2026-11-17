@@ -2889,13 +2889,16 @@
         try {
           localStorage.setItem('valut_palette', pal);
           localStorage.setItem('valut_theme_mode', mode);
+          localStorage.setItem('theme', mode);
         } catch(e) {}
       }
     }
 
     function initTheme() {
-      const m = localStorage.getItem('valut_theme_mode') || 'light';
+      const m = localStorage.getItem('valut_theme_mode') || localStorage.getItem('theme') || 'light';
       const p = localStorage.getItem('valut_palette') || 'royal_navy';
+      const f = localStorage.getItem('valut_font') || 'plus_jakarta_sans';
+      document.documentElement.setAttribute('data-font', f);
       applyTheme(p, m, false);
     }
 
