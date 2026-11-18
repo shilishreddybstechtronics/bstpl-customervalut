@@ -1286,4 +1286,10 @@ body.sidebar-open .cv-sidebar {
   order: 2 !important;
 }
 
-
+/* Hide running timers per user preference in nav-bar and home overview / inventory */
+#sbLiveTime,
+.cv-sb-live-foot,
+#liveTime,
+#dlgLiveTime {
+  display: none !important;
+}

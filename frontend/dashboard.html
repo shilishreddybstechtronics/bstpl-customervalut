@@ -687,12 +687,8 @@
       color: #ffffff;
       line-height: 1.2;
     }
-    .cv-sb-live-foot {
-      font-size: 10px;
-      color: #64748b;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      padding-top: 6px;
-      margin-top: 4px;
+    .cv-sb-live-foot, #sbLiveTime, #liveTime {
+      display: none !important;
     }
 
     /* Sidebar Footer */
@@ -1797,7 +1793,7 @@
             <span class="cv-sb-metric-val" id="sbLiveCustCount">—</span>
           </div>
         </div>
-        <div class="cv-sb-live-foot" id="sbLiveTime">Live • Streaming active</div>
+        <div class="cv-sb-live-foot" id="sbLiveTime" style="display:none!important;">Live • Streaming active</div>
       </div>
           </div>
     </aside>
@@ -1902,7 +1898,7 @@
               <span style="font-size:13px;color:var(--muted);margin-top:2px;display:block">Complete directory of all registered customer device records, SIM assignments, and inventory details.</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:12px;color:var(--muted);font-weight:700" id="liveTime"></span>
+              <span style="font-size:12px;color:var(--muted);font-weight:700;display:none!important;" id="liveTime"></span>
               <button class="b" id="liveExportExcel" style="font-weight:700;padding:8px 16px;border-radius:9px;background:var(--card-subtle);border:1px solid var(--line)">📥 Export to Excel</button>
             </div>
           </div>
@@ -3139,14 +3135,8 @@
 
     // Live sidebar telemetry
     function updateLiveStreamClock() {
-      const el = $('sbLiveTime');
-      if (!el) return;
-      if (typeof livePolling !== 'undefined' && !livePolling) return;
-      const now = new Date();
-      el.textContent = 'Live • ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      /* Live clock display hidden per user requirement */
     }
-    if (typeof setInterval === 'function') setInterval(updateLiveStreamClock, 1000);
-    updateLiveStreamClock();
 
     // Dedicated Sidebar Stats Updater (Works dynamically and reliably)
     async function updateSidebarStats() {
@@ -4236,7 +4226,7 @@
           }
 
           if ($('liveTime')) {
-            $('liveTime').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+            /* liveTime hidden */ if ($('liveTime')) $('liveTime').textContent = '';
           }
         } catch (err) {
           console.error('Live cycle error:', err);
