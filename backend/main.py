@@ -4,6 +4,7 @@ Configures FastAPI routes, security middleware, database migrations, and static 
 """
 import json
 import os
+import asyncio
 from pathlib import Path
 from datetime import timedelta
 from contextlib import asynccontextmanager
@@ -152,7 +153,10 @@ async def lifespan(app: FastAPI):
         print("Database connected and schema verified successfully.")
     except Exception as e:
         print(f"Database startup notice: {e}")
-    yield
+    try:
+        yield
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        pass
 
 
 # ==============================================================================

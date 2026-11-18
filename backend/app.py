@@ -68,27 +68,30 @@ if __name__ == "__main__":
 
     browser_host = "localhost" if host == "0.0.0.0" else host
     print(f"Starting CustomerVault on http://{browser_host}:{port} ...")
-    uvicorn.run(
-        "main:app",
-        host=host,
-        port=port,
-        reload=True,
-        app_dir=str(backend_dir),
-        reload_dirs=[str(backend_dir)],
-        reload_excludes=[
-            "*.log",
-            "*.json",
-            "*.xlsx",
-            "*.env",
-            "*.bak",
-            "*.db*",
-            "*_cache*",
-            "logs/*",
-            "sensorise/logs/*",
-            "telematics_cache.json",
-            "customervault.db*"
-        ]
-    )
+    try:
+        uvicorn.run(
+            "main:app",
+            host=host,
+            port=port,
+            reload=True,
+            app_dir=str(backend_dir),
+            reload_dirs=[str(backend_dir)],
+            reload_excludes=[
+                "*.log",
+                "*.json",
+                "*.xlsx",
+                "*.env",
+                "*.bak",
+                "*.db*",
+                "*_cache*",
+                "logs/*",
+                "sensorise/logs/*",
+                "telematics_cache.json",
+                "customervault.db*"
+            ]
+        )
+    except (KeyboardInterrupt, SystemExit):
+        print("\nCustomerVault server shut down gracefully.")
 elif __name__ not in ("__main__", "__mp_main__"):
     # Expose FastAPI 'app' instance for external ASGI runners (gunicorn, uvicorn CLI e.g. uvicorn backend.app:app)
     # When __name__ == "__mp_main__", multiprocessing on Windows is fixing up __main__; skip importing main.
