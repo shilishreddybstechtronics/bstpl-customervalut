@@ -3220,27 +3220,111 @@
 
     function exportExcel(title, headers, rows) {
       try {
+        if (!rows || !rows.length) {
+          toast('⚠️ No data records to export.');
+          return;
+        }
         toast('Generating Excel file…');
+
+        const safeTitle = (title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_');
+        const fileName = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        // Check if SheetJS (XLSX) is available
         if (typeof XLSX !== 'undefined') {
-          const data = [headers, ...(rows || [])];
-          const ws = XLSX.utils.aoa_to_sheet(data);
+          // 1. Sanitize all rows: prevent [object Object], undefined, null, and preserve long numeric strings as text
+          const cleanHeaders = (headers || []).map(h => String(h ?? '').trim());
+          const cleanRows = rows.map(r => {
+            return (headers || []).map((_, i) => {
+              const val = Array.isArray(r) ? r[i] : (r && typeof r === 'object' ? r[cleanHeaders[i]] : '');
+              if (val == null) return '';
+              if (typeof val === 'object') {
+                try { return JSON.stringify(val); } catch (_) { return String(val); }
+              }
+              return String(val).trim();
+            });
+          });
+
+          // 2. Build worksheet with raw string types for long identifier columns (IMEI, ICCID, MSISDN)
+          const data = [cleanHeaders, ...cleanRows];
+          const ws = XLSX.utils.aoa_to_sheet(data, { raw: true });
+
+          // 3. Mark all cell types: 10+ digits or alphanumeric identifiers must be text ('s') so Excel doesn't use scientific notation
+          const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+          for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+              const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+              const cell = ws[cellRef];
+              if (cell && cell.v != null) {
+                const sVal = String(cell.v).trim();
+                if (R === 0) {
+                  cell.t = 's';
+                  cell.v = sVal;
+                } else if (/^\d{9,}$/.test(sVal) || /^8\d{13,}/i.test(sVal) || /^[0-9A-Fa-f]{15,}$/.test(sVal)) {
+                  cell.t = 's';
+                  cell.v = sVal;
+                }
+              }
+            }
+          }
+
+          // 4. Auto-fit column widths based on content length
+          const colWidths = cleanHeaders.map((h, colIdx) => {
+            let maxLen = h.length;
+            for (let rowIdx = 0; rowIdx < Math.min(cleanRows.length, 150); rowIdx++) {
+              const cellVal = cleanRows[rowIdx][colIdx];
+              if (cellVal) maxLen = Math.max(maxLen, String(cellVal).length);
+            }
+            return { wch: Math.min(Math.max(maxLen + 3, 12), 50) };
+          });
+          ws['!cols'] = colWidths;
+
+          // 5. Create workbook and package worksheet
           const wb = XLSX.utils.book_new();
           XLSX.utils.book_append_sheet(wb, ws, 'Data');
-          const safeTitle = (title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_');
-          const fileName = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-          XLSX.writeFile(wb, fileName);
-          toast('Excel downloaded successfully');
-        } else {
-          const csv = [headers.join(','), ...(rows || []).map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = `${title || 'export'}.csv`;
-          a.click();
-          toast('CSV downloaded');
+
+          // 6. Direct binary blob generation and download triggering
+          const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+          const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+          }, 600);
+
+          toast(`✓ Excel file "${fileName}" downloaded successfully!`);
+          return;
         }
-      } catch(e) {
-        toast('Export failed: ' + e.message);
+
+        // Fallback: UTF-8 BOM CSV export (opens directly in Excel with full formatting)
+        const csvRows = [headers.map(h => `"${String(h ?? '').replace(/"/g, '""')}"`).join(',')];
+        rows.forEach(r => {
+          const rowVals = (headers || []).map((_, i) => {
+            const v = Array.isArray(r) ? r[i] : (r && typeof r === 'object' ? r[headers[i]] : '');
+            return `"${String(v ?? '').replace(/"/g, '""')}"`;
+          });
+          csvRows.push(rowVals.join(','));
+        });
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 600);
+        toast(`✓ File "${safeTitle}.csv" downloaded successfully!`);
+      } catch (err) {
+        console.error('Export Excel failed:', err);
+        toast('❌ Export failed: ' + (err && err.message ? err.message : String(err)));
       }
     }
 
@@ -5023,7 +5107,8 @@
         </select>
         ${total ? `
           <button class="b" id="btnNfChooseCols" type="button" onclick="askFetchCols('normal').then(ok => { if(ok) renderNormalFetchTable(nfCurrentList); })" style="font-size:12px;font-weight:700">⚙️ Choose Columns (${displayCols.length})</button>
-          <button class="b p" id="btnNfDlExcel" type="button" style="font-size:12.5px;font-weight:700">📥 Download Full Data as Excel</button>` : ''}
+          <button class="b" id="btnNfDlCurPage" type="button" style="font-size:12px;font-weight:700" title="Download only the records visible on this page">📄 Download Page (${items.length})</button>
+          <button class="b p" id="btnNfDlExcel" type="button" style="font-size:12.5px;font-weight:700" title="Download all records matching this search">📥 Download All (${total.toLocaleString()}) as Excel</button>` : ''}
       </div>
     </div>
     ${notFoundPanel}
@@ -5106,6 +5191,20 @@
           if (radCustom) { radCustom.checked = true; radCustom.dispatchEvent(new Event('change')); }
           $('nfCustomColsWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         };
+        if ($('btnNfDlCurPage')) {
+          $('btnNfDlCurPage').onclick = () => {
+            if (!items.length) { toast('No records on this page to download.'); return; }
+            const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
+            const cols = computeDisplayCols(items, viewOpt);
+            if (!cols.length) { toast('Please choose at least one column.'); return; }
+            const headers = ['ID', ...cols.map(c => c.label)];
+            const data = items.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))]);
+            const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && currentCustomerCid)
+              ? CU.find(c => String(c.id) === String(currentCustomerCid)) : null;
+            const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
+            exportExcel(`${custPrefix}_Page_${page}`, headers, data);
+          };
+        }
         if ($('btnNfDlExcel')) $('btnNfDlExcel').onclick = () => nfDownloadExcel();
       }
 
@@ -5115,14 +5214,19 @@
         if (btn) btn.disabled = true;
         try {
           let rows = nfState.items;
+          const qry = nfState.query || { raw: ($('fq') ? $('fq').value.trim() : ''), field: ($('fCol') ? $('fCol').value : 'all'), cust: ($('fCust') ? $('fCust').value : '') };
           if (nfState.mode === 'server' && nfState.total > nfState.items.length) {
             rows = [];
             const size = 5000, pages = Math.ceil(nfState.total / size);
             for (let p = 1; p <= pages; p++) {
               showBstplLoader(`Preparing export… ${rows.length.toLocaleString()} of ${nfState.total.toLocaleString()} records`, (p - 1) / pages * 100);
-              const res = await api('/api/devices?' + nfParams(nfState.query, p, size));
+              const res = await api('/api/devices?' + nfParams(qry, p, size));
               rows.push(...(res.items || []));
             }
+          }
+          if (!rows || !rows.length) {
+            toast('No records to download.');
+            return;
           }
           const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
 
@@ -5489,8 +5593,10 @@
           <span class="sub" style="font-size:12.5px">${exact.length.toLocaleString()} record(s) returned${res.includeSimilar ? ` · ${partialTerms.length.toLocaleString()} value(s) matched only partially` : ''} · ${notFound.length.toLocaleString()} not found.</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${(exact.length || similar.length) ? `<button class="b p" id="btnBfDlExcel" type="button">📥 Download Excel (Chosen Columns)</button>` : ''}
-          ${noExactCount ? `<button class="b" id="btnBfDlNotFound" type="button" style="font-weight:700">📥 Download Not-Found Entries (Excel)</button>` : ''}
+          ${exact.length ? `<button class="b p" id="btnBfDlExact" type="button" style="font-weight:700">🎯 Download Exact (${exact.length.toLocaleString()})</button>` : ''}
+          ${similar.length ? `<button class="b" id="btnBfDlSimilar" type="button" style="font-weight:700">🔎 Download Partial (${similar.length.toLocaleString()})</button>` : ''}
+          ${(exact.length || similar.length) ? `<button class="b" id="btnBfDlExcel" type="button" style="font-weight:700">📥 Download All Matches (Chosen Columns)</button>` : ''}
+          ${noExactCount ? `<button class="b d" id="btnBfDlNotFound" type="button" style="font-weight:700">⚠️ Download Not-Found (${noExactCount.toLocaleString()})</button>` : ''}
         </div>
       </div>
     </div>
@@ -5536,6 +5642,18 @@
             ...partialTerms.map(t => [t, res.field, 'PARTIAL ONLY', 'No exact match; similar records exist', now])
           ];
           exportExcel('fetch_data_not_found_' + new Date().toISOString().slice(0, 10), hdr, rows);
+        };
+
+        if ($('btnBfDlExact')) $('btnBfDlExact').onclick = () => {
+          const headers = ['ID', 'Customer Name', 'Data Source', 'Device SR No', 'IMEI', 'ICCID', 'MSISDN1', 'MSISDN2', 'Act Date', 'Expiry Date', 'Model', 'SIM Provider', 'SIM Type'];
+          const rows = exact.map(d => [d.id, d.customer_name, devValue(d, 'source'), d.device_sr_no, d.imei, d.iccid, devValue(d, 'msisdn1'), devValue(d, 'msisdn2'), devValue(d, 'act_date'), devValue(d, 'expiry_date'), d.model, d.sim_provider, d.sim_type]);
+          exportExcel(fetchPrefix() + '_exact_matches', headers, rows);
+        };
+
+        if ($('btnBfDlSimilar')) $('btnBfDlSimilar').onclick = () => {
+          const headers = ['ID', 'Customer Name', 'Data Source', 'Device SR No', 'IMEI', 'ICCID', 'MSISDN1', 'MSISDN2', 'Act Date', 'Expiry Date', 'Model', 'SIM Provider', 'SIM Type'];
+          const rows = similar.map(d => [d.id, d.customer_name, devValue(d, 'source'), d.device_sr_no, d.imei, d.iccid, devValue(d, 'msisdn1'), devValue(d, 'msisdn2'), devValue(d, 'act_date'), devValue(d, 'expiry_date'), d.model, d.sim_provider, d.sim_type]);
+          exportExcel(fetchPrefix() + '_partial_matches', headers, rows);
         };
 
         if ($('btnBfDlExcel')) $('btnBfDlExcel').onclick = async () => {

@@ -476,7 +476,7 @@ _CUSTOMER_COLS_CACHE = {}
 
 
 @router.get("/customers/{customer_id}/columns", dependencies=[Depends(require_permission("view"))])
-def get_customer_columns(customer_id: int, refresh: bool = False, db: Session = Depends(get_db)):
+def get_customer_columns(customer_id: int, db: Session = Depends(get_db), refresh: bool = False):
     """Retrieves standard columns plus unique/custom columns specific to this customer."""
     now = time.time()
     if not refresh and customer_id in _CUSTOMER_COLS_CACHE:
@@ -1096,7 +1096,7 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
     query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type,
                                expiry_filter=expiry_filter, expiry_days=expiry_days, exp_start=exp_start, exp_end=exp_end)
     if customer_id:
-        cust_cols = get_customer_columns(customer_id, db)
+        cust_cols = get_customer_columns(customer_id=customer_id, db=db)
         extra_cols = [c["key"] for c in cust_cols.get("unique_columns", [])]
     else:
         extra_cols = [n for (n,) in db.query(models.ColumnRegistry.name).order_by(models.ColumnRegistry.name)]
