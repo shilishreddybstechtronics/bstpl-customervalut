@@ -2247,30 +2247,8 @@
             </div>
           </div>
 
-          <!-- Live Telemetry KPI Metrics -->
-          <div class="stats" id="liveKpis" style="margin-top:0;margin-bottom:18px">
-            <div class="card stat" style="border-left-color:var(--primary)"><b>…</b><span>Total Devices</span></div>
-            <div class="card stat"><b>…</b><span>Active Customers</span></div>
-            <div class="card stat" style="border-left-color:var(--warn)"><b>…</b><span>Expiring in 30 Days</span></div>
-            <div class="card stat" style="border-left-color:var(--danger)"><b>…</b><span>Expired Devices</span></div>
-            <div class="card stat" style="border-left-color:var(--ok)"><b>…</b><span>Data Health Score</span></div>
-          </div>
-
-          <!-- WHAT IS HAPPENING BELOW: Customer Details & Records Navigation (Customer Portfolios vs Device Records Feed) -->
-          <div class="inv-subnav" role="tablist"
-            style="display:flex;gap:10px;margin:18px 0;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap">
-            <button class="inv-sub-btn active" id="btnHomeSubCust" data-home-sub="cust" type="button"
-              title="Browse customer portfolios, profile details, and inventory files">
-              <span>📁</span> <span>Customer Portfolios &amp; Records</span> (<span id="homeCustCountBadge">0</span>)
-            </button>
-            <button class="inv-sub-btn" id="btnHomeSubDevices" data-home-sub="devices" type="button"
-              title="Explore all device records in live searchable table">
-              <span>📋</span> <span>Device Records Feed</span>
-            </button>
-          </div>
-
-          <!-- Sub-View 1: Customer Portfolios & Inventory Records of Each Customer (Cards Grid) -->
-          <div id="homeSubViewCust" class="home-sub-view">
+          <!-- Customer Portfolios & Records Directory -->
+          <div id="homeSubViewCust" style="margin-top:6px">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
               <div style="flex:1;max-width:440px;min-width:240px">
                 <label for="homeCustSearch" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">
@@ -2288,92 +2266,12 @@
                   style="background:linear-gradient(135deg, #2563eb, #1d4ed8);border-color:#2563eb;color:#fff;display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px">
                   📥 Download All Customer Data
                 </button>
-                <a href="inventory.html" class="b" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:12.5px;text-decoration:none">
-                  📋 Open Customer Inventory
-                </a>
               </div>
             </div>
 
             <!-- Grid of Each Customer's Details & Records -->
             <div id="homeCustGrid" class="customer-file-grid" style="margin-top:14px">
               <div class="empty">Loading customer portfolios…</div>
-            </div>
-          </div>
-
-          <!-- Sub-View 2: Device Records Feed & Selected Customer Banner -->
-          <div id="homeSubViewDevices" class="home-sub-view" hidden>
-            <!-- Selected Customer Profile & Inventory Banner (shown when a customer is filtered) -->
-            <div id="homeActiveCustBanner" style="display:none;background:var(--card-subtle);border:1.5px solid var(--primary);border-radius:12px;padding:14px 18px;margin-bottom:16px;box-shadow:0 3px 12px rgba(29,104,225,0.06);align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-              <div style="display:flex;align-items:center;gap:12px">
-                <div id="homeActiveCustAvatar" style="display:inline-grid;place-items:center;width:42px;height:42px;border-radius:12px;font-size:20px;background:var(--card);border:1px solid var(--line);flex-shrink:0">🏢</div>
-                <div>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <h4 id="homeActiveCustName" style="margin:0;font-size:16px;font-weight:800;color:var(--text)">Customer</h4>
-                    <span id="homeActiveCustId" style="font-size:11.5px;color:var(--muted);font-weight:700">#0</span>
-                  </div>
-                  <div style="font-size:12.5px;color:var(--muted);margin-top:2px">
-                    <span id="homeActiveCustDevCount">0 records</span> · <span id="homeActiveCustExpCount">0 expiring</span>
-                  </div>
-                </div>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <button type="button" class="b p" id="btnHomeCustEntriesModal" style="font-size:12px;font-weight:700">👁️ View Records Modal</button>
-                <button type="button" class="b" id="btnHomeActiveCustDlExcel" style="font-size:12px;font-weight:700">📥 Download Excel</button>
-                <button type="button" class="b" id="btnHomeClearActiveCust" style="font-size:12px">✕ View All Customers</button>
-              </div>
-            </div>
-
-            <!-- Instant Live Search & Filters Toolbar -->
-            <div id="cardLiveMasterStream">
-              <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-                <div style="min-width:180px">
-                  <label for="liveCustFilter"
-                    style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Customer
-                    Account</label>
-                  <select id="liveCustFilter"
-                    style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text)">
-                    <option value="">All Customers</option>
-                  </select>
-                </div>
-                <div style="min-width:160px">
-                  <label for="liveFieldFilter"
-                    style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Target
-                    Column</label>
-                  <select id="liveFieldFilter"
-                    style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text)">
-                    <option value="all">All Columns</option>
-                    <option value="imei">IMEI</option>
-                    <option value="iccid">ICCID / CCID</option>
-                    <option value="device_sr_no">Device SR No</option>
-                    <option value="msisdn1">MSISDN1</option>
-                    <option value="customer_name">Customer Name</option>
-                    <option value="model">Model</option>
-                    <option value="sim_provider">SIM Provider</option>
-                  </select>
-                </div>
-                <div style="flex:1;min-width:240px">
-                  <label for="liveSearchInput"
-                    style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Instant Live
-                    Search</label>
-                  <div class="cv-search-container">
-                    <span class="cv-search-icon-left">🔎</span>
-                    <input id="liveSearchInput" class="cv-search-input"
-                      placeholder="Search customer records across all columns…" autocomplete="off" />
-                    <span class="cv-search-spinner" id="liveSearchSpinner">🌀</span>
-                    <button type="button" class="cv-search-clear-btn" id="liveSearchClearBtn"
-                      title="Clear search">✕</button>
-                  </div>
-                </div>
-                <div>
-                  <button class="b" id="liveSearchClear"
-                    style="height:40px;padding:0 14px;border-radius:10px;font-weight:700">Clear</button>
-                </div>
-              </div>
-
-              <!-- Master Data Table -->
-              <div id="liveMasterTable">
-                <div class="empty">Loading master feed…</div>
-              </div>
             </div>
           </div>
         </div>
@@ -4152,11 +4050,9 @@
                 </span>` : ''}
               </div>
             </div>
-            <div class="ca" style="display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px">
-              <button class="b p" data-home-cview="${c.id}" style="font-size:12px;padding:6px 12px;font-weight:700" title="View all device records for this customer in interactive modal">👁️ Records</button>
-              <button class="b" data-home-ctable="${c.id}" style="font-size:12px;padding:6px 10px;font-weight:700" title="Switch to records table filtered to this customer">📋 Table View</button>
-              <button class="b" data-home-cdl="${c.id}" style="font-size:12px;padding:6px 10px;font-weight:700" title="Download Excel with all columns and values">📥 Download</button>
-              <a class="b" href="inventory.html" style="font-size:12px;padding:6px 8px;text-decoration:none" title="Open in Customer Inventory Hub">🔗</a>
+            <div class="ca" style="display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px">
+              <button class="b p" data-home-cview="${c.id}" style="font-size:12px;padding:6px 14px;font-weight:700" title="View all device records for this customer in interactive modal">👁️ Records</button>
+              <button class="b" data-home-cdl="${c.id}" style="font-size:12px;padding:6px 14px;font-weight:700" title="Download Excel with all columns and values">📥 Download</button>
             </div>
           </div>`;
       }).join('');
@@ -4227,8 +4123,6 @@
                 <input id="dlgHomeCustSearch" class="cv-search-input" style="height:34px;font-size:12.5px" placeholder="Search within entries…" />
               </div>
               <button type="button" class="b p" id="btnDlgHomeCustDlExcel" style="font-size:12.5px;font-weight:700">📥 Download Excel</button>
-              <button type="button" class="b" id="btnDlgHomeJumpToTable" style="font-size:12.5px;font-weight:700">📋 Filter in Live Table</button>
-              <a href="inventory.html" class="b" style="font-size:12.5px;font-weight:700;text-decoration:none">📋 Open in Inventory</a>
             </div>
           </div>
           <div class="tw" style="max-height:56vh;overflow:auto" id="dlgHomeCustTableWrap">
@@ -4270,17 +4164,7 @@
           $('btnDlgHomeCustDlExcel').onclick = () => downloadHomeCustomerExcel(customer);
         }
 
-        if ($('btnDlgHomeJumpToTable')) {
-          $('btnDlgHomeJumpToTable').onclick = () => {
-            if ($('cdlg')) $('cdlg').close();
-            if ($('liveCustFilter')) $('liveCustFilter').value = customer.id;
-            liveCid = customer.id;
-            livePage = 1;
-            switchHomeSubView('devices');
-            updateHomeActiveCustomerBanner();
-            updateLiveFeedTable();
-          };
-        }
+
       } catch (err) {
         fail(err);
       } finally {
@@ -4745,17 +4629,7 @@
         return;
       }
 
-      const tableBtn = e.target.closest('[data-home-ctable]');
-      if (tableBtn) {
-        const cid = tableBtn.dataset.homeCtable;
-        if ($('liveCustFilter')) $('liveCustFilter').value = cid;
-        liveCid = cid;
-        livePage = 1;
-        switchHomeSubView('devices');
-        updateHomeActiveCustomerBanner();
-        updateLiveFeedTable();
-        return;
-      }
+
 
       const dlBtn = e.target.closest('[data-home-cdl]');
       if (dlBtn) {
@@ -4774,15 +4648,7 @@
     });
 
     if ($('liveExportExcel')) {
-      $('liveExportExcel').onclick = async () => {
-        try {
-          toast('Exporting live feed records…');
-          const d = await api(`/api/devices?page=1&page_size=5000&q=${encodeURIComponent(liveQ)}&column=${liveCol}${liveCid ? '&customer_id=' + liveCid : ''}`);
-          const headers = ['ID', ...COLS.map(c => c[1]), ...XC];
-          const rows = d.items.map(dev => [dev.id, ...COLS.map(c => dev[c[0]] || ''), ...XC.map(c => (dev.extra || {})[c] || '')]);
-          exportExcel('Live_Feed_Inventory', headers, rows);
-        } catch (err) { fail(err); }
-      };
+      $('liveExportExcel').onclick = () => downloadAllHomeCustomerData();
     }
 
     // 12. Run Live Telemetry Cycle
@@ -4863,6 +4729,7 @@
 
     // 13. Update Live Feed Table (with meaningful empty state)
     async function updateLiveFeedTable() {
+      if (!$('liveMasterTable')) return;
       try {
         const rawD = await api(`/api/devices?page=${livePage}&page_size=25&q=${encodeURIComponent(liveQ)}&column=${liveCol}&sort_by=${sortCol}&sort_dir=${sortDir}${liveCid ? '&customer_id=' + liveCid : ''}`).catch(() => null);
         const d = (rawD && typeof rawD === 'object' && Array.isArray(rawD.items)) ? rawD : { items: [], total: 0, page: 1, pages: 1 };
