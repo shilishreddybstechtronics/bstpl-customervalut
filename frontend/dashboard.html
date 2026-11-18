@@ -3699,10 +3699,16 @@
             a.href = blobUrl;
             const safeName = (customer.name || 'Customer').replace(/[^a-zA-Z0-9_-]/g, '_');
             a.download = `${safeName}_Inventory.xlsx`;
+            a.setAttribute('download', `${safeName}_Inventory.xlsx`);
+            a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            a.remove();
-            window.URL.revokeObjectURL(blobUrl);
+            setTimeout(() => {
+              if (a.parentNode) a.parentNode.removeChild(a);
+              window.URL.revokeObjectURL(blobUrl);
+            }, 1000);
+            document.body.classList.remove('cv-page-3d-exit');
+            if (typeof hideBstplLoader === 'function') hideBstplLoader();
             toast(`✓ Downloaded ${customer.name} inventory.`);
           } else {
             throw new Error('Export download failed');
@@ -3732,10 +3738,16 @@
             const a = document.createElement('a');
             a.href = blobUrl;
             a.download = `All_Customer_Inventory.xlsx`;
+            a.setAttribute('download', `All_Customer_Inventory.xlsx`);
+            a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            a.remove();
-            window.URL.revokeObjectURL(blobUrl);
+            setTimeout(() => {
+              if (a.parentNode) a.parentNode.removeChild(a);
+              window.URL.revokeObjectURL(blobUrl);
+            }, 1000);
+            document.body.classList.remove('cv-page-3d-exit');
+            if (typeof hideBstplLoader === 'function') hideBstplLoader();
             toast('✓ Downloaded complete customer inventory.');
           } else {
             throw new Error('All customer export failed');

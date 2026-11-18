@@ -352,9 +352,11 @@ if (!window.openCartModal) {
 
       if (!link) return;
 
+      // Never intercept file download links, blob URLs, or links with download attributes
+      if (link.hasAttribute('download') || link.download) return;
       const href = link.getAttribute('href');
-      // Skip anchors, javascript, external sites, target="_blank", or modifier-clicks
-      if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+      // Skip anchors, javascript, external sites, target="_blank", blob/data URLs, or modifier-clicks
+      if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('blob:') || href.startsWith('data:')) return;
       if (link.target === '_blank' || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
       if (href.startsWith('http://') || href.startsWith('https://')) {
         if (!href.startsWith(window.location.origin)) return;
@@ -1056,12 +1058,16 @@ if (!window.openCartModal) {
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
+      a.setAttribute('download', filename);
+      a.style.display = 'none';
       document.body.appendChild(a);
       a.click();
       setTimeout(() => {
+        if (a.parentNode) a.parentNode.removeChild(a);
         window.URL.revokeObjectURL(url);
-        a.remove();
       }, 1000);
+      document.body.classList.remove('cv-page-3d-exit');
+      if (typeof window.hideBstplLoader === 'function') window.hideBstplLoader();
       if (typeof window.toast === 'function') window.toast('✓ Database backup downloaded successfully!', 'ok');
     } catch (err) {
       if (typeof cv?.alert === 'function') cv.alert('Backup Error: ' + err.message, 'Backup Notice');

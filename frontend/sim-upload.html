@@ -4830,6 +4830,8 @@
 
             const dateStr = new Date().toISOString().slice(0, 10);
             XLSX.writeFile(wb, `Duplicate_Errors_Report_${dateStr}.xlsx`);
+            document.body.classList.remove('cv-page-3d-exit');
+            if (typeof hideBstplLoader === 'function') hideBstplLoader();
           }
 
           if ($('btnDlSkipped')) {
@@ -6757,6 +6759,8 @@
 
       const dateStr = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `SIM_Upload_After_Change_Report_${dateStr}.xlsx`);
+      document.body.classList.remove('cv-page-3d-exit');
+      if (typeof hideBstplLoader === 'function') hideBstplLoader();
       toast('After-change comparison report downloaded successfully.');
     }
 
@@ -6842,6 +6846,8 @@
 
       const dateStr = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `SIM_Upload_Before_Change_Report_${dateStr}.xlsx`);
+      document.body.classList.remove('cv-page-3d-exit');
+      if (typeof hideBstplLoader === 'function') hideBstplLoader();
       toast('Before-change Excel report downloaded successfully.');
     }
 
@@ -6957,6 +6963,8 @@
 
       const dateStr = new Date().toISOString().slice(0, 10);
       XLSX.writeFile(wb, `SIM_Upload_Complete_Both_Reports_${dateStr}.xlsx`);
+      document.body.classList.remove('cv-page-3d-exit');
+      if (typeof hideBstplLoader === 'function') hideBstplLoader();
       toast('Complete Before & After comparison Excel report downloaded successfully.');
     }
 

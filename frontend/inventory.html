@@ -4250,12 +4250,16 @@
           const link = document.createElement('a');
           link.href = blobUrl;
           link.download = fileName;
+          link.setAttribute('download', fileName);
+          link.style.display = 'none';
           document.body.appendChild(link);
           link.click();
           setTimeout(() => {
-            document.body.removeChild(link);
+            if (link.parentNode) link.parentNode.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
-          }, 600);
+          }, 1000);
+          document.body.classList.remove('cv-page-3d-exit');
+          if (typeof hideBstplLoader === 'function') hideBstplLoader();
 
           toast(`✓ Excel file "${fileName}" downloaded successfully!`);
           return;
@@ -4276,12 +4280,16 @@
         const link = document.createElement('a');
         link.href = blobUrl;
         link.download = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.setAttribute('download', `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
         setTimeout(() => {
-          document.body.removeChild(link);
+          if (link.parentNode) link.parentNode.removeChild(link);
           URL.revokeObjectURL(blobUrl);
-        }, 600);
+        }, 1000);
+        document.body.classList.remove('cv-page-3d-exit');
+        if (typeof hideBstplLoader === 'function') hideBstplLoader();
         toast(`✓ File "${safeTitle}.csv" downloaded successfully!`);
       } catch (e) {
         console.error('Export Excel failed:', e);
@@ -5519,10 +5527,16 @@
             a.href = blobUrl;
             const safeName = (customer.name || 'Customer').replace(/[^a-zA-Z0-9_-]/g, '_');
             a.download = `${safeName}_Inventory.xlsx`;
+            a.setAttribute('download', `${safeName}_Inventory.xlsx`);
+            a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(blobUrl);
+            setTimeout(() => {
+              if (a.parentNode) a.parentNode.removeChild(a);
+              window.URL.revokeObjectURL(blobUrl);
+            }, 1000);
+            document.body.classList.remove('cv-page-3d-exit');
+            if (typeof hideBstplLoader === 'function') hideBstplLoader();
             toast(`✓ Successfully downloaded inventory for ${customer.name}`);
             return;
           }
@@ -6859,16 +6873,9 @@
       XLSX.utils.book_append_sheet(wb, wsGuide, 'Upload_Instructions');
 
       XLSX.writeFile(wb, 'CustomerVault_Sample_Bulk_Upload_Template.xlsx');
+      document.body.classList.remove('cv-page-3d-exit');
+      if (typeof hideBstplLoader === 'function') hideBstplLoader();
       toast('📥 Sample Excel file with complete upload details downloaded successfully!');
-      if (typeof showEventPopup === 'function') {
-        showEventPopup({
-          type: 'download',
-          title: 'Sample Template Download Complete',
-          message: 'Sample Bulk Upload Excel file (.xlsx) with sample data and upload instructions downloaded.',
-          meta: { 'File Name': 'CustomerVault_Sample_Bulk_Upload_Template.xlsx', 'Sheets': 'Upload_Template, Upload_Instructions' },
-          progress: '100% Downloaded'
-        });
-      }
     }
     window.downloadBulkUploadTemplate = downloadBulkUploadTemplate;
 
@@ -8422,6 +8429,8 @@
 
             const dateStr = new Date().toISOString().slice(0, 10);
             XLSX.writeFile(wb, `Duplicate_Errors_Report_${dateStr}.xlsx`);
+            document.body.classList.remove('cv-page-3d-exit');
+            if (typeof hideBstplLoader === 'function') hideBstplLoader();
           }
 
           if ($('btnDlSkipped')) {

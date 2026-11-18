@@ -73,12 +73,17 @@
     const link = document.createElement('a');
     link.href = blobUrl;
     link.download = fileName;
+    link.setAttribute('download', fileName);
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     setTimeout(() => {
-      document.body.removeChild(link);
+      if (link.parentNode) link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-    }, 800);
+    }, 1000);
+    // Explicitly guarantee exit class and loaders are always cleared so page remains responsive
+    document.body.classList.remove('cv-page-3d-exit');
+    if (typeof window.hideBstplLoader === 'function') window.hideBstplLoader();
   }
 
   function exportExcel(title, headers, rows) {

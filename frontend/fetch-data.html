@@ -3299,12 +3299,16 @@
           const link = document.createElement('a');
           link.href = blobUrl;
           link.download = fileName;
+          link.setAttribute('download', fileName);
+          link.style.display = 'none';
           document.body.appendChild(link);
           link.click();
           setTimeout(() => {
-            document.body.removeChild(link);
+            if (link.parentNode) link.parentNode.removeChild(link);
             window.URL.revokeObjectURL(blobUrl);
-          }, 600);
+          }, 1000);
+          document.body.classList.remove('cv-page-3d-exit');
+          if (typeof hideBstplLoader === 'function') hideBstplLoader();
 
           toast(`✓ Excel file "${fileName}" downloaded successfully!`);
           return;
@@ -3325,12 +3329,16 @@
         const link = document.createElement('a');
         link.href = blobUrl;
         link.download = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.setAttribute('download', `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
         setTimeout(() => {
-          document.body.removeChild(link);
+          if (link.parentNode) link.parentNode.removeChild(link);
           URL.revokeObjectURL(blobUrl);
-        }, 600);
+        }, 1000);
+        document.body.classList.remove('cv-page-3d-exit');
+        if (typeof hideBstplLoader === 'function') hideBstplLoader();
         toast(`✓ File "${safeTitle}.csv" downloaded successfully!`);
       } catch (err) {
         console.error('Export Excel failed:', err);
