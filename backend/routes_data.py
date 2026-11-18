@@ -476,10 +476,10 @@ _CUSTOMER_COLS_CACHE = {}
 
 
 @router.get("/customers/{customer_id}/columns", dependencies=[Depends(require_permission("view"))])
-def get_customer_columns(customer_id: int, db: Session = Depends(get_db)):
+def get_customer_columns(customer_id: int, refresh: bool = False, db: Session = Depends(get_db)):
     """Retrieves standard columns plus unique/custom columns specific to this customer."""
     now = time.time()
-    if customer_id in _CUSTOMER_COLS_CACHE:
+    if not refresh and customer_id in _CUSTOMER_COLS_CACHE:
         cached_ts, cached_res = _CUSTOMER_COLS_CACHE[customer_id]
         if now - cached_ts < 300:
             return cached_res
@@ -1108,7 +1108,20 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
             break
         for d in part:
             o = out(d)
-            rows.append([d.id] + [o.get(k) for k, _ in EXPORT_COLS] + [(d.extra or {}).get(c) for c in extra_cols])
+            ex = o.get("extra") or {}
+            def _get_val(k):
+                if not isinstance(ex, dict):
+                    return ""
+                if k in ex and ex[k] is not None:
+                    return ex[k]
+                low = str(k).lower().strip()
+                clean = re.sub(r"[^a-z0-9]", "", low)
+                for ek, ev in ex.items():
+                    ek_s = str(ek).lower().strip()
+                    if ek_s == low or re.sub(r"[^a-z0-9]", "", ek_s) == clean:
+                        return ev
+                return ""
+            rows.append([d.id] + [o.get(k) for k, _ in EXPORT_COLS] + [_get_val(c) for c in extra_cols])
         offset += batch
         for d in part:
             db.expunge(d)  # keep memory flat while reading tens of thousands of rows

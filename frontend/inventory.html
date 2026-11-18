@@ -4460,7 +4460,7 @@
 
     let currentExportCustomer = null;
 
-    function openExportColumnsModal(customer = null) {
+    async function openExportColumnsModal(customer = null) {
       currentExportCustomer = customer;
       const dlg = $('dlgChooseExportCols');
       if (!dlg) return;
@@ -4476,20 +4476,32 @@
           : 'Select which columns you want to see in your exported Customer Inventory spreadsheet.';
       }
 
+      let uCols = [];
+      if (customer && customer.id) {
+        try {
+          const res = await api(`/api/customers/${customer.id}/columns`);
+          if (res && Array.isArray(res.unique_columns)) {
+            uCols = res.unique_columns.map(c => ({ key: c.key, label: c.label || c.key, isUnique: true }));
+          }
+        } catch (_) {}
+      }
+
       const allAvailableCols = [
-        { key: 'customer_name', label: 'Customer Name' },
-        ...COLS.map(c => ({ key: c[0], label: c[1] })),
-        ...(XC || []).map(c => ({ key: c, label: c.replace(/_/g, ' ') })),
-        { key: 'added_by', label: 'Added By' },
-        { key: 'created_at', label: 'Added On' }
+        { key: 'customer_name', label: 'Customer Name', isUnique: false },
+        ...COLS.map(c => ({ key: c[0], label: c[1], isUnique: false })),
+        ...uCols,
+        ...(uCols.length === 0 ? (XC || []).map(c => ({ key: c, label: c.replace(/_/g, ' '), isUnique: true })) : []),
+        { key: 'added_by', label: 'Added By', isUnique: false },
+        { key: 'created_at', label: 'Added On', isUnique: false }
       ];
 
       const listEl = $('exportColsList');
       if (listEl) {
         listEl.innerHTML = allAvailableCols.map(c => `
-            <label class="col-pill-chip active" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid var(--primary);background:var(--card-subtle);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
-              <input type="checkbox" class="exp-modal-chk" value="${c.key}" checked style="width:14px;height:14px;margin:0;accent-color:var(--primary)" />
+            <label class="col-pill-chip active ${c.isUnique ? 'unique-chip' : ''}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${c.isUnique ? '#0284c7' : 'var(--primary)'};background:${c.isUnique ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
+              <input type="checkbox" class="exp-modal-chk" value="${c.key}" checked style="width:14px;height:14px;margin:0;accent-color:${c.isUnique ? '#0284c7' : 'var(--primary)'}" />
               <span>${esc(c.label)}</span>
+              ${c.isUnique ? '<span class="tag info" style="font-size:9.5px;padding:1px 5px;margin-left:2px">Unique</span>' : ''}
             </label>
           `).join('');
 
@@ -4504,8 +4516,8 @@
             const chip = e.target.closest('.col-pill-chip');
             if (chip) {
               chip.classList.toggle('active', e.target.checked);
-              chip.style.borderColor = e.target.checked ? 'var(--primary)' : 'var(--line)';
-              chip.style.background = e.target.checked ? 'var(--card-subtle)' : 'var(--card)';
+              chip.style.borderColor = e.target.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
+              chip.style.background = e.target.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
             }
             updateCountText();
           };
@@ -4516,7 +4528,11 @@
             document.querySelectorAll('.exp-modal-chk').forEach(c => {
               c.checked = true;
               const chip = c.closest('.col-pill-chip');
-              if (chip) { chip.classList.add('active'); chip.style.borderColor = 'var(--primary)'; chip.style.background = 'var(--card-subtle)'; }
+              if (chip) {
+                chip.classList.add('active');
+                chip.style.borderColor = chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)';
+                chip.style.background = chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)';
+              }
             });
             updateCountText();
           };
@@ -4600,7 +4616,20 @@
               dev.id,
               ...checked.map(k => {
                 if (k === 'customer_name') return dev.customer_name || (cust ? cust.name : '');
-                if (dev.extra && dev.extra[k] !== undefined) return dev.extra[k] || '';
+                if (k in dev && dev[k] != null && dev[k] !== '') return dev[k];
+                if (dev.extra) {
+                  let ex = dev.extra;
+                  if (typeof ex === 'string') { try { ex = JSON.parse(ex); } catch (_) { ex = null; } }
+                  if (ex && typeof ex === 'object') {
+                    if (ex[k] != null) return ex[k];
+                    const lowK = String(k).toLowerCase().trim();
+                    const cleanK = lowK.replace(/^x_/, '').replace(/[^a-z0-9]/g, '');
+                    for (const [ek, ev] of Object.entries(ex)) {
+                      const lowEk = String(ek).toLowerCase().trim();
+                      if (lowEk === lowK || lowEk.replace(/^x_/, '').replace(/[^a-z0-9]/g, '') === cleanK) return ev != null ? ev : '';
+                    }
+                  }
+                }
                 return dev[k] != null ? dev[k] : '';
               })
             ]);

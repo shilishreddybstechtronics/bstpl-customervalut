@@ -2589,21 +2589,21 @@
             </div>
 
             <div class="fetch-view-cards-grid" id="nfViewOptGroup">
-              <label class="view-opt-card on" id="lblOptAll">
+              <label class="view-opt-card on" id="lblOptAll" title="View complete records including customer-specific unique columns">
                 <input type="radio" name="nfViewOpt" value="all" checked />
                 <div class="view-opt-content">
-                  <div class="view-opt-title">📋 All Columns</div>
-                  <div class="view-opt-desc">Full 15 fields + Added by/on</div>
+                  <div class="view-opt-title">📋 Customer Full Data View</div>
+                  <div class="view-opt-desc">Full 15 fields + customer unique columns</div>
                 </div>
               </label>
-              <label class="view-opt-card" id="lblOptQuick">
+              <label class="view-opt-card" id="lblOptQuick" title="Fast, streamlined overview without customer unique columns">
                 <input type="radio" name="nfViewOpt" value="quick" />
                 <div class="view-opt-content">
                   <div class="view-opt-title">⚡ Quick View</div>
                   <div class="view-opt-desc">Customer, IMEI, SIM &amp; Expiry overview</div>
                 </div>
               </label>
-              <label class="view-opt-card" id="lblOptCustom">
+              <label class="view-opt-card" id="lblOptCustom" title="Custom pick which standard and customer-unique columns to view">
                 <input type="radio" name="nfViewOpt" value="custom" />
                 <div class="view-opt-content">
                   <div class="view-opt-title">⚙️ Choose Columns</div>
@@ -3075,11 +3075,24 @@
 
     /* Ask which columns to fetch (single and bulk) before running */
     async function askFetchCols(kind) {
-      const cols = [...COLS.map(c => ({ key: c[0], label: c[1] })), ...XC.map(c => ({ key: c, label: c }))];
+      const cid = (kind === 'bulk' ? ($('bfCustFilter') ? $('bfCustFilter').value : '') : ($('fCust') ? $('fCust').value : ''));
+      if (cid && cid !== '__ALL__' && typeof fetchCustomerColumns === 'function') {
+        if (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(cid)) {
+          await fetchCustomerColumns(cid);
+        }
+      }
+      const uniqCols = (currentCustomerUniqueCols && currentCustomerUniqueCols.length > 0)
+        ? currentCustomerUniqueCols.map(c => ({ key: c.key, label: `💎 ${c.label || c.key}`, isUnique: true }))
+        : (typeof XC !== 'undefined' ? XC : []).map(c => ({ key: c, label: c, isUnique: true }));
+
+      const cols = [
+        ...COLS.map(c => ({ key: c[0], label: c[1] })),
+        ...uniqCols
+      ];
       const cur = Array.from(document.querySelectorAll(kind === 'bulk' ? '.bf-out-chk:checked' : '.nf-col-chk:checked')).map(c => c.value);
       const picked = await cv.pickColumns(cols, {
-        title: kind === 'bulk' ? 'Choose columns for this bulk fetch' : 'Choose columns for this fetch',
-        sub: 'Only the selected columns are shown and included in downloads.',
+        title: kind === 'bulk' ? 'Choose columns for this bulk fetch' : 'Choose columns to view & download',
+        sub: 'Only the selected columns will be displayed and included in exports.',
         ok: kind === 'bulk' ? 'Run bulk fetch' : 'Apply Columns',
         preselect: cur.length ? cur : undefined
       });
@@ -4173,7 +4186,7 @@
         $('fq').onkeydown = e => { if (e.key === 'Enter') runNormalFetch(); };
 
         document.querySelectorAll('input[name="nfViewOpt"]').forEach(r => {
-          r.onchange = () => {
+          r.onchange = async () => {
             document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(card => {
               card.classList.remove('on');
               card.style.borderColor = 'var(--line)';
@@ -4186,7 +4199,23 @@
               chosenCard.style.background = 'var(--card-subtle)';
             }
             const isCustom = r.value === 'custom';
+            const isQuick = r.value === 'quick';
             $('nfCustomColsWrap').style.display = isCustom ? 'block' : 'none';
+
+            // User requirement: "they should only fetch on the customer full data download or view"
+            // If user selects Customer Full Data View (all) or Choose Columns (custom), fetch unique columns:
+            if (!isQuick) {
+              const cid = $('fCust') ? $('fCust').value : '';
+              const targetCid = cid && cid !== '__ALL__' ? cid : (
+                (nfCurrentList.length > 0 && new Set(nfCurrentList.map(d => d.customer_id).filter(Boolean)).size === 1)
+                  ? nfCurrentList[0].customer_id
+                  : null
+              );
+              if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
+                await fetchCustomerColumns(targetCid);
+              }
+            }
+
             if (isCustom) renderNfCustomColsCheckboxes();
             renderNormalFetchTable(nfCurrentList);
           };
@@ -4194,21 +4223,25 @@
       }
 
       let currentCustomerUniqueCols = [];
+      let currentCustomerCid = null;
       const customerUniqueColsCache = {};
 
       async function fetchCustomerColumns(cid) {
         if (!cid || cid === '__ALL__') {
           currentCustomerUniqueCols = [];
+          currentCustomerCid = null;
           return [];
         }
         if (customerUniqueColsCache[cid]) {
           currentCustomerUniqueCols = customerUniqueColsCache[cid];
+          currentCustomerCid = String(cid);
           return currentCustomerUniqueCols;
         }
         try {
           const res = await api(`/api/customers/${cid}/columns`);
           if (res && Array.isArray(res.unique_columns)) {
             currentCustomerUniqueCols = res.unique_columns;
+            currentCustomerCid = String(cid);
             customerUniqueColsCache[cid] = res.unique_columns;
             return res.unique_columns;
           }
@@ -4216,14 +4249,21 @@
           console.warn('Failed to fetch customer unique columns:', e);
         }
         currentCustomerUniqueCols = [];
+        currentCustomerCid = null;
         return [];
       }
 
       async function onCustomerSelectionChange(cid) {
+        const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
+        // "they should only fetch on the customer full data download or view":
+        // Only fetch immediately if in Full Data View or Custom View; skip in Quick View
         if (cid && cid !== '__ALL__') {
-          await fetchCustomerColumns(cid);
+          if (viewOpt !== 'quick') {
+            await fetchCustomerColumns(cid);
+          }
         } else {
           currentCustomerUniqueCols = [];
+          currentCustomerCid = null;
         }
         populateNfFieldsDropdown();
         renderNfCustomColsCheckboxes();
@@ -4761,6 +4801,23 @@
                         query: qry, notFound: [], hasRun: true };
             nfCurrentList = nfState.items;
           }
+
+          // User requirement: "they should only fetch on the customer full data download or view"
+          // In Customer Full Data View (all) or Choose Columns (custom), fetch unique columns:
+          const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
+          if (viewOpt !== 'quick') {
+            const targetCid = (qry.cust && qry.cust !== '__ALL__') ? qry.cust : (
+              (nfCurrentList.length > 0 && new Set(nfCurrentList.map(d => d.customer_id).filter(Boolean)).size === 1)
+                ? nfCurrentList[0].customer_id
+                : null
+            );
+            if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
+              await fetchCustomerColumns(targetCid);
+              populateNfFieldsDropdown();
+              if (viewOpt === 'custom') renderNfCustomColsCheckboxes();
+            }
+          }
+
           renderNormalFetchTable(nfCurrentList);
         } catch (err) {
           if (err && err.name === 'AbortError') return;
@@ -4787,9 +4844,12 @@
       function computeDisplayCols(items, viewOpt) {
         if (viewOpt === 'quick') {
           return [
-            { key: 'customer_name', label: 'Customer Name' }, { key: 'imei', label: 'IMEI' },
-            { key: 'dispatched_date', label: 'Dispatched Date' }, { key: 'expiry_date', label: 'Expiry Date' },
-            { key: 'sim_provider', label: 'SIM Provider' }, { key: 'sim_type', label: 'SIM Type' }
+            { key: 'customer_name', label: 'Customer Name', isUnique: false },
+            { key: 'imei', label: 'IMEI', isUnique: false },
+            { key: 'dispatched_date', label: 'Dispatched Date', isUnique: false },
+            { key: 'expiry_date', label: 'Expiry Date', isUnique: false },
+            { key: 'sim_provider', label: 'SIM Provider', isUnique: false },
+            { key: 'sim_type', label: 'SIM Type', isUnique: false }
           ];
         }
 
@@ -4821,8 +4881,8 @@
         if (viewOpt === 'custom') {
           const checked = new Set(Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value));
           const all = [
-            { key: 'customer_name', label: 'Customer Name' },
-            ...COLS.filter(c => c[0] !== 'customer_name').map(c => ({ key: c[0], label: c[1] })),
+            { key: 'customer_name', label: 'Customer Name', isUnique: false },
+            ...COLS.filter(c => c[0] !== 'customer_name').map(c => ({ key: c[0], label: c[1], isUnique: false })),
             ...extraColsList
           ];
           const filtered = all.filter(c => checked.has(c.key));
@@ -4830,11 +4890,11 @@
         }
 
         return [
-          { key: 'customer_name', label: 'Customer Name' },
-          ...COLS.filter(c => c[0] !== 'customer_name').map(c => ({ key: c[0], label: c[1] })),
+          { key: 'customer_name', label: 'Customer Name', isUnique: false },
+          ...COLS.filter(c => c[0] !== 'customer_name').map(c => ({ key: c[0], label: c[1], isUnique: false })),
           ...extraColsList,
-          { key: 'added_by', label: 'Added By' },
-          { key: 'created_at', label: 'Added On' }
+          { key: 'added_by', label: 'Added By', isUnique: false },
+          { key: 'created_at', label: 'Added On', isUnique: false }
         ];
       }
 
@@ -4873,6 +4933,16 @@
             if (cleanK === cleanTarget && v != null) return v;
           }
         }
+        // Direct attribute check on dev (case-insensitive and slug-matched)
+        const lowKey = String(key).toLowerCase().trim();
+        const cleanTarget = lowKey.replace(/^x_/, '').replace(/[^a-z0-9]/g, '');
+        for (const [k, v] of Object.entries(dev)) {
+          if (typeof v !== 'object' && typeof v !== 'function' && v != null && v !== '') {
+            const lowK = String(k).toLowerCase().trim();
+            if (lowK === lowKey) return v;
+            if (lowK.replace(/^x_/, '').replace(/[^a-z0-9]/g, '') === cleanTarget) return v;
+          }
+        }
         return dev[key] != null ? dev[key] : '';
       }
 
@@ -4903,11 +4973,15 @@
         const hideAllBtn = isAllScopeActive ? `<button class="b" type="button" onclick="disableShowAllCustomers()" style="height:26px;font-size:11.5px;padding:0 10px;border-radius:6px;font-weight:700;margin-left:10px;background:rgba(239,68,68,0.08);color:#dc2626;border-color:rgba(239,68,68,0.3)" title="Hide all customer data">🔒 Hide All Data</button>` : '';
         const allScopeBadge = isAllScopeActive ? `<span class="badge" style="background:rgba(37,99,235,0.1);color:var(--primary);border:1px solid rgba(37,99,235,0.25);padding:2px 8px;border-radius:99px;font-weight:800;font-size:11px;margin-left:8px">🌐 All Customers</span>` : '';
 
+        const uniqueBadge = (currentCustomerUniqueCols && currentCustomerUniqueCols.length > 0 && viewOpt !== 'quick')
+          ? `<span class="badge" style="background:rgba(2,132,199,0.1);color:#0284c7;border:1px solid rgba(2,132,199,0.3);padding:2px 8px;border-radius:99px;font-weight:700;font-size:11px;margin-left:8px" title="Showing ${currentCustomerUniqueCols.length} customer-specific unique columns">💎 ${currentCustomerUniqueCols.length} Unique Columns</span>`
+          : (viewOpt === 'quick' ? `<span class="badge" style="background:var(--card-subtle);color:var(--muted);border:1px solid var(--line);padding:2px 8px;border-radius:99px;font-weight:600;font-size:11px;margin-left:8px">⚡ Quick View</span>` : '');
+
         const summary = isExact
           ? `<span style="font-size:14px;font-weight:800">${foundTerms.toLocaleString()} of ${(q.terms || []).length.toLocaleString()} values found</span>
-             <span class="sub" style="margin-left:8px;font-size:12px">${total.toLocaleString()} record(s) · exact match</span>${allScopeBadge}${hideAllBtn}`
+             <span class="sub" style="margin-left:8px;font-size:12px">${total.toLocaleString()} record(s) · exact match</span>${allScopeBadge}${uniqueBadge}${hideAllBtn}`
           : `<span style="font-size:14px;font-weight:800">${total.toLocaleString()} records found</span>
-             <span class="sub" style="margin-left:8px;font-size:12px">${total ? `Showing ${from.toLocaleString()}–${to.toLocaleString()}` : ''} · SIM filter: <b>${esc(activeFetchSimType.toUpperCase())}</b></span>${allScopeBadge}${hideAllBtn}`;
+             <span class="sub" style="margin-left:8px;font-size:12px">${total ? `Showing ${from.toLocaleString()}–${to.toLocaleString()}` : ''} · SIM filter: <b>${esc(activeFetchSimType.toUpperCase())}</b></span>${allScopeBadge}${uniqueBadge}${hideAllBtn}`;
 
         const notFoundPanel = (isExact && nfState.notFound.length) ? `
           <div class="card" style="padding:12px 14px;border:1px solid var(--danger);border-radius:10px;margin-bottom:12px">
@@ -4949,14 +5023,14 @@
         </select>
         ${total ? `
           <button class="b" id="btnNfChooseCols" type="button" onclick="askFetchCols('normal').then(ok => { if(ok) renderNormalFetchTable(nfCurrentList); })" style="font-size:12px;font-weight:700">⚙️ Choose Columns (${displayCols.length})</button>
-          <button class="b p" id="btnNfDlExcel" type="button" style="font-size:12.5px;font-weight:700">📥 Download all ${total.toLocaleString()} as Excel</button>` : ''}
+          <button class="b p" id="btnNfDlExcel" type="button" style="font-size:12.5px;font-weight:700">📥 Download Full Data as Excel</button>` : ''}
       </div>
     </div>
     ${notFoundPanel}
     ${!items.length ? '<div class="empty">No matching records found.</div>' : `
       <div class="tw" style="max-height:550px;overflow:auto">
         <table class="data-table" style="font-size:12px">
-          <thead><tr><th>#</th>${displayCols.map(c => `<th>${esc(c.label)}</th>`).join('')}<th>Actions</th></tr></thead>
+          <thead><tr><th>#</th>${displayCols.map(c => `<th>${c.isUnique ? `<span style="color:#0284c7;display:inline-flex;align-items:center;gap:3px" title="Customer Unique Column">💎 ${esc(c.label)}</span>` : esc(c.label)}</th>`).join('')}<th>Actions</th></tr></thead>
           <tbody>
             ${items.map(dev => `
               <tr>
@@ -5051,11 +5125,27 @@
             }
           }
           const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
-          const cols = computeDisplayCols(rows, viewOpt);
+
+          // User requirement: "they should only fetch on the customer full data download or view"
+          // Ensure customer unique columns are fetched for customer full data download:
+          const targetCid = (nfState.query && nfState.query.cust && nfState.query.cust !== '__ALL__')
+            ? nfState.query.cust
+            : (rows.length > 0 && new Set(rows.map(d => d.customer_id).filter(Boolean)).size === 1 ? rows[0].customer_id : null);
+
+          if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
+            await fetchCustomerColumns(targetCid);
+          }
+
+          // Full Data Download includes all standard columns + customer unique columns (unless user explicitly customized columns):
+          const cols = computeDisplayCols(rows, viewOpt === 'quick' ? 'all' : viewOpt);
           if (!cols.length) { toast('Please choose at least one column.'); return; }
           const headers = ['ID', ...cols.map(c => c.label)];
           const data = rows.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))]);
-          exportExcel(fetchPrefix() + '_normal', headers, data);
+
+          const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && targetCid)
+            ? CU.find(c => String(c.id) === String(targetCid)) : null;
+          const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
+          exportExcel(`${custPrefix}_Full_Data_Export`, headers, data);
           if (nfState.mode === 'server' && rows.length !== nfState.total) toast(`Note: exported ${rows.length.toLocaleString()} of ${nfState.total.toLocaleString()} records (data changed while exporting).`);
         } catch (err) {
           fail(err);
@@ -5448,9 +5538,16 @@
           exportExcel('fetch_data_not_found_' + new Date().toISOString().slice(0, 10), hdr, rows);
         };
 
-        if ($('btnBfDlExcel')) $('btnBfDlExcel').onclick = () => {
+        if ($('btnBfDlExcel')) $('btnBfDlExcel').onclick = async () => {
           const checkedCols = Array.from(document.querySelectorAll('.bf-out-chk:checked')).map(c => c.value);
           if (!checkedCols.length) { toast('Please check at least one output column.'); return; }
+
+          // Ensure customer unique columns are fetched for the scoped customer on full data download
+          const custId = $('bfCustFilter') ? $('bfCustFilter').value : '';
+          const targetCid = custId || (exact.length > 0 && new Set(exact.map(d => d.customer_id).filter(Boolean)).size === 1 ? exact[0].customer_id : null);
+          if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
+            await fetchCustomerColumns(targetCid);
+          }
 
           const labels = {};
           COLS.forEach(c => { labels[c[0]] = c[1]; });
@@ -5490,7 +5587,10 @@
             notFound.forEach(t => addMissing(t, 'NOT FOUND'));
             partialTerms.forEach(t => addMissing(t, 'NO EXACT MATCH'));
           }
-          exportExcel(fetchPrefix() + '_bulk_export', headers, rows);
+          const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && targetCid)
+            ? CU.find(c => String(c.id) === String(targetCid)) : null;
+          const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
+          exportExcel(custPrefix + '_Bulk_Full_Data_Export', headers, rows);
         };
       }
 
