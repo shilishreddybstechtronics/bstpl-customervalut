@@ -2047,15 +2047,42 @@
         <!-- Live Telemetry Widget in Left Sidebar (Data Metrics & Dynamic Clock) -->
         <div class="cv-sidebar-live-widget" id="sidebarLiveWidget">
           <div class="cv-sb-live-metrics">
-          <div class="cv-sb-metric-item">
-            <span class="cv-sb-metric-lbl">Devices</span>
-            <span class="cv-sb-metric-val" id="sbLiveDevCount">—</span>
+            <!-- Devices Card -->
+            <div class="cv-sb-metric-item cv-sb-metric-dev">
+              <div class="cv-sb-metric-icon-wrap dev-ico-bg">
+                <svg class="cv-sb-metric-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                  <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                </svg>
+              </div>
+              <div class="cv-sb-metric-body">
+                <div class="cv-sb-metric-header">
+                  <span class="cv-sb-metric-lbl">Devices</span>
+                  <span class="cv-sb-metric-badge dev-badge">TOTAL</span>
+                </div>
+                <span class="cv-sb-metric-val" id="sbLiveDevCount">—</span>
+              </div>
+            </div>
+
+            <!-- Customers Card -->
+            <div class="cv-sb-metric-item cv-sb-metric-cust">
+              <div class="cv-sb-metric-icon-wrap cust-ico-bg">
+                <svg class="cv-sb-metric-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
+              <div class="cv-sb-metric-body">
+                <div class="cv-sb-metric-header">
+                  <span class="cv-sb-metric-lbl">Customers</span>
+                  <span class="cv-sb-metric-badge cust-badge">ACTIVE</span>
+                </div>
+                <span class="cv-sb-metric-val" id="sbLiveCustCount">—</span>
+              </div>
+            </div>
           </div>
-          <div class="cv-sb-metric-item">
-            <span class="cv-sb-metric-lbl">Customers</span>
-            <span class="cv-sb-metric-val" id="sbLiveCustCount">—</span>
-          </div>
-        </div>
           <div class="cv-sb-live-foot" id="sbLiveTime" style="display:none!important;">Live • Streaming active</div>
         </div>
       </div>
