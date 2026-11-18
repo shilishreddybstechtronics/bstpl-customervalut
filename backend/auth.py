@@ -202,20 +202,16 @@ DEFAULT_PERMISSIONS = {
 # Combines role defaults with custom per-user override switches stored in `user.permissions` JSON.
 # Super Admins (0001, 0007) are hard-coded to have True for all permissions and cannot be restricted.
 # ==============================================================================
-def get_user_permissions(user: models.User) -> dict:
+def get_user_permissions(user: models.User) -> dict[str, bool]:
     """Returns complete effective permissions for user, combining role defaults and individual overrides."""
     norm = normalize_id(user.user_id)
     if norm in MASTER_SUPER_ADMIN_IDS:
-        p = {k: True for k in DEFAULT_PERMISSIONS["super_admin"]}
-        p["scoped_customer_id"] = None
-        return p
+        return {k: True for k in DEFAULT_PERMISSIONS["super_admin"]}
     cat = get_user_category(user)["category"]
     perms = dict(DEFAULT_PERMISSIONS.get(cat, DEFAULT_PERMISSIONS["regular_user"]))
     if user.permissions and isinstance(user.permissions, dict):
         for k, v in user.permissions.items():
             if isinstance(v, bool):
-                perms[k] = v
-            elif k == "scoped_customer_id":
                 perms[k] = v
     return perms
 

@@ -1,8 +1,6 @@
 import re
 from datetime import date, datetime, timedelta
-from typing import Optional
-
-from typing import Literal
+from typing import Optional, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, AliasChoices
 
@@ -160,7 +158,8 @@ class UserOut(BaseModel):
     is_master: Optional[bool] = False
     can_delete: Optional[bool] = False
     password: Optional[str] = None
-    permissions: Optional[dict[str, bool]] = None
+    permissions: Optional[dict[str, Any]] = None
+    scoped_customer_id: Optional[int] = None
     previous_name: Optional[str] = None
     theme_palette: Optional[str] = None
     theme_mode: Optional[str] = None
