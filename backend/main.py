@@ -333,8 +333,10 @@ def login(data: schemas.LoginIn, request: Request, db: Session = Depends(get_db)
 # ==============================================================================
 @app.post("/auth/logout")
 @app.post("/api/auth/logout")
+@app.post("/api/logout")
 @app.get("/auth/logout")
 @app.get("/api/auth/logout")
+@app.get("/api/logout")
 def logout(request: Request, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     log_activity(db, "logout", "Signed out", user=current_user, request=request, commit=True)
     return {"ok": True}

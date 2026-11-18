@@ -425,6 +425,8 @@ def stats(db: Session = Depends(get_db), user: models.User = Depends(get_current
 
 
 @router.get("/columns", dependencies=[Depends(require_permission("view"))])
+@router.get("/extra-cols", dependencies=[Depends(require_permission("view"))])
+@router.get("/extra_cols", dependencies=[Depends(require_permission("view"))])
 def columns(db: Session = Depends(get_db)):
     """Extra column names found in uploads, shown after the built-in columns."""
     base_set = {c.lower() for c in BASE_COLUMNS}
@@ -1071,6 +1073,7 @@ def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, s
 # 4. Returns formatted device records and pagination metadata.
 # ==============================================================================
 @router.get("/devices", dependencies=[Depends(require_permission("view"))])
+@router.get("/devices/", dependencies=[Depends(require_permission("view"))])
 def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optional[str] = "all",
                  sim_type: Optional[str] = "all",
                  expiry_filter: Optional[str] = "all", expiry_days: int = Query(30, ge=1, le=365),
