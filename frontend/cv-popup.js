@@ -537,6 +537,11 @@ if (!window.openCartModal) {
     if (qs && !qs.dataset.universalBound) {
       qs.dataset.universalBound = 'true';
       qs.addEventListener('click', function (e) {
+        if (window.cvCommandPalette && typeof window.cvCommandPalette.open === 'function') {
+          e.preventDefault();
+          window.cvCommandPalette.open();
+          return;
+        }
         const inp = document.querySelector('#liveSearchInput, #searchInput, #imeiInput, #invSearchInput, #q, #filterQ, input[type="search"]');
         if (inp) {
           e.preventDefault();
