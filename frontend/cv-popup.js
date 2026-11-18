@@ -532,6 +532,25 @@ if (!window.openCartModal) {
       setSidebarOpen(false);
     }
 
+    // Wire #bNotifBell (Universal Notification Center)
+    let bell = document.getElementById('bNotifBell');
+    if (!bell && qs && qs.parentNode) {
+      bell = document.createElement('button');
+      bell.id = 'bNotifBell';
+      bell.className = 'b cv-bell-btn';
+      bell.title = 'System Notifications & Live Alerts';
+      bell.innerHTML = `<span>🔔</span><span class="cv-bell-badge" id="cvBellBadge" style="display:none">0</span>`;
+      qs.parentNode.insertBefore(bell, qs);
+    }
+    if (bell && !bell.dataset.universalBound) {
+      bell.dataset.universalBound = 'true';
+      bell.addEventListener('click', function (e) {
+        e.preventDefault();
+        openNotificationDrawer();
+      });
+      refreshNotificationBadge();
+    }
+
     // Wire #bQs (Quick Search)
     const qs = document.getElementById('bQs');
     if (qs && !qs.dataset.universalBound) {
@@ -641,9 +660,610 @@ if (!window.openCartModal) {
     }
   }, true);
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initUniversalHeaderActions);
-  } else {
+  // =========================================================================
+  // UNIVERSAL NOTIFICATION CENTER & BADGE CONTROLLER
+  // =========================================================================
+  async function refreshNotificationBadge() {
+    const badge = document.getElementById('cvBellBadge');
+    if (!badge) return;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch('/api/notifications/summary', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const cnt = data.badge_count || 0;
+        if (cnt > 0) {
+          badge.textContent = cnt > 99 ? '99+' : cnt;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    } catch (_) {}
+  }
+
+  async function openNotificationDrawer() {
+    let backdrop = document.getElementById('cvNotifBackdrop');
+    if (backdrop) {
+      backdrop.remove();
+      return;
+    }
+
+    backdrop = document.createElement('div');
+    backdrop.id = 'cvNotifBackdrop';
+    backdrop.className = 'cv-notif-backdrop';
+    backdrop.innerHTML = `
+      <div class="cv-notif-drawer">
+        <div class="cv-notif-header">
+          <h3 class="cv-notif-title"><span>🔔</span> <span>Notification Center</span></h3>
+          <button type="button" class="b" id="btnCloseNotifDrawer" style="padding:4px 10px;font-size:12px">✕</button>
+        </div>
+        <div class="cv-notif-body" id="cvNotifBody">
+          <div style="text-align:center;padding:30px;color:var(--muted)">Loading alerts and live activity…</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    backdrop.onclick = e => {
+      if (e.target === backdrop) backdrop.remove();
+    };
+    backdrop.querySelector('#btnCloseNotifDrawer').onclick = () => backdrop.remove();
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/notifications/summary', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to load notifications');
+      const data = await res.json();
+
+      const bodyEl = backdrop.querySelector('#cvNotifBody');
+      let html = '';
+
+      if (data.expiring_7d > 0) {
+        html += `
+          <div class="cv-notif-card danger" onclick="window.location.href='alerts.html'">
+            <div style="font-size:22px">⚠️</div>
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:800;color:#ef4444">${data.expiring_7d.toLocaleString()} SIM Devices Expiring in 7 Days</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Immediate renewal required. Click to view devices.</div>
+            </div>
+            <span style="font-size:12px;color:var(--primary);font-weight:700">Open ➔</span>
+          </div>
+        `;
+      }
+
+      if (data.expiring_30d > 0) {
+        html += `
+          <div class="cv-notif-card warn" onclick="window.location.href='alerts.html'">
+            <div style="font-size:22px">⏳</div>
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:800;color:#f59e0b">${data.expiring_30d.toLocaleString()} Devices Expiring within 30 Days</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Upcoming commercial renewals. Click to manage.</div>
+            </div>
+            <span style="font-size:12px;color:var(--primary);font-weight:700">Open ➔</span>
+          </div>
+        `;
+      }
+
+      if (data.expired > 0) {
+        html += `
+          <div class="cv-notif-card warn" onclick="window.location.href='alerts.html'">
+            <div style="font-size:22px">❌</div>
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:800;color:#64748b">${data.expired.toLocaleString()} Expired Devices in Fleet</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Deactivated or overdue SIM plans.</div>
+            </div>
+            <span style="font-size:12px;color:var(--primary);font-weight:700">Open ➔</span>
+          </div>
+        `;
+      }
+
+      if (data.errors_count > 0) {
+        html += `
+          <div class="cv-notif-card danger" onclick="window.location.href='errors.html'">
+            <div style="font-size:22px">🚫</div>
+            <div style="flex:1">
+              <div style="font-size:13.5px;font-weight:800;color:#ef4444">${data.errors_count.toLocaleString()} Upload Errors Pending Review</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Rectify duplicates or missing fields.</div>
+            </div>
+            <span style="font-size:12px;color:var(--primary);font-weight:700">Fix ➔</span>
+          </div>
+        `;
+      }
+
+      html += `
+        <div style="margin-top:10px;padding:12px;background:var(--card-subtle);border-radius:12px;border:1px solid var(--line)">
+          <div style="font-size:12px;font-weight:800;margin-bottom:8px;text-transform:uppercase;color:var(--muted)">System Admin Snapshot</div>
+          <button class="b" type="button" id="btnDrawerDownloadBackup" style="width:100%;font-size:12.5px;font-weight:700">
+            💾 Download Database Backup (.sql)
+          </button>
+        </div>
+      `;
+
+      if (Array.isArray(data.recent_activities) && data.recent_activities.length > 0) {
+        html += `
+          <div style="margin-top:14px">
+            <div style="font-size:12px;font-weight:800;margin-bottom:8px;text-transform:uppercase;color:var(--muted)">Recent Fleet Activity</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              ${data.recent_activities.map(a => `
+                <div style="font-size:12px;padding:8px 10px;border-radius:8px;background:var(--card-subtle);border:1px solid var(--line)">
+                  <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:10.5px">
+                    <span>${E(a.user)}</span>
+                    <span>${E(a.time)}</span>
+                  </div>
+                  <div style="font-weight:600;margin-top:2px;color:var(--text)">${E(a.detail || a.action)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      bodyEl.innerHTML = html;
+
+      const btnBackup = bodyEl.querySelector('#btnDrawerDownloadBackup');
+      if (btnBackup) {
+        btnBackup.onclick = () => {
+          if (typeof window.toast === 'function') window.toast('Generating database backup snapshot…');
+          window.location.href = '/api/system/backup';
+        };
+      }
+    } catch (err) {
+      const bodyEl = backdrop.querySelector('#cvNotifBody');
+      if (bodyEl) bodyEl.innerHTML = `<div class="empty err">${E(err.message)}</div>`;
+    }
+  }
+
+  // =========================================================================
+  // DEVICE 360 TIMELINE MODAL CONTROLLER
+  // =========================================================================
+  cv.openDeviceTimeline = async function (ident) {
+    if (!ident) return;
+    try {
+      if (typeof window.toast === 'function') window.toast(`Fetching 360° history for ${ident}…`);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/devices/${encodeURIComponent(ident)}/timeline`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Device timeline could not be loaded.');
+      const data = await res.json();
+      const dev = data.device || {};
+
+      const milestonesHtml = (data.milestones || []).map(m => `
+        <div class="cv-timeline-item ${m.status || ''}">
+          <div class="cv-timeline-dot">${m.icon || '•'}</div>
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <span style="font-weight:800;font-size:13.5px">${E(m.title)}</span>
+              <span style="font-size:11px;color:var(--muted);font-weight:600">${E(m.date)}</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:3px">${E(m.detail)}</div>
+          </div>
+        </div>
+      `).join('');
+
+      const bodyHtml = `
+        <div style="margin-bottom:14px;padding:12px;border-radius:12px;background:var(--card-subtle);border:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;font-size:12px">
+          <div><b style="color:var(--muted)">IMEI:</b> <span>${E(dev.imei)}</span> ${data.is_luhn_valid ? '<span class="tag ok" style="font-size:9.5px;padding:1px 4px">Luhn OK</span>' : '<span class="tag warn" style="font-size:9.5px;padding:1px 4px" title="Luhn check digit mismatch">Luhn Notice</span>'}</div>
+          <div><b style="color:var(--muted)">Serial:</b> <span>${E(dev.device_sr_no || 'N/A')}</span></div>
+          <div><b style="color:var(--muted)">ICCID:</b> <span>${E(dev.iccid || 'N/A')}</span></div>
+          <div><b style="color:var(--muted)">Customer:</b> <span>${E(data.customer_name || 'N/A')}</span></div>
+          <div><b style="color:var(--muted)">Provider:</b> <span>${E(dev.sim_provider || 'N/A')}</span></div>
+          <div><b style="color:var(--muted)">Plan:</b> <span>${E(dev.activation_plan || 'N/A')}</span></div>
+        </div>
+        <div class="cv-timeline-wrap">
+          ${milestonesHtml}
+        </div>
+      `;
+
+      open(head(`Device 360° History — ${dev.imei || ident}`, 'info', '📜') + `
+        <div class="cvp-body" style="max-height:60vh;overflow-y:auto">${bodyHtml}</div>
+        <div class="cvp-foot">
+          <button class="b main" data-act="ok">Close History</button>
+        </div>
+      `, { wide: true });
+    } catch (e) {
+      if (typeof window.toast === 'function') window.toast('Timeline error: ' + e.message);
+    }
+  };
+
+  // =========================================================================
+  // BULK PLAN RENEWAL ENGINE CONTROLLER
+  // =========================================================================
+  cv.openBulkRenewModal = function (deviceIds = [], onSuccess) {
+    if (!deviceIds || !deviceIds.length) {
+      if (typeof window.toast === 'function') window.toast('Please select at least one device to renew.');
+      return;
+    }
+
+    const modalHtml = `
+      <div style="margin-bottom:14px">
+        <p style="font-size:13px;color:var(--text);margin:0 0 12px">
+          Extending commercial validity for <b>${deviceIds.length.toLocaleString()}</b> selected device(s). Choose duration or a custom expiry date:
+        </p>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <label class="b p" style="cursor:pointer;font-size:12px;padding:8px 14px;border-radius:8px">
+            <input type="radio" name="renewDuration" value="1" checked style="margin-right:6px" /> +1 Year
+          </label>
+          <label class="b" style="cursor:pointer;font-size:12px;padding:8px 14px;border-radius:8px">
+            <input type="radio" name="renewDuration" value="2" style="margin-right:6px" /> +2 Years
+          </label>
+          <label class="b" style="cursor:pointer;font-size:12px;padding:8px 14px;border-radius:8px">
+            <input type="radio" name="renewDuration" value="3" style="margin-right:6px" /> +3 Years
+          </label>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Or Exact Custom Expiry Date (Optional):</label>
+          <input type="date" id="renewCustomDate" style="width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)" />
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Update Plan Name (Optional):</label>
+          <input type="text" id="renewPlanName" placeholder="e.g. BSTPL Commercial Renewal 2027" style="width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)" />
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Renewal Note / Reference (Optional):</label>
+          <input type="text" id="renewNote" placeholder="e.g. Invoice #REC-9821" style="width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card)" />
+        </div>
+      </div>
+    `;
+
+    open(head(`🔄 Renew SIM Plans (${deviceIds.length} Devices)`, 'info', '⚡') + `
+      <div class="cvp-body">${modalHtml}</div>
+      <div class="cvp-foot">
+        <button class="b" data-act="cancel">Cancel</button>
+        <button class="b p" id="btnSubmitRenew" style="font-weight:800">Confirm & Extend Plan</button>
+      </div>
+    `, {
+      onKey: (back, close) => {
+        const btn = back.querySelector('#btnSubmitRenew');
+        if (btn) {
+          btn.onclick = async () => {
+            btn.disabled = true;
+            btn.textContent = 'Extending plans…';
+            try {
+              const durVal = parseInt(back.querySelector('input[name="renewDuration"]:checked')?.value || '1', 10);
+              const customDate = back.querySelector('#renewCustomDate')?.value || null;
+              const plan = back.querySelector('#renewPlanName')?.value.trim() || null;
+              const note = back.querySelector('#renewNote')?.value.trim() || null;
+
+              const token = localStorage.getItem('token');
+              const res = await fetch('/api/devices/bulk-renew', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  device_ids: deviceIds,
+                  years: durVal,
+                  new_expiry_date: customDate,
+                  activation_plan: plan,
+                  note: note
+                })
+              });
+              if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || 'Renewal failed');
+              }
+              const data = await res.json();
+              close('ok');
+              if (typeof window.toast === 'function') window.toast(`✓ ${data.message || 'Plans renewed successfully!'}`);
+              if (typeof onSuccess === 'function') onSuccess(data);
+            } catch (err) {
+              btn.disabled = false;
+              btn.textContent = 'Confirm & Extend Plan';
+              if (typeof window.toast === 'function') window.toast('Renewal error: ' + err.message);
+            }
+          };
+        }
+      }
+    });
+  };
+
+  // =========================================================================
+  // LUHN ALGORITHM IMEI VALIDATOR (GSM MOD 10)
+  // =========================================================================
+  cv.validateImeiLuhn = function (imeiStr) {
+    const imei = String(imeiStr || '').replace(/\D/g, '');
+    if (imei.length !== 15) return false;
+    let total = 0;
+    for (let i = 0; i < 14; i++) {
+      let digit = parseInt(imei[i], 10);
+      if (i % 2 === 1) {
+        digit *= 2;
+        if (digit > 9) digit = Math.floor(digit / 10) + (digit % 10);
+      }
+      total += digit;
+    }
+    const checkDigit = (10 - (total % 10)) % 10;
+    return checkDigit === parseInt(imei[14], 10);
+  };
+
+  cv.attachImeiValidation = function (inputEl) {
+    if (!inputEl || inputEl._cvLuhnAttached) return;
+    inputEl._cvLuhnAttached = true;
+
+    let noteEl = inputEl.parentNode ? inputEl.parentNode.querySelector('.cv-luhn-note') : null;
+    if (!noteEl && inputEl.parentNode) {
+      noteEl = document.createElement('div');
+      noteEl.className = 'cv-luhn-note';
+      noteEl.style.display = 'none';
+      inputEl.parentNode.appendChild(noteEl);
+    }
+
+    const check = () => {
+      const val = String(inputEl.value || '').trim();
+      const digits = val.replace(/\D/g, '');
+      if (digits.length === 15) {
+        const valid = cv.validateImeiLuhn(digits);
+        if (!valid) {
+          if (noteEl) {
+            noteEl.style.display = 'inline-flex';
+            noteEl.className = 'cv-luhn-note warn';
+            noteEl.innerHTML = '⚠️ GSM Luhn check digit notice (checksum mismatch)';
+            noteEl.title = 'The 15th digit does not match standard Luhn mod-10 formula. Please verify hardware barcode.';
+          }
+        } else {
+          if (noteEl) {
+            noteEl.style.display = 'inline-flex';
+            noteEl.className = 'cv-luhn-note ok';
+            noteEl.innerHTML = '✓ Valid GSM IMEI Checksum';
+            noteEl.title = 'IMEI conforms to 15-digit 3GPP/GSM checksum specification.';
+          }
+        }
+      } else {
+        if (noteEl) noteEl.style.display = 'none';
+      }
+    };
+
+    inputEl.addEventListener('input', check);
+    inputEl.addEventListener('blur', check);
+    if (inputEl.value) check();
+  };
+
+  function scanAndAttachImeiInputs() {
+    try {
+      const inputs = document.querySelectorAll('input[data-devf="imei"], input[id*="imei" i], input[name*="imei" i]');
+      inputs.forEach(cv.attachImeiValidation);
+    } catch (_) {}
+  }
+
+  // =========================================================================
+  // ONE-CLICK DATABASE SNAPSHOT & BACKUP (.SQL STREAM)
+  // =========================================================================
+  cv.downloadDatabaseBackup = async function () {
+    try {
+      const token = localStorage.getItem('token');
+      if (typeof window.toast === 'function') window.toast('Generating database backup snapshot…', 'info');
+      const res = await fetch('/api/system/backup', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Snapshot generation failed');
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      let filename = 'customervault_backup_' + new Date().toISOString().slice(0, 10) + '.sql';
+      const m = disposition.match(/filename="?([^";]+)"?/);
+      if (m && m[1]) filename = m[1];
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      }, 1000);
+      if (typeof window.toast === 'function') window.toast('✓ Database backup downloaded successfully!', 'ok');
+    } catch (err) {
+      if (typeof cv?.alert === 'function') cv.alert('Backup Error: ' + err.message, 'Backup Notice');
+      else alert('Backup Error: ' + err.message);
+    }
+  };
+
+  // =========================================================================
+  // VISUAL BUSINESS INTELLIGENCE & TELEMATICS CHARTS
+  // =========================================================================
+  cv.renderAnalyticsCharts = async function (containerIdOrEl) {
+    const el = typeof containerIdOrEl === 'string' ? document.getElementById(containerIdOrEl) : containerIdOrEl;
+    if (!el) return;
+
+    el.innerHTML = '<div style="padding:28px;text-align:center;color:var(--muted);font-weight:700">⏳ Loading fleet telematics &amp; renewal charts…</div>';
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/analytics/charts', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Failed to load analytics charts (' + res.status + ')');
+      const data = await res.json();
+
+      const provColors = {
+        'Airtel': '#ef4444',
+        'Jio': '#0284c7',
+        'Vodafone': '#8b5cf6',
+        'Vi': '#8b5cf6',
+        'BSNL': '#f97316',
+        'Sensorise': '#06b6d4',
+        'Unknown': '#64748b'
+      };
+
+      const providers = data.sim_providers || {};
+      const provEntries = Object.entries(providers);
+      const totalProvDevs = provEntries.reduce((acc, pair) => acc + pair[1], 0) || 1;
+
+      const trajectory = data.expiry_trajectory || [];
+      const maxTraj = Math.max.apply(null, trajectory.map(t => t.count || 0).concat([1]));
+
+      const types = data.sim_types || {};
+      const totalTypes = Object.values(types).reduce((a, b) => a + b, 0) || 1;
+      const esimCount = types['E-SIM'] || 0;
+      const plasticCount = types['Plastic SIM'] || 0;
+      const esimPct = Math.round((esimCount / totalTypes) * 100);
+      const plasticPct = 100 - esimPct;
+
+      const topCusts = data.top_customers || [];
+      const maxCustCount = Math.max.apply(null, topCusts.map(c => c.count || 0).concat([1]));
+
+      // 1. Carrier Distribution Segments & Legend
+      let distSegsHtml = '';
+      let distLegendHtml = '';
+      provEntries.forEach(([prov, cnt]) => {
+        const pct = ((cnt / totalProvDevs) * 100).toFixed(1);
+        const intPct = Math.round((cnt / totalProvDevs) * 100);
+        const color = provColors[prov] || '#3b82f6';
+        distSegsHtml += '<div class="cv-dist-seg" style="width:' + pct + '%;background:' + color + '" title="' + prov + ': ' + cnt + ' (' + pct + '%)"></div>';
+        distLegendHtml += '<div class="cv-legend-item">' +
+          '<div class="cv-legend-left">' +
+            '<span class="cv-legend-dot" style="background:' + color + '"></span>' +
+            '<span style="font-weight:700;color:var(--text)">' + prov + '</span>' +
+          '</div>' +
+          '<div><b>' + cnt + '</b> <span style="color:var(--muted);font-size:11px">(' + intPct + '%)</span></div>' +
+        '</div>';
+      });
+
+      // 2. Trajectory Column Bars
+      let trajBarsHtml = '';
+      trajectory.forEach(item => {
+        const heightPct = Math.max(8, Math.round(((item.count || 0) / maxTraj) * 85));
+        const isHeavy = item.count >= 5;
+        const hasExp = item.count > 0;
+        const barClass = isHeavy ? 'cv-traj-bar heavy-exp' : (hasExp ? 'cv-traj-bar has-exp' : 'cv-traj-bar');
+        const parts = (item.label || '').split(' ');
+        const mName = parts[0] || '';
+        const yr = parts[1] || '';
+        const shortLbl = mName.substring(0, 3) + (yr ? " '" + yr.substring(2) : '');
+        const valTop = item.count > 0 ? '<span class="cv-traj-val">' + item.count + '</span>' : '';
+        trajBarsHtml += '<div class="cv-traj-col" title="' + item.label + ': ' + item.count + ' expiring">' +
+          valTop +
+          '<div class="' + barClass + '" style="height:' + heightPct + 'px"></div>' +
+          '<span class="cv-traj-lbl">' + shortLbl + '</span>' +
+        '</div>';
+      });
+
+      // 3. Top Customers
+      let topCustsHtml = '';
+      if (!topCusts.length) {
+        topCustsHtml = '<div class="empty">No customer devices found</div>';
+      } else {
+        topCusts.forEach((c, i) => {
+          const pct = Math.round((c.count / maxCustCount) * 100);
+          topCustsHtml += '<div class="cv-hbar-row">' +
+            '<div class="cv-hbar-meta">' +
+              '<span style="color:var(--text);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">' +
+                '<span style="color:var(--primary);font-size:11px">#' + (i + 1) + '</span> ' + c.name +
+              '</span>' +
+              '<span style="color:var(--muted)">' + c.count + ' SIMs</span>' +
+            '</div>' +
+            '<div class="cv-hbar-bg">' +
+              '<div class="cv-hbar-fill" style="width:' + pct + '%"></div>' +
+            '</div>' +
+          '</div>';
+        });
+      }
+
+      el.innerHTML = '<div class="cv-analytics-grid">' +
+        // Card 1
+        '<div class="cv-chart-card">' +
+          '<div class="cv-chart-title">' +
+            '<span>📡 SIM Carrier Fleet Share</span>' +
+            '<span class="cv-chart-badge">' + totalProvDevs + ' SIMs Tracked</span>' +
+          '</div>' +
+          '<div class="cv-dist-track" title="SIM Carrier Breakdown">' + distSegsHtml + '</div>' +
+          '<div class="cv-dist-legend">' + distLegendHtml + '</div>' +
+        '</div>' +
+
+        // Card 2
+        '<div class="cv-chart-card">' +
+          '<div class="cv-chart-title">' +
+            '<span>📅 12-Month Renewal Forecast</span>' +
+            '<span class="cv-chart-badge">Trajectory</span>' +
+          '</div>' +
+          '<div class="cv-trajectory-chart">' + trajBarsHtml + '</div>' +
+          '<div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--muted)">' +
+            '<span>Next 30 Days Due: <b>' + (trajectory[0]?.count || 0) + '</b></span>' +
+            '<span style="display:inline-flex;align-items:center;gap:4px">' +
+              '<span style="width:8px;height:8px;border-radius:2px;background:#f59e0b"></span> Due Renewals' +
+            '</span>' +
+          '</div>' +
+        '</div>' +
+
+        // Card 3
+        '<div class="cv-chart-card">' +
+          '<div class="cv-chart-title">' +
+            '<span>📶 SIM Technology &amp; Form Factor</span>' +
+            '<span class="cv-chart-badge">Hardware Ratio</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:12px;margin-bottom:14px">' +
+            '<div style="flex:1;padding:12px;border-radius:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);display:flex;align-items:center;gap:10px">' +
+              '<span style="font-size:20px">⚡</span>' +
+              '<div>' +
+                '<div style="font-size:11px;color:#059669;font-weight:800;text-transform:uppercase">E-SIM Form</div>' +
+                '<div style="font-size:18px;font-weight:900;color:var(--text)">' + esimCount + ' <span style="font-size:12px;font-weight:700;color:var(--muted)">(' + esimPct + '%)</span></div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="flex:1;padding:12px;border-radius:10px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);display:flex;align-items:center;gap:10px">' +
+              '<span style="font-size:20px">💳</span>' +
+              '<div>' +
+                '<div style="font-size:11px;color:#4f46e5;font-weight:800;text-transform:uppercase">Plastic SIM</div>' +
+                '<div style="font-size:18px;font-weight:900;color:var(--text)">' + plasticCount + ' <span style="font-size:12px;font-weight:700;color:var(--muted)">(' + plasticPct + '%)</span></div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="cv-dist-track" style="height:10px;margin-bottom:8px">' +
+            '<div style="width:' + esimPct + '%;background:#10b981" title="E-SIM: ' + esimPct + '%"></div>' +
+            '<div style="width:' + plasticPct + '%;background:#6366f1" title="Plastic SIM: ' + plasticPct + '%"></div>' +
+          '</div>' +
+          '<div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:auto">' +
+            'Automated telecom form-factor detection across active fleet' +
+          '</div>' +
+        '</div>' +
+
+        // Card 4
+        '<div class="cv-chart-card">' +
+          '<div class="cv-chart-title">' +
+            '<span>🏆 Top Customer Fleets</span>' +
+            '<span class="cv-chart-badge">Volume Rankings</span>' +
+          '</div>' +
+          '<div class="cv-hbar-list">' + topCustsHtml + '</div>' +
+        '</div>' +
+      '</div>';
+    } catch (err) {
+      el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--danger)">' +
+        '<div>⚠️ Could not load analytics: ' + (err.message || 'Unknown error') + '</div>' +
+        '<button class="b" onclick="cv.renderAnalyticsCharts(\'' + (typeof containerIdOrEl === 'string' ? containerIdOrEl : 'homeAnalyticsBody') + '\')" style="margin-top:10px;font-size:12px">🔄 Retry Loading</button>' +
+      '</div>';
+    }
+  };
+
+  function initPageEnhancements() {
     initUniversalHeaderActions();
+    scanAndAttachImeiInputs();
+
+    // Auto-render analytics on home/dashboard if element exists
+    if (document.getElementById('homeAnalyticsBody')) {
+      cv.renderAnalyticsCharts('homeAnalyticsBody');
+    }
+    if (document.getElementById('dashAnalyticsBody')) {
+      cv.renderAnalyticsCharts('dashAnalyticsBody');
+    }
+
+    // Mutation observer for dynamically added forms and inputs
+    const obs = new MutationObserver(() => scanAndAttachImeiInputs());
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPageEnhancements);
+  } else {
+    initPageEnhancements();
   }
 

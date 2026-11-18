@@ -2332,6 +2332,31 @@
           </div>
         </div>
 
+        <!-- WHAT IS HAPPENING BELOW: Business Intelligence & Telematics Analytics -->
+        <!-- Visual Telematics BI Analytics Card (Fleet Carrier Share, 12-Month Renewal Trajectory, Hardware Form Factor & Top Fleets) -->
+        <div class="card" id="homeAnalyticsCard"
+          style="margin-bottom:24px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,0.03)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:14px">
+            <div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:22px">📊</span>
+                <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text)">Fleet Telematics &amp; SIM Analytics</h3>
+                <span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--card-subtle);border:1px solid var(--line);color:var(--primary);letter-spacing:0.5px">EXECUTIVE BI</span>
+              </div>
+              <span style="font-size:13px;color:var(--muted);margin-top:2px;display:block">Real-time SIM provider market share, forward 12-month renewal forecast trajectory, and hardware form factor composition.</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="b" type="button" onclick="cv.renderAnalyticsCharts('homeAnalyticsBody')"
+                style="font-weight:700;padding:8px 16px;border-radius:9px;background:var(--card-subtle);border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px">
+                🔄 Refresh Analytics
+              </button>
+            </div>
+          </div>
+          <div id="homeAnalyticsBody">
+            <div class="empty">Loading fleet telemetry analytics…</div>
+          </div>
+        </div>
+
         <!-- WHAT IS HAPPENING BELOW: Automated Data Health & Integrity Diagnostics -->
         <!-- Data Health & Integrity Monitor Card (Embedded inside Home Overview) -->
         <div class="card" id="homeDataHealthCard"

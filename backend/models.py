@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, Date, DateTime, JSON, Text, TIMESTAMP, ForeignKey, func
+from sqlalchemy import Boolean, Column, Integer, String, Date, DateTime, JSON, Text, TIMESTAMP, ForeignKey, func, Index
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -59,6 +59,12 @@ class Device(Base):
     extra = Column(JSON, nullable=True)  # any extra CSV columns: {"Plan": "Gold", ...}
 
     customer = relationship("Customer")
+
+    __table_args__ = (
+        Index("ix_sim_devices_active_cust", "customer_id", "deleted_at"),
+        Index("ix_sim_devices_active_exp", "deleted_at", "expiry_date"),
+        Index("ix_sim_devices_active_prov", "deleted_at", "sim_provider"),
+    )
 
 
 class ColumnRegistry(Base):

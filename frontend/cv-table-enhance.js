@@ -82,6 +82,26 @@
       }
     });
 
+    // Make 15-digit IMEI cells interactive for Device 360° Timeline
+    try {
+      table.querySelectorAll('tbody td').forEach(td => {
+        const txt = td.textContent.trim();
+        if (/^\d{15}$/.test(txt) && !td.dataset.timelineBound) {
+          td.dataset.timelineBound = '1';
+          td.style.cursor = 'pointer';
+          td.style.color = 'var(--primary, #1d68e1)';
+          td.style.fontWeight = '700';
+          td.title = 'Click to open 360° Device Lifecycle Timeline';
+          td.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (window.cv && typeof window.cv.openDeviceTimeline === 'function') {
+              window.cv.openDeviceTimeline(txt);
+            }
+          });
+        }
+      });
+    } catch (_) {}
+
     initRowSelection(table);
   }
 
@@ -99,6 +119,8 @@
         activeDock.innerHTML = `
           <span class="cv-bulk-dock-count"><span id="cvDockNum">0</span> selected</span>
           <button class="cv-bulk-dock-btn primary" id="btnCvDockExport">📥 Export Selected (Excel)</button>
+          <button class="cv-bulk-dock-btn" id="btnCvDockRenew" style="background:#10b981;color:#ffffff;border-color:#10b981">🔄 Renew Plans</button>
+          <button class="cv-bulk-dock-btn" id="btnCvDockTimeline" style="background:#0284c7;color:#ffffff;border-color:#0284c7">📜 Device 360°</button>
           <button class="cv-bulk-dock-btn" id="btnCvDockClear">✖ Clear Selection</button>
         `;
         document.body.appendChild(activeDock);
@@ -106,6 +128,71 @@
         activeDock.querySelector('#btnCvDockClear').onclick = () => {
           table.querySelectorAll('tbody input[type="checkbox"]').forEach(c => c.checked = false);
           updateDock();
+        };
+
+        activeDock.querySelector('#btnCvDockTimeline').onclick = () => {
+          const selectedRows = Array.from(table.querySelectorAll('tbody tr')).filter(r => {
+            const chk = r.querySelector('input[type="checkbox"]');
+            return chk && chk.checked;
+          });
+          if (!selectedRows.length) return;
+          const firstRow = selectedRows[0];
+          let ident = firstRow.dataset.imei || firstRow.dataset.id;
+          if (!ident) {
+            for (const td of firstRow.querySelectorAll('td')) {
+              const txt = td.textContent.trim();
+              if (/^\d{15}$/.test(txt)) { ident = txt; break; }
+            }
+            if (!ident) {
+              const firstTd = firstRow.querySelector('td:nth-child(2), td');
+              ident = firstTd ? firstTd.textContent.trim() : '';
+            }
+          }
+          if (ident && window.cv && typeof window.cv.openDeviceTimeline === 'function') {
+            window.cv.openDeviceTimeline(ident);
+          } else if (typeof window.toast === 'function') {
+            window.toast('Select a device row to view 360° timeline.');
+          }
+        };
+
+        activeDock.querySelector('#btnCvDockRenew').onclick = () => {
+          const selectedRows = Array.from(table.querySelectorAll('tbody tr')).filter(r => {
+            const chk = r.querySelector('input[type="checkbox"]');
+            return chk && chk.checked;
+          });
+          if (!selectedRows.length) return;
+
+          const ids = [];
+          selectedRows.forEach(r => {
+            const chk = r.querySelector('input[type="checkbox"]');
+            const v = chk ? chk.value : '';
+            if (v && /^\d+$/.test(v) && v !== 'on') {
+              ids.push(parseInt(v, 10));
+            } else if (r.dataset.id && /^\d+$/.test(r.dataset.id)) {
+              ids.push(parseInt(r.dataset.id, 10));
+            } else {
+              const firstTd = r.querySelector('td:nth-child(2), td');
+              const txt = firstTd ? firstTd.textContent.trim() : '';
+              if (/^\d+$/.test(txt)) ids.push(parseInt(txt, 10));
+            }
+          });
+
+          if (!ids.length) {
+            if (typeof window.toast === 'function') window.toast('No device records found in selection.');
+            return;
+          }
+
+          if (window.cv && typeof window.cv.openBulkRenewModal === 'function') {
+            window.cv.openBulkRenewModal(ids, () => {
+              if (typeof window.refreshPageData === 'function') {
+                window.refreshPageData();
+              } else if (typeof window.loadInventory === 'function') {
+                window.loadInventory();
+              } else {
+                window.location.reload();
+              }
+            });
+          }
         };
 
         activeDock.querySelector('#btnCvDockExport').onclick = () => {

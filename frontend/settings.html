@@ -1924,6 +1924,12 @@
                   <option value="super_admin" id="optSuperAdminRole">👑 Super Admin</option>
                 </select>
               </div>
+              <div>
+                <label for="uScopedCust">Customer Portal Scope (Optional)</label>
+                <select id="uScopedCust" title="Restrict account access strictly to a single customer portfolio">
+                  <option value="" selected>🌐 Global (All Customers)</option>
+                </select>
+              </div>
             </div>
             <div id="roleTierBadge" style="margin:8px 0;font-size:12px;font-weight:600;color:var(--primary)"></div>
             <p class="sub" style="margin:8px 0 14px;font-size:12px;color:var(--muted);line-height:1.5">
@@ -1943,6 +1949,49 @@
             <h4 style="margin:0 0 12px;font-size:14.5px;font-weight:800;color:var(--text)">📋 Active System Accounts &amp; Access Tiers</h4>
             <div id="usersTableWrap">
               <div class="empty">Loading employees…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WHAT IS HAPPENING BELOW: Database Snapshot, Backup & Disaster Recovery Administration -->
+        <div class="card" id="settingsBackupCard" style="padding:28px;border-radius:18px;border:1px solid var(--line);background:var(--card);box-shadow:0 4px 18px rgba(0,0,0,0.03);margin-bottom:24px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:48px;height:48px;border-radius:14px;background:var(--card-subtle);border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:24px">
+                💾
+              </div>
+              <div>
+                <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
+                  <span>Database Snapshot &amp; Backup Administration</span>
+                  <span class="badge ok" style="font-size:11px;padding:3px 9px;border-radius:99px;font-weight:700">Online Replication</span>
+                </h3>
+                <p class="sub" style="margin:3px 0 0;font-size:12.5px;color:var(--text-dim)">
+                  Instant point-in-time SQLite snapshot and SQL schema stream backup for emergency fleet disaster recovery. Restricted to Master/Super Administrators.
+                </p>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <button type="button" class="b p" id="btnDownloadDbSnapshot" onclick="cv.downloadDatabaseBackup()"
+                style="font-weight:800;padding:10px 20px;border-radius:10px;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg, #10b981 0%, #059669 100%);border-color:#10b981;box-shadow:0 2px 10px rgba(16,185,129,0.25)">
+                <span>💾</span> <span>Download Database Snapshot (.sql)</span>
+              </button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px">
+            <div style="padding:14px 16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px">
+              <span style="display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Storage Engine</span>
+              <b style="font-size:14px;color:var(--text)">SQLite 3 / TiDB Cloud Ready</b>
+              <span style="display:block;font-size:11.5px;color:var(--ok);font-weight:600;margin-top:2px">WAL Mode • Resilient Fallback</span>
+            </div>
+            <div style="padding:14px 16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px">
+              <span style="display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Snapshot Protocol</span>
+              <b style="font-size:14px;color:var(--text)">Atomic VACUUM INTO / Dump Stream</b>
+              <span style="display:block;font-size:11.5px;color:var(--text-dim);margin-top:2px">Consistent lock-free streaming</span>
+            </div>
+            <div style="padding:14px 16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px">
+              <span style="display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Access Tier Required</span>
+              <b style="font-size:14px;color:var(--primary)">Super Admin / Master Admin</b>
+              <span style="display:block;font-size:11.5px;color:var(--text-dim);margin-top:2px">Audit-logged activity</span>
             </div>
           </div>
         </div>
@@ -4371,7 +4420,10 @@ This employee will immediately lose all access credentials to CustomerVault.`,
                   </div>
                 </td>
                 <td><code>${esc(u.user_id)}</code></td>
-                <td>${badgeHtml}</td>
+                <td>
+                  ${badgeHtml}
+                  ${u.scoped_customer_id ? `<span class="badge" style="font-size:10.5px;background:rgba(2,132,199,0.12);color:#0284c7;border:1px solid rgba(2,132,199,0.3);margin-left:4px">Scoped Cust #${u.scoped_customer_id}</span>` : ''}
+                </td>
                 <td><span class="role-pill ${u.role}">${esc(u.role)}</span></td>
                 ${pwdColHtml}
                 <td>${permSummaryHtml}</td>
@@ -4463,12 +4515,29 @@ This employee will immediately lose all access credentials to CustomerVault.`,
             };
           }
 
+          // Populate Customer Scope options
+          if ($('uScopedCust')) {
+            api('/api/customers').then(custs => {
+              const sel = $('uScopedCust');
+              const cur = sel.value;
+              sel.innerHTML = '<option value="">🌐 Global (All Customers)</option>';
+              (custs || []).forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.name} (#${c.id})`;
+                sel.appendChild(opt);
+              });
+              if (cur) sel.value = cur;
+            }).catch(() => {});
+          }
+
           if ($('uadd')) {
             $('uadd').onclick = async () => {
               const name = ($('un')?.value || '').trim();
               const user_id = ($('ui')?.value || '').trim();
               const password = $('up')?.value || '';
               const role = ($('ur2') && $('ur2').value) || 'master_admin';
+              const scopedVal = $('uScopedCust')?.value;
               if (!name || !user_id || !password) { cv.toast('Please complete all required fields', 'warn'); return; }
               const norm = /^\d+$/.test(user_id) ? user_id.padStart(4, '0') : user_id;
               if (['0001', '0007'].includes(norm) || role === 'super_admin') {
@@ -4478,12 +4547,17 @@ This employee will immediately lose all access credentials to CustomerVault.`,
                 }
               }
               try {
-                await api('/api/users', { method: 'POST', body: JSON.stringify({ name, user_id, password, role }) });
+                const payload = { name, user_id, password, role };
+                if (scopedVal && /^\d+$/.test(scopedVal)) {
+                  payload.permissions = { scoped_customer_id: parseInt(scopedVal, 10) };
+                }
+                await api('/api/users', { method: 'POST', body: JSON.stringify(payload) });
                 cv.toast(`Employee account for ${user_id} created successfully!`, 'ok');
                 if ($('un')) $('un').value = '';
                 if ($('ui')) $('ui').value = '';
                 if ($('up')) $('up').value = '';
                 if ($('ur2')) $('ur2').value = 'master_admin';
+                if ($('uScopedCust')) $('uScopedCust').value = '';
                 if ($('roleTierBadge')) $('roleTierBadge').textContent = '';
                 loadUsersContainer();
               } catch (err) { fail(err); }

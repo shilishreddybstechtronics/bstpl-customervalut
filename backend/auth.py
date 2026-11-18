@@ -202,16 +202,20 @@ DEFAULT_PERMISSIONS = {
 # Combines role defaults with custom per-user override switches stored in `user.permissions` JSON.
 # Super Admins (0001, 0007) are hard-coded to have True for all permissions and cannot be restricted.
 # ==============================================================================
-def get_user_permissions(user: models.User) -> dict[str, bool]:
+def get_user_permissions(user: models.User) -> dict:
     """Returns complete effective permissions for user, combining role defaults and individual overrides."""
     norm = normalize_id(user.user_id)
     if norm in MASTER_SUPER_ADMIN_IDS:
-        return {k: True for k in DEFAULT_PERMISSIONS["super_admin"]}
+        p = {k: True for k in DEFAULT_PERMISSIONS["super_admin"]}
+        p["scoped_customer_id"] = None
+        return p
     cat = get_user_category(user)["category"]
     perms = dict(DEFAULT_PERMISSIONS.get(cat, DEFAULT_PERMISSIONS["regular_user"]))
     if user.permissions and isinstance(user.permissions, dict):
         for k, v in user.permissions.items():
             if isinstance(v, bool):
+                perms[k] = v
+            elif k == "scoped_customer_id":
                 perms[k] = v
     return perms
 
@@ -302,12 +306,20 @@ def is_admin_tier(user: models.User) -> bool:
 
 
 def clean_permissions(perms) -> dict:
-    """Only known privilege names with true/false values are accepted."""
+    """Only known privilege names with true/false values, or scoped_customer_id, are accepted."""
     if not isinstance(perms, dict):
         raise ValueError("Permissions must be a set of on/off switches.")
     clean = {}
     for k, v in perms.items():
-        if k in PERMISSION_KEYS:
+        if k == "scoped_customer_id":
+            if v is None or v == "" or v == 0:
+                clean["scoped_customer_id"] = None
+            else:
+                try:
+                    clean["scoped_customer_id"] = int(v)
+                except (ValueError, TypeError):
+                    clean["scoped_customer_id"] = None
+        elif k in PERMISSION_KEYS:
             clean[k] = bool(v)
     return clean
 

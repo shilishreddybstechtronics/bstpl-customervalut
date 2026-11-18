@@ -525,5 +525,14 @@ class FetchSyncIn(BaseModel):
     update_data: Optional[list[dict]] = None
 
 
+class BulkRenewIn(BaseModel):
+    device_ids: list[int]
+    years: Optional[int] = 1
+    new_expiry_date: Optional[date] = None
+    activation_plan: Optional[str] = None
+    note: Optional[str] = None
+
+
+
 
 

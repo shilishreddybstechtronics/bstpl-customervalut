@@ -63,6 +63,7 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
     prev_name = perms_meta.get("previous_name")
     theme_pal = perms_meta.get("theme_palette", "royal_navy")
     theme_md = perms_meta.get("theme_mode", "light")
+    scoped_cid = perms_meta.get("scoped_customer_id")
 
     return {
         "id": u.id,
@@ -79,6 +80,7 @@ def user_out(u: models.User, actor: Optional[models.User] = None) -> dict:
         "can_manage_privileges": can_priv,
         "password": pwd,
         "permissions": get_user_permissions(u),
+        "scoped_customer_id": scoped_cid,
         "previous_name": prev_name,
         "theme_palette": theme_pal,
         "theme_mode": theme_md,
@@ -210,11 +212,11 @@ def create_user(data: schemas.UserCreate, db: Session = Depends(get_db), admin: 
     if db.query(models.User).filter(models.User.user_id == login_id).first():
         raise HTTPException(400, "This ID is already taken. Choose another one.")
 
-    # Privileges (individual switches) can only be given by a Super Admin
+    # Privileges (individual switches or customer scoping) can be given by Super/Master Admins
     overrides = {}
     if data.permissions:
-        if not is_admin_super:
-            raise HTTPException(403, "Only Super Admins can give privileges.")
+        if not (is_admin_super or admin_cat == "master_admin"):
+            raise HTTPException(403, "Only Super Admins and Master Admins can assign privileges or customer scope.")
         try:
             overrides = clean_permissions(data.permissions)
         except ValueError as e:

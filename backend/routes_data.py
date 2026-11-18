@@ -4,6 +4,7 @@ import math
 import time
 import uuid
 from datetime import date, datetime, timedelta
+from pathlib import Path
 from typing import Optional, Literal
 from pydantic import BaseModel, field_validator
 
@@ -469,13 +470,19 @@ def all_columns(db: Session = Depends(get_db)):
 
 # ---------- customers ----------
 @router.get("/customers", dependencies=[Depends(require_permission("view"))])
-def customers(db: Session = Depends(get_db)):
+def customers(db: Session = Depends(get_db), user: Optional[models.User] = Depends(get_current_user)):
     soon = date.today() + timedelta(days=30)
-    rows = (db.query(Customer.id, Customer.name, Customer.avatar, func.count(Device.id),
+    scoped_cid = None
+    if user and isinstance(user.permissions, dict):
+        scoped_cid = user.permissions.get("scoped_customer_id")
+
+    base_query = (db.query(Customer.id, Customer.name, Customer.avatar, func.count(Device.id),
                      func.sum(case((Device.expiry_date <= soon, 1), else_=0)))
             .outerjoin(Device, (Device.customer_id == Customer.id) & ACTIVE)
-            .filter(Customer.deleted_at.is_(None))
-            .group_by(Customer.id, Customer.name, Customer.avatar).order_by(Customer.name).all())
+            .filter(Customer.deleted_at.is_(None)))
+    if scoped_cid:
+        base_query = base_query.filter(Customer.id == int(scoped_cid))
+    rows = base_query.group_by(Customer.id, Customer.name, Customer.avatar).order_by(Customer.name).all()
     return [{"id": i, "name": n, "avatar": a, "devices": c, "expiring_or_expired": int(e or 0)} for i, n, a, c, e in rows]
 
 
@@ -901,9 +908,17 @@ def update_customer_avatar(customer_id: int, data: dict, db: Session = Depends(g
 # 6. Sorts by specified column in ascending or descending order.
 # ==============================================================================
 def build_device_query(db: Session, customer_id, q, column, sort_by, sort_dir, sim_type="all",
-                       expiry_filter="all", expiry_days=30, exp_start=None, exp_end=None):
+                       expiry_filter="all", expiry_days=30, exp_start=None, exp_end=None,
+                       user: Optional[models.User] = None):
     """Search + sort shared by the table and the Excel export, so both always agree."""
     query = db.query(Device).join(Customer).options(joinedload(Device.customer)).filter(ACTIVE)
+
+    scoped_cid = None
+    if user and isinstance(user.permissions, dict):
+        scoped_cid = user.permissions.get("scoped_customer_id")
+    if scoped_cid:
+        customer_id = int(scoped_cid)
+
     if customer_id:
         query = query.filter(Device.customer_id == customer_id)
 
@@ -1064,7 +1079,7 @@ def list_devices(customer_id: Optional[int] = None, q: str = "", column: Optiona
                  page: int = Query(1, ge=1), page_size: int = Query(100, ge=1, le=5000),
                  db: Session = Depends(get_db), user: Optional[models.User] = Depends(get_current_user)):
     query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type,
-                               expiry_filter=expiry_filter, expiry_days=expiry_days, exp_start=exp_start, exp_end=exp_end)
+                               expiry_filter=expiry_filter, expiry_days=expiry_days, exp_start=exp_start, exp_end=exp_end, user=user)
     cur_page = int(page.default if hasattr(page, 'default') else page)
     cur_page_size = int(page_size.default if hasattr(page_size, 'default') else page_size)
     total = query.count()
@@ -1101,7 +1116,7 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
                    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
     """EVERY record that matches the current filters (not just one page) as an Excel file."""
     query = build_device_query(db, customer_id, q, column, sort_by, sort_dir, sim_type=sim_type,
-                               expiry_filter=expiry_filter, expiry_days=expiry_days, exp_start=exp_start, exp_end=exp_end)
+                               expiry_filter=expiry_filter, expiry_days=expiry_days, exp_start=exp_start, exp_end=exp_end, user=user)
     if customer_id:
         cust_cols = get_customer_columns(customer_id=customer_id, db=db)
         extra_cols = [c["key"] for c in cust_cols.get("unique_columns", [])]
@@ -4076,4 +4091,300 @@ def bulk_edit_execute(data: schemas.BulkEditExecuteIn, db: Session = Depends(get
         "failures_count": failures_count,
         "errors": []
     }
+
+
+# ==============================================================================
+# WHAT IS HAPPENING BELOW:
+# Advanced Hardware & Fleet Intelligence Endpoints:
+# 1. validate_imei_luhn: GSM IMEI Checksum Verification (Luhn mod 10).
+# 2. bulk_renew_devices: 1-Click Plan Extension & Renewal Engine.
+# 3. get_device_timeline: 360-Degree Lifecycle Audit Trail for Individual IMEI.
+# 4. get_analytics_charts_data: Business Intelligence visual chart metrics.
+# 5. get_notifications_summary: Real-Time Universal Notification Drawer Alerts.
+# 6. download_database_backup: Instant Super Admin Database Snapshot.
+# ==============================================================================
+
+def validate_imei_luhn(imei_str: str) -> bool:
+    """Verifies standard 15-digit GSM IMEI checksum via Luhn mod-10 formula."""
+    imei = re.sub(r"\D", "", str(imei_str or ""))
+    if len(imei) != 15:
+        return False
+    total = 0
+    for i in range(14):
+        digit = int(imei[i])
+        if i % 2 == 1:
+            digit *= 2
+            if digit > 9:
+                digit = (digit // 10) + (digit % 10)
+        total += digit
+    check_digit = (10 - (total % 10)) % 10
+    return check_digit == int(imei[14])
+
+
+@router.post("/devices/bulk-renew", dependencies=[Depends(require_staff), Depends(require_permission("edit"))])
+def bulk_renew_devices(data: schemas.BulkRenewIn, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
+    """Bulk extends commercial plan expiry date for selected devices."""
+    if not data.device_ids:
+        raise HTTPException(400, "No device IDs provided for renewal.")
+
+    devices = db.query(Device).filter(ACTIVE, Device.id.in_(data.device_ids)).all()
+    if not devices:
+        raise HTTPException(404, "None of the specified devices were found.")
+
+    today = date.today()
+    renewed_count = 0
+    for d in devices:
+        if data.new_expiry_date:
+            d.expiry_date = data.new_expiry_date
+        else:
+            add_years = data.years or 1
+            base_date = d.expiry_date if (d.expiry_date and d.expiry_date > today) else today
+            try:
+                d.expiry_date = base_date.replace(year=base_date.year + add_years)
+            except ValueError:
+                d.expiry_date = base_date + timedelta(days=add_years * 365)
+
+        if data.activation_plan:
+            d.activation_plan = data.activation_plan
+
+        renewed_count += 1
+
+    note_str = f" ({data.note})" if data.note else ""
+    log_activity(db, "plan_renewal", f"Renewed plan for {renewed_count} devices (+{data.years or 1}yr){note_str}", user=user)
+    db.commit()
+    return {
+        "success": True,
+        "renewed_count": renewed_count,
+        "message": f"Successfully extended plan for {renewed_count} devices."
+    }
+
+
+@router.get("/devices/{ident}/timeline", dependencies=[Depends(require_permission("view"))])
+def get_device_timeline(ident: str, db: Session = Depends(get_db)):
+    """Returns the complete 360-degree lifecycle history of an individual device."""
+    dev = None
+    if ident.isdigit():
+        dev = db.query(Device).filter(Device.id == int(ident)).first()
+    if not dev:
+        dev = db.query(Device).filter(or_(Device.imei == ident, Device.iccid == ident, Device.device_sr_no == ident)).first()
+    if not dev:
+        raise HTTPException(404, "Device record not found")
+
+    cust = db.query(Customer).filter(Customer.id == dev.customer_id).first()
+    cust_name = cust.name if cust else "Unknown Customer"
+
+    today = date.today()
+    milestones = []
+
+    # 1. Ingestion milestone
+    if dev.created_at:
+        date_str = dev.created_at.strftime("%Y-%m-%d %H:%M") if hasattr(dev.created_at, "strftime") else str(dev.created_at)
+        milestones.append({
+            "stage": "Ingestion",
+            "title": "Device Ingested into CustomerVault",
+            "date": date_str,
+            "icon": "📥",
+            "status": "complete",
+            "detail": f"Assigned to customer portfolio '{cust_name}'. Initial IMEI: {dev.imei}."
+        })
+
+    # 2. Dispatch milestone
+    if dev.dispatched_date:
+        milestones.append({
+            "stage": "Dispatch",
+            "title": "Hardware Dispatched to Customer / Fleet",
+            "date": dev.dispatched_date.isoformat(),
+            "icon": "🚚",
+            "status": "complete",
+            "detail": f"Device Serial: {dev.device_sr_no or 'N/A'}. Model: {dev.model or 'Standard'}."
+        })
+
+    # 3. Activation milestone
+    if dev.act_date:
+        milestones.append({
+            "stage": "Activation",
+            "title": "Commercial / Telecom SIM Activation",
+            "date": dev.act_date.isoformat(),
+            "icon": "⚡",
+            "status": "complete",
+            "detail": f"Provider: {dev.sim_provider or 'Telecom'}. Plan: {dev.activation_plan or 'Active'}."
+        })
+
+    # 4. Sensorise Telematics milestone
+    sensorise_data = {}
+    try:
+        from sensorise_sync import TELEMATICS_CACHE
+        if dev.iccid and dev.iccid in TELEMATICS_CACHE:
+            sc = TELEMATICS_CACHE[dev.iccid]
+            sensorise_data = sc
+            milestones.append({
+                "stage": "Sensorise Cloud",
+                "title": f"Sensorise LCM Status: {sc.get('cardState', 'Commercial')} / {sc.get('cardStatus', 'Active')}",
+                "date": sc.get("dualProfileActivationDate") or sc.get("commercialActivationDate") or "Live",
+                "icon": "📡",
+                "status": "active" if sc.get("cardStatus") == "Active" else "warning",
+                "detail": f"Primary TSP: {sc.get('primaryTSP', 'N/A')} ({sc.get('primaryStatus', 'N/A')}), Fallback: {sc.get('fallbackTSP', 'N/A')}."
+            })
+    except Exception:
+        pass
+
+    # 5. Expiry milestone
+    if dev.expiry_date:
+        days_diff = (dev.expiry_date - today).days
+        if days_diff < 0:
+            exp_status = "expired"
+            exp_title = f"Plan Expired {abs(days_diff)} day(s) ago"
+            exp_icon = "❌"
+        elif days_diff <= 30:
+            exp_status = "expiring_soon"
+            exp_title = f"Expiring Soon ({days_diff} days remaining)"
+            exp_icon = "⚠️"
+        else:
+            exp_status = "active"
+            exp_title = f"Active ({days_diff} days remaining)"
+            exp_icon = "✅"
+        milestones.append({
+            "stage": "Commercial Expiry",
+            "title": exp_title,
+            "date": dev.expiry_date.isoformat(),
+            "icon": exp_icon,
+            "status": exp_status,
+            "detail": f"Valid until {dev.expiry_date.isoformat()} under plan '{dev.activation_plan or 'Standard'}'."
+        })
+
+    # 6. Recycle bin status
+    if dev.deleted_at:
+        date_del = dev.deleted_at.strftime("%Y-%m-%d %H:%M") if hasattr(dev.deleted_at, "strftime") else str(dev.deleted_at)
+        milestones.append({
+            "stage": "Recycle Bin",
+            "title": "Moved to Cart / Recycle Bin",
+            "date": date_del,
+            "icon": "🗑️",
+            "status": "deleted",
+            "detail": f"By user '{dev.deleted_by or 'Unknown'}'. Reason: {dev.delete_reason or 'None provided'}."
+        })
+
+    luhn_valid = validate_imei_luhn(dev.imei)
+
+    return {
+        "device": out(dev),
+        "customer_name": cust_name,
+        "is_luhn_valid": luhn_valid,
+        "milestones": milestones,
+        "sensorise": sensorise_data
+    }
+
+
+@router.get("/analytics/charts", dependencies=[Depends(require_permission("view"))])
+def get_analytics_charts_data(db: Session = Depends(get_db)):
+    """Computes fleet distribution for visual charts: Provider market share, forward 12-month expiry trajectory, and SIM type ratio."""
+    today = date.today()
+
+    # 1. SIM Provider distribution
+    prov_counts = db.query(Device.sim_provider, func.count(Device.id)).filter(ACTIVE).group_by(Device.sim_provider).all()
+    providers = {}
+    for p_name, cnt in prov_counts:
+        key = (p_name or "Unassigned").strip()
+        providers[key] = providers.get(key, 0) + cnt
+
+    # 2. Forward 12-month expiry trajectory
+    monthly_trajectory = []
+    for m in range(12):
+        year = today.year + ((today.month - 1 + m) // 12)
+        month = ((today.month - 1 + m) % 12) + 1
+        m_start = date(year, month, 1)
+        next_year = year + (1 if month == 12 else 0)
+        next_month = 1 if month == 12 else month + 1
+        m_end = date(next_year, next_month, 1) - timedelta(days=1)
+
+        m_count = db.query(func.count(Device.id)).filter(ACTIVE, Device.expiry_date >= m_start, Device.expiry_date <= m_end).scalar() or 0
+        monthly_trajectory.append({
+            "key": f"{year}-{month:02d}",
+            "label": m_start.strftime("%b %Y"),
+            "count": m_count
+        })
+
+    # 3. SIM Type breakdown
+    esim_cnt = db.query(func.count(Device.id)).filter(
+        ACTIVE,
+        or_(func.upper(Device.sim_type) == 'E-SIM', and_(or_(Device.sim_type.is_(None), Device.sim_type == ''), Device.iccid.isnot(None), Device.iccid != ''))
+    ).scalar() or 0
+    plastic_cnt = db.query(func.count(Device.id)).filter(
+        ACTIVE,
+        or_(func.upper(Device.sim_type).in_(['PLASTIC SIM', 'PLASTIC']), and_(or_(Device.sim_type.is_(None), Device.sim_type == ''), or_(Device.iccid.is_(None), Device.iccid == '')))
+    ).scalar() or 0
+
+    # 4. Top 8 Customers
+    top_custs = db.query(Customer.name, func.count(Device.id)).join(Device).filter(ACTIVE).group_by(Customer.id).order_by(func.count(Device.id).desc()).limit(8).all()
+    top_customers = [{"name": c_name, "count": cnt} for c_name, cnt in top_custs]
+
+    return {
+        "sim_providers": providers,
+        "expiry_trajectory": monthly_trajectory,
+        "sim_types": {"E-SIM": esim_cnt, "Plastic SIM": plastic_cnt},
+        "top_customers": top_customers
+    }
+
+
+@router.get("/notifications/summary", dependencies=[Depends(require_permission("view"))])
+def get_notifications_summary(db: Session = Depends(get_db)):
+    """Computes actionable real-time notification alerts for the universal top-bar bell icon."""
+    today = date.today()
+    exp_7 = db.query(func.count(Device.id)).filter(ACTIVE, Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=7)).scalar() or 0
+    exp_30 = db.query(func.count(Device.id)).filter(ACTIVE, Device.expiry_date.isnot(None), Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=30)).scalar() or 0
+    already_expired = db.query(func.count(Device.id)).filter(ACTIVE, Device.expiry_date.isnot(None), Device.expiry_date < today).scalar() or 0
+    errors_cnt = db.query(func.count(models.ErroredRecord.id)).scalar() or 0
+    cart_cnt = db.query(func.count(Device.id)).filter(Device.deleted_at.isnot(None)).scalar() or 0
+
+    recent_acts = db.query(models.ActivityLog).order_by(models.ActivityLog.created_at.desc()).limit(5).all()
+    acts = []
+    for a in recent_acts:
+        acts.append({
+            "action": a.action,
+            "detail": a.detail,
+            "user": a.user_login or a.user_name or "System",
+            "time": a.created_at.strftime("%H:%M, %d %b") if hasattr(a.created_at, "strftime") else str(a.created_at)
+        })
+
+    return {
+        "expiring_7d": exp_7,
+        "expiring_30d": exp_30,
+        "expired": already_expired,
+        "errors_count": errors_cnt,
+        "cart_count": cart_cnt,
+        "badge_count": exp_7 + errors_cnt,
+        "recent_activities": acts
+    }
+
+
+@router.get("/system/backup", dependencies=[Depends(require_admin)])
+def download_database_backup(db: Session = Depends(get_db), admin: models.User = Depends(require_admin)):
+    """Generates an instant, consistent SQLite snapshot or SQL export of the entire database."""
+    log_activity(db, "system_backup", "Initiated complete database backup", user=admin)
+    db.commit()
+
+    import sqlite3
+    db_file = Path(__file__).parent / "customervault.db"
+    backup_filename = f"CustomerVault_Backup_{date.today().isoformat()}.sql"
+
+    if db_file.exists():
+        mem_db = io.BytesIO()
+        src_conn = sqlite3.connect(str(db_file))
+        mem_conn = sqlite3.connect(":memory:")
+        src_conn.backup(mem_conn)
+        src_conn.close()
+        for line in mem_conn.iterdump():
+            mem_db.write(f"{line}\n".encode("utf-8"))
+        mem_conn.close()
+        mem_db.seek(0)
+        return StreamingResponse(
+            mem_db, media_type="application/sql",
+            headers={"Content-Disposition": f'attachment; filename="{backup_filename}"'}
+        )
+    else:
+        buf = io.BytesIO(b"-- CustomerVault Online SQL Dump (No local file)\n")
+        return StreamingResponse(
+            buf, media_type="application/sql",
+            headers={"Content-Disposition": f'attachment; filename="{backup_filename}"'}
+        )
 
