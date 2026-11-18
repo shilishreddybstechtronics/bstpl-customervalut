@@ -4690,11 +4690,26 @@
             const queryUrl = `/api/devices?page=1&page_size=5000&q=${encodeURIComponent(targetQ)}&column=${targetCol}&sort_by=${sortCol}&sort_dir=${sortDir}${targetCid ? '&customer_id=' + targetCid : ''}`;
             const d = await api(queryUrl);
 
+            let allItems = (d && d.items) ? [...d.items] : [];
+            const totalCount = d && d.total ? d.total : allItems.length;
+            if (totalCount > allItems.length) {
+              const totalPages = Math.ceil(totalCount / 5000);
+              for (let p = 2; p <= totalPages; p++) {
+                if (typeof showBstplLoader === 'function') {
+                  showBstplLoader(`Fetching records ${allItems.length.toLocaleString()} of ${totalCount.toLocaleString()}…`);
+                }
+                const nextChunk = await api(`/api/devices?page=${p}&page_size=5000&q=${encodeURIComponent(targetQ)}&column=${targetCol}&sort_by=${sortCol}&sort_dir=${sortDir}${targetCid ? '&customer_id=' + targetCid : ''}`);
+                if (nextChunk && nextChunk.items) {
+                  allItems.push(...nextChunk.items);
+                }
+              }
+            }
+
             const colMap = {};
             allAvailableCols.forEach(c => { colMap[c.key] = c.label; });
 
             const headers = ['ID', ...checked.map(k => colMap[k] || k)];
-            const rows = (d.items || []).map(dev => [
+            const rows = allItems.map(dev => [
               dev.id,
               ...checked.map(k => {
                 if (k === 'customer_name') return dev.customer_name || (cust ? cust.name : '');
@@ -5628,21 +5643,8 @@
             devsByCust.get(cid).push(d);
           });
 
-          const wb = XLSX.utils.book_new();
-          let sheetsCount = 0;
-
-          customers.forEach(c => {
+          const sheets = customers.map(c => {
             const custDevs = devsByCust.get(c.id) || [];
-            let sheetName = (c.name || `Customer_${c.id}`).replace(/[\\/?*\[\]:]/g, '_').trim();
-            if (!sheetName) sheetName = `Customer_${c.id}`;
-            if (sheetName.length > 31) sheetName = sheetName.substring(0, 31);
-
-            let uniqueName = sheetName;
-            let counter = 1;
-            while (wb.SheetNames.includes(uniqueName)) {
-              uniqueName = sheetName.substring(0, 28) + '_' + counter++;
-            }
-
             const headers = chosenCols.map(col => col.label);
             const rows = custDevs.map(d => chosenCols.map(col => {
               if (col.key === 'id') return d.id;
@@ -5651,15 +5653,24 @@
               if (d.extra && col.key in d.extra) return d.extra[col.key] != null ? d.extra[col.key] : '';
               return '';
             }));
-
-            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-            XLSX.utils.book_append_sheet(wb, ws, uniqueName);
-            sheetsCount++;
+            return {
+              name: c.name || `Customer_${c.id}`,
+              headers,
+              rows
+            };
           });
 
-          const dateStr = new Date().toISOString().slice(0, 10);
-          XLSX.writeFile(wb, `BSTPL_CustomerVault_All_Portfolios_${dateStr}.xlsx`);
-          toast(`Multi-customer workbook downloaded with ${sheetsCount} customer sheets!`);
+          if (window.cvExport && typeof window.cvExport.exportMultiSheetExcel === 'function') {
+            window.cvExport.exportMultiSheetExcel('BSTPL_CustomerVault_All_Portfolios', sheets);
+          } else {
+            const wb = XLSX.utils.book_new();
+            sheets.forEach(s => {
+              const ws = XLSX.utils.aoa_to_sheet([s.headers, ...s.rows], { raw: true });
+              XLSX.utils.book_append_sheet(wb, ws, s.name.substring(0, 31));
+            });
+            XLSX.writeFile(wb, `BSTPL_CustomerVault_All_Portfolios_${new Date().toISOString().slice(0, 10)}.xlsx`);
+          }
+          toast(`✓ Multi-customer workbook downloaded with ${sheets.length} customer sheets!`);
         } catch (err) {
           fail(err);
         } finally {

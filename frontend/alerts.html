@@ -2268,28 +2268,8 @@
     }
 
     function exportExcel(title, headers, rows) {
-      try {
-        toast('Generating Excel file…');
-        if (typeof XLSX !== 'undefined') {
-          const data = [headers, ...(rows || [])];
-          const ws = XLSX.utils.aoa_to_sheet(data);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'Data');
-          const safeTitle = (title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_');
-          const fileName = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-          XLSX.writeFile(wb, fileName);
-          toast('Excel downloaded successfully');
-        } else {
-          const csv = [headers.join(','), ...(rows || []).map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = `${title || 'export'}.csv`;
-          a.click();
-          toast('CSV downloaded');
-        }
-      } catch(e) {
-        toast('Export failed: ' + e.message);
+      if (window.cvExport && typeof window.cvExport.exportExcel === 'function') {
+        return window.cvExport.exportExcel(title, headers, rows);
       }
     }
 

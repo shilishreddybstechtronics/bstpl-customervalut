@@ -3300,11 +3300,26 @@
             const targetQ = typeof invQ !== 'undefined' ? invQ : '';
             const targetCol = typeof invCol !== 'undefined' ? invCol : 'all';
             const d = await api(`/api/devices?page=1&page_size=5000&q=${encodeURIComponent(targetQ)}&column=${targetCol}&sort_by=${sortCol}&sort_dir=${sortDir}${targetCid ? '&customer_id=' + targetCid : ''}`);
+            let allItems = (d && d.items) ? [...d.items] : [];
+            const totalCount = d && d.total ? d.total : allItems.length;
+            if (totalCount > allItems.length) {
+              const totalPages = Math.ceil(totalCount / 5000);
+              for (let p = 2; p <= totalPages; p++) {
+                if (typeof showBstplLoader === 'function') {
+                  showBstplLoader(`Fetching records ${allItems.length.toLocaleString()} of ${totalCount.toLocaleString()}…`);
+                }
+                const nextChunk = await api(`/api/devices?page=${p}&page_size=5000&q=${encodeURIComponent(targetQ)}&column=${targetCol}&sort_by=${sortCol}&sort_dir=${sortDir}${targetCid ? '&customer_id=' + targetCid : ''}`);
+                if (nextChunk && nextChunk.items) {
+                  allItems.push(...nextChunk.items);
+                }
+              }
+            }
+
             const colMap = {};
             allAvailableCols.forEach(c => { colMap[c.key] = c.label; });
 
             const headers = ['ID', ...checked.map(k => colMap[k] || k)];
-            const rows = (d.items || []).map(dev => [
+            const rows = allItems.map(dev => [
               dev.id,
               ...checked.map(k => {
                 if (k === 'customer_name') return dev.customer_name || (custObj ? custObj.name : '');

@@ -1780,8 +1780,8 @@
               <button class="b" type="button" onclick="loadCartContainer()" style="font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:8px" title="Refresh Cart Data">
                 🔄 Refresh
               </button>
-              <button class="b" type="button" onclick="exportCartListCsv()" style="font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:8px" title="Download Excel CSV of deleted records">
-                📥 Export CSV
+              <button class="b" type="button" onclick="exportCartListExcel()" style="font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:8px" title="Download Excel (.xlsx) of deleted records">
+                📥 Export Excel
               </button>
             </div>
           </div>
@@ -2672,35 +2672,38 @@
       }
     };
 
-    // Client-Side CSV Export
-    window.exportCartListCsv = function() {
+    // Client-Side Excel Export
+    window.exportCartListExcel = function() {
       const isCust = currentTab === 'custs';
-      let csv = '';
-      let filename = '';
-
       if (isCust) {
         if (!allCartCusts.length) { showToast('No customers to export.', 'info'); return; }
-        filename = `deleted_customers_${new Date().toISOString().slice(0, 10)}.csv`;
-        csv = 'Customer ID,Customer Name,Associated Records,Deleted Date,Deleted By\n' +
-          allCartCusts.map(c => `"${c.id}","${(c.name || '').replace(/"/g, '""')}","${c.devices || 0}","${c.deleted_at || ''}","${c.deleted_by || ''}"`).join('\n');
+        const headers = ['Customer ID', 'Customer Name', 'Associated Records', 'Deleted Date', 'Deleted By'];
+        const rows = allCartCusts.map(c => [
+          c.id,
+          c.name || '',
+          c.devices || 0,
+          c.deleted_at || '',
+          c.deleted_by || ''
+        ]);
+        exportExcel('Deleted_Customers_Cart', headers, rows);
       } else {
         if (!allCartDevs.length) { showToast('No device records to export.', 'info'); return; }
-        filename = `deleted_records_${new Date().toISOString().slice(0, 10)}.csv`;
-        csv = 'ID,IMEI,Customer Name,Device Serial,ICCID,MSISDN1,Deleted Date,Deleted By,Reason\n' +
-          allCartDevs.map(d => `"${d.id}","${d.imei || ''}","${(d.customer_name || '').replace(/"/g, '""')}","${d.device_sr_no || ''}","${d.iccid || ''}","${d.msisdn1 || ''}","${d.deleted_at || ''}","${d.deleted_by || ''}","${(d.delete_reason || '').replace(/"/g, '""')}"`).join('\n');
+        const headers = ['ID', 'IMEI', 'Customer Name', 'Device Serial', 'ICCID', 'MSISDN1', 'Deleted Date', 'Deleted By', 'Reason'];
+        const rows = allCartDevs.map(d => [
+          d.id,
+          d.imei || '',
+          d.customer_name || '',
+          d.device_sr_no || '',
+          d.iccid || '',
+          d.msisdn1 || '',
+          d.deleted_at || '',
+          d.deleted_by || '',
+          d.delete_reason || ''
+        ]);
+        exportExcel('Deleted_Records_Cart', headers, rows);
       }
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast(`Exported ${filename} successfully!`, 'ok');
     };
+    window.exportCartListCsv = window.exportCartListExcel;
 
     // Logout Functionality
     window.logout = async function(ask = true) {

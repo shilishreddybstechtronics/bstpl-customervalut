@@ -334,9 +334,16 @@ def make_excel(title: str, headers: list[str], rows: list[list]) -> io.BytesIO:
                 cell.border = thin_border
                 if r_idx % 2 == 1:
                     cell.fill = zebra
+                v_str = vals[col_idx - 1]
+                if len(v_str) >= 9 and (v_str.isdigit() or v_str.startswith('8991')):
+                    cell.number_format = '@'
 
     for i, w in enumerate(widths, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = min(max(w + 3, 12), 60)
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = min(max(w + 3, 12), 60)
+        h_low = str(headers[i - 1]).lower()
+        if any(k in h_low for k in ["imei", "iccid", "msisdn", "serial", "sr_no", "sr no"]):
+            ws.column_dimensions[col_letter].number_format = '@'
     ws.row_dimensions[1].height = 26
     ws.freeze_panes = "A2"
 
@@ -1099,7 +1106,25 @@ def export_devices(customer_id: Optional[int] = None, q: str = "", column: Optio
         cust_cols = get_customer_columns(customer_id=customer_id, db=db)
         extra_cols = [c["key"] for c in cust_cols.get("unique_columns", [])]
     else:
-        extra_cols = [n for (n,) in db.query(models.ColumnRegistry.name).order_by(models.ColumnRegistry.name)]
+        # Check if matched results belong to a single customer
+        distinct_cids = [cid for (cid,) in query.with_entities(Device.customer_id).distinct().limit(2).all()]
+        if len(distinct_cids) == 1 and distinct_cids[0]:
+            cust_cols = get_customer_columns(customer_id=distinct_cids[0], db=db)
+            extra_cols = [c["key"] for c in cust_cols.get("unique_columns", [])]
+        else:
+            reg_names = [n for (n,) in db.query(models.ColumnRegistry.name).order_by(models.ColumnRegistry.name)]
+            extra_keys = set(reg_names)
+            try:
+                sample_extras = query.filter(Device.extra.isnot(None)).limit(1000).all()
+                for d in sample_extras:
+                    ex = d.extra
+                    if isinstance(ex, dict):
+                        for k in ex.keys():
+                            if k and k.strip():
+                                extra_keys.add(k.strip())
+            except Exception:
+                pass
+            extra_cols = sorted(extra_keys)
     headers = ["ID"] + [label for _, label in EXPORT_COLS] + extra_cols
     rows, offset, batch = [], 0, 2000
     while True:

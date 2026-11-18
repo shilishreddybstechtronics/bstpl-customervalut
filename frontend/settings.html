@@ -3074,28 +3074,8 @@
     }
 
     function exportExcel(title, headers, rows) {
-      try {
-        toast('Generating Excel file…');
-        if (typeof XLSX !== 'undefined') {
-          const data = [headers, ...(rows || [])];
-          const ws = XLSX.utils.aoa_to_sheet(data);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'Data');
-          const safeTitle = (title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_');
-          const fileName = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-          XLSX.writeFile(wb, fileName);
-          toast('Excel downloaded successfully');
-        } else {
-          const csv = [headers.join(','), ...(rows || []).map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = `${title || 'export'}.csv`;
-          a.click();
-          toast('CSV downloaded');
-        }
-      } catch(e) {
-        toast('Export failed: ' + e.message);
+      if (window.cvExport && typeof window.cvExport.exportExcel === 'function') {
+        return window.cvExport.exportExcel(title, headers, rows);
       }
     }
 
@@ -4871,21 +4851,14 @@ This employee will immediately lose all access credentials to CustomerVault.`,
             }
             const headers = ['Timestamp', 'Employee ID', 'Action', 'Details', 'IP Address'];
             const rows = items.map(i => [
-              `"${(i.created_at || '').replace(/"/g, '""')}"`,
-              `"${(i.user_id || '').replace(/"/g, '""')}"`,
-              `"${(i.action || '').replace(/"/g, '""')}"`,
-              `"${(i.details || '').replace(/"/g, '""')}"`,
-              `"${(i.ip_address || '').replace(/"/g, '""')}"`
+              i.created_at || '',
+              i.user_id || '',
+              i.action || '',
+              i.details || '',
+              i.ip_address || ''
             ]);
-            const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join(String.fromCharCode(10));
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', `login_inventory_audit_${new Date().toISOString().slice(0, 10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            toast('✅ Login inventory export downloaded');
+            exportExcel('login_inventory_audit', headers, rows);
+            toast('✅ Login inventory Excel downloaded');
           } catch (err) {
             toast('⚠️ Failed to export audit log');
           }

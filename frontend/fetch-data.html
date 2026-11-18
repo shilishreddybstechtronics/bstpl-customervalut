@@ -5649,15 +5649,22 @@
           exportExcel('fetch_data_not_found_' + new Date().toISOString().slice(0, 10), hdr, rows);
         };
 
-        if ($('btnBfDlExact')) $('btnBfDlExact').onclick = () => {
-          const headers = ['ID', 'Customer Name', 'Data Source', 'Device SR No', 'IMEI', 'ICCID', 'MSISDN1', 'MSISDN2', 'Act Date', 'Expiry Date', 'Model', 'SIM Provider', 'SIM Type'];
-          const rows = exact.map(d => [d.id, d.customer_name, devValue(d, 'source'), d.device_sr_no, d.imei, d.iccid, devValue(d, 'msisdn1'), devValue(d, 'msisdn2'), devValue(d, 'act_date'), devValue(d, 'expiry_date'), d.model, d.sim_provider, d.sim_type]);
+        if ($('btnBfDlExact')) $('btnBfDlExact').onclick = async () => {
+          const custId = $('bfCustFilter') ? $('bfCustFilter').value : '';
+          const targetCid = custId || (exact.length > 0 && new Set(exact.map(d => d.customer_id).filter(Boolean)).size === 1 ? exact[0].customer_id : null);
+          if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
+            await fetchCustomerColumns(targetCid);
+          }
+          const displayCols = computeDisplayCols(exact, 'all');
+          const headers = ['ID', ...displayCols.map(c => c.label)];
+          const rows = exact.map(d => [d.id, ...displayCols.map(c => devValue(d, c.key))]);
           exportExcel(fetchPrefix() + '_exact_matches', headers, rows);
         };
 
-        if ($('btnBfDlSimilar')) $('btnBfDlSimilar').onclick = () => {
-          const headers = ['ID', 'Customer Name', 'Data Source', 'Device SR No', 'IMEI', 'ICCID', 'MSISDN1', 'MSISDN2', 'Act Date', 'Expiry Date', 'Model', 'SIM Provider', 'SIM Type'];
-          const rows = similar.map(d => [d.id, d.customer_name, devValue(d, 'source'), d.device_sr_no, d.imei, d.iccid, devValue(d, 'msisdn1'), devValue(d, 'msisdn2'), devValue(d, 'act_date'), devValue(d, 'expiry_date'), d.model, d.sim_provider, d.sim_type]);
+        if ($('btnBfDlSimilar')) $('btnBfDlSimilar').onclick = async () => {
+          const displayCols = computeDisplayCols(similar, 'all');
+          const headers = ['ID', ...displayCols.map(c => c.label)];
+          const rows = similar.map(d => [d.id, ...displayCols.map(c => devValue(d, c.key))]);
           exportExcel(fetchPrefix() + '_partial_matches', headers, rows);
         };
 
