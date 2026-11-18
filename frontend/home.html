@@ -725,27 +725,33 @@
       }
 
       .cv-sb-live-metrics {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 6px;
-      }
-
-      .cv-sb-metric-item {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .cv-sb-metric-val {
-        font-size: 14px;
-        font-weight: 800;
-        color: #ffffff;
-      }
-
-      .cv-sb-metric-lbl {
-        font-size: 10px;
-        color: #94a3b8;
-      }
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .cv-sb-metric-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 7px 12px;
+    }
+    .cv-sb-metric-lbl {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cv-sb-metric-val {
+      font-size: 17px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+    }
 
       .cv-sb-live-foot {
         font-size: 10px;
@@ -2045,15 +2051,15 @@
         <!-- Live Telemetry Widget in Left Sidebar (Data Metrics & Dynamic Clock) -->
         <div class="cv-sidebar-live-widget" id="sidebarLiveWidget">
           <div class="cv-sb-live-metrics">
-            <div class="cv-sb-metric-item">
-              <span class="cv-sb-metric-val" id="sbLiveDevCount">—</span>
-              <span class="cv-sb-metric-lbl">Devices</span>
-            </div>
-            <div class="cv-sb-metric-item">
-              <span class="cv-sb-metric-val" id="sbLiveCustCount">—</span>
-              <span class="cv-sb-metric-lbl">Customers</span>
-            </div>
+          <div class="cv-sb-metric-item">
+            <span class="cv-sb-metric-lbl">Devices</span>
+            <span class="cv-sb-metric-val" id="sbLiveDevCount">—</span>
           </div>
+          <div class="cv-sb-metric-item">
+            <span class="cv-sb-metric-lbl">Customers</span>
+            <span class="cv-sb-metric-val" id="sbLiveCustCount">—</span>
+          </div>
+        </div>
           <div class="cv-sb-live-foot" id="sbLiveTime">Live • Streaming active</div>
         </div>
       </div>
