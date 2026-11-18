@@ -1279,19 +1279,11 @@ body.sidebar-open .cv-sidebar {
 
 .cv-sidebar-live-widget .cv-sb-metric-val,
 .cv-sb-metric-val {
-  font-size: 19px !important;
-  font-weight: 900 !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
   color: #ffffff !important;
   line-height: 1.2 !important;
   order: 2 !important;
 }
-
-/* Hide Live Time Display per User Preference */
-.cv-sidebar-live-widget .cv-sb-live-foot,
-.cv-sb-live-foot,
-#sbLiveTime {
-  display: none !important;
-}
-
 
 

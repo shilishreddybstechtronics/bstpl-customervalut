@@ -459,8 +459,12 @@
       color: #ffffff;
       line-height: 1.2;
     }
-    .cv-sb-live-foot, #sbLiveTime {
-      display: none !important;
+    .cv-sb-live-foot {
+      font-size: 10px;
+      color: #64748b;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 6px;
+      margin-top: 4px;
     }
 
     /* Sidebar Footer */
@@ -2356,6 +2360,7 @@
             <span class="cv-sb-metric-val" id="sbLiveCustCount">—</span>
           </div>
         </div>
+        <div class="cv-sb-live-foot" id="sbLiveTime">Live • Streaming active</div>
       </div>
     </aside>
 
@@ -3859,7 +3864,11 @@
 
 
     // Live sidebar telemetry
-    function updateLiveStreamClock() { /* Live clock display disabled per user preference */ });
+    function updateLiveStreamClock() {
+      const el = $('sbLiveTime');
+      if (!el) return;
+      const now = new Date();
+      el.textContent = 'Live • ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
     if (typeof setInterval === 'function') setInterval(updateLiveStreamClock, 1000);
     updateLiveStreamClock();
