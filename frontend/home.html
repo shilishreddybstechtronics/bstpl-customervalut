@@ -2082,6 +2082,23 @@
                 <span class="cv-sb-metric-val" id="sbLiveCustCount">—</span>
               </div>
             </div>
+
+            <!-- Inserted by You Card -->
+            <div class="cv-sb-metric-item cv-sb-metric-user">
+              <div class="cv-sb-metric-icon-wrap user-ico-bg">
+                <svg class="cv-sb-metric-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+              </div>
+              <div class="cv-sb-metric-body">
+                <div class="cv-sb-metric-header">
+                  <span class="cv-sb-metric-lbl">Inserted by You</span>
+                  <span class="cv-sb-metric-badge user-badge">MINE</span>
+                </div>
+                <span class="cv-sb-metric-val" id="sbLiveUserCount">—</span>
+              </div>
+            </div>
           </div>
           <div class="cv-sb-live-foot" id="sbLiveTime" style="display:none!important;">Live • Streaming active</div>
         </div>
@@ -4062,6 +4079,7 @@
 
           if ($('sbLiveDevCount')) $('sbLiveDevCount').textContent = Number(devCount).toLocaleString('en-US');
           if ($('sbLiveCustCount')) $('sbLiveCustCount').textContent = Number(custCount).toLocaleString('en-US');
+          if ($('sbLiveUserCount')) $('sbLiveUserCount').textContent = Number(uCount).toLocaleString('en-US');
         }
       } catch (e) {
         console.log('Notice: Stats ribbon sync:', e);
@@ -4801,6 +4819,9 @@
         }
         if ($('sbLiveCustCount') && ins.total_customers != null) {
           $('sbLiveCustCount').textContent = Number(ins.total_customers).toLocaleString('en-US');
+        }
+        if ($('sbLiveUserCount') && ins.added_by_you != null) {
+          $('sbLiveUserCount').textContent = Number(ins.added_by_you).toLocaleString('en-US');
         }
 
         // 2. Live Feed Table

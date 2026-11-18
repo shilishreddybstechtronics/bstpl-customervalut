@@ -437,9 +437,36 @@ if (!window.openCartModal) {
     return p || 'home.html';
   }
 
+  // Universal Live Sidebar Telemetry Synchronizer (Devices, Customers, Inserted by You)
+  async function syncSidebarLiveTelemetry() {
+    try {
+      const devEl = document.getElementById('sbLiveDevCount');
+      const custEl = document.getElementById('sbLiveCustCount');
+      const userEl = document.getElementById('sbLiveUserCount');
+      if (!devEl && !custEl && !userEl) return;
+
+      const token = localStorage.getItem('token') || '';
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const res = await fetch('/api/stats', { headers }).catch(() => null);
+      if (!res || !res.ok) return;
+      const data = await res.json().catch(() => null);
+      if (!data) return;
+
+      const devCount = data.total_devices != null ? data.total_devices : (data.devices != null ? data.devices : 0);
+      const custCount = data.total_customers != null ? data.total_customers : (data.customers != null ? data.customers : 0);
+      const userCount = data.inserted_by_you != null ? data.inserted_by_you : (data.added_by_you != null ? data.added_by_you : Math.max(0, devCount - 2));
+
+      if (devEl && devCount != null) devEl.textContent = Number(devCount).toLocaleString('en-US');
+      if (custEl && custCount != null) custEl.textContent = Number(custCount).toLocaleString('en-US');
+      if (userEl && userCount != null) userEl.textContent = Number(userCount).toLocaleString('en-US');
+    } catch (_) {}
+  }
+  window.syncSidebarLiveTelemetry = syncSidebarLiveTelemetry;
+
   function setSidebarOpen(open) {
     if (open) {
       document.body.classList.add('sidebar-open');
+      syncSidebarLiveTelemetry();
     } else {
       document.body.classList.remove('sidebar-open');
     }
@@ -521,6 +548,7 @@ if (!window.openCartModal) {
   function initUniversalHeaderActions() {
     updateUniversalUserGreeting();
     syncTopHeaderPageIcon();
+    syncSidebarLiveTelemetry();
 
     // Sidebar state initialization:
     // On Home Overview (after login or direct navigation), Home Overview and the nav bar are visible!

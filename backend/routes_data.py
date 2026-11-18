@@ -412,6 +412,7 @@ def stats(db: Session = Depends(get_db), user: models.User = Depends(get_current
         "devices": total_devices,
         "total_devices": total_devices,
         "added_by_you": added_by_you,
+        "inserted_by_you": added_by_you,
         "columns": unique_columns,
         "unique_columns": unique_columns,
         "deleted": deleted_devices,

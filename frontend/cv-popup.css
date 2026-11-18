@@ -1242,14 +1242,14 @@ body.sidebar-open .cv-sidebar {
 
 /* ==========================================================================
    Vertical Live Metrics Widget in Navigation Bar (Sidebar)
-   Polished telemetry labeling for Devices and Customers
+   Polished telemetry labeling for Devices, Customers & Inserted by You
    ========================================================================== */
 .cv-sidebar-live-widget {
   background: rgba(255, 255, 255, 0.04) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 14px !important;
-  padding: 10px !important;
-  margin: 12px 0 16px 0 !important;
+  border-radius: 13px !important;
+  padding: 8px 9px !important;
+  margin: 10px 0 14px 0 !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 16px rgba(0, 0, 0, 0.25) !important;
 }
 
@@ -1257,7 +1257,7 @@ body.sidebar-open .cv-sidebar {
 .cv-sb-live-metrics {
   display: flex !important;
   flex-direction: column !important;
-  gap: 9px !important;
+  gap: 7px !important;
   margin: 0 !important;
 }
 
@@ -1267,11 +1267,11 @@ body.sidebar-open .cv-sidebar {
   display: flex !important;
   flex-direction: row !important;
   align-items: center !important;
-  gap: 11px !important;
+  gap: 9px !important;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  border-radius: 11px !important;
-  padding: 9px 12px !important;
+  border-radius: 10px !important;
+  padding: 7px 10px !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18) !important;
   overflow: hidden !important;
@@ -1309,12 +1309,24 @@ body.sidebar-open .cv-sidebar {
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.16) !important;
 }
 
+/* Inserted by You metric specific styling */
+.cv-sidebar-live-widget .cv-sb-metric-user,
+.cv-sb-metric-user {
+  border-left: 3px solid #8b5cf6 !important;
+}
+
+.cv-sidebar-live-widget .cv-sb-metric-user:hover,
+.cv-sb-metric-user:hover {
+  border-left-color: #a78bfa !important;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.16) !important;
+}
+
 /* Micro-icon badge */
 .cv-sb-metric-icon-wrap {
   flex: none !important;
-  width: 36px !important;
-  height: 36px !important;
-  border-radius: 9px !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1332,10 +1344,16 @@ body.sidebar-open .cv-sidebar {
   color: #34d399 !important;
 }
 
+.user-ico-bg {
+  background: rgba(139, 92, 246, 0.14) !important;
+  border: 1px solid rgba(139, 92, 246, 0.28) !important;
+  color: #a78bfa !important;
+}
+
 .cv-sb-metric-svg {
   display: block !important;
-  width: 18px !important;
-  height: 18px !important;
+  width: 16px !important;
+  height: 16px !important;
 }
 
 /* Metric content body */
@@ -1344,7 +1362,7 @@ body.sidebar-open .cv-sidebar {
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 1px !important;
 }
 
 /* Header line (Label + Pill Badge) */
@@ -1358,21 +1376,21 @@ body.sidebar-open .cv-sidebar {
 
 .cv-sidebar-live-widget .cv-sb-metric-lbl,
 .cv-sb-metric-lbl {
-  font-size: 10.5px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
   color: #94a3b8 !important;
   text-transform: uppercase !important;
-  letter-spacing: 0.7px !important;
+  letter-spacing: 0.5px !important;
   margin: 0 !important;
   white-space: nowrap !important;
 }
 
 .cv-sb-metric-badge {
-  font-size: 8.5px !important;
+  font-size: 8px !important;
   font-weight: 800 !important;
-  padding: 2px 6px !important;
+  padding: 1.5px 5px !important;
   border-radius: 99px !important;
-  letter-spacing: 0.5px !important;
+  letter-spacing: 0.4px !important;
   text-transform: uppercase !important;
   line-height: 1 !important;
 }
@@ -1389,10 +1407,16 @@ body.sidebar-open .cv-sidebar {
   border: 1px solid rgba(16, 185, 129, 0.28) !important;
 }
 
+.user-badge {
+  background: rgba(139, 92, 246, 0.14) !important;
+  color: #c4b5fd !important;
+  border: 1px solid rgba(139, 92, 246, 0.28) !important;
+}
+
 /* Metric numerical value */
 .cv-sidebar-live-widget .cv-sb-metric-val,
 .cv-sb-metric-val {
-  font-size: 18px !important;
+  font-size: 17px !important;
   font-weight: 800 !important;
   color: #ffffff !important;
   line-height: 1.2 !important;
