@@ -2951,7 +2951,7 @@
                   placeholder="Enter IMEI, ICCID, Serial, Phone, Customer, or paste comma/newline list (leave blank for all)…"
                   autocomplete="off" />
                 <button type="button" id="fqClearBtn" title="Clear query"
-                  onclick="const q = document.getElementById('fq'); if(q){q.value=''; q.focus();}">✕</button>
+                  onclick="var el = document.getElementById('fq'); if(el){ el.value=''; el.focus(); }">✕</button>
               </div>
               <div class="fetch-hero-actions">
                 <button class="b p fetch-btn-primary" id="btnRunNormalFetch" type="button">
@@ -3333,35 +3333,46 @@
   </dialog>
 
   <!-- Modal: Copy Fetched Data to Clipboard Pop-up -->
-  <dialog id="dlgFetchCopyData" class="modal-card" style="width:min(820px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45);padding:0">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
+  <dialog id="dlgFetchCopyData" class="modal-card"
+    style="width:min(820px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45);padding:0">
+    <div
+      style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
       <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:44px;height:44px;border-radius:12px;background:#ffffff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;padding:3px;box-shadow:0 3px 8px rgba(0,0,0,0.06);position:relative;flex-shrink:0">
-          <img src="logo.svg" onerror="handleImgFallback(this)" alt="BSTPL Logo" style="width:100%;height:100%;object-fit:contain;border-radius:8px" />
-          <span style="position:absolute;bottom:-4px;right:-4px;font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">📋</span>
+        <div
+          style="width:44px;height:44px;border-radius:12px;background:#ffffff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;padding:3px;box-shadow:0 3px 8px rgba(0,0,0,0.06);position:relative;flex-shrink:0">
+          <img src="logo.svg" onerror="handleImgFallback(this)" alt="BSTPL Logo"
+            style="width:100%;height:100%;object-fit:contain;border-radius:8px" />
+          <span
+            style="position:absolute;bottom:-4px;right:-4px;font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">📋</span>
         </div>
         <div>
           <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text)">Copy Fetched Data to Clipboard</h3>
-          <p class="sub" style="margin:2px 0 0;font-size:12px">View and copy formatted text to paste into Excel, Google Sheets, or documents.</p>
+          <p class="sub" style="margin:2px 0 0;font-size:12px">View and copy formatted text to paste into Excel, Google
+            Sheets, or documents.</p>
         </div>
       </div>
-      <button class="b ghost" id="closeDlgFetchCopyData" type="button" onclick="closeModal('dlgFetchCopyData')" style="font-size:20px;padding:4px 10px;cursor:pointer" aria-label="Close" title="Close Pop-up">✕</button>
+      <button class="b ghost" id="closeDlgFetchCopyData" type="button" onclick="closeModal('dlgFetchCopyData')"
+        style="font-size:20px;padding:4px 10px;cursor:pointer" aria-label="Close" title="Close Pop-up">✕</button>
     </div>
 
     <div style="padding:18px 22px;max-height:calc(85vh - 75px);overflow-y:auto">
-      
+
       <!-- Top Options Grid -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px">
+      <div
+        style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px">
         <!-- Records Scope -->
         <div>
-          <label style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Records Scope</label>
+          <label
+            style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Records
+            Scope</label>
           <select id="copyDataScope" style="width:100%;height:34px;font-size:12.5px;font-weight:600">
           </select>
         </div>
 
         <!-- Format -->
         <div>
-          <label style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Format</label>
+          <label
+            style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Format</label>
           <select id="copyDataFormat" style="width:100%;height:34px;font-size:12.5px;font-weight:600">
             <option value="tsv" selected>📊 Table / TSV (Paste to Excel &amp; Sheets)</option>
             <option value="csv">📄 CSV (Comma-Separated)</option>
@@ -3372,25 +3383,33 @@
 
         <!-- Single Column Selector (hidden unless format == 'single') -->
         <div id="copyDataColWrap" style="display:none">
-          <label style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Target Column</label>
+          <label
+            style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Target
+            Column</label>
           <select id="copyDataTargetCol" style="width:100%;height:34px;font-size:12.5px;font-weight:600">
           </select>
         </div>
       </div>
 
       <!-- Toggles and Stats Bar -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
         <div id="copyDataTogglesWrap" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-          <label id="copyDataIncludeHeadersLbl" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
-            <input type="checkbox" id="copyDataIncludeHeaders" checked style="accent-color:var(--primary);width:15px;height:15px" />
+          <label id="copyDataIncludeHeadersLbl"
+            style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
+            <input type="checkbox" id="copyDataIncludeHeaders" checked
+              style="accent-color:var(--primary);width:15px;height:15px" />
             <span>Include Column Headers</span>
           </label>
-          <label id="copyDataIncludeIdLbl" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
-            <input type="checkbox" id="copyDataIncludeId" checked style="accent-color:var(--primary);width:15px;height:15px" />
+          <label id="copyDataIncludeIdLbl"
+            style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
+            <input type="checkbox" id="copyDataIncludeId" checked
+              style="accent-color:var(--primary);width:15px;height:15px" />
             <span>Include ID Column</span>
           </label>
         </div>
-        <div id="copyDataStatsBadge" style="font-size:11.5px;font-weight:700;color:var(--muted);background:var(--card-subtle);border:1px solid var(--line);padding:4px 10px;border-radius:99px">
+        <div id="copyDataStatsBadge"
+          style="font-size:11.5px;font-weight:700;color:var(--muted);background:var(--card-subtle);border:1px solid var(--line);padding:4px 10px;border-radius:99px">
           0 records • 0 lines
         </div>
       </div>
@@ -3399,17 +3418,22 @@
       <div style="position:relative;margin-bottom:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:12px;font-weight:700;color:var(--text-dim)">Data in Text (Ready to Copy):</span>
-          <button class="b" id="btnCopyDataSelectAll" type="button" style="height:24px;padding:0 8px;font-size:11px;font-weight:700">🔍 Select All Text</button>
+          <button class="b" id="btnCopyDataSelectAll" type="button"
+            style="height:24px;padding:0 8px;font-size:11px;font-weight:700">🔍 Select All Text</button>
         </div>
-        <textarea id="copyDataPreviewText" readonly spellcheck="false" placeholder="Fetched data will appear here..." style="width:100%;height:240px;font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace;font-size:11.5px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);resize:vertical;white-space:pre"></textarea>
+        <textarea id="copyDataPreviewText" readonly spellcheck="false" placeholder="Fetched data will appear here..."
+          style="width:100%;height:240px;font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace;font-size:11.5px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);resize:vertical;white-space:pre"></textarea>
       </div>
 
       <!-- Footer Buttons with explicit Copy and Close options -->
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);padding-top:14px">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);padding-top:14px">
         <span style="font-size:12px;color:var(--muted)">Tip: In Table format, paste directly into Excel / Sheets.</span>
         <div style="display:flex;align-items:center;gap:10px">
-          <button class="b" id="btnCloseCopyDataModal" type="button" onclick="closeModal('dlgFetchCopyData')" style="font-weight:700;padding:9px 20px;font-size:13px">✕ Close</button>
-          <button class="b p" id="btnCopyDataExecute" type="button" style="font-weight:800;padding:9px 24px;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+          <button class="b" id="btnCloseCopyDataModal" type="button" onclick="closeModal('dlgFetchCopyData')"
+            style="font-weight:700;padding:9px 20px;font-size:13px">✕ Close</button>
+          <button class="b p" id="btnCopyDataExecute" type="button"
+            style="font-weight:800;padding:9px 24px;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
             <span id="copyDataIcon">📋</span>
             <span id="copyDataBtnLabel">Copy to Clipboard</span>
           </button>
@@ -5385,7 +5409,7 @@
       }
     }
 
-    window.openFetchCopyDataModal = async function(ctx) {
+    window.openFetchCopyDataModal = async function (ctx) {
       _copyModalCtx = ctx;
       const dlg = $('dlgFetchCopyData');
       if (!dlg) return;
@@ -5432,7 +5456,7 @@
         colSel.innerHTML += `<option value="id">Database ID</option>`;
         if (Array.isArray(ctx.displayCols)) {
           ctx.displayCols.forEach(c => {
-            if (!['imei','iccid','device_sr_no','msisdn1','msisdn2','customer_name','activation_plan','sim_provider','sim_type','act_date','expiry_date','id'].includes(c.key)) {
+            if (!['imei', 'iccid', 'device_sr_no', 'msisdn1', 'msisdn2', 'customer_name', 'activation_plan', 'sim_provider', 'sim_type', 'act_date', 'expiry_date', 'id'].includes(c.key)) {
               colSel.innerHTML += `<option value="${esc(c.key)}">${esc(c.label || c.key)}</option>`;
             }
           });
@@ -5470,7 +5494,7 @@
                 rows.push(...(res.items || []));
               }
               ctx.allRows = rows;
-            } catch(e) {
+            } catch (e) {
               console.warn('Failed to load all rows for copy:', e);
               toast('Could not fetch all records: ' + (e.message || e));
             } finally {
