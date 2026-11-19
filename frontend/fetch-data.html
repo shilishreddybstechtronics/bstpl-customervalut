@@ -2879,7 +2879,93 @@
       </div>
     </dialog>
 
-  
+  <!-- Modal: Copy Fetched Data to Clipboard Pop-up -->
+  <dialog id="dlgFetchCopyData" class="modal-card" style="width:min(820px, 95vw);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45);padding:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:var(--card)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:#ffffff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;padding:3px;box-shadow:0 3px 8px rgba(0,0,0,0.06);position:relative;flex-shrink:0">
+          <img src="logo.svg" onerror="handleImgFallback(this)" alt="BSTPL Logo" style="width:100%;height:100%;object-fit:contain;border-radius:8px" />
+          <span style="position:absolute;bottom:-4px;right:-4px;font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.15)">📋</span>
+        </div>
+        <div>
+          <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--text)">Copy Fetched Data to Clipboard</h3>
+          <p class="sub" style="margin:2px 0 0;font-size:12px">View and copy formatted text to paste into Excel, Google Sheets, or documents.</p>
+        </div>
+      </div>
+      <button class="b ghost" id="closeDlgFetchCopyData" type="button" onclick="closeModal('dlgFetchCopyData')" style="font-size:20px;padding:4px 10px;cursor:pointer" aria-label="Close" title="Close Pop-up">✕</button>
+    </div>
+
+    <div style="padding:18px 22px;max-height:calc(85vh - 75px);overflow-y:auto">
+      
+      <!-- Top Options Grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px">
+        <!-- Records Scope -->
+        <div>
+          <label style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Records Scope</label>
+          <select id="copyDataScope" style="width:100%;height:34px;font-size:12.5px;font-weight:600">
+          </select>
+        </div>
+
+        <!-- Format -->
+        <div>
+          <label style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Format</label>
+          <select id="copyDataFormat" style="width:100%;height:34px;font-size:12.5px;font-weight:600">
+            <option value="tsv" selected>📊 Table / TSV (Paste to Excel &amp; Sheets)</option>
+            <option value="csv">📄 CSV (Comma-Separated)</option>
+            <option value="single">🔢 Single Column List (IMEI, ICCID, etc.)</option>
+            <option value="json">📦 JSON Array</option>
+          </select>
+        </div>
+
+        <!-- Single Column Selector (hidden unless format == 'single') -->
+        <div id="copyDataColWrap" style="display:none">
+          <label style="display:block;font-size:11.5px;font-weight:800;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Target Column</label>
+          <select id="copyDataTargetCol" style="width:100%;height:34px;font-size:12.5px;font-weight:600">
+          </select>
+        </div>
+      </div>
+
+      <!-- Toggles and Stats Bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+        <div id="copyDataTogglesWrap" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <label id="copyDataIncludeHeadersLbl" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
+            <input type="checkbox" id="copyDataIncludeHeaders" checked style="accent-color:var(--primary);width:15px;height:15px" />
+            <span>Include Column Headers</span>
+          </label>
+          <label id="copyDataIncludeIdLbl" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer">
+            <input type="checkbox" id="copyDataIncludeId" checked style="accent-color:var(--primary);width:15px;height:15px" />
+            <span>Include ID Column</span>
+          </label>
+        </div>
+        <div id="copyDataStatsBadge" style="font-size:11.5px;font-weight:700;color:var(--muted);background:var(--card-subtle);border:1px solid var(--line);padding:4px 10px;border-radius:99px">
+          0 records • 0 lines
+        </div>
+      </div>
+
+      <!-- Live Text Area Display -->
+      <div style="position:relative;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:700;color:var(--text-dim)">Data in Text (Ready to Copy):</span>
+          <button class="b" id="btnCopyDataSelectAll" type="button" style="height:24px;padding:0 8px;font-size:11px;font-weight:700">🔍 Select All Text</button>
+        </div>
+        <textarea id="copyDataPreviewText" readonly spellcheck="false" placeholder="Fetched data will appear here..." style="width:100%;height:240px;font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace;font-size:11.5px;line-height:1.5;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);resize:vertical;white-space:pre"></textarea>
+      </div>
+
+      <!-- Footer Buttons with explicit Copy and Close options -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);padding-top:14px">
+        <span style="font-size:12px;color:var(--muted)">Tip: In Table format, paste directly into Excel / Sheets.</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="b" id="btnCloseCopyDataModal" type="button" onclick="closeModal('dlgFetchCopyData')" style="font-weight:700;padding:9px 20px;font-size:13px">✕ Close</button>
+          <button class="b p" id="btnCopyDataExecute" type="button" style="font-weight:800;padding:9px 24px;font-size:13.5px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12)">
+            <span id="copyDataIcon">📋</span>
+            <span id="copyDataBtnLabel">Copy to Clipboard</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </dialog>
+
   <!-- Modal: Choose Visible & Unique Columns for Fetch Data -->
   <!-- =======================================================================
        WHAT IS HAPPENING BELOW:
@@ -4618,6 +4704,310 @@
     }
     window.openFetchChooseColsModal = openFetchChooseColsModal;
 
+    // ==============================================================================
+    // WHAT IS HAPPENING BELOW:
+    // Modal Dialog: Copy Fetched Data to Clipboard Pop-up
+    // Allows users to view fetched data in text form and copy it to clipboard.
+    // Supports:
+    // 1. Table / TSV (Tab-Separated, optimal for pasting directly into Excel & Google Sheets)
+    // 2. CSV (Comma-Separated Values)
+    // 3. Single Column List (e.g. clean list of IMEIs or ICCIDs)
+    // 4. JSON Array
+    // Includes:
+    // - Select All Text button
+    // - Live text area displaying formatted data
+    // - Copy option button with clipboard checkmark feedback
+    // - Close option button to dismiss the pop-up
+    // ==============================================================================
+    let _copyModalCtx = null;
+
+    async function copyToClipboard(text) {
+      if (!text) return false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch (err) {
+        console.warn('navigator.clipboard failed, using fallback:', err);
+      }
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch (e) {
+        document.body.removeChild(ta);
+        return false;
+      }
+    }
+    window.copyToClipboard = copyToClipboard;
+
+    function buildCopyDataText(ctx) {
+      if (!ctx) return { text: '', recordsCount: 0, linesCount: 0, charCount: 0 };
+      const scope = $('copyDataScope') ? $('copyDataScope').value : 'page';
+      const format = $('copyDataFormat') ? $('copyDataFormat').value : 'tsv';
+      const targetCol = $('copyDataTargetCol') ? $('copyDataTargetCol').value : 'imei';
+      const incHeaders = $('copyDataIncludeHeaders') ? $('copyDataIncludeHeaders').checked : true;
+      const incId = $('copyDataIncludeId') ? $('copyDataIncludeId').checked : true;
+
+      let records = [];
+      if (ctx.mode === 'bulk') {
+        if (scope === 'exact') records = ctx.exact || [];
+        else if (scope === 'similar') records = ctx.similar || [];
+        else if (scope === 'notFound') {
+          const list = [...(ctx.notFound || []), ...(ctx.partialTerms || [])];
+          const text = list.join('\n');
+          return { text, recordsCount: list.length, linesCount: list.length, charCount: text.length };
+        } else {
+          records = [...(ctx.exact || []), ...(ctx.similar || [])];
+        }
+      } else {
+        if (scope === 'all') records = ctx.allRows || ctx.items || [];
+        else records = ctx.items || [];
+      }
+
+      if (!records || !records.length) {
+        return { text: '', recordsCount: 0, linesCount: 0, charCount: 0 };
+      }
+
+      // Single column list mode (e.g. IMEIs or ICCIDs)
+      if (format === 'single') {
+        const lines = [];
+        if (incHeaders) lines.push(targetCol.toUpperCase());
+        records.forEach(r => {
+          let val = targetCol === 'id' ? r.id : devValue(r, targetCol);
+          if (val != null && val !== '' && val !== '—') lines.push(String(val));
+        });
+        const text = lines.join('\n');
+        return { text, recordsCount: records.length, linesCount: lines.length, charCount: text.length };
+      }
+
+      // JSON Array mode
+      if (format === 'json') {
+        const cols = ctx.displayCols || computeDisplayCols(records, 'all');
+        const out = records.map(r => {
+          const rowObj = {};
+          if (incId) rowObj['id'] = r.id;
+          cols.forEach(c => { rowObj[c.label || c.key] = devValue(r, c.key); });
+          return rowObj;
+        });
+        const text = JSON.stringify(out, null, 2);
+        return { text, recordsCount: records.length, linesCount: text.split('\n').length, charCount: text.length };
+      }
+
+      // TSV (Table for Excel / Sheets) or CSV mode
+      const cols = ctx.displayCols || computeDisplayCols(records, 'all');
+      const delimiter = format === 'csv' ? ',' : '\t';
+      const escapeCell = val => {
+        let str = (val == null ? '' : String(val)).replace(/\r?\n/g, ' ').trim();
+        if (format === 'csv') {
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            str = `"${str.replace(/"/g, '""')}"`;
+          }
+        }
+        return str;
+      };
+
+      const lines = [];
+      if (incHeaders) {
+        const hdr = [];
+        if (incId) hdr.push('ID');
+        cols.forEach(c => hdr.push(c.label || c.key));
+        lines.push(hdr.map(escapeCell).join(delimiter));
+      }
+
+      records.forEach(r => {
+        const row = [];
+        if (incId) row.push(r.id);
+        cols.forEach(c => row.push(devValue(r, c.key)));
+        lines.push(row.map(escapeCell).join(delimiter));
+      });
+
+      const text = lines.join('\n');
+      return { text, recordsCount: records.length, linesCount: lines.length, charCount: text.length };
+    }
+
+    function updateCopyModalPreview() {
+      if (!_copyModalCtx) return;
+      const res = buildCopyDataText(_copyModalCtx);
+      const ta = $('copyDataPreviewText');
+      if (ta) ta.value = res.text;
+
+      const badge = $('copyDataStatsBadge');
+      if (badge) {
+        badge.textContent = `${res.recordsCount.toLocaleString()} records • ${res.linesCount.toLocaleString()} lines • ${res.charCount.toLocaleString()} chars`;
+      }
+
+      const btn = $('btnCopyDataExecute');
+      const lbl = $('copyDataBtnLabel');
+      const ico = $('copyDataIcon');
+      if (btn && lbl && ico) {
+        lbl.textContent = 'Copy to Clipboard';
+        ico.textContent = '📋';
+        btn.style.background = 'var(--primary, #1d68e1)';
+        btn.disabled = !res.text;
+      }
+    }
+
+    window.openFetchCopyDataModal = async function(ctx) {
+      _copyModalCtx = ctx;
+      const dlg = $('dlgFetchCopyData');
+      if (!dlg) return;
+
+      // Populate Scopes dropdown
+      const scopeSel = $('copyDataScope');
+      if (scopeSel) {
+        scopeSel.innerHTML = '';
+        if (ctx.mode === 'bulk') {
+          if (ctx.exact && ctx.exact.length) {
+            scopeSel.innerHTML += `<option value="exact" selected>🎯 Exact Matches (${ctx.exact.length.toLocaleString()} records)</option>`;
+          }
+          if (ctx.similar && ctx.similar.length) {
+            scopeSel.innerHTML += `<option value="similar">🔎 Partial Matches (${ctx.similar.length.toLocaleString()} records)</option>`;
+          }
+          if (ctx.exact && ctx.similar && (ctx.exact.length || ctx.similar.length)) {
+            scopeSel.innerHTML += `<option value="all">🌐 All Matches (${(ctx.exact.length + ctx.similar.length).toLocaleString()} records)</option>`;
+          }
+          if (ctx.notFound && ctx.notFound.length) {
+            scopeSel.innerHTML += `<option value="notFound">⚠️ Not Found Values (${ctx.notFound.length.toLocaleString()})</option>`;
+          }
+        } else {
+          // Normal mode
+          scopeSel.innerHTML += `<option value="page" selected>📄 Visible Page (${(ctx.items || []).length.toLocaleString()} records)</option>`;
+          scopeSel.innerHTML += `<option value="all">🌐 All Matching Records (${(ctx.total || (ctx.items || []).length).toLocaleString()} records)</option>`;
+        }
+      }
+
+      // Populate Target Column dropdown for Single Column List
+      const colSel = $('copyDataTargetCol');
+      if (colSel) {
+        colSel.innerHTML = '';
+        colSel.innerHTML += `<option value="imei" selected>IMEI</option>`;
+        colSel.innerHTML += `<option value="iccid">ICCID / CCID</option>`;
+        colSel.innerHTML += `<option value="device_sr_no">Device Serial No</option>`;
+        colSel.innerHTML += `<option value="msisdn1">MSISDN 1 (Phone)</option>`;
+        colSel.innerHTML += `<option value="msisdn2">MSISDN 2</option>`;
+        colSel.innerHTML += `<option value="customer_name">Customer Name</option>`;
+        colSel.innerHTML += `<option value="activation_plan">Activation Plan</option>`;
+        colSel.innerHTML += `<option value="sim_provider">SIM Provider</option>`;
+        colSel.innerHTML += `<option value="sim_type">SIM Type</option>`;
+        colSel.innerHTML += `<option value="act_date">Activation Date</option>`;
+        colSel.innerHTML += `<option value="expiry_date">Expiry Date</option>`;
+        colSel.innerHTML += `<option value="id">Database ID</option>`;
+        if (Array.isArray(ctx.displayCols)) {
+          ctx.displayCols.forEach(c => {
+            if (!['imei','iccid','device_sr_no','msisdn1','msisdn2','customer_name','activation_plan','sim_provider','sim_type','act_date','expiry_date','id'].includes(c.key)) {
+              colSel.innerHTML += `<option value="${esc(c.key)}">${esc(c.label || c.key)}</option>`;
+            }
+          });
+        }
+      }
+
+      // Reset format & options
+      if ($('copyDataFormat')) $('copyDataFormat').value = 'tsv';
+      if ($('copyDataColWrap')) $('copyDataColWrap').style.display = 'none';
+      if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = 'flex';
+      if ($('copyDataIncludeHeaders')) $('copyDataIncludeHeaders').checked = true;
+      if ($('copyDataIncludeId')) $('copyDataIncludeId').checked = true;
+
+      // Setup event listeners
+      if (scopeSel) {
+        scopeSel.onchange = async () => {
+          const val = scopeSel.value;
+          if (val === 'notFound') {
+            if ($('copyDataColWrap')) $('copyDataColWrap').style.display = 'none';
+            if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = 'none';
+          } else {
+            const fmt = $('copyDataFormat') ? $('copyDataFormat').value : 'tsv';
+            if ($('copyDataColWrap')) $('copyDataColWrap').style.display = (fmt === 'single') ? 'block' : 'none';
+            if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = (fmt === 'json') ? 'none' : 'flex';
+          }
+
+          if (val === 'all' && ctx.mode === 'normal' && nfState.mode === 'server' && ctx.total > (ctx.items || []).length && !ctx.allRows) {
+            showBstplLoader(`Loading all ${ctx.total.toLocaleString()} records for copying…`, 40);
+            try {
+              const qry = nfState.query || { raw: ($('fq') ? $('fq').value.trim() : ''), field: ($('fCol') ? $('fCol').value : 'all'), cust: ($('fCust') ? $('fCust').value : '') };
+              const rows = [];
+              const size = 5000, pages = Math.ceil(ctx.total / size);
+              for (let p = 1; p <= pages; p++) {
+                const res = await api('/api/devices?' + nfParams(qry, p, size));
+                rows.push(...(res.items || []));
+              }
+              ctx.allRows = rows;
+            } catch(e) {
+              console.warn('Failed to load all rows for copy:', e);
+              toast('Could not fetch all records: ' + (e.message || e));
+            } finally {
+              hideBstplLoader();
+            }
+          }
+          updateCopyModalPreview();
+        };
+      }
+
+      if ($('copyDataFormat')) {
+        $('copyDataFormat').onchange = () => {
+          const fmt = $('copyDataFormat').value;
+          if ($('copyDataColWrap')) $('copyDataColWrap').style.display = (fmt === 'single') ? 'block' : 'none';
+          if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = (fmt === 'json') ? 'none' : 'flex';
+          updateCopyModalPreview();
+        };
+      }
+
+      if (colSel) colSel.onchange = () => updateCopyModalPreview();
+      if ($('copyDataIncludeHeaders')) $('copyDataIncludeHeaders').onchange = () => updateCopyModalPreview();
+      if ($('copyDataIncludeId')) $('copyDataIncludeId').onchange = () => updateCopyModalPreview();
+
+      if ($('btnCopyDataSelectAll')) {
+        $('btnCopyDataSelectAll').onclick = () => {
+          const ta = $('copyDataPreviewText');
+          if (ta) {
+            ta.focus();
+            ta.select();
+            toast('Text selected. Press Ctrl+C to copy.');
+          }
+        };
+      }
+
+      if ($('btnCopyDataExecute')) {
+        $('btnCopyDataExecute').onclick = async () => {
+          const ta = $('copyDataPreviewText');
+          const text = ta ? ta.value : '';
+          if (!text) { toast('No data to copy.'); return; }
+          const ok = await copyToClipboard(text);
+          const btn = $('btnCopyDataExecute');
+          const lbl = $('copyDataBtnLabel');
+          const ico = $('copyDataIcon');
+          if (ok) {
+            if (lbl) lbl.textContent = 'Copied to Clipboard!';
+            if (ico) ico.textContent = '✅';
+            if (btn) btn.style.background = 'var(--ok, #16a34a)';
+            toast(`✓ Data copied to clipboard! Ready to paste into Excel or Sheets.`, 'ok');
+            setTimeout(() => {
+              if (lbl) lbl.textContent = 'Copy to Clipboard';
+              if (ico) ico.textContent = '📋';
+              if (btn) btn.style.background = 'var(--primary, #1d68e1)';
+            }, 2500);
+          } else {
+            toast('Clipboard access blocked. Please click "Select All Text" and press Ctrl+C.');
+          }
+        };
+      }
+
+      updateCopyModalPreview();
+
+      if (typeof dlg.showModal === 'function') dlg.showModal();
+      else { dlg.setAttribute('open', ''); dlg.style.display = 'block'; }
+    };
+
 
       function renderNfCustomColsCheckboxes() {
         const listEl = $('nfCustomColsList');
@@ -5115,6 +5505,7 @@
               <div style="display:flex;gap:6px">
                 <button class="b" id="btnNfToggleNF" type="button" style="height:26px;font-size:11.5px">Show / Hide</button>
                 <button class="b" id="btnNfDlNF" type="button" style="height:26px;font-size:11.5px">📥 Download list</button>
+                <button class="b" id="btnNfCopyNF" type="button" style="height:26px;font-size:11.5px">📋 Copy list</button>
               </div>
             </div>
             <div id="nfNotFoundList" style="display:none;max-height:140px;overflow:auto;background:var(--card);padding:8px 12px;border-radius:6px;font-family:monospace;font-size:12px;border:1px solid var(--line);margin-top:8px">
@@ -5149,7 +5540,8 @@
         ${total ? `
           <button class="b" id="btnNfChooseCols" type="button" onclick="askFetchCols('normal').then(ok => { if(ok) renderNormalFetchTable(nfCurrentList); })" style="font-size:12px;font-weight:700">⚙️ Choose Columns (${displayCols.length})</button>
           <button class="b" id="btnNfDlCurPage" type="button" style="font-size:12px;font-weight:700" title="Download only the records visible on this page">📄 Download Page (${items.length})</button>
-          <button class="b p" id="btnNfDlExcel" type="button" style="font-size:12.5px;font-weight:700" title="Download all records matching this search">📥 Download All (${total.toLocaleString()}) as Excel</button>` : ''}
+          <button class="b p" id="btnNfDlExcel" type="button" style="font-size:12.5px;font-weight:700" title="Download all records matching this search">📥 Download All (${total.toLocaleString()}) as Excel</button>
+          <button class="b" id="btnNfCopyData" type="button" style="font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px" title="Copy fetched data in pop-up dialog">📋 Copy Data</button>` : ''}
       </div>
     </div>
     ${notFoundPanel}
@@ -5244,6 +5636,29 @@
               ? CU.find(c => String(c.id) === String(currentCustomerCid)) : null;
             const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
             exportExcel(`${custPrefix}_Page_${page}`, headers, data);
+          };
+        }
+        if ($('btnNfCopyNF')) {
+          $('btnNfCopyNF').onclick = async () => {
+            const list = nfState.notFound || [];
+            if (!list.length) { toast('No not-found values to copy.'); return; }
+            const ok = await copyToClipboard(list.join('\n'));
+            if (ok) toast(`✓ Copied ${list.length.toLocaleString()} not-found values to clipboard!`, 'ok');
+            else toast('Failed to copy to clipboard.');
+          };
+        }
+        if ($('btnNfCopyData')) {
+          $('btnNfCopyData').onclick = () => {
+            const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
+            const cols = computeDisplayCols(items, viewOpt);
+            openFetchCopyDataModal({
+              mode: 'normal',
+              items: items,
+              allRows: (nfState.mode === 'client' || (nfState.items && nfState.items.length >= total)) ? nfState.items : null,
+              total: total,
+              page: page,
+              displayCols: cols
+            });
           };
         }
         if ($('btnNfDlExcel')) $('btnNfDlExcel').onclick = () => nfDownloadExcel();
@@ -5637,6 +6052,7 @@
           ${exact.length ? `<button class="b p" id="btnBfDlExact" type="button" style="font-weight:700">🎯 Download Exact (${exact.length.toLocaleString()})</button>` : ''}
           ${similar.length ? `<button class="b" id="btnBfDlSimilar" type="button" style="font-weight:700">🔎 Download Partial (${similar.length.toLocaleString()})</button>` : ''}
           ${(exact.length || similar.length) ? `<button class="b" id="btnBfDlExcel" type="button" style="font-weight:700">📥 Download All Matches (Chosen Columns)</button>` : ''}
+          ${(exact.length || similar.length || noExactCount) ? `<button class="b" id="btnBfCopyData" type="button" style="font-weight:700;display:inline-flex;align-items:center;gap:6px" title="Copy bulk fetch data in pop-up dialog">📋 Copy Data</button>` : ''}
           ${noExactCount ? `<button class="b d" id="btnBfDlNotFound" type="button" style="font-weight:700">⚠️ Download Not-Found (${noExactCount.toLocaleString()})</button>` : ''}
         </div>
       </div>
@@ -5646,7 +6062,10 @@
       <div class="card" style="padding:14px;border:1px solid var(--danger);border-radius:10px;margin-bottom:16px">
         <div class="row" style="align-items:center;justify-content:space-between;margin-bottom:6px">
           <b style="color:var(--danger)">⚠️ No exact match (${noExactCount.toLocaleString()})</b>
-          <button class="b" id="btnToggleNotFoundTerms" type="button" style="height:26px;font-size:11.5px">Show / Hide List</button>
+          <div style="display:flex;gap:6px">
+            <button class="b" id="btnToggleNotFoundTerms" type="button" style="height:26px;font-size:11.5px">Show / Hide List</button>
+            <button class="b" id="btnBfCopyNotFoundList" type="button" style="height:26px;font-size:11.5px">📋 Copy list</button>
+          </div>
         </div>
         <div id="bfNotFoundListText" style="display:none;max-height:160px;overflow:auto;background:var(--card);padding:8px 12px;border-radius:6px;font-family:monospace;font-size:12px;border:1px solid var(--line);margin-top:8px">
           ${notFound.slice(0, 5000).map(t => esc(t)).join('<br />')}
@@ -5674,6 +6093,31 @@
           const box = $('bfNotFoundListText');
           box.style.display = box.style.display === 'none' ? 'block' : 'none';
         };
+
+        if ($('btnBfCopyNotFoundList')) {
+          $('btnBfCopyNotFoundList').onclick = async () => {
+            const list = [...notFound, ...partialTerms];
+            if (!list.length) { toast('No not-found values to copy.'); return; }
+            const ok = await copyToClipboard(list.join('\n'));
+            if (ok) toast(`✓ Copied ${list.length.toLocaleString()} unmatched values to clipboard!`, 'ok');
+            else toast('Failed to copy to clipboard.');
+          };
+        }
+
+        if ($('btnBfCopyData')) {
+          $('btnBfCopyData').onclick = () => {
+            const allMatches = [...exact, ...similar];
+            const cols = computeDisplayCols(allMatches.length ? allMatches : (exact.length ? exact : similar), 'all');
+            openFetchCopyDataModal({
+              mode: 'bulk',
+              exact: exact,
+              similar: similar,
+              notFound: notFound,
+              partialTerms: partialTerms,
+              displayCols: cols
+            });
+          };
+        }
 
         if ($('btnBfDlNotFound')) $('btnBfDlNotFound').onclick = () => {
           const now = new Date().toLocaleString();
