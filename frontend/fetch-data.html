@@ -3733,6 +3733,8 @@
       if (kind === 'normal') {
         fetchCustomSelectedCols = picked;
         const r = document.querySelector('input[name="nfViewOpt"][value="custom"]');
+        if (r) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
+        document.querySelectorAll('.nf-col-chk').forEach(c => { c.checked = picked.includes(c.value); c.dispatchEvent(new Event('change', { bubbles: true })); });
         if (r) {
           r.checked = true;
           document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(c => c.classList.remove('on'));
@@ -3743,6 +3745,7 @@
         renderNfCustomColsCheckboxes();
         renderNormalFetchTable(nfCurrentList);
       } else {
+        document.querySelectorAll('.bf-out-chk').forEach(c => { c.checked = picked.includes(c.value); c.dispatchEvent(new Event('change', { bubbles: true })); });
         document.querySelectorAll('.bf-out-chk').forEach(c => {
           c.checked = picked.includes(c.value);
           const chip = c.closest('.col-pill-chip');
@@ -3904,146 +3907,146 @@
       </tbody></table></div>`;
     }
 
-    function exportExcel(title, headers, rows) {
-      try {
-        if (!rows || !rows.length) {
-          toast('⚠️ No data records to export.');
-          return;
-        }
-        toast('Generating Excel file…');
+        function exportExcel(title, headers, rows) {
+          try {
+            if (!rows || !rows.length) {
+              toast('⚠️ No data records to export.');
+              return;
+            }
+            toast('Generating Excel file…');
 
-        const safeTitle = (title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_');
-        const fileName = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+            const safeTitle = (title || 'Export').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
-        // Check if SheetJS (XLSX) is available
-        if (typeof XLSX !== 'undefined') {
-          // 1. Sanitize all rows: prevent [object Object], undefined, null, and preserve long numeric strings as text
-          const cleanHeaders = (headers || []).map(h => String(h ?? '').trim());
-          const cleanRows = rows.map(r => {
-            return (headers || []).map((_, i) => {
-              const val = Array.isArray(r) ? r[i] : (r && typeof r === 'object' ? r[cleanHeaders[i]] : '');
-              if (val == null) return '';
-              if (typeof val === 'object') {
-                try { return JSON.stringify(val); } catch (_) { return String(val); }
-              }
-              return String(val).trim();
-            });
-          });
+            // Check if SheetJS (XLSX) is available
+            if (typeof XLSX !== 'undefined') {
+              // 1. Sanitize all rows: prevent [object Object], undefined, null, and preserve long numeric strings as text
+              const cleanHeaders = (headers || []).map(h => String(h ?? '').trim());
+              const cleanRows = rows.map(r => {
+                return (headers || []).map((_, i) => {
+                  const val = Array.isArray(r) ? r[i] : (r && typeof r === 'object' ? r[cleanHeaders[i]] : '');
+                  if (val == null) return '';
+                  if (typeof val === 'object') {
+                    try { return JSON.stringify(val); } catch (_) { return String(val); }
+                  }
+                  return String(val).trim();
+                });
+              });
 
-          // 2. Build worksheet with raw string types for long identifier columns (IMEI, ICCID, MSISDN)
-          const data = [cleanHeaders, ...cleanRows];
-          const ws = XLSX.utils.aoa_to_sheet(data, { raw: true });
+              // 2. Build worksheet with raw string types for long identifier columns (IMEI, ICCID, MSISDN)
+              const data = [cleanHeaders, ...cleanRows];
+              const ws = XLSX.utils.aoa_to_sheet(data, { raw: true });
 
-          // 3. Mark all cell types: 10+ digits or alphanumeric identifiers must be text ('s') so Excel doesn't use scientific notation
-          const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
-          for (let R = range.s.r; R <= range.e.r; ++R) {
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-              const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-              const cell = ws[cellRef];
-              if (cell && cell.v != null) {
-                const sVal = String(cell.v).trim();
-                if (R === 0) {
-                  cell.t = 's';
-                  cell.v = sVal;
-                } else if (/^\d{9,}$/.test(sVal) || /^8\d{13,}/i.test(sVal) || /^[0-9A-Fa-f]{15,}$/.test(sVal)) {
-                  cell.t = 's';
-                  cell.v = sVal;
+              // 3. Mark all cell types: 10+ digits or alphanumeric identifiers must be text ('s') so Excel doesn't use scientific notation
+              const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+              for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                  const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+                  const cell = ws[cellRef];
+                  if (cell && cell.v != null) {
+                    const sVal = String(cell.v).trim();
+                    if (R === 0) {
+                      cell.t = 's';
+                      cell.v = sVal;
+                    } else if (/^\d{9,}$/.test(sVal) || /^8\d{13,}/i.test(sVal) || /^[0-9A-Fa-f]{15,}$/.test(sVal)) {
+                      cell.t = 's';
+                      cell.v = sVal;
+                    }
+                  }
                 }
               }
+
+              // 4. Auto-fit column widths based on content length
+              const colWidths = cleanHeaders.map((h, colIdx) => {
+                let maxLen = h.length;
+                for (let rowIdx = 0; rowIdx < Math.min(cleanRows.length, 150); rowIdx++) {
+                  const cellVal = cleanRows[rowIdx][colIdx];
+                  if (cellVal) maxLen = Math.max(maxLen, String(cellVal).length);
+                }
+                return { wch: Math.min(Math.max(maxLen + 3, 12), 50) };
+              });
+              ws['!cols'] = colWidths;
+
+              // 5. Create workbook and package worksheet
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, 'Data');
+
+              // 6. Direct binary blob generation and download triggering
+              const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+              const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+              const blobUrl = window.URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = blobUrl;
+              link.download = fileName;
+              link.setAttribute('download', fileName);
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              setTimeout(() => {
+                if (link.parentNode) link.parentNode.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+              }, 1000);
+              document.body.classList.remove('cv-page-3d-exit');
+              if (typeof hideBstplLoader === 'function') hideBstplLoader();
+
+              toast(`✓ Excel file "${fileName}" downloaded successfully!`);
+              return;
             }
+
+            // Fallback: UTF-8 BOM CSV export (opens directly in Excel with full formatting)
+            const csvRows = [headers.map(h => `"${String(h ?? '').replace(/"/g, '""')}"`).join(',')];
+            rows.forEach(r => {
+              const rowVals = (headers || []).map((_, i) => {
+                const v = Array.isArray(r) ? r[i] : (r && typeof r === 'object' ? r[headers[i]] : '');
+                return `"${String(v ?? '').replace(/"/g, '""')}"`;
+              });
+              csvRows.push(rowVals.join(','));
+            });
+            const BOM = '\uFEFF';
+            const blob = new Blob([BOM + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.setAttribute('download', `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+              if (link.parentNode) link.parentNode.removeChild(link);
+              URL.revokeObjectURL(blobUrl);
+            }, 1000);
+            document.body.classList.remove('cv-page-3d-exit');
+            if (typeof hideBstplLoader === 'function') hideBstplLoader();
+            toast(`✓ File "${safeTitle}.csv" downloaded successfully!`);
+          } catch (err) {
+            console.error('Export Excel failed:', err);
+            toast('❌ Export failed: ' + (err && err.message ? err.message : String(err)));
           }
-
-          // 4. Auto-fit column widths based on content length
-          const colWidths = cleanHeaders.map((h, colIdx) => {
-            let maxLen = h.length;
-            for (let rowIdx = 0; rowIdx < Math.min(cleanRows.length, 150); rowIdx++) {
-              const cellVal = cleanRows[rowIdx][colIdx];
-              if (cellVal) maxLen = Math.max(maxLen, String(cellVal).length);
-            }
-            return { wch: Math.min(Math.max(maxLen + 3, 12), 50) };
-          });
-          ws['!cols'] = colWidths;
-
-          // 5. Create workbook and package worksheet
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'Data');
-
-          // 6. Direct binary blob generation and download triggering
-          const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-          const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-          const blobUrl = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = fileName;
-          link.setAttribute('download', fileName);
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            if (link.parentNode) link.parentNode.removeChild(link);
-            window.URL.revokeObjectURL(blobUrl);
-          }, 1000);
-          document.body.classList.remove('cv-page-3d-exit');
-          if (typeof hideBstplLoader === 'function') hideBstplLoader();
-
-          toast(`✓ Excel file "${fileName}" downloaded successfully!`);
-          return;
         }
 
-        // Fallback: UTF-8 BOM CSV export (opens directly in Excel with full formatting)
-        const csvRows = [headers.map(h => `"${String(h ?? '').replace(/"/g, '""')}"`).join(',')];
-        rows.forEach(r => {
-          const rowVals = (headers || []).map((_, i) => {
-            const v = Array.isArray(r) ? r[i] : (r && typeof r === 'object' ? r[headers[i]] : '');
-            return `"${String(v ?? '').replace(/"/g, '""')}"`;
-          });
-          csvRows.push(rowVals.join(','));
-        });
-        const BOM = '\uFEFF';
-        const blob = new Blob([BOM + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
-        const blobUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`;
-        link.setAttribute('download', `${safeTitle}_${new Date().toISOString().slice(0, 10)}.csv`);
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          if (link.parentNode) link.parentNode.removeChild(link);
-          URL.revokeObjectURL(blobUrl);
-        }, 1000);
-        document.body.classList.remove('cv-page-3d-exit');
-        if (typeof hideBstplLoader === 'function') hideBstplLoader();
-        toast(`✓ File "${safeTitle}.csv" downloaded successfully!`);
-      } catch (err) {
-        console.error('Export Excel failed:', err);
-        toast('❌ Export failed: ' + (err && err.message ? err.message : String(err)));
-      }
-    }
-
-    // Modal helpers
-    function openDlg(title, bodyHtml, confirmLabel, onConfirm, isDanger = false) {
-      $('cdt').textContent = title;
-      $('cdb').innerHTML = bodyHtml;
-      $('cde').textContent = '';
-      $('cdok').textContent = confirmLabel || 'Confirm';
-      $('cdok').className = isDanger ? 'b d' : 'b p';
-      $('cdok').onclick = async e => {
-        e.preventDefault();
-        try {
+        // Modal helpers
+        function openDlg(title, bodyHtml, confirmLabel, onConfirm, isDanger = false) {
+          $('cdt').textContent = title;
+          $('cdb').innerHTML = bodyHtml;
           $('cde').textContent = '';
-          await onConfirm();
-          $('cdlg').close();
-        } catch (err) { $('cde').textContent = err.message; }
-      };
-      $('cdx').onclick = () => $('cdlg').close();
-      $('cdlg').showModal();
-    }
+          $('cdok').textContent = confirmLabel || 'Confirm';
+          $('cdok').className = isDanger ? 'b d' : 'b p';
+          $('cdok').onclick = async e => {
+            e.preventDefault();
+            try {
+              $('cde').textContent = '';
+              await onConfirm();
+              $('cdlg').close();
+            } catch (err) { $('cde').textContent = err.message; }
+          };
+          $('cdx').onclick = () => $('cdlg').close();
+          $('cdlg').showModal();
+        }
 
-    function buildDeviceFormFields(dev = {}) {
-      const extra = dev.extra || {};
-      return `
+        function buildDeviceFormFields(dev = {}) {
+          const extra = dev.extra || {};
+          return `
         <div class="form-grid">
           <div><label>Customer Name *</label><input data-devf="customer_name" value="${esc(dev.customer_name || '')}" placeholder="Customer name" required /></div>
           <div><label>Device SR No</label><input data-devf="device_sr_no" value="${esc(dev.device_sr_no || '')}" /></div>
@@ -4062,237 +4065,237 @@
           <div><label>SIM Type</label><select data-devf="sim_type"><option value="">Select type</option><option value="E-SIM" ${dev.sim_type === 'E-SIM' ? 'selected' : ''}>E-SIM</option><option value="Plastic SIM" ${dev.sim_type === 'Plastic SIM' ? 'selected' : ''}>Plastic SIM</option></select></div>
         </div>
       `;
-    }
+        }
 
-    async function openEditDeviceModal(id) {
-      try {
-        toast('Loading record…');
-        const dev = await api('/api/devices/' + id);
-        $('devTitle').textContent = `Edit Device #${dev.id} (IMEI ${dev.imei})`;
-        $('devFields').innerHTML = buildDeviceFormFields(dev);
-        $('devErr').textContent = '';
-        $('devSave').textContent = 'Save Changes';
-        $('devform').onsubmit = async e => {
-          e.preventDefault();
-          $('devErr').textContent = '';
-          const body = {};
-          document.querySelectorAll('#devdlg [data-devf]').forEach(i => {
-            const k = i.dataset.devf, v = i.value.trim();
-            if (k === 'imei') return;
-            body[k] = v || null;
-          });
+        async function openEditDeviceModal(id) {
           try {
-            await api('/api/devices/' + dev.id, { method: 'PUT', body: JSON.stringify(body) });
-            $('devdlg').close();
-            toast('Device record updated');
-            if (typeof refreshActiveContainer === 'function') refreshActiveContainer(dev.id);
-            else if (typeof loadInventoryContainer === 'function') loadInventoryContainer();
-          } catch (err) { $('devErr').textContent = err.message; }
-        };
-        $('devdlg').showModal();
-      } catch (err) { fail(err); }
-    }
-    const devCancelBtn = $('devCancel');
-    if (devCancelBtn) devCancelBtn.onclick = () => $('devdlg').close();
+            toast('Loading record…');
+            const dev = await api('/api/devices/' + id);
+            $('devTitle').textContent = `Edit Device #${dev.id} (IMEI ${dev.imei})`;
+            $('devFields').innerHTML = buildDeviceFormFields(dev);
+            $('devErr').textContent = '';
+            $('devSave').textContent = 'Save Changes';
+            $('devform').onsubmit = async e => {
+              e.preventDefault();
+              $('devErr').textContent = '';
+              const body = {};
+              document.querySelectorAll('#devdlg [data-devf]').forEach(i => {
+                const k = i.dataset.devf, v = i.value.trim();
+                if (k === 'imei') return;
+                body[k] = v || null;
+              });
+              try {
+                await api('/api/devices/' + dev.id, { method: 'PUT', body: JSON.stringify(body) });
+                $('devdlg').close();
+                toast('Device record updated');
+                if (typeof refreshActiveContainer === 'function') refreshActiveContainer(dev.id);
+                else if (typeof loadInventoryContainer === 'function') loadInventoryContainer();
+              } catch (err) { $('devErr').textContent = err.message; }
+            };
+            $('devdlg').showModal();
+          } catch (err) { fail(err); }
+        }
+        const devCancelBtn = $('devCancel');
+        if (devCancelBtn) devCancelBtn.onclick = () => $('devdlg').close();
 
 
 
-    function openExportColumnsModal() {
-      const dlg = $('dlgChooseExportCols');
-      if (!dlg) return;
+        function openExportColumnsModal() {
+          const dlg = $('dlgChooseExportCols');
+          if (!dlg) return;
 
-      const allAvailableCols = [
-        { key: 'customer_name', label: 'Customer Name' },
-        ...COLS.map(c => ({ key: c[0], label: c[1] })),
-        ...(XC || []).map(c => ({ key: c, label: c })),
-        { key: 'added_by', label: 'Added By' },
-        { key: 'created_at', label: 'Added On' }
-      ];
+          const allAvailableCols = [
+            { key: 'customer_name', label: 'Customer Name' },
+            ...COLS.map(c => ({ key: c[0], label: c[1] })),
+            ...(XC || []).map(c => ({ key: c, label: c })),
+            { key: 'added_by', label: 'Added By' },
+            { key: 'created_at', label: 'Added On' }
+          ];
 
-      const listEl = $('exportColsList');
-      if (listEl) {
-        listEl.innerHTML = allAvailableCols.map(c => `
+          const listEl = $('exportColsList');
+          if (listEl) {
+            listEl.innerHTML = allAvailableCols.map(c => `
           <label class="col-pill-chip active" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid var(--primary);background:var(--card);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
             <input type="checkbox" class="exp-modal-chk" value="${c.key}" checked style="width:14px;height:14px;margin:0;accent-color:var(--primary)" />
             <span>${esc(c.label)}</span>
           </label>
         `).join('');
 
-        const updateCountText = () => {
-          const checkedCount = document.querySelectorAll('.exp-modal-chk:checked').length;
-          if ($('exportColsCountText')) $('exportColsCountText').textContent = `${checkedCount} of ${allAvailableCols.length} columns selected`;
-          if ($('btnConfirmExportExcel')) $('btnConfirmExportExcel').disabled = (checkedCount === 0);
-        };
+            const updateCountText = () => {
+              const checkedCount = document.querySelectorAll('.exp-modal-chk:checked').length;
+              if ($('exportColsCountText')) $('exportColsCountText').textContent = `${checkedCount} of ${allAvailableCols.length} columns selected`;
+              if ($('btnConfirmExportExcel')) $('btnConfirmExportExcel').disabled = (checkedCount === 0);
+            };
 
-        document.querySelectorAll('.exp-modal-chk').forEach(chk => {
-          chk.onchange = e => {
-            const chip = e.target.closest('.col-pill-chip');
-            if (chip) {
-              chip.classList.toggle('active', e.target.checked);
-              chip.style.borderColor = e.target.checked ? 'var(--primary)' : 'var(--line)';
-              chip.style.background = e.target.checked ? 'var(--card-subtle)' : 'var(--card)';
+            document.querySelectorAll('.exp-modal-chk').forEach(chk => {
+              chk.onchange = e => {
+                const chip = e.target.closest('.col-pill-chip');
+                if (chip) {
+                  chip.classList.toggle('active', e.target.checked);
+                  chip.style.borderColor = e.target.checked ? 'var(--primary)' : 'var(--line)';
+                  chip.style.background = e.target.checked ? 'var(--card-subtle)' : 'var(--card)';
+                }
+                updateCountText();
+              };
+            });
+
+            if ($('btnExpPresetAll')) {
+              $('btnExpPresetAll').onclick = () => {
+                document.querySelectorAll('.exp-modal-chk').forEach(c => {
+                  c.checked = true;
+                  const chip = c.closest('.col-pill-chip');
+                  if (chip) { chip.classList.add('active'); chip.style.borderColor = 'var(--primary)'; chip.style.background = 'var(--card-subtle)'; }
+                });
+                updateCountText();
+              };
             }
+
+            if ($('btnExpPresetClear')) {
+              $('btnExpPresetClear').onclick = () => {
+                document.querySelectorAll('.exp-modal-chk').forEach(c => {
+                  c.checked = false;
+                  const chip = c.closest('.col-pill-chip');
+                  if (chip) { chip.classList.remove('active'); chip.style.borderColor = 'var(--line)'; chip.style.background = 'var(--card)'; }
+                });
+                updateCountText();
+              };
+            }
+
+            if ($('btnExpPresetSim')) {
+              $('btnExpPresetSim').onclick = () => {
+                const simKeys = new Set(['customer_name', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type']);
+                document.querySelectorAll('.exp-modal-chk').forEach(c => {
+                  c.checked = simKeys.has(c.value);
+                  const chip = c.closest('.col-pill-chip');
+                  if (chip) {
+                    chip.classList.toggle('active', c.checked);
+                    chip.style.borderColor = c.checked ? 'var(--primary)' : 'var(--line)';
+                    chip.style.background = c.checked ? 'var(--card-subtle)' : 'var(--card)';
+                  }
+                });
+                updateCountText();
+              };
+            }
+
+            if ($('btnExpPresetId')) {
+              $('btnExpPresetId').onclick = () => {
+                const idKeys = new Set(['customer_name', 'imei', 'device_sr_no', 'iccid', 'model']);
+                document.querySelectorAll('.exp-modal-chk').forEach(c => {
+                  c.checked = idKeys.has(c.value);
+                  const chip = c.closest('.col-pill-chip');
+                  if (chip) {
+                    chip.classList.toggle('active', c.checked);
+                    chip.style.borderColor = c.checked ? 'var(--primary)' : 'var(--line)';
+                    chip.style.background = c.checked ? 'var(--card-subtle)' : 'var(--card)';
+                  }
+                });
+                updateCountText();
+              };
+            }
+
             updateCountText();
-          };
-        });
-
-        if ($('btnExpPresetAll')) {
-          $('btnExpPresetAll').onclick = () => {
-            document.querySelectorAll('.exp-modal-chk').forEach(c => {
-              c.checked = true;
-              const chip = c.closest('.col-pill-chip');
-              if (chip) { chip.classList.add('active'); chip.style.borderColor = 'var(--primary)'; chip.style.background = 'var(--card-subtle)'; }
-            });
-            updateCountText();
-          };
-        }
-
-        if ($('btnExpPresetClear')) {
-          $('btnExpPresetClear').onclick = () => {
-            document.querySelectorAll('.exp-modal-chk').forEach(c => {
-              c.checked = false;
-              const chip = c.closest('.col-pill-chip');
-              if (chip) { chip.classList.remove('active'); chip.style.borderColor = 'var(--line)'; chip.style.background = 'var(--card)'; }
-            });
-            updateCountText();
-          };
-        }
-
-        if ($('btnExpPresetSim')) {
-          $('btnExpPresetSim').onclick = () => {
-            const simKeys = new Set(['customer_name', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type']);
-            document.querySelectorAll('.exp-modal-chk').forEach(c => {
-              c.checked = simKeys.has(c.value);
-              const chip = c.closest('.col-pill-chip');
-              if (chip) {
-                chip.classList.toggle('active', c.checked);
-                chip.style.borderColor = c.checked ? 'var(--primary)' : 'var(--line)';
-                chip.style.background = c.checked ? 'var(--card-subtle)' : 'var(--card)';
-              }
-            });
-            updateCountText();
-          };
-        }
-
-        if ($('btnExpPresetId')) {
-          $('btnExpPresetId').onclick = () => {
-            const idKeys = new Set(['customer_name', 'imei', 'device_sr_no', 'iccid', 'model']);
-            document.querySelectorAll('.exp-modal-chk').forEach(c => {
-              c.checked = idKeys.has(c.value);
-              const chip = c.closest('.col-pill-chip');
-              if (chip) {
-                chip.classList.toggle('active', c.checked);
-                chip.style.borderColor = c.checked ? 'var(--primary)' : 'var(--line)';
-                chip.style.background = c.checked ? 'var(--card-subtle)' : 'var(--card)';
-              }
-            });
-            updateCountText();
-          };
-        }
-
-        updateCountText();
-      }
-
-      if ($('closeDlgChooseExportCols')) $('closeDlgChooseExportCols').onclick = () => dlg.close();
-      if ($('cancelDlgChooseExportCols')) $('cancelDlgChooseExportCols').onclick = () => dlg.close();
-
-      if ($('btnConfirmExportExcel')) {
-        $('btnConfirmExportExcel').onclick = async () => {
-          const checked = Array.from(document.querySelectorAll('.exp-modal-chk:checked')).map(c => c.value);
-          if (!checked.length) {
-            toast('Please select at least one column.');
-            return;
           }
-          dlg.close();
 
-          try {
-            toast('Exporting customer inventory…');
-            const targetQ = typeof invQ !== 'undefined' ? invQ : '';
-            const targetCol = typeof invCol !== 'undefined' ? invCol : 'all';
-            const targetCid = typeof invCid !== 'undefined' ? invCid : '';
-            const d = await api(`/api/devices?page=1&page_size=5000&q=${encodeURIComponent(targetQ)}&column=${targetCol}&sort_by=${sortCol}&sort_dir=${sortDir}${targetCid ? '&customer_id=' + targetCid : ''}`);
-            const colMap = {};
-            allAvailableCols.forEach(c => { colMap[c.key] = c.label; });
+          if ($('closeDlgChooseExportCols')) $('closeDlgChooseExportCols').onclick = () => dlg.close();
+          if ($('cancelDlgChooseExportCols')) $('cancelDlgChooseExportCols').onclick = () => dlg.close();
 
-            const headers = ['ID', ...checked.map(k => colMap[k] || k)];
-            const rows = (d.items || []).map(dev => [
-              dev.id,
-              ...checked.map(k => {
-                if (k === 'customer_name') return dev.customer_name || '';
-                if (dev.extra && dev.extra[k] !== undefined) return dev.extra[k] || '';
-                return dev[k] != null ? dev[k] : '';
-              })
-            ]);
-            await exportExcel('Customer_Inventory_Export', headers, rows);
-          } catch (err) {
-            fail(err);
+          if ($('btnConfirmExportExcel')) {
+            $('btnConfirmExportExcel').onclick = async () => {
+              const checked = Array.from(document.querySelectorAll('.exp-modal-chk:checked')).map(c => c.value);
+              if (!checked.length) {
+                toast('Please select at least one column.');
+                return;
+              }
+              dlg.close();
+
+              try {
+                toast('Exporting customer inventory…');
+                const targetQ = typeof invQ !== 'undefined' ? invQ : '';
+                const targetCol = typeof invCol !== 'undefined' ? invCol : 'all';
+                const targetCid = typeof invCid !== 'undefined' ? invCid : '';
+                const d = await api(`/api/devices?page=1&page_size=5000&q=${encodeURIComponent(targetQ)}&column=${targetCol}&sort_by=${sortCol}&sort_dir=${sortDir}${targetCid ? '&customer_id=' + targetCid : ''}`);
+                const colMap = {};
+                allAvailableCols.forEach(c => { colMap[c.key] = c.label; });
+
+                const headers = ['ID', ...checked.map(k => colMap[k] || k)];
+                const rows = (d.items || []).map(dev => [
+                  dev.id,
+                  ...checked.map(k => {
+                    if (k === 'customer_name') return dev.customer_name || '';
+                    if (dev.extra && dev.extra[k] !== undefined) return dev.extra[k] || '';
+                    return dev[k] != null ? dev[k] : '';
+                  })
+                ]);
+                await exportExcel('Customer_Inventory_Export', headers, rows);
+              } catch (err) {
+                fail(err);
+              }
+            };
           }
+
+          if (typeof dlg.showModal === 'function') dlg.showModal();
+        }
+
+
+
+        const myRole = () => {
+          const u = getUser();
+          return u.role || (u.is_admin ? 'admin' : 'standard');
         };
-      }
-
-      if (typeof dlg.showModal === 'function') dlg.showModal();
-    }
 
 
-
-    const myRole = () => {
-      const u = getUser();
-      return u.role || (u.is_admin ? 'admin' : 'standard');
-    };
-
-
-    function avatarHtml(c) {
-      const a = (c && c.avatar) || '';
-      return a.startsWith('data:image/') ? `<img class="av" alt="" src="${esc(a)}">` : `<span class="av">${esc(a || '🏢')}</span>`;
-    }
-
-    function alertSummary(list) {
-      if (!Array.isArray(list)) return '';
-      const t = new Date(); t.setHours(0, 0, 0, 0);
-      let x = 0, w = 0, m = 0;
-      list.forEach(d => {
-        if (!d.expiry_date) return;
-        const n = Math.round((new Date(d.expiry_date) - t) / 864e5);
-        if (n < 0) x++; else if (n <= 7) w++; else m++;
-      });
-      return `🔴 ${x} expired · 🟠 ${w} within 7 days · 🟡 ${m} within 30 days`;
-    }
-
-    async function loadCU() {
-      try {
-        const res = await api('/api/customers');
-        if (Array.isArray(res)) CU = res;
-      } catch (e) { }
-      return CU;
-    }
-
-    async function updateChrome() {
-      try {
-        const u = getUser();
-        const h = new Date().getHours();
-        let greet = 'Good morning';
-        if (h >= 12 && h < 17) greet = 'Good afternoon';
-        else if (h >= 17) greet = 'Good evening';
-        if ($('hi')) $('hi').textContent = `${greet}, ${u.name || u.user_id || 'Shilish Reddy'}`;
-        const uInitial = ((u.name || u.user_id || 'U')[0] || 'U').toUpperCase();
-        if ($('userAvatarCircle')) $('userAvatarCircle').textContent = uInitial;
-        const r = (u.role || (u.is_admin ? 'admin' : 'standard')).toUpperCase();
-        if ($('rolePill')) {
-          $('rolePill').textContent = r;
-          $('rolePill').className = `role-pill ${r.toLowerCase().includes('admin') ? 'admin' : 'standard'}`;
+        function avatarHtml(c) {
+          const a = (c && c.avatar) || '';
+          return a.startsWith('data:image/') ? `<img class="av" alt="" src="${esc(a)}">` : `<span class="av">${esc(a || '🏢')}</span>`;
         }
-      } catch (e) { }
-    }
+
+        function alertSummary(list) {
+          if (!Array.isArray(list)) return '';
+          const t = new Date(); t.setHours(0, 0, 0, 0);
+          let x = 0, w = 0, m = 0;
+          list.forEach(d => {
+            if (!d.expiry_date) return;
+            const n = Math.round((new Date(d.expiry_date) - t) / 864e5);
+            if (n < 0) x++; else if (n <= 7) w++; else m++;
+          });
+          return `🔴 ${x} expired · 🟠 ${w} within 7 days · 🟡 ${m} within 30 days`;
+        }
+
+        async function loadCU() {
+          try {
+            const res = await api('/api/customers');
+            if (Array.isArray(res)) CU = res;
+          } catch (e) { }
+          return CU;
+        }
+
+        async function updateChrome() {
+          try {
+            const u = getUser();
+            const h = new Date().getHours();
+            let greet = 'Good morning';
+            if (h >= 12 && h < 17) greet = 'Good afternoon';
+            else if (h >= 17) greet = 'Good evening';
+            if ($('hi')) $('hi').textContent = `${greet}, ${u.name || u.user_id || 'Shilish Reddy'}`;
+            const uInitial = ((u.name || u.user_id || 'U')[0] || 'U').toUpperCase();
+            if ($('userAvatarCircle')) $('userAvatarCircle').textContent = uInitial;
+            const r = (u.role || (u.is_admin ? 'admin' : 'standard')).toUpperCase();
+            if ($('rolePill')) {
+              $('rolePill').textContent = r;
+              $('rolePill').className = `role-pill ${r.toLowerCase().includes('admin') ? 'admin' : 'standard'}`;
+            }
+          } catch (e) { }
+        }
 
 
-    // --- Branded 3D Loader & Notification System (Logo + Message on Search/Load) ---
-    function showBstplLoader(msg = 'Searching & loading records…', pct = null) {
-      let loader = $('cvGlobalLoader');
-      if (!loader) {
-        loader = document.createElement('div');
-        loader.id = 'cvGlobalLoader';
-        loader.className = 'cv-global-loader';
-        loader.innerHTML = `
+        // --- Branded 3D Loader & Notification System (Logo + Message on Search/Load) ---
+        function showBstplLoader(msg = 'Searching & loading records…', pct = null) {
+          let loader = $('cvGlobalLoader');
+          if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'cvGlobalLoader';
+            loader.className = 'cv-global-loader';
+            loader.innerHTML = `
           <div class="cv-loader-backdrop"></div>
           <div class="cv-loader-card">
             <div class="cv-loader-logo-wrap">
@@ -4304,756 +4307,756 @@
             <div class="cv-loader-progress"><div class="cv-loader-progress-bar"></div></div>
           </div>
         `;
-        document.body.appendChild(loader);
-      }
-      const msgEl = $('cvLoaderMsg');
-      if (msgEl && msg != null) msgEl.textContent = msg;
-      const bar = loader.querySelector('.cv-loader-progress-bar');
-      if (bar && pct != null) {
-        bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
-      }
-      loader.style.display = 'flex';
-    }
-
-    function updateBstplLoader(msg = null, pct = null) {
-      let loader = $('cvGlobalLoader');
-      if (!loader) {
-        showBstplLoader(msg || 'Processing…', pct);
-        return;
-      }
-      if (msg != null) {
-        const msgEl = $('cvLoaderMsg');
-        if (msgEl) msgEl.textContent = msg;
-      }
-      if (pct != null) {
-        const bar = loader.querySelector('.cv-loader-progress-bar');
-        if (bar) bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
-      }
-    }
-
-    function hideBstplLoader() {
-      const loader = $('cvGlobalLoader');
-      if (loader) loader.style.display = 'none';
-    }
-
-    // Compatibility aliases for BSTPI / BSTPL loader calls (Requirement 3)
-    window.showBstplLoader = showBstplLoader;
-    window.updateBstplLoader = updateBstplLoader;
-    window.hideBstplLoader = hideBstplLoader;
-    window.showBSTPILoader = showBstplLoader;
-    window.updateBSTPILoader = updateBstplLoader;
-    window.hideBSTPILoader = hideBstplLoader;
-
-    // Minimal 3D Page Transitions while navigating between files (e.g. errors.html -> inventory.html)
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('a.cv-nav-item, .cv-header-actions a, a.nav-link, aside a').forEach(link => {
-        link.addEventListener('click', e => {
-          const href = link.getAttribute('href');
-          if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !link.target) {
-            const currentFile = window.location.pathname.split('/').pop() || 'home.html';
-            if (href !== currentFile) {
-              e.preventDefault();
-              document.body.classList.add('cv-page-3d-exit');
-              const linkText = link.textContent.replace(/[^\w\s]/gi, '').trim();
-              showBstplLoader(`Opening ${linkText || 'CustomerVault'}…`);
-              setTimeout(() => { window.location.href = href; }, 160);
-            }
+            document.body.appendChild(loader);
           }
-        });
-      });
-    });
+          const msgEl = $('cvLoaderMsg');
+          if (msgEl && msg != null) msgEl.textContent = msg;
+          const bar = loader.querySelector('.cv-loader-progress-bar');
+          if (bar && pct != null) {
+            bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+          }
+          loader.style.display = 'flex';
+        }
 
-
-    function openBulkEditImeiModal() {
-      const dlg = $('dlgBulkEditImei');
-      if (dlg && typeof dlg.showModal === 'function') {
-        dlg.showModal();
-      } else {
-        window.location.href = 'edit-delete.html?mode=bulk-edit';
-      }
-    }
-
-    function openBulkDeleteExcelModal() {
-      const dlg = $('dlgBulkDeleteExcel');
-      if (dlg && typeof dlg.showModal === 'function') {
-        dlg.showModal();
-      } else {
-        window.location.href = 'edit-delete.html?mode=bulk-delete';
-      }
-    }
-
-    function openAddColumnModal() {
-      const dlg = $('dlgAddColumn');
-      if (!dlg) return;
-      if ($('newColName')) $('newColName').value = '';
-      if ($('newColValue')) $('newColValue').value = '';
-      if ($('newColImeis')) $('newColImeis').value = '';
-      if ($('newColErr')) { $('newColErr').textContent = ''; $('newColErr').style.display = 'none'; }
-      if ($('newColTarget')) $('newColTarget').value = 'all';
-      if ($('newColCustWrap')) $('newColCustWrap').style.display = 'none';
-      if ($('newColImeisWrap')) $('newColImeisWrap').style.display = 'none';
-
-      // Populate customer options
-      if ($('newColCustSel')) {
-        let custOpts = '<option value="">-- Choose Customer --</option>';
-        custOpts += (CU || []).map(c => `<option value="${c.id}">${esc(c.name || c.customer_name)}</option>`).join('');
-        $('newColCustSel').innerHTML = custOpts;
-        if (typeof invCid !== 'undefined' && invCid) $('newColCustSel').value = invCid;
-      }
-
-      if ($('newColTarget')) {
-        $('newColTarget').onchange = () => {
-          const t = $('newColTarget').value;
-          if ($('newColCustWrap')) $('newColCustWrap').style.display = (t === 'customer') ? 'block' : 'none';
-          if ($('newColImeisWrap')) $('newColImeisWrap').style.display = (t === 'specified') ? 'block' : 'none';
-        };
-      }
-
-      if ($('closeDlgAddColumn')) $('closeDlgAddColumn').onclick = () => dlg.close();
-      if ($('cancelDlgAddColumn')) $('cancelDlgAddColumn').onclick = () => dlg.close();
-
-      if ($('formAddColumn')) {
-        $('formAddColumn').onsubmit = async e => {
-          e.preventDefault();
-          if ($('newColErr')) { $('newColErr').textContent = ''; $('newColErr').style.display = 'none'; }
-          const colName = ($('newColName')?.value || '').trim();
-          if (!colName) {
-            if ($('newColErr')) { $('newColErr').textContent = 'Please enter a column name.'; $('newColErr').style.display = 'block'; }
+        function updateBstplLoader(msg = null, pct = null) {
+          let loader = $('cvGlobalLoader');
+          if (!loader) {
+            showBstplLoader(msg || 'Processing…', pct);
             return;
           }
-
-          const target = $('newColTarget')?.value || 'all';
-          let customerId = null;
-          let imeis = null;
-
-          if (target === 'customer') {
-            const cid = parseInt($('newColCustSel')?.value);
-            if (!cid) {
-              if ($('newColErr')) { $('newColErr').textContent = 'Please select a customer.'; $('newColErr').style.display = 'block'; }
-              return;
-            }
-            customerId = cid;
-          } else if (target === 'specified') {
-            const raw = ($('newColImeis')?.value || '').split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean);
-            if (!raw.length) {
-              if ($('newColErr')) { $('newColErr').textContent = 'Please enter at least one IMEI.'; $('newColErr').style.display = 'block'; }
-              return;
-            }
-            imeis = raw;
-            if (typeof invCid !== 'undefined' && invCid) customerId = parseInt(invCid);
-          } else if (target === 'all' && typeof invCid !== 'undefined' && invCid) {
-            customerId = parseInt(invCid);
+          if (msg != null) {
+            const msgEl = $('cvLoaderMsg');
+            if (msgEl) msgEl.textContent = msg;
           }
+          if (pct != null) {
+            const bar = loader.querySelector('.cv-loader-progress-bar');
+            if (bar) bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+          }
+        }
 
-          const val = $('newColValue')?.value || '';
-          const btn = $('btnSubmitAddColumn');
-          if (btn) { btn.disabled = true; btn.textContent = 'Adding Column…'; }
+        function hideBstplLoader() {
+          const loader = $('cvGlobalLoader');
+          if (loader) loader.style.display = 'none';
+        }
 
-          try {
-            const res = await api('/api/columns/add', {
-              method: 'POST',
-              body: JSON.stringify({
-                column_name: colName,
-                target: target,
-                customer_id: customerId,
-                imeis: imeis,
-                value: val !== '' ? val : null
-              })
+        // Compatibility aliases for BSTPI / BSTPL loader calls (Requirement 3)
+        window.showBstplLoader = showBstplLoader;
+        window.updateBstplLoader = updateBstplLoader;
+        window.hideBstplLoader = hideBstplLoader;
+        window.showBSTPILoader = showBstplLoader;
+        window.updateBSTPILoader = updateBstplLoader;
+        window.hideBSTPILoader = hideBstplLoader;
+
+        // Minimal 3D Page Transitions while navigating between files (e.g. errors.html -> inventory.html)
+        document.addEventListener('DOMContentLoaded', () => {
+          document.querySelectorAll('a.cv-nav-item, .cv-header-actions a, a.nav-link, aside a').forEach(link => {
+            link.addEventListener('click', e => {
+              const href = link.getAttribute('href');
+              if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !link.target) {
+                const currentFile = window.location.pathname.split('/').pop() || 'home.html';
+                if (href !== currentFile) {
+                  e.preventDefault();
+                  document.body.classList.add('cv-page-3d-exit');
+                  const linkText = link.textContent.replace(/[^\w\s]/gi, '').trim();
+                  showBstplLoader(`Opening ${linkText || 'CustomerVault'}…`);
+                  setTimeout(() => { window.location.href = href; }, 160);
+                }
+              }
             });
-            dlg.close();
-            toast(`Column "${res.column || colName}" added successfully`);
-            if (typeof fetchInventoryRows === 'function') await fetchInventoryRows();
-          } catch (err) {
-            if ($('newColErr')) { $('newColErr').textContent = err.message || 'Failed to add column'; $('newColErr').style.display = 'block'; }
-          } finally {
-            if (btn) { btn.disabled = false; btn.textContent = '➕ Add Column'; }
+          });
+        });
+
+
+        function openBulkEditImeiModal() {
+          const dlg = $('dlgBulkEditImei');
+          if (dlg && typeof dlg.showModal === 'function') {
+            dlg.showModal();
+          } else {
+            window.location.href = 'edit-delete.html?mode=bulk-edit';
           }
-        };
-      }
+        }
 
-      if (typeof dlg.showModal === 'function') dlg.showModal();
-    }
+        function openBulkDeleteExcelModal() {
+          const dlg = $('dlgBulkDeleteExcel');
+          if (dlg && typeof dlg.showModal === 'function') {
+            dlg.showModal();
+          } else {
+            window.location.href = 'edit-delete.html?mode=bulk-delete';
+          }
+        }
 
-    function openAddDeviceModal() {
-      const dlg = $('devdlg');
-      if (!dlg) return;
-      $('devTitle').textContent = 'Add Device Record';
-      $('devFields').innerHTML = buildDeviceFormFields();
-      $('devErr').textContent = '';
-      $('devSave').textContent = 'Create Record';
-      $('devform').onsubmit = async e => {
-        e.preventDefault();
-        $('devErr').textContent = '';
-        const body = {};
-        document.querySelectorAll('#devdlg [data-devf]').forEach(i => {
-          const k = i.dataset.devf, v = i.value.trim();
-          if (v) body[k] = v;
-        });
-        const extra = {};
-        document.querySelectorAll('#devdlg [data-devx]').forEach(i => {
-          const k = i.dataset.devx, v = i.value.trim();
-          if (v) extra[k] = v;
-        });
-        if (Object.keys(extra).length) body.extra = extra;
+        function openAddColumnModal() {
+          const dlg = $('dlgAddColumn');
+          if (!dlg) return;
+          if ($('newColName')) $('newColName').value = '';
+          if ($('newColValue')) $('newColValue').value = '';
+          if ($('newColImeis')) $('newColImeis').value = '';
+          if ($('newColErr')) { $('newColErr').textContent = ''; $('newColErr').style.display = 'none'; }
+          if ($('newColTarget')) $('newColTarget').value = 'all';
+          if ($('newColCustWrap')) $('newColCustWrap').style.display = 'none';
+          if ($('newColImeisWrap')) $('newColImeisWrap').style.display = 'none';
 
-        try {
-          await api('/api/devices', { method: 'POST', body: JSON.stringify(body) });
-          dlg.close();
-          toast('Device record created successfully');
-          if (typeof loadInventoryContainer === 'function') loadInventoryContainer();
-          else if (typeof refreshActiveContainer === 'function') refreshActiveContainer();
-        } catch (err) { $('devErr').textContent = err.message; }
-      };
-      if (typeof dlg.showModal === 'function') dlg.showModal();
-    }
+          // Populate customer options
+          if ($('newColCustSel')) {
+            let custOpts = '<option value="">-- Choose Customer --</option>';
+            custOpts += (CU || []).map(c => `<option value="${c.id}">${esc(c.name || c.customer_name)}</option>`).join('');
+            $('newColCustSel').innerHTML = custOpts;
+            if (typeof invCid !== 'undefined' && invCid) $('newColCustSel').value = invCid;
+          }
 
-    function loadCustomModels() {
-      const sel = $('optModel');
-      if (!sel) return;
-      try {
-        const saved = JSON.parse(localStorage.getItem('custom_models') || '[]');
-        sel.querySelectorAll('.custom-model-opt').forEach(o => o.remove());
-        const newOpt = sel.querySelector('option[value="__new__"]');
-        saved.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m;
-          opt.textContent = m;
-          opt.className = 'custom-model-opt';
-          if (newOpt) sel.insertBefore(opt, newOpt);
-          else sel.appendChild(opt);
-        });
-      } catch (e) { }
-    }
+          if ($('newColTarget')) {
+            $('newColTarget').onchange = () => {
+              const t = $('newColTarget').value;
+              if ($('newColCustWrap')) $('newColCustWrap').style.display = (t === 'customer') ? 'block' : 'none';
+              if ($('newColImeisWrap')) $('newColImeisWrap').style.display = (t === 'specified') ? 'block' : 'none';
+            };
+          }
 
-    function showEventPopup(opts) {
-      opts = opts || {};
-      const title = opts.title || 'Notification';
-      const message = opts.message || '';
-      const dlg = $('dlgEventPopup');
-      if (!dlg || typeof dlg.showModal !== 'function') {
-        toast((title ? title + ': ' : '') + message);
-        return;
-      }
-      if ($('eventPopupTitle')) $('eventPopupTitle').textContent = title;
-      if ($('eventPopupMessage')) $('eventPopupMessage').textContent = message;
-      try {
-        dlg.showModal();
-        setTimeout(() => { try { dlg.close(); } catch (e) { } }, opts.duration || 3500);
-      } catch (e) { toast(message); }
-    }
+          if ($('closeDlgAddColumn')) $('closeDlgAddColumn').onclick = () => dlg.close();
+          if ($('cancelDlgAddColumn')) $('cancelDlgAddColumn').onclick = () => dlg.close();
+
+          if ($('formAddColumn')) {
+            $('formAddColumn').onsubmit = async e => {
+              e.preventDefault();
+              if ($('newColErr')) { $('newColErr').textContent = ''; $('newColErr').style.display = 'none'; }
+              const colName = ($('newColName')?.value || '').trim();
+              if (!colName) {
+                if ($('newColErr')) { $('newColErr').textContent = 'Please enter a column name.'; $('newColErr').style.display = 'block'; }
+                return;
+              }
+
+              const target = $('newColTarget')?.value || 'all';
+              let customerId = null;
+              let imeis = null;
+
+              if (target === 'customer') {
+                const cid = parseInt($('newColCustSel')?.value);
+                if (!cid) {
+                  if ($('newColErr')) { $('newColErr').textContent = 'Please select a customer.'; $('newColErr').style.display = 'block'; }
+                  return;
+                }
+                customerId = cid;
+              } else if (target === 'specified') {
+                const raw = ($('newColImeis')?.value || '').split(/[\r\n,]+/).map(s => s.trim()).filter(Boolean);
+                if (!raw.length) {
+                  if ($('newColErr')) { $('newColErr').textContent = 'Please enter at least one IMEI.'; $('newColErr').style.display = 'block'; }
+                  return;
+                }
+                imeis = raw;
+                if (typeof invCid !== 'undefined' && invCid) customerId = parseInt(invCid);
+              } else if (target === 'all' && typeof invCid !== 'undefined' && invCid) {
+                customerId = parseInt(invCid);
+              }
+
+              const val = $('newColValue')?.value || '';
+              const btn = $('btnSubmitAddColumn');
+              if (btn) { btn.disabled = true; btn.textContent = 'Adding Column…'; }
+
+              try {
+                const res = await api('/api/columns/add', {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    column_name: colName,
+                    target: target,
+                    customer_id: customerId,
+                    imeis: imeis,
+                    value: val !== '' ? val : null
+                  })
+                });
+                dlg.close();
+                toast(`Column "${res.column || colName}" added successfully`);
+                if (typeof fetchInventoryRows === 'function') await fetchInventoryRows();
+              } catch (err) {
+                if ($('newColErr')) { $('newColErr').textContent = err.message || 'Failed to add column'; $('newColErr').style.display = 'block'; }
+              } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '➕ Add Column'; }
+              }
+            };
+          }
+
+          if (typeof dlg.showModal === 'function') dlg.showModal();
+        }
+
+        function openAddDeviceModal() {
+          const dlg = $('devdlg');
+          if (!dlg) return;
+          $('devTitle').textContent = 'Add Device Record';
+          $('devFields').innerHTML = buildDeviceFormFields();
+          $('devErr').textContent = '';
+          $('devSave').textContent = 'Create Record';
+          $('devform').onsubmit = async e => {
+            e.preventDefault();
+            $('devErr').textContent = '';
+            const body = {};
+            document.querySelectorAll('#devdlg [data-devf]').forEach(i => {
+              const k = i.dataset.devf, v = i.value.trim();
+              if (v) body[k] = v;
+            });
+            const extra = {};
+            document.querySelectorAll('#devdlg [data-devx]').forEach(i => {
+              const k = i.dataset.devx, v = i.value.trim();
+              if (v) extra[k] = v;
+            });
+            if (Object.keys(extra).length) body.extra = extra;
+
+            try {
+              await api('/api/devices', { method: 'POST', body: JSON.stringify(body) });
+              dlg.close();
+              toast('Device record created successfully');
+              if (typeof loadInventoryContainer === 'function') loadInventoryContainer();
+              else if (typeof refreshActiveContainer === 'function') refreshActiveContainer();
+            } catch (err) { $('devErr').textContent = err.message; }
+          };
+          if (typeof dlg.showModal === 'function') dlg.showModal();
+        }
+
+        function loadCustomModels() {
+          const sel = $('optModel');
+          if (!sel) return;
+          try {
+            const saved = JSON.parse(localStorage.getItem('custom_models') || '[]');
+            sel.querySelectorAll('.custom-model-opt').forEach(o => o.remove());
+            const newOpt = sel.querySelector('option[value="__new__"]');
+            saved.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m;
+              opt.textContent = m;
+              opt.className = 'custom-model-opt';
+              if (newOpt) sel.insertBefore(opt, newOpt);
+              else sel.appendChild(opt);
+            });
+          } catch (e) { }
+        }
+
+        function showEventPopup(opts) {
+          opts = opts || {};
+          const title = opts.title || 'Notification';
+          const message = opts.message || '';
+          const dlg = $('dlgEventPopup');
+          if (!dlg || typeof dlg.showModal !== 'function') {
+            toast((title ? title + ': ' : '') + message);
+            return;
+          }
+          if ($('eventPopupTitle')) $('eventPopupTitle').textContent = title;
+          if ($('eventPopupMessage')) $('eventPopupMessage').textContent = message;
+          try {
+            dlg.showModal();
+            setTimeout(() => { try { dlg.close(); } catch (e) { } }, opts.duration || 3500);
+          } catch (e) { toast(message); }
+        }
 
 
-    // Live sidebar telemetry
-    function updateLiveStreamClock() {
-      /* Live clock display hidden per user requirement */
-    }
+        // Live sidebar telemetry
+        function updateLiveStreamClock() {
+          /* Live clock display hidden per user requirement */
+        }
 
 
-    // --- Universal Inter-Page Interlinking & Data Synchronization System ---
-    let lastKnownDbUpdate = parseInt(localStorage.getItem('customervault_db_updated') || '0', 10);
+        // --- Universal Inter-Page Interlinking & Data Synchronization System ---
+        let lastKnownDbUpdate = parseInt(localStorage.getItem('customervault_db_updated') || '0', 10);
 
-    function notifyDataUpdated(detail = {}) {
-      const now = Date.now();
-      lastKnownDbUpdate = now;
-      try {
-        localStorage.setItem('customervault_db_updated', String(now));
+        function notifyDataUpdated(detail = {}) {
+          const now = Date.now();
+          lastKnownDbUpdate = now;
+          try {
+            localStorage.setItem('customervault_db_updated', String(now));
+            if (window.BroadcastChannel) {
+              const bc = new BroadcastChannel('customervault_sync_channel');
+              bc.postMessage({ type: 'DB_UPDATED', timestamp: now, detail });
+              bc.close();
+            }
+          } catch (e) { }
+        }
+        window.notifyDataUpdated = notifyDataUpdated;
+
+        async function syncGlobalMetricsAndChrome() {
+          try {
+            const [statsRes, custsRes] = await Promise.all([
+              api('/api/stats').catch(() => null),
+              api('/api/customers').catch(() => null)
+            ]);
+
+            if (statsRes) {
+              S = statsRes;
+              const devTotal = statsRes.total_devices != null ? statsRes.total_devices : (statsRes.devices || 0);
+              const custTotal = statsRes.total_customers != null ? statsRes.total_customers : (statsRes.customers || 0);
+              const errTotal = statsRes.errored_records != null ? statsRes.errored_records : 0;
+              const cartTotal = statsRes.deleted_devices != null ? statsRes.deleted_devices : (statsRes.deleted || 0);
+              const exp30Total = statsRes.expiring_30_days != null ? statsRes.expiring_30_days : (statsRes.total_expiring || 0);
+              const expiredTotal = statsRes.expired != null ? statsRes.expired : (statsRes.total_expired || 0);
+
+              // Update sidebar badges and widgets
+              const userTotal = statsRes.inserted_by_you != null ? statsRes.inserted_by_you : (statsRes.added_by_you != null ? statsRes.added_by_you : Math.max(0, devTotal - 2));
+              if ($('sbLiveDevCount')) $('sbLiveDevCount').textContent = Number(devTotal).toLocaleString();
+              if ($('sbLiveCustCount')) $('sbLiveCustCount').textContent = Number(custTotal).toLocaleString();
+              if ($('sbLiveUserCount')) $('sbLiveUserCount').textContent = Number(userTotal).toLocaleString();
+              if ($('allRecordsCount')) $('allRecordsCount').textContent = Number(devTotal).toLocaleString();
+              if ($('allCustCount')) $('allCustCount').textContent = Number(custTotal).toLocaleString();
+              if ($('sidebarErrorsBadge')) {
+                $('sidebarErrorsBadge').textContent = Number(errTotal).toLocaleString();
+                $('sidebarErrorsBadge').style.display = errTotal > 0 ? 'inline-block' : 'none';
+              }
+              if ($('invCustCountBadge')) $('invCustCountBadge').textContent = Number(custTotal).toLocaleString();
+              if ($('topCartCountBadge')) $('topCartCountBadge').textContent = cartTotal;
+              if ($('cartCountText')) $('cartCountText').textContent = cartTotal;
+              if ($('simRestoreCountBadge')) $('simRestoreCountBadge').textContent = `${Number(cartTotal).toLocaleString()} records`;
+
+              // Update Home Overview & Live Stream KPI cards if present
+              if ($('kpiDev')) $('kpiDev').textContent = Number(devTotal).toLocaleString();
+              if ($('kpiCust')) $('kpiCust').textContent = Number(custTotal).toLocaleString();
+              if ($('kpiExp30')) $('kpiExp30').textContent = Number(exp30Total).toLocaleString();
+              if ($('kpiExpired')) $('kpiExpired').textContent = Number(expiredTotal).toLocaleString();
+            }
+
+            if (custsRes && Array.isArray(custsRes)) {
+              CU = custsRes;
+              if ($('invCustCountBadge')) $('invCustCountBadge').textContent = CU.length.toLocaleString();
+              if (typeof populateNfCustomerDropdown === 'function') populateNfCustomerDropdown();
+              if (typeof populateBfCustomerFilter === 'function') populateBfCustomerFilter();
+              if (typeof populateLiveCustomerDropdown === 'function') populateLiveCustomerDropdown();
+              if (typeof refreshUploadCustDropdown === 'function') refreshUploadCustDropdown();
+            }
+          } catch (e) {
+            console.warn('Sync metrics error:', e);
+          }
+        }
+        window.syncGlobalMetricsAndChrome = syncGlobalMetricsAndChrome;
+
+        let _refreshDebounceTimer = null;
+        function triggerLivePageRefresh() {
+          clearTimeout(_refreshDebounceTimer);
+          _refreshDebounceTimer = setTimeout(async () => {
+            await syncGlobalMetricsAndChrome();
+
+            // Dynamically re-fetch container data on active page
+            const path = window.location.pathname.toLowerCase();
+            if (path.endsWith('home.html') || path.endsWith('dashboard.html') || path.endsWith('index.html')) {
+              if (typeof updateHomeStatsRibbon === 'function') updateHomeStatsRibbon();
+              if (typeof updateHomeExpiryBanner === 'function') updateHomeExpiryBanner();
+              if (typeof runLiveCycle === 'function') runLiveCycle(true);
+              if (typeof loadHealthContainer === 'function') loadHealthContainer();
+            } else if (path.endsWith('inventory.html')) {
+              if (typeof loadCustomerFilesContainer === 'function') loadCustomerFilesContainer();
+              if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
+            } else if (path.endsWith('fetch-data.html')) {
+              if (typeof populateNfCustomerDropdown === 'function') populateNfCustomerDropdown();
+              if (typeof populateBfCustomerFilter === 'function') populateBfCustomerFilter();
+              if (typeof runNormalFetch === 'function' && nfState.hasRun) runNormalFetch(nfState.page, { silent: true, reuse: true });
+            } else if (path.endsWith('edit-delete.html')) {
+              if (typeof runSearch === 'function' && $('qImei') && $('qImei').value.trim()) runSearch();
+            } else if (path.endsWith('alerts.html')) {
+              if (typeof loadExpiryContainer === 'function') loadExpiryContainer();
+            } else if (path.endsWith('errors.html')) {
+              if (typeof loadErrorsContainer === 'function') loadErrorsContainer();
+            } else if (path.endsWith('settings.html')) {
+              if (typeof loadSettingsPage === 'function') loadSettingsPage();
+            }
+          }, 200);
+        }
+        window.triggerLivePageRefresh = triggerLivePageRefresh;
+
+        // Cross-tab broadcast listener
         if (window.BroadcastChannel) {
-          const bc = new BroadcastChannel('customervault_sync_channel');
-          bc.postMessage({ type: 'DB_UPDATED', timestamp: now, detail });
-          bc.close();
-        }
-      } catch (e) { }
-    }
-    window.notifyDataUpdated = notifyDataUpdated;
-
-    async function syncGlobalMetricsAndChrome() {
-      try {
-        const [statsRes, custsRes] = await Promise.all([
-          api('/api/stats').catch(() => null),
-          api('/api/customers').catch(() => null)
-        ]);
-
-        if (statsRes) {
-          S = statsRes;
-          const devTotal = statsRes.total_devices != null ? statsRes.total_devices : (statsRes.devices || 0);
-          const custTotal = statsRes.total_customers != null ? statsRes.total_customers : (statsRes.customers || 0);
-          const errTotal = statsRes.errored_records != null ? statsRes.errored_records : 0;
-          const cartTotal = statsRes.deleted_devices != null ? statsRes.deleted_devices : (statsRes.deleted || 0);
-          const exp30Total = statsRes.expiring_30_days != null ? statsRes.expiring_30_days : (statsRes.total_expiring || 0);
-          const expiredTotal = statsRes.expired != null ? statsRes.expired : (statsRes.total_expired || 0);
-
-          // Update sidebar badges and widgets
-          const userTotal = statsRes.inserted_by_you != null ? statsRes.inserted_by_you : (statsRes.added_by_you != null ? statsRes.added_by_you : Math.max(0, devTotal - 2));
-          if ($('sbLiveDevCount')) $('sbLiveDevCount').textContent = Number(devTotal).toLocaleString();
-          if ($('sbLiveCustCount')) $('sbLiveCustCount').textContent = Number(custTotal).toLocaleString();
-          if ($('sbLiveUserCount')) $('sbLiveUserCount').textContent = Number(userTotal).toLocaleString();
-          if ($('allRecordsCount')) $('allRecordsCount').textContent = Number(devTotal).toLocaleString();
-          if ($('allCustCount')) $('allCustCount').textContent = Number(custTotal).toLocaleString();
-          if ($('sidebarErrorsBadge')) {
-            $('sidebarErrorsBadge').textContent = Number(errTotal).toLocaleString();
-            $('sidebarErrorsBadge').style.display = errTotal > 0 ? 'inline-block' : 'none';
-          }
-          if ($('invCustCountBadge')) $('invCustCountBadge').textContent = Number(custTotal).toLocaleString();
-          if ($('topCartCountBadge')) $('topCartCountBadge').textContent = cartTotal;
-          if ($('cartCountText')) $('cartCountText').textContent = cartTotal;
-          if ($('simRestoreCountBadge')) $('simRestoreCountBadge').textContent = `${Number(cartTotal).toLocaleString()} records`;
-
-          // Update Home Overview & Live Stream KPI cards if present
-          if ($('kpiDev')) $('kpiDev').textContent = Number(devTotal).toLocaleString();
-          if ($('kpiCust')) $('kpiCust').textContent = Number(custTotal).toLocaleString();
-          if ($('kpiExp30')) $('kpiExp30').textContent = Number(exp30Total).toLocaleString();
-          if ($('kpiExpired')) $('kpiExpired').textContent = Number(expiredTotal).toLocaleString();
+          try {
+            const syncBc = new BroadcastChannel('customervault_sync_channel');
+            syncBc.onmessage = e => {
+              if (e.data && e.data.type === 'DB_UPDATED') {
+                lastKnownDbUpdate = e.data.timestamp;
+                triggerLivePageRefresh();
+              }
+            };
+          } catch (e) { }
         }
 
-        if (custsRes && Array.isArray(custsRes)) {
-          CU = custsRes;
-          if ($('invCustCountBadge')) $('invCustCountBadge').textContent = CU.length.toLocaleString();
-          if (typeof populateNfCustomerDropdown === 'function') populateNfCustomerDropdown();
-          if (typeof populateBfCustomerFilter === 'function') populateBfCustomerFilter();
-          if (typeof populateLiveCustomerDropdown === 'function') populateLiveCustomerDropdown();
-          if (typeof refreshUploadCustDropdown === 'function') refreshUploadCustDropdown();
-        }
-      } catch (e) {
-        console.warn('Sync metrics error:', e);
-      }
-    }
-    window.syncGlobalMetricsAndChrome = syncGlobalMetricsAndChrome;
-
-    let _refreshDebounceTimer = null;
-    function triggerLivePageRefresh() {
-      clearTimeout(_refreshDebounceTimer);
-      _refreshDebounceTimer = setTimeout(async () => {
-        await syncGlobalMetricsAndChrome();
-
-        // Dynamically re-fetch container data on active page
-        const path = window.location.pathname.toLowerCase();
-        if (path.endsWith('home.html') || path.endsWith('dashboard.html') || path.endsWith('index.html')) {
-          if (typeof updateHomeStatsRibbon === 'function') updateHomeStatsRibbon();
-          if (typeof updateHomeExpiryBanner === 'function') updateHomeExpiryBanner();
-          if (typeof runLiveCycle === 'function') runLiveCycle(true);
-          if (typeof loadHealthContainer === 'function') loadHealthContainer();
-        } else if (path.endsWith('inventory.html')) {
-          if (typeof loadCustomerFilesContainer === 'function') loadCustomerFilesContainer();
-          if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
-        } else if (path.endsWith('fetch-data.html')) {
-          if (typeof populateNfCustomerDropdown === 'function') populateNfCustomerDropdown();
-          if (typeof populateBfCustomerFilter === 'function') populateBfCustomerFilter();
-          if (typeof runNormalFetch === 'function' && nfState.hasRun) runNormalFetch(nfState.page, { silent: true, reuse: true });
-        } else if (path.endsWith('edit-delete.html')) {
-          if (typeof runSearch === 'function' && $('qImei') && $('qImei').value.trim()) runSearch();
-        } else if (path.endsWith('alerts.html')) {
-          if (typeof loadExpiryContainer === 'function') loadExpiryContainer();
-        } else if (path.endsWith('errors.html')) {
-          if (typeof loadErrorsContainer === 'function') loadErrorsContainer();
-        } else if (path.endsWith('settings.html')) {
-          if (typeof loadSettingsPage === 'function') loadSettingsPage();
-        }
-      }, 200);
-    }
-    window.triggerLivePageRefresh = triggerLivePageRefresh;
-
-    // Cross-tab broadcast listener
-    if (window.BroadcastChannel) {
-      try {
-        const syncBc = new BroadcastChannel('customervault_sync_channel');
-        syncBc.onmessage = e => {
-          if (e.data && e.data.type === 'DB_UPDATED') {
-            lastKnownDbUpdate = e.data.timestamp;
-            triggerLivePageRefresh();
-          }
-        };
-      } catch (e) { }
-    }
-
-    // Storage event listener (cross-window fallback)
-    window.addEventListener('storage', e => {
-      if (e.key === 'customervault_db_updated') {
-        const ts = parseInt(e.newValue || '0', 10);
-        if (ts > lastKnownDbUpdate) {
-          lastKnownDbUpdate = ts;
-          triggerLivePageRefresh();
-        }
-      }
-    });
-
-    // Window focus listener: When user switches back to this tab/window, refresh immediately
-    window.addEventListener('focus', () => {
-      const cur = parseInt(localStorage.getItem('customervault_db_updated') || '0', 10);
-      if (cur > lastKnownDbUpdate) {
-        lastKnownDbUpdate = cur;
-        triggerLivePageRefresh();
-      } else {
-        syncGlobalMetricsAndChrome();
-      }
-    });
-
-    syncGlobalMetricsAndChrome();
-
-
-    // Live sidebar telemetry updater
-    async function updateSidebarStats() {
-      try {
-        const statsRes = await api('/api/stats').catch(() => null);
-        if (statsRes) {
-          const devTotal = statsRes.total_devices != null ? statsRes.total_devices : (statsRes.devices || 0);
-          const custTotal = statsRes.total_customers != null ? statsRes.total_customers : (statsRes.customers || 0);
-          const userTotal = statsRes.inserted_by_you != null ? statsRes.inserted_by_you : (statsRes.added_by_you != null ? statsRes.added_by_you : Math.max(0, devTotal - 2));
-          if ($('sbLiveDevCount') && devTotal) $('sbLiveDevCount').textContent = Number(devTotal).toLocaleString('en-US');
-          if ($('sbLiveCustCount') && custTotal) $('sbLiveCustCount').textContent = Number(custTotal).toLocaleString('en-US');
-          if ($('sbLiveUserCount') && userTotal != null) $('sbLiveUserCount').textContent = Number(userTotal).toLocaleString('en-US');
-        }
-      } catch (e) { }
-    }
-    window.updateSidebarStats = updateSidebarStats;
-
-    const toggleLiveBtn = $('sidebarToggleLiveBtn');
-    if (toggleLiveBtn) {
-      toggleLiveBtn.onclick = function () {
-        if (this.classList.contains('on')) {
-          this.classList.remove('on');
-          this.classList.add('off');
-          this.textContent = 'OFF';
-          toast('Live stream paused');
-        } else {
-          this.classList.remove('off');
-          this.classList.add('on');
-          this.textContent = 'ON';
-          toast('Live stream active');
-          syncGlobalMetricsAndChrome();
-        }
-      };
-    }
-
-    // Sub-view switcher for Inventory and Upload
-    let currentInvSubView = 'devices';
-    function switchInvSubView(view) {
-      currentInvSubView = view;
-      document.querySelectorAll('.inv-sub-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.sub === view);
-      });
-      const vDev = $('subViewDevices'), vCust = $('subViewCust'), vUpl = $('subViewUpload');
-      if (vDev) vDev.hidden = (view !== 'devices');
-      if (vCust) vCust.hidden = (view !== 'cust');
-      if (vUpl) vUpl.hidden = (view !== 'upload');
-
-      if (view === 'devices') {
-        if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
-      } else if (view === 'cust') {
-        if (typeof loadCustomerFilesContainer === 'function') loadCustomerFilesContainer();
-      } else if (view === 'upload') {
-        if (typeof initBulkUploadContainer === 'function') initBulkUploadContainer();
-      }
-    }
-
-
-
-    /* =========================================================================
-       QUICK FETCH PRESET HANDLERS
-       ========================================================================= */
-    function activateAllFieldsPreset() {
-      // Switch view option to 'all'
-      const radAll = document.querySelector('input[name="nfViewOpt"][value="all"]');
-      if (radAll) {
-        radAll.checked = true;
-        radAll.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      // If custom view was open, check all columns
-      document.querySelectorAll('.nf-col-chk').forEach(c => {
-        c.checked = true;
-        const chip = c.closest('.col-pill-chip');
-        if (chip) {
-          chip.classList.add('active');
-          chip.style.borderColor = 'var(--primary)';
-          chip.style.background = 'var(--card-subtle)';
-        }
-      });
-      // In bulk mode, select all output columns
-      if (typeof $('bfColsSelectAll') !== 'undefined' && $('bfColsSelectAll')) {
-        document.querySelectorAll('.bf-out-chk').forEach(c => {
-          c.checked = true;
-          const chip = c.closest('.col-pill-chip');
-          if (chip) {
-            chip.classList.add('active');
-            chip.style.borderColor = 'var(--primary)';
-            chip.style.background = 'var(--card-subtle)';
+        // Storage event listener (cross-window fallback)
+        window.addEventListener('storage', e => {
+          if (e.key === 'customervault_db_updated') {
+            const ts = parseInt(e.newValue || '0', 10);
+            if (ts > lastKnownDbUpdate) {
+              lastKnownDbUpdate = ts;
+              triggerLivePageRefresh();
+            }
           }
         });
-        if (typeof bfLastResult !== 'undefined' && bfLastResult) renderBulkFetchOutcome(bfLastResult);
-      }
-      toast('📋 Preset activated: All dynamic fields and columns enabled');
-    }
-    window.activateAllFieldsPreset = activateAllFieldsPreset;
 
-    function activateAllCustomersPreset() {
-      const custSel = $('fCust');
-      if (custSel) {
-        custSel.value = '';
-        custSel.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      const bfCustSel = $('bfCustFilter');
-      if (bfCustSel) {
-        bfCustSel.value = '';
-      }
-      toast('👥 Preset activated: Showing all customer portfolios');
-      if (typeof runNormalFetch === 'function') runNormalFetch(1);
-    }
-    window.activateAllCustomersPreset = activateAllCustomersPreset;
+        // Window focus listener: When user switches back to this tab/window, refresh immediately
+        window.addEventListener('focus', () => {
+          const cur = parseInt(localStorage.getItem('customervault_db_updated') || '0', 10);
+          if (cur > lastKnownDbUpdate) {
+            lastKnownDbUpdate = cur;
+            triggerLivePageRefresh();
+          } else {
+            syncGlobalMetricsAndChrome();
+          }
+        });
 
-    // WHAT IS HAPPENING BELOW:
-    // All Records KPI Card Toggle Action:
-    // Clicking toggles between showing all 117,619 records across all customers
-    // and re-hiding all customer data back to the clean hidden state.
-    function activateAllRecordsPreset() {
-      const isAllCurrentlyActive = ($('chkShowAllCustomers') && $('chkShowAllCustomers').checked) ||
-        ($('fCust') && $('fCust').value === '__ALL__') ||
-        (typeof nfState !== 'undefined' && nfState.hasRun && nfState.total > 0 && (!nfState.query?.cust || nfState.query?.cust === '__ALL__') && !nfState.query?.raw);
+        syncGlobalMetricsAndChrome();
 
-      if (isAllCurrentlyActive) {
-        // Toggle: HIDE THE DATA AGAIN
-        if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
-        if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
-        if ($('fCust')) $('fCust').value = '';
-        if ($('btnPresetAllRecords')) $('btnPresetAllRecords').classList.remove('active-toggle');
-        toast('🔒 All customer records hidden.');
-        runNormalFetch(1);
-      } else {
-        // Toggle: DISPLAY ALL RECORDS
-        const q = $('fq'); if (q) q.value = '';
-        const col = $('fCol'); if (col) col.value = 'all';
-        if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = true;
-        if ($('lblShowAllCust')) $('lblShowAllCust').classList.add('active');
-        if ($('fCust')) $('fCust').value = '__ALL__';
-        const match = $('fMatch'); if (match) match.value = 'auto';
-        if ($('btnPresetAllRecords')) $('btnPresetAllRecords').classList.add('active-toggle');
 
-        // Reset SIM filter to all records
-        const btnAll = $('btnSimTypeAll');
-        if (btnAll) {
-          btnAll.click();
-        } else {
-          activeFetchSimType = 'all';
+        // Live sidebar telemetry updater
+        async function updateSidebarStats() {
+          try {
+            const statsRes = await api('/api/stats').catch(() => null);
+            if (statsRes) {
+              const devTotal = statsRes.total_devices != null ? statsRes.total_devices : (statsRes.devices || 0);
+              const custTotal = statsRes.total_customers != null ? statsRes.total_customers : (statsRes.customers || 0);
+              const userTotal = statsRes.inserted_by_you != null ? statsRes.inserted_by_you : (statsRes.added_by_you != null ? statsRes.added_by_you : Math.max(0, devTotal - 2));
+              if ($('sbLiveDevCount') && devTotal) $('sbLiveDevCount').textContent = Number(devTotal).toLocaleString('en-US');
+              if ($('sbLiveCustCount') && custTotal) $('sbLiveCustCount').textContent = Number(custTotal).toLocaleString('en-US');
+              if ($('sbLiveUserCount') && userTotal != null) $('sbLiveUserCount').textContent = Number(userTotal).toLocaleString('en-US');
+            }
+          } catch (e) { }
+        }
+        window.updateSidebarStats = updateSidebarStats;
+
+        const toggleLiveBtn = $('sidebarToggleLiveBtn');
+        if (toggleLiveBtn) {
+          toggleLiveBtn.onclick = function () {
+            if (this.classList.contains('on')) {
+              this.classList.remove('on');
+              this.classList.add('off');
+              this.textContent = 'OFF';
+              toast('Live stream paused');
+            } else {
+              this.classList.remove('off');
+              this.classList.add('on');
+              this.textContent = 'ON';
+              toast('Live stream active');
+              syncGlobalMetricsAndChrome();
+            }
+          };
+        }
+
+        // Sub-view switcher for Inventory and Upload
+        let currentInvSubView = 'devices';
+        function switchInvSubView(view) {
+          currentInvSubView = view;
+          document.querySelectorAll('.inv-sub-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.sub === view);
+          });
+          const vDev = $('subViewDevices'), vCust = $('subViewCust'), vUpl = $('subViewUpload');
+          if (vDev) vDev.hidden = (view !== 'devices');
+          if (vCust) vCust.hidden = (view !== 'cust');
+          if (vUpl) vUpl.hidden = (view !== 'upload');
+
+          if (view === 'devices') {
+            if (typeof fetchInventoryRows === 'function') fetchInventoryRows();
+          } else if (view === 'cust') {
+            if (typeof loadCustomerFilesContainer === 'function') loadCustomerFilesContainer();
+          } else if (view === 'upload') {
+            if (typeof initBulkUploadContainer === 'function') initBulkUploadContainer();
+          }
+        }
+
+
+
+        /* =========================================================================
+           QUICK FETCH PRESET HANDLERS
+           ========================================================================= */
+        function activateAllFieldsPreset() {
+          // Switch view option to 'all'
+          const radAll = document.querySelector('input[name="nfViewOpt"][value="all"]');
+          if (radAll) {
+            radAll.checked = true;
+            radAll.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          // If custom view was open, check all columns
+          document.querySelectorAll('.nf-col-chk').forEach(c => {
+            c.checked = true;
+            const chip = c.closest('.col-pill-chip');
+            if (chip) {
+              chip.classList.add('active');
+              chip.style.borderColor = 'var(--primary)';
+              chip.style.background = 'var(--card-subtle)';
+            }
+          });
+          // In bulk mode, select all output columns
+          if (typeof $('bfColsSelectAll') !== 'undefined' && $('bfColsSelectAll')) {
+            document.querySelectorAll('.bf-out-chk').forEach(c => {
+              c.checked = true;
+              const chip = c.closest('.col-pill-chip');
+              if (chip) {
+                chip.classList.add('active');
+                chip.style.borderColor = 'var(--primary)';
+                chip.style.background = 'var(--card-subtle)';
+              }
+            });
+            if (typeof bfLastResult !== 'undefined' && bfLastResult) renderBulkFetchOutcome(bfLastResult);
+          }
+          toast('📋 Preset activated: All dynamic fields and columns enabled');
+        }
+        window.activateAllFieldsPreset = activateAllFieldsPreset;
+
+        function activateAllCustomersPreset() {
+          const custSel = $('fCust');
+          if (custSel) {
+            custSel.value = '';
+            custSel.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          const bfCustSel = $('bfCustFilter');
+          if (bfCustSel) {
+            bfCustSel.value = '';
+          }
+          toast('👥 Preset activated: Showing all customer portfolios');
           if (typeof runNormalFetch === 'function') runNormalFetch(1);
         }
-        toast('⚡ Displaying complete dataset across all customers…');
-      }
-    }
-    window.activateAllRecordsPreset = activateAllRecordsPreset;
+        window.activateAllCustomersPreset = activateAllCustomersPreset;
 
-    // =========================================================================
-    // WHAT IS HAPPENING BELOW:
-    // Container Initialization & Event Binding:
-    // Sets up click listeners for the SIM-Type filter pills, attaches tab switching
-    // logic between Normal Fetch and Bulk Fetch, and boots the individual sub-views.
-    // =========================================================================
-    function initFetchContainer() {
-      // Shared SIM-Type Filter Buttons
-      document.querySelectorAll('#fetchSimTypeBtns button').forEach(btn => {
-        btn.onclick = () => {
-          document.querySelectorAll('#fetchSimTypeBtns button').forEach(b => b.classList.remove('on'));
-          btn.classList.add('on');
-          activeFetchSimType = btn.dataset.simtype || 'all';
+        // WHAT IS HAPPENING BELOW:
+        // All Records KPI Card Toggle Action:
+        // Clicking toggles between showing all 117,619 records across all customers
+        // and re-hiding all customer data back to the clean hidden state.
+        function activateAllRecordsPreset() {
+          const isAllCurrentlyActive = ($('chkShowAllCustomers') && $('chkShowAllCustomers').checked) ||
+            ($('fCust') && $('fCust').value === '__ALL__') ||
+            (typeof nfState !== 'undefined' && nfState.hasRun && nfState.total > 0 && (!nfState.query?.cust || nfState.query?.cust === '__ALL__') && !nfState.query?.raw);
 
-          if ($('bulkFetchResultsWrap')) $('bulkFetchResultsWrap').innerHTML = '';
-          bfLastResult = null;
-          if (activeFetchMode === 'normal') {
-            runNormalFetch();
+          if (isAllCurrentlyActive) {
+            // Toggle: HIDE THE DATA AGAIN
+            if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
+            if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
+            if ($('fCust')) $('fCust').value = '';
+            if ($('btnPresetAllRecords')) $('btnPresetAllRecords').classList.remove('active-toggle');
+            toast('🔒 All customer records hidden.');
+            runNormalFetch(1);
+          } else {
+            // Toggle: DISPLAY ALL RECORDS
+            const q = $('fq'); if (q) q.value = '';
+            const col = $('fCol'); if (col) col.value = 'all';
+            if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = true;
+            if ($('lblShowAllCust')) $('lblShowAllCust').classList.add('active');
+            if ($('fCust')) $('fCust').value = '__ALL__';
+            const match = $('fMatch'); if (match) match.value = 'auto';
+            if ($('btnPresetAllRecords')) $('btnPresetAllRecords').classList.add('active-toggle');
+
+            // Reset SIM filter to all records
+            const btnAll = $('btnSimTypeAll');
+            if (btnAll) {
+              btnAll.click();
+            } else {
+              activeFetchSimType = 'all';
+              if (typeof runNormalFetch === 'function') runNormalFetch(1);
+            }
+            toast('⚡ Displaying complete dataset across all customers…');
           }
-        };
-      });
+        }
+        window.activateAllRecordsPreset = activateAllRecordsPreset;
 
-      // Sub-tabs
-      $('tabFNormal').onclick = () => {
-        activeFetchMode = 'normal';
-        $('tabFNormal').classList.add('on');
-        $('tabFBulk').classList.remove('on');
-        $('viewNormalFetch').hidden = false;
-        $('viewBulkFetch').hidden = true;
-      };
-      $('tabFBulk').onclick = () => {
-        activeFetchMode = 'bulk';
-        $('tabFBulk').classList.add('on');
-        $('tabFNormal').classList.remove('on');
-        $('viewNormalFetch').hidden = true;
-        $('viewBulkFetch').hidden = false;
-        populateBfCustomerFilter();
-        renderBfOutputColumns();
-      };
+        // =========================================================================
+        // WHAT IS HAPPENING BELOW:
+        // Container Initialization & Event Binding:
+        // Sets up click listeners for the SIM-Type filter pills, attaches tab switching
+        // logic between Normal Fetch and Bulk Fetch, and boots the individual sub-views.
+        // =========================================================================
+        function initFetchContainer() {
+          // Shared SIM-Type Filter Buttons
+          document.querySelectorAll('#fetchSimTypeBtns button').forEach(btn => {
+            btn.onclick = () => {
+              document.querySelectorAll('#fetchSimTypeBtns button').forEach(b => b.classList.remove('on'));
+              btn.classList.add('on');
+              activeFetchSimType = btn.dataset.simtype || 'all';
 
-      initNormalFetchView();
-      initBulkFetchView();
-    }
+              if ($('bulkFetchResultsWrap')) $('bulkFetchResultsWrap').innerHTML = '';
+              bfLastResult = null;
+              if (activeFetchMode === 'normal') {
+                runNormalFetch();
+              }
+            };
+          });
 
-    /* ---------- Normal Fetch Setup ---------- */
-    // =========================================================================
-    // WHAT IS HAPPENING BELOW:
-    // Normal Fetch View Setup:
-    // Populates fields and customer dropdowns, wires the 'Fetch Data' and 'Reset'
-    // buttons, handles Enter key press in the search input, and connects view option radio cards.
-    // =========================================================================
+          // Sub-tabs
+          $('tabFNormal').onclick = () => {
+            activeFetchMode = 'normal';
+            $('tabFNormal').classList.add('on');
+            $('tabFBulk').classList.remove('on');
+            $('viewNormalFetch').hidden = false;
+            $('viewBulkFetch').hidden = true;
+          };
+          $('tabFBulk').onclick = () => {
+            activeFetchMode = 'bulk';
+            $('tabFBulk').classList.add('on');
+            $('tabFNormal').classList.remove('on');
+            $('viewNormalFetch').hidden = true;
+            $('viewBulkFetch').hidden = false;
+            populateBfCustomerFilter();
+            renderBfOutputColumns();
+          };
 
-    // WHAT IS HAPPENING BELOW:
-    // Global helper functions to toggle the separate 'Show All Customers Data' option:
-    window.enableShowAllCustomers = function () {
-      if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = true;
-      if ($('lblShowAllCust')) $('lblShowAllCust').classList.add('active');
-      if ($('fCust')) $('fCust').value = '__ALL__';
-      toast('Displaying all records across all customers…');
-      runNormalFetch(1);
-    };
+          initNormalFetchView();
+          initBulkFetchView();
+        }
 
-    window.disableShowAllCustomers = function () {
-      if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
-      if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
-      if ($('fCust') && $('fCust').value === '__ALL__') $('fCust').value = '';
-      if ($('btnPresetAllRecords')) $('btnPresetAllRecords').classList.remove('active-toggle');
-      toast('All customer data is now hidden.');
-      runNormalFetch(1);
-    };
+        /* ---------- Normal Fetch Setup ---------- */
+        // =========================================================================
+        // WHAT IS HAPPENING BELOW:
+        // Normal Fetch View Setup:
+        // Populates fields and customer dropdowns, wires the 'Fetch Data' and 'Reset'
+        // buttons, handles Enter key press in the search input, and connects view option radio cards.
+        // =========================================================================
 
-    function initNormalFetchView() {
-      populateNfFieldsDropdown();
-      populateNfCustomerDropdown();
-
-      $('btnRunNormalFetch').onclick = () => runNormalFetch(1);
-      $('btnResetNormalFetch').onclick = () => {
-        $('fq').value = '';
-        $('fCol').value = 'all';
-        $('fCust').value = '';
-        if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
-        if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
-        if ($('fMatch')) $('fMatch').value = 'auto';
-        nfState = { ...nfState, page: 1, query: null, hasRun: false };
-        runNormalFetch(1);
-      };
-
-      // Wire up Customer dropdown change
-      $('fCust').onchange = async () => {
-        const val = $('fCust').value;
-        if (val === '__ALL__') {
+        // WHAT IS HAPPENING BELOW:
+        // Global helper functions to toggle the separate 'Show All Customers Data' option:
+        window.enableShowAllCustomers = function () {
           if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = true;
           if ($('lblShowAllCust')) $('lblShowAllCust').classList.add('active');
-        } else {
-          if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
-          if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
-        }
-        await onCustomerSelectionChange(val);
-        runNormalFetch(1);
-      };
-
-      // Wire up dedicated Show All Customers Data checkbox toggle
-      if ($('chkShowAllCustomers')) {
-        $('chkShowAllCustomers').onchange = async function () {
-          if (this.checked) {
-            $('fCust').value = '__ALL__';
-            if ($('lblShowAllCust')) $('lblShowAllCust').classList.add('active');
-          } else {
-            if ($('fCust').value === '__ALL__') $('fCust').value = '';
-            if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
-          }
-          await onCustomerSelectionChange($('fCust').value);
+          if ($('fCust')) $('fCust').value = '__ALL__';
+          toast('Displaying all records across all customers…');
           runNormalFetch(1);
         };
-      }
-      $('fq').onkeydown = e => { if (e.key === 'Enter') runNormalFetch(); };
 
-      document.querySelectorAll('input[name="nfViewOpt"]').forEach(r => {
-        r.onchange = async () => {
-          document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(card => {
-            card.classList.remove('on');
-            card.style.borderColor = 'var(--line)';
-            card.style.background = 'var(--card)';
-          });
-          const chosenCard = r.closest('.view-opt-card');
-          if (chosenCard) {
-            chosenCard.classList.add('on');
-            chosenCard.style.borderColor = 'var(--primary)';
-            chosenCard.style.background = 'var(--card-subtle)';
-          }
-          const isCustom = r.value === 'custom';
-          const isQuick = r.value === 'quick';
-          $('nfCustomColsWrap').style.display = isCustom ? 'block' : 'none';
-
-          // User requirement: "they should only fetch on the customer full data download or view"
-          // If user selects Customer Full Data View (all) or Choose Columns (custom), fetch unique columns:
-          if (!isQuick) {
-            const cid = $('fCust') ? $('fCust').value : '';
-            const targetCid = cid && cid !== '__ALL__' ? cid : (
-              (nfCurrentList.length > 0 && new Set(nfCurrentList.map(d => d.customer_id).filter(Boolean)).size === 1)
-                ? nfCurrentList[0].customer_id
-                : null
-            );
-            if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
-              await fetchCustomerColumns(targetCid);
-            }
-          }
-
-          if (isCustom) renderNfCustomColsCheckboxes();
-          renderNormalFetchTable(nfCurrentList);
+        window.disableShowAllCustomers = function () {
+          if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
+          if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
+          if ($('fCust') && $('fCust').value === '__ALL__') $('fCust').value = '';
+          if ($('btnPresetAllRecords')) $('btnPresetAllRecords').classList.remove('active-toggle');
+          toast('All customer data is now hidden.');
+          runNormalFetch(1);
         };
-      });
-    }
 
-    let currentCustomerUniqueCols = [];
-    let currentCustomerCid = null;
-    const customerUniqueColsCache = {};
+        function initNormalFetchView() {
+          populateNfFieldsDropdown();
+          populateNfCustomerDropdown();
 
-    async function fetchCustomerColumns(cid) {
-      if (!cid || cid === '__ALL__') {
-        currentCustomerUniqueCols = [];
-        currentCustomerCid = null;
-        return [];
-      }
-      if (customerUniqueColsCache[cid]) {
-        currentCustomerUniqueCols = customerUniqueColsCache[cid];
-        currentCustomerCid = String(cid);
-        return currentCustomerUniqueCols;
-      }
-      try {
-        const res = await api(`/api/customers/${cid}/columns`);
-        if (res && Array.isArray(res.unique_columns)) {
-          currentCustomerUniqueCols = res.unique_columns;
-          currentCustomerCid = String(cid);
-          customerUniqueColsCache[cid] = res.unique_columns;
-          return res.unique_columns;
+          $('btnRunNormalFetch').onclick = () => runNormalFetch(1);
+          $('btnResetNormalFetch').onclick = () => {
+            $('fq').value = '';
+            $('fCol').value = 'all';
+            $('fCust').value = '';
+            if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
+            if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
+            if ($('fMatch')) $('fMatch').value = 'auto';
+            nfState = { ...nfState, page: 1, query: null, hasRun: false };
+            runNormalFetch(1);
+          };
+
+          // Wire up Customer dropdown change
+          $('fCust').onchange = async () => {
+            const val = $('fCust').value;
+            if (val === '__ALL__') {
+              if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = true;
+              if ($('lblShowAllCust')) $('lblShowAllCust').classList.add('active');
+            } else {
+              if ($('chkShowAllCustomers')) $('chkShowAllCustomers').checked = false;
+              if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
+            }
+            await onCustomerSelectionChange(val);
+            runNormalFetch(1);
+          };
+
+          // Wire up dedicated Show All Customers Data checkbox toggle
+          if ($('chkShowAllCustomers')) {
+            $('chkShowAllCustomers').onchange = async function () {
+              if (this.checked) {
+                $('fCust').value = '__ALL__';
+                if ($('lblShowAllCust')) $('lblShowAllCust').classList.add('active');
+              } else {
+                if ($('fCust').value === '__ALL__') $('fCust').value = '';
+                if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
+              }
+              await onCustomerSelectionChange($('fCust').value);
+              runNormalFetch(1);
+            };
+          }
+          $('fq').onkeydown = e => { if (e.key === 'Enter') runNormalFetch(); };
+
+          document.querySelectorAll('input[name="nfViewOpt"]').forEach(r => {
+            r.onchange = async () => {
+              document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(card => {
+                card.classList.remove('on');
+                card.style.borderColor = 'var(--line)';
+                card.style.background = 'var(--card)';
+              });
+              const chosenCard = r.closest('.view-opt-card');
+              if (chosenCard) {
+                chosenCard.classList.add('on');
+                chosenCard.style.borderColor = 'var(--primary)';
+                chosenCard.style.background = 'var(--card-subtle)';
+              }
+              const isCustom = r.value === 'custom';
+              const isQuick = r.value === 'quick';
+              $('nfCustomColsWrap').style.display = isCustom ? 'block' : 'none';
+
+              // User requirement: "they should only fetch on the customer full data download or view"
+              // If user selects Customer Full Data View (all) or Choose Columns (custom), fetch unique columns:
+              if (!isQuick) {
+                const cid = $('fCust') ? $('fCust').value : '';
+                const targetCid = cid && cid !== '__ALL__' ? cid : (
+                  (nfCurrentList.length > 0 && new Set(nfCurrentList.map(d => d.customer_id).filter(Boolean)).size === 1)
+                    ? nfCurrentList[0].customer_id
+                    : null
+                );
+                if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
+                  await fetchCustomerColumns(targetCid);
+                }
+              }
+
+              if (isCustom) renderNfCustomColsCheckboxes();
+              renderNormalFetchTable(nfCurrentList);
+            };
+          });
         }
-      } catch (e) {
-        console.warn('Failed to fetch customer unique columns:', e);
-      }
-      currentCustomerUniqueCols = [];
-      currentCustomerCid = null;
-      return [];
-    }
 
-    async function onCustomerSelectionChange(cid) {
-      const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
-      // "they should only fetch on the customer full data download or view":
-      // Only fetch immediately if in Full Data View or Custom View; skip in Quick View
-      if (cid && cid !== '__ALL__') {
-        if (viewOpt !== 'quick') {
-          await fetchCustomerColumns(cid);
+        let currentCustomerUniqueCols = [];
+        let currentCustomerCid = null;
+        const customerUniqueColsCache = {};
+
+        async function fetchCustomerColumns(cid) {
+          if (!cid || cid === '__ALL__') {
+            currentCustomerUniqueCols = [];
+            currentCustomerCid = null;
+            return [];
+          }
+          if (customerUniqueColsCache[cid]) {
+            currentCustomerUniqueCols = customerUniqueColsCache[cid];
+            currentCustomerCid = String(cid);
+            return currentCustomerUniqueCols;
+          }
+          try {
+            const res = await api(`/api/customers/${cid}/columns`);
+            if (res && Array.isArray(res.unique_columns)) {
+              currentCustomerUniqueCols = res.unique_columns;
+              currentCustomerCid = String(cid);
+              customerUniqueColsCache[cid] = res.unique_columns;
+              return res.unique_columns;
+            }
+          } catch (e) {
+            console.warn('Failed to fetch customer unique columns:', e);
+          }
+          currentCustomerUniqueCols = [];
+          currentCustomerCid = null;
+          return [];
         }
-      } else {
-        currentCustomerUniqueCols = [];
-        currentCustomerCid = null;
-      }
-      populateNfFieldsDropdown();
-      renderNfCustomColsCheckboxes();
-    }
 
-    function populateNfFieldsDropdown() {
-      const sel = $('fCol');
-      if (!sel) return;
-      const curr = sel.value;
-      const custSel = $('fCust');
-      const cid = custSel ? custSel.value : '';
-      const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU)) ? CU.find(c => String(c.id) === String(cid)) : null;
-      const custName = selectedCust ? selectedCust.name : '';
+        async function onCustomerSelectionChange(cid) {
+          const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
+          // "they should only fetch on the customer full data download or view":
+          // Only fetch immediately if in Full Data View or Custom View; skip in Quick View
+          if (cid && cid !== '__ALL__') {
+            if (viewOpt !== 'quick') {
+              await fetchCustomerColumns(cid);
+            }
+          } else {
+            currentCustomerUniqueCols = [];
+            currentCustomerCid = null;
+          }
+          populateNfFieldsDropdown();
+          renderNfCustomColsCheckboxes();
+        }
 
-      const uniqCols = (currentCustomerUniqueCols && currentCustomerUniqueCols.length > 0)
-        ? currentCustomerUniqueCols
-        : (cid && cid !== '__ALL__') ? [] : (typeof XC !== 'undefined' ? XC : []).map(k => ({ key: k, label: k }));
+        function populateNfFieldsDropdown() {
+          const sel = $('fCol');
+          if (!sel) return;
+          const curr = sel.value;
+          const custSel = $('fCust');
+          const cid = custSel ? custSel.value : '';
+          const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU)) ? CU.find(c => String(c.id) === String(cid)) : null;
+          const custName = selectedCust ? selectedCust.name : '';
 
-      let html = `
+          const uniqCols = (currentCustomerUniqueCols && currentCustomerUniqueCols.length > 0)
+            ? currentCustomerUniqueCols
+            : (cid && cid !== '__ALL__') ? [] : (typeof XC !== 'undefined' ? XC : []).map(k => ({ key: k, label: k }));
+
+          let html = `
           <option value="all">🔍 All Fields (Universal Search)</option>
           <optgroup label="Standard Inventory Fields">
             <option value="customer_name">Customer Name</option>
@@ -5061,553 +5064,563 @@
           </optgroup>
         `;
 
-      if (uniqCols.length > 0) {
-        const groupTitle = custName ? `Unique Customer Columns (${custName})` : `Unique / Extra Columns`;
-        html += `<optgroup label="💎 ${esc(groupTitle)}">
+          if (uniqCols.length > 0) {
+            const groupTitle = custName ? `Unique Customer Columns (${custName})` : `Unique / Extra Columns`;
+            html += `<optgroup label="💎 ${esc(groupTitle)}">
             ${uniqCols.map(c => `<option value="${esc(c.key)}">${esc(c.label || c.key)}</option>`).join('')}
           </optgroup>`;
-      }
+          }
 
-      sel.innerHTML = html;
-      if (curr && Array.from(sel.options).some(o => o.value === curr)) {
-        sel.value = curr;
-      } else {
-        sel.value = 'all';
-      }
-    }
+          sel.innerHTML = html;
+          if (curr && Array.from(sel.options).some(o => o.value === curr)) {
+            sel.value = curr;
+          } else {
+            sel.value = 'all';
+          }
+        }
 
-    function populateNfCustomerDropdown() {
-      const sel = $('fCust');
-      if (!sel) return;
-      const curr = sel.value;
-      sel.innerHTML = `<option value="">-- Select Customer --</option><option value="__ALL__">🌐 Show All Customers Data</option>` + (CU || []).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
-      if (curr) sel.value = curr;
-    }
+        function populateNfCustomerDropdown() {
+          const sel = $('fCust');
+          if (!sel) return;
+          const curr = sel.value;
+          sel.innerHTML = `<option value="">-- Select Customer --</option><option value="__ALL__">🌐 Show All Customers Data</option>` + (CU || []).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+          if (curr) sel.value = curr;
+        }
 
 
-    let fetchCustomSelectedCols = null;
+        let fetchCustomSelectedCols = null;
 
-    // =========================================================================
-    // WHAT IS HAPPENING BELOW:
-    // Dynamic Column Picker Modal Engine:
-    // 1. Inspects currently selected customer to discover customer-specific custom columns.
-    // 2. Merges standard base columns with dynamic extra columns.
-    // 3. Renders filterable column chips with checkboxes, preset buttons, and live selection counter.
-    // 4. Applies selected columns to search view upon confirmation.
-    // =========================================================================
-    async function openFetchChooseColsModal() {
-      const dlg = $('dlgFetchChooseCols');
-      if (!dlg) return;
+        // =========================================================================
+        // WHAT IS HAPPENING BELOW:
+        // Dynamic Column Picker Modal Engine:
+        // 1. Inspects currently selected customer to discover customer-specific custom columns.
+        // 2. Merges standard base columns with dynamic extra columns.
+        // 3. Renders filterable column chips with checkboxes, preset buttons, and live selection counter.
+        // 4. Applies selected columns to search view upon confirmation.
+        // =========================================================================
+        async function openFetchChooseColsModal() {
+          const dlg = $('dlgFetchChooseCols');
+          if (!dlg) return;
 
-      const custSel = $('fCust');
-      const selectedCid = custSel ? custSel.value : '';
-      const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU)) ? CU.find(c => String(c.id) === String(selectedCid)) : null;
-      const custName = selectedCust ? selectedCust.name : (selectedCid ? `Customer #${selectedCid}` : 'All Customers');
+          const custSel = $('fCust');
+          const selectedCid = custSel ? custSel.value : '';
+          const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU)) ? CU.find(c => String(c.id) === String(selectedCid)) : null;
+          const custName = selectedCust ? selectedCust.name : (selectedCid ? `Customer #${selectedCid}` : 'All Customers');
 
-      if ($('dlgFetchScopeCustName')) $('dlgFetchScopeCustName').textContent = custName;
+          if ($('dlgFetchScopeCustName')) $('dlgFetchScopeCustName').textContent = custName;
 
-      // Discover all standard columns
-      const standardCols = (typeof COLS !== 'undefined' ? COLS : []).map(c => ({ key: c[0], label: c[1], isUnique: false }));
+          // Discover all standard columns
+          const standardCols = (typeof COLS !== 'undefined' ? COLS : []).map(c => ({ key: c[0], label: c[1], isUnique: false }));
 
-      // Discover unique extra columns for this customer
-      let extraCols = [];
-      if (selectedCid && selectedCid !== '__ALL__') {
-        const uCols = await fetchCustomerColumns(selectedCid);
-        extraCols = (uCols || []).map(c => ({ key: c.key, label: c.label || c.key, isUnique: true }));
-      } else {
-        const extraKeysSet = new Set(typeof XC !== 'undefined' ? XC : []);
-        extraCols = Array.from(extraKeysSet).map(k => ({
-          key: k,
-          label: k.replace(/_/g, ' '),
-          isUnique: true
-        }));
-      }
+          // Discover unique extra columns for this customer
+          let extraCols = [];
+          if (selectedCid && selectedCid !== '__ALL__') {
+            const uCols = await fetchCustomerColumns(selectedCid);
+            extraCols = (uCols || []).map(c => ({ key: c.key, label: c.label || c.key, isUnique: true }));
+          } else {
+            const extraKeysSet = new Set(typeof XC !== 'undefined' ? XC : []);
+            extraCols = Array.from(extraKeysSet).map(k => ({
+              key: k,
+              label: k.replace(/_/g, ' '),
+              isUnique: true
+            }));
+          }
 
-      const allCols = [
-        { key: 'customer_name', label: 'Customer Name', isUnique: false },
-        ...standardCols.filter(c => c.key !== 'customer_name'),
-        ...extraCols,
-        { key: 'added_by', label: 'Added By', isUnique: false },
-        { key: 'created_at', label: 'Added On', isUnique: false }
-      ];
+          const allCols = [
+            { key: 'customer_name', label: 'Customer Name', isUnique: false },
+            ...standardCols.filter(c => c.key !== 'customer_name'),
+            ...extraCols,
+            { key: 'added_by', label: 'Added By', isUnique: false },
+            { key: 'created_at', label: 'Added On', isUnique: false }
+          ];
 
-      if ($('dlgFetchTotalColsBadge')) {
-        $('dlgFetchTotalColsBadge').textContent = `${standardCols.length} Standard + ${extraCols.length} Unique`;
-      }
+          if ($('dlgFetchTotalColsBadge')) {
+            $('dlgFetchTotalColsBadge').textContent = `${standardCols.length} Standard + ${extraCols.length} Unique`;
+          }
 
-      // Pre-selected set
-      const activeKeys = fetchCustomSelectedCols ? new Set(fetchCustomSelectedCols) : new Set(allCols.map(c => c.key));
+          // Pre-selected set
+          const activeKeys = fetchCustomSelectedCols ? new Set(fetchCustomSelectedCols) : new Set(allCols.map(c => c.key));
 
-      const renderGrid = (filterTerm = '') => {
-        const grid = $('dlgFetchColsListGrid');
-        if (!grid) return;
-        const term = (filterTerm || '').toLowerCase().trim();
-        const visibleCols = term ? allCols.filter(c => c.label.toLowerCase().includes(term) || c.key.toLowerCase().includes(term)) : allCols;
+          const renderGrid = (filterTerm = '') => {
+            const grid = $('dlgFetchColsListGrid');
+            if (!grid) return;
+            const term = (filterTerm || '').toLowerCase().trim();
+            const visibleCols = term ? allCols.filter(c => c.label.toLowerCase().includes(term) || c.key.toLowerCase().includes(term)) : allCols;
 
-        grid.innerHTML = visibleCols.map(c => {
-          const isChecked = activeKeys.has(c.key);
-          return `
+            grid.innerHTML = visibleCols.map(c => {
+              const isChecked = activeKeys.has(c.key);
+              return `
             <label class="col-pill-chip ${isChecked ? 'active' : ''} ${c.isUnique ? 'unique-chip' : ''}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${isChecked ? (c.isUnique ? '#0284c7' : 'var(--primary)') : 'var(--line)'};background:${isChecked ? (c.isUnique ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
               <input type="checkbox" class="fetch-dlg-chk" value="${c.key}" ${isChecked ? 'checked' : ''} style="width:14px;height:14px;margin:0;accent-color:${c.isUnique ? '#0284c7' : 'var(--primary)'}" />
               <span>${esc(c.label)}</span>
               ${c.isUnique ? '<span class="tag info" style="font-size:9.5px;padding:1px 5px;margin-left:2px">Unique</span>' : ''}
             </label>
           `;
-        }).join('');
+            }).join('');
 
-        const updateCount = () => {
-          const totalChecked = activeKeys.size;
-          if ($('dlgFetchColsCountText')) $('dlgFetchColsCountText').textContent = `${totalChecked} of ${allCols.length} columns selected`;
-          if ($('btnConfirmFetchChooseCols')) $('btnConfirmFetchChooseCols').disabled = (totalChecked === 0);
-        };
+            const updateCount = () => {
+              const totalChecked = activeKeys.size;
+              if ($('dlgFetchColsCountText')) $('dlgFetchColsCountText').textContent = `${totalChecked} of ${allCols.length} columns selected`;
+              if ($('btnConfirmFetchChooseCols')) $('btnConfirmFetchChooseCols').disabled = (totalChecked === 0);
+            };
 
-        grid.querySelectorAll('.fetch-dlg-chk').forEach(chk => {
-          chk.onchange = e => {
-            const val = e.target.value;
-            if (e.target.checked) activeKeys.add(val);
-            else activeKeys.delete(val);
-            const chip = e.target.closest('.col-pill-chip');
-            if (chip) {
-              chip.classList.toggle('active', e.target.checked);
-              chip.style.borderColor = e.target.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
-              chip.style.background = e.target.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
-            }
+            grid.querySelectorAll('.fetch-dlg-chk').forEach(chk => {
+              chk.onchange = e => {
+                const val = e.target.value;
+                if (e.target.checked) activeKeys.add(val);
+                else activeKeys.delete(val);
+                const chip = e.target.closest('.col-pill-chip');
+                if (chip) {
+                  chip.classList.toggle('active', e.target.checked);
+                  chip.style.borderColor = e.target.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
+                  chip.style.background = e.target.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
+                }
+                updateCount();
+              };
+            });
+
             updateCount();
           };
-        });
 
-        updateCount();
-      };
+          renderGrid();
 
-      renderGrid();
-
-      if ($('dlgFetchColsSearchInput')) {
-        $('dlgFetchColsSearchInput').value = '';
-        $('dlgFetchColsSearchInput').oninput = e => renderGrid(e.target.value);
-      }
-
-      if ($('btnDlgFetchPresetAll')) {
-        $('btnDlgFetchPresetAll').onclick = () => {
-          allCols.forEach(c => activeKeys.add(c.key));
-          renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
-        };
-      }
-
-      if ($('btnDlgFetchPresetClear')) {
-        $('btnDlgFetchPresetClear').onclick = () => {
-          activeKeys.clear();
-          renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
-        };
-      }
-
-      if ($('btnDlgFetchPresetSim')) {
-        $('btnDlgFetchPresetSim').onclick = () => {
-          activeKeys.clear();
-          ['customer_name', 'source', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type'].forEach(k => activeKeys.add(k));
-          renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
-        };
-      }
-
-      if ($('btnDlgFetchPresetId')) {
-        $('btnDlgFetchPresetId').onclick = () => {
-          activeKeys.clear();
-          ['customer_name', 'imei', 'device_sr_no', 'iccid', 'model'].forEach(k => activeKeys.add(k));
-          renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
-        };
-      }
-
-      if ($('btnDlgFetchPresetUnique')) {
-        $('btnDlgFetchPresetUnique').onclick = () => {
-          activeKeys.clear();
-          activeKeys.add('customer_name');
-          activeKeys.add('imei');
-          activeKeys.add('device_sr_no');
-          extraCols.forEach(c => activeKeys.add(c.key));
-          renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
-        };
-      }
-
-      if ($('closeDlgFetchChooseCols')) $('closeDlgFetchChooseCols').onclick = () => dlg.close();
-      if ($('cancelDlgFetchChooseCols')) $('cancelDlgFetchChooseCols').onclick = () => dlg.close();
-
-      if ($('btnConfirmFetchChooseCols')) {
-        $('btnConfirmFetchChooseCols').onclick = () => {
-          if (!activeKeys.size) {
-            toast('Please select at least one column.');
-            return;
-          }
-          fetchCustomSelectedCols = Array.from(activeKeys);
-          dlg.close();
-
-          const rCustom = document.querySelector('input[name="nfViewOpt"][value="custom"]');
-          if (rCustom) rCustom.checked = true;
-          document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(c => c.classList.remove('on'));
-          const lblCustom = $('lblOptCustom');
-          if (lblCustom) lblCustom.classList.add('on');
-          if ($('nfCustomColsWrap')) $('nfCustomColsWrap').style.display = 'block';
-
-          renderNfCustomColsCheckboxes();
-          toast(`✓ Applied ${activeKeys.size} visible columns.`);
-          if (typeof runNormalFetch === 'function') runNormalFetch(1);
-        };
-      }
-
-      if (typeof dlg.showModal === 'function') dlg.showModal();
-    }
-    window.openFetchChooseColsModal = openFetchChooseColsModal;
-
-    // ==============================================================================
-    // WHAT IS HAPPENING BELOW:
-    // Modal Dialog: Copy Fetched Data to Clipboard Pop-up
-    // Allows users to view fetched data in text form and copy it to clipboard.
-    // Supports:
-    // 1. Table / TSV (Tab-Separated, optimal for pasting directly into Excel & Google Sheets)
-    // 2. CSV (Comma-Separated Values)
-    // 3. Single Column List (e.g. clean list of IMEIs or ICCIDs)
-    // 4. JSON Array
-    // Includes:
-    // - Select All Text button
-    // - Live text area displaying formatted data
-    // - Copy option button with clipboard checkmark feedback
-    // - Close option button to dismiss the pop-up
-    // ==============================================================================
-    let _copyModalCtx = null;
-
-    async function copyToClipboard(text) {
-      if (!text) return false;
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-          return true;
-        }
-      } catch (err) {
-        console.warn('navigator.clipboard failed, using fallback:', err);
-      }
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.left = '-9999px';
-      ta.style.top = '-9999px';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      try {
-        const ok = document.execCommand('copy');
-        document.body.removeChild(ta);
-        return ok;
-      } catch (e) {
-        document.body.removeChild(ta);
-        return false;
-      }
-    }
-    window.copyToClipboard = copyToClipboard;
-
-    function buildCopyDataText(ctx) {
-      if (!ctx) return { text: '', recordsCount: 0, linesCount: 0, charCount: 0 };
-      const scope = $('copyDataScope') ? $('copyDataScope').value : 'page';
-      const format = $('copyDataFormat') ? $('copyDataFormat').value : 'tsv';
-      const targetCol = $('copyDataTargetCol') ? $('copyDataTargetCol').value : 'imei';
-      const incHeaders = $('copyDataIncludeHeaders') ? $('copyDataIncludeHeaders').checked : true;
-      const incId = $('copyDataIncludeId') ? $('copyDataIncludeId').checked : true;
-
-      let records = [];
-      if (ctx.mode === 'bulk') {
-        if (scope === 'exact') records = ctx.exact || [];
-        else if (scope === 'similar') records = ctx.similar || [];
-        else if (scope === 'notFound') {
-          const list = [...(ctx.notFound || []), ...(ctx.partialTerms || [])];
-          const text = list.join('\n');
-          return { text, recordsCount: list.length, linesCount: list.length, charCount: text.length };
-        } else {
-          records = [...(ctx.exact || []), ...(ctx.similar || [])];
-        }
-      } else {
-        if (scope === 'all') records = ctx.allRows || ctx.items || [];
-        else records = ctx.items || [];
-      }
-
-      if (!records || !records.length) {
-        return { text: '', recordsCount: 0, linesCount: 0, charCount: 0 };
-      }
-
-      // Single column list mode (e.g. IMEIs or ICCIDs)
-      if (format === 'single') {
-        const lines = [];
-        if (incHeaders) lines.push(targetCol.toUpperCase());
-        records.forEach(r => {
-          let val = targetCol === 'id' ? r.id : devValue(r, targetCol);
-          if (val != null && val !== '' && val !== '—') lines.push(String(val));
-        });
-        const text = lines.join('\n');
-        return { text, recordsCount: records.length, linesCount: lines.length, charCount: text.length };
-      }
-
-      // JSON Array mode
-      if (format === 'json') {
-        const cols = ctx.displayCols || computeDisplayCols(records, 'all');
-        const out = records.map(r => {
-          const rowObj = {};
-          if (incId) rowObj['id'] = r.id;
-          cols.forEach(c => { rowObj[c.label || c.key] = devValue(r, c.key); });
-          return rowObj;
-        });
-        const text = JSON.stringify(out, null, 2);
-        return { text, recordsCount: records.length, linesCount: text.split('\n').length, charCount: text.length };
-      }
-
-      // TSV (Table for Excel / Sheets) or CSV mode
-      const cols = ctx.displayCols || computeDisplayCols(records, 'all');
-      const delimiter = format === 'csv' ? ',' : '\t';
-      const escapeCell = val => {
-        let str = (val == null ? '' : String(val)).replace(/\r?\n/g, ' ').trim();
-        if (format === 'csv') {
-          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            str = `"${str.replace(/"/g, '""')}"`;
-          }
-        }
-        return str;
-      };
-
-      const lines = [];
-      if (incHeaders) {
-        const hdr = [];
-        if (incId) hdr.push('ID');
-        cols.forEach(c => hdr.push(c.label || c.key));
-        lines.push(hdr.map(escapeCell).join(delimiter));
-      }
-
-      records.forEach(r => {
-        const row = [];
-        if (incId) row.push(r.id);
-        cols.forEach(c => row.push(devValue(r, c.key)));
-        lines.push(row.map(escapeCell).join(delimiter));
-      });
-
-      const text = lines.join('\n');
-      return { text, recordsCount: records.length, linesCount: lines.length, charCount: text.length };
-    }
-
-    function updateCopyModalPreview() {
-      if (!_copyModalCtx) return;
-      const res = buildCopyDataText(_copyModalCtx);
-      const ta = $('copyDataPreviewText');
-      if (ta) ta.value = res.text;
-
-      const badge = $('copyDataStatsBadge');
-      if (badge) {
-        badge.textContent = `${res.recordsCount.toLocaleString()} records • ${res.linesCount.toLocaleString()} lines • ${res.charCount.toLocaleString()} chars`;
-      }
-
-      const btn = $('btnCopyDataExecute');
-      const lbl = $('copyDataBtnLabel');
-      const ico = $('copyDataIcon');
-      if (btn && lbl && ico) {
-        lbl.textContent = 'Copy to Clipboard';
-        ico.textContent = '📋';
-        btn.style.background = 'var(--primary, #1d68e1)';
-        btn.disabled = !res.text;
-      }
-    }
-
-    window.openFetchCopyDataModal = async function (ctx) {
-      _copyModalCtx = ctx;
-      const dlg = $('dlgFetchCopyData');
-      if (!dlg) return;
-
-      // Populate Scopes dropdown
-      const scopeSel = $('copyDataScope');
-      if (scopeSel) {
-        scopeSel.innerHTML = '';
-        if (ctx.mode === 'bulk') {
-          if (ctx.exact && ctx.exact.length) {
-            scopeSel.innerHTML += `<option value="exact" selected>🎯 Exact Matches (${ctx.exact.length.toLocaleString()} records)</option>`;
-          }
-          if (ctx.similar && ctx.similar.length) {
-            scopeSel.innerHTML += `<option value="similar">🔎 Partial Matches (${ctx.similar.length.toLocaleString()} records)</option>`;
-          }
-          if (ctx.exact && ctx.similar && (ctx.exact.length || ctx.similar.length)) {
-            scopeSel.innerHTML += `<option value="all">🌐 All Matches (${(ctx.exact.length + ctx.similar.length).toLocaleString()} records)</option>`;
-          }
-          if (ctx.notFound && ctx.notFound.length) {
-            scopeSel.innerHTML += `<option value="notFound">⚠️ Not Found Values (${ctx.notFound.length.toLocaleString()})</option>`;
-          }
-        } else {
-          // Normal mode
-          scopeSel.innerHTML += `<option value="page" selected>📄 Visible Page (${(ctx.items || []).length.toLocaleString()} records)</option>`;
-          scopeSel.innerHTML += `<option value="all">🌐 All Matching Records (${(ctx.total || (ctx.items || []).length).toLocaleString()} records)</option>`;
-        }
-      }
-
-      // Populate Target Column dropdown for Single Column List
-      const colSel = $('copyDataTargetCol');
-      if (colSel) {
-        colSel.innerHTML = '';
-        colSel.innerHTML += `<option value="imei" selected>IMEI</option>`;
-        colSel.innerHTML += `<option value="iccid">ICCID / CCID</option>`;
-        colSel.innerHTML += `<option value="device_sr_no">Device Serial No</option>`;
-        colSel.innerHTML += `<option value="msisdn1">MSISDN 1 (Phone)</option>`;
-        colSel.innerHTML += `<option value="msisdn2">MSISDN 2</option>`;
-        colSel.innerHTML += `<option value="customer_name">Customer Name</option>`;
-        colSel.innerHTML += `<option value="activation_plan">Activation Plan</option>`;
-        colSel.innerHTML += `<option value="sim_provider">SIM Provider</option>`;
-        colSel.innerHTML += `<option value="sim_type">SIM Type</option>`;
-        colSel.innerHTML += `<option value="act_date">Activation Date</option>`;
-        colSel.innerHTML += `<option value="expiry_date">Expiry Date</option>`;
-        colSel.innerHTML += `<option value="id">Database ID</option>`;
-        if (Array.isArray(ctx.displayCols)) {
-          ctx.displayCols.forEach(c => {
-            if (!['imei', 'iccid', 'device_sr_no', 'msisdn1', 'msisdn2', 'customer_name', 'activation_plan', 'sim_provider', 'sim_type', 'act_date', 'expiry_date', 'id'].includes(c.key)) {
-              colSel.innerHTML += `<option value="${esc(c.key)}">${esc(c.label || c.key)}</option>`;
-            }
-          });
-        }
-      }
-
-      // Reset format & options
-      if ($('copyDataFormat')) $('copyDataFormat').value = 'tsv';
-      if ($('copyDataColWrap')) $('copyDataColWrap').style.display = 'none';
-      if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = 'flex';
-      if ($('copyDataIncludeHeaders')) $('copyDataIncludeHeaders').checked = true;
-      if ($('copyDataIncludeId')) $('copyDataIncludeId').checked = true;
-
-      // Setup event listeners
-      if (scopeSel) {
-        scopeSel.onchange = async () => {
-          const val = scopeSel.value;
-          if (val === 'notFound') {
-            if ($('copyDataColWrap')) $('copyDataColWrap').style.display = 'none';
-            if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = 'none';
-          } else {
-            const fmt = $('copyDataFormat') ? $('copyDataFormat').value : 'tsv';
-            if ($('copyDataColWrap')) $('copyDataColWrap').style.display = (fmt === 'single') ? 'block' : 'none';
-            if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = (fmt === 'json') ? 'none' : 'flex';
+          if ($('dlgFetchColsSearchInput')) {
+            $('dlgFetchColsSearchInput').value = '';
+            $('dlgFetchColsSearchInput').oninput = e => renderGrid(e.target.value);
           }
 
-          if (val === 'all' && ctx.mode === 'normal' && nfState.mode === 'server' && ctx.total > (ctx.items || []).length && !ctx.allRows) {
-            showBstplLoader(`Loading all ${ctx.total.toLocaleString()} records for copying…`, 40);
-            try {
-              const qry = nfState.query || { raw: ($('fq') ? $('fq').value.trim() : ''), field: ($('fCol') ? $('fCol').value : 'all'), cust: ($('fCust') ? $('fCust').value : '') };
-              const rows = [];
-              const size = 5000, pages = Math.ceil(ctx.total / size);
-              for (let p = 1; p <= pages; p++) {
-                const res = await api('/api/devices?' + nfParams(qry, p, size));
-                rows.push(...(res.items || []));
+          if ($('btnDlgFetchPresetAll')) {
+            $('btnDlgFetchPresetAll').onclick = () => {
+              allCols.forEach(c => activeKeys.add(c.key));
+              renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
+            };
+          }
+
+          if ($('btnDlgFetchPresetClear')) {
+            $('btnDlgFetchPresetClear').onclick = () => {
+              activeKeys.clear();
+              renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
+            };
+          }
+
+          if ($('btnDlgFetchPresetSim')) {
+            $('btnDlgFetchPresetSim').onclick = () => {
+              activeKeys.clear();
+              ['customer_name', 'source', 'imei', 'iccid', 'msisdn1', 'msisdn2', 'act_date', 'expiry_date', 'sim_provider', 'sim_type'].forEach(k => activeKeys.add(k));
+              renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
+            };
+          }
+
+          if ($('btnDlgFetchPresetId')) {
+            $('btnDlgFetchPresetId').onclick = () => {
+              activeKeys.clear();
+              ['customer_name', 'imei', 'device_sr_no', 'iccid', 'model'].forEach(k => activeKeys.add(k));
+              renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
+            };
+          }
+
+          if ($('btnDlgFetchPresetUnique')) {
+            $('btnDlgFetchPresetUnique').onclick = () => {
+              activeKeys.clear();
+              activeKeys.add('customer_name');
+              activeKeys.add('imei');
+              activeKeys.add('device_sr_no');
+              extraCols.forEach(c => activeKeys.add(c.key));
+              renderGrid($('dlgFetchColsSearchInput') ? $('dlgFetchColsSearchInput').value : '');
+            };
+          }
+
+          if ($('closeDlgFetchChooseCols')) $('closeDlgFetchChooseCols').onclick = () => dlg.close();
+          if ($('cancelDlgFetchChooseCols')) $('cancelDlgFetchChooseCols').onclick = () => dlg.close();
+
+          if ($('btnConfirmFetchChooseCols')) {
+            $('btnConfirmFetchChooseCols').onclick = () => {
+              if (!activeKeys.size) {
+                toast('Please select at least one column.');
+                return;
               }
-              ctx.allRows = rows;
-            } catch (e) {
-              console.warn('Failed to load all rows for copy:', e);
-              toast('Could not fetch all records: ' + (e.message || e));
-            } finally {
-              hideBstplLoader();
+              fetchCustomSelectedCols = Array.from(activeKeys);
+              dlg.close();
+
+              const rCustom = document.querySelector('input[name="nfViewOpt"][value="custom"]');
+              if (rCustom) rCustom.checked = true;
+              document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(c => c.classList.remove('on'));
+              const lblCustom = $('lblOptCustom');
+              if (lblCustom) lblCustom.classList.add('on');
+              if ($('nfCustomColsWrap')) $('nfCustomColsWrap').style.display = 'block';
+
+              document.querySelectorAll('.nf-col-chk').forEach(chk => {
+                chk.checked = activeKeys.has(chk.value);
+                const chip = chk.closest('.col-pill-chip');
+                if (chip) {
+                  chip.classList.toggle('active', chk.checked);
+                  chip.style.borderColor = chk.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
+                  chip.style.background = chk.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
+                }
+              });
+
+              renderNfCustomColsCheckboxes();
+              toast(`✓ Applied ${activeKeys.size} visible columns.`);
+              if (typeof runNormalFetch === 'function') runNormalFetch(1);
+            };
+          }
+
+          if (typeof dlg.showModal === 'function') dlg.showModal();
+        }
+        window.openFetchChooseColsModal = openFetchChooseColsModal;
+
+        // ==============================================================================
+        // WHAT IS HAPPENING BELOW:
+        // Modal Dialog: Copy Fetched Data to Clipboard Pop-up
+        // Allows users to view fetched data in text form and copy it to clipboard.
+        // Supports:
+        // 1. Table / TSV (Tab-Separated, optimal for pasting directly into Excel & Google Sheets)
+        // 2. CSV (Comma-Separated Values)
+        // 3. Single Column List (e.g. clean list of IMEIs or ICCIDs)
+        // 4. JSON Array
+        // Includes:
+        // - Select All Text button
+        // - Live text area displaying formatted data
+        // - Copy option button with clipboard checkmark feedback
+        // - Close option button to dismiss the pop-up
+        // ==============================================================================
+        let _copyModalCtx = null;
+
+        async function copyToClipboard(text) {
+          if (!text) return false;
+          try {
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(text);
+              return true;
             }
+          } catch (err) {
+            console.warn('navigator.clipboard failed, using fallback:', err);
           }
-          updateCopyModalPreview();
-        };
-      }
-
-      if ($('copyDataFormat')) {
-        $('copyDataFormat').onchange = () => {
-          const fmt = $('copyDataFormat').value;
-          if ($('copyDataColWrap')) $('copyDataColWrap').style.display = (fmt === 'single') ? 'block' : 'none';
-          if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = (fmt === 'json') ? 'none' : 'flex';
-          updateCopyModalPreview();
-        };
-      }
-
-      if (colSel) colSel.onchange = () => updateCopyModalPreview();
-      if ($('copyDataIncludeHeaders')) $('copyDataIncludeHeaders').onchange = () => updateCopyModalPreview();
-      if ($('copyDataIncludeId')) $('copyDataIncludeId').onchange = () => updateCopyModalPreview();
-
-      if ($('btnCopyDataSelectAll')) {
-        $('btnCopyDataSelectAll').onclick = () => {
-          const ta = $('copyDataPreviewText');
-          if (ta) {
-            ta.focus();
-            ta.select();
-            toast('Text selected. Press Ctrl+C to copy.');
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          ta.style.top = '-9999px';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          try {
+            const ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            return ok;
+          } catch (e) {
+            document.body.removeChild(ta);
+            return false;
           }
-        };
-      }
+        }
+        window.copyToClipboard = copyToClipboard;
 
-      if ($('btnCopyDataExecute')) {
-        $('btnCopyDataExecute').onclick = async () => {
+        function buildCopyDataText(ctx) {
+          if (!ctx) return { text: '', recordsCount: 0, linesCount: 0, charCount: 0 };
+          const scope = $('copyDataScope') ? $('copyDataScope').value : 'page';
+          const format = $('copyDataFormat') ? $('copyDataFormat').value : 'tsv';
+          const targetCol = $('copyDataTargetCol') ? $('copyDataTargetCol').value : 'imei';
+          const incHeaders = $('copyDataIncludeHeaders') ? $('copyDataIncludeHeaders').checked : true;
+          const incId = $('copyDataIncludeId') ? $('copyDataIncludeId').checked : true;
+
+          let records = [];
+          if (ctx.mode === 'bulk') {
+            if (scope === 'exact') records = ctx.exact || [];
+            else if (scope === 'similar') records = ctx.similar || [];
+            else if (scope === 'notFound') {
+              const list = [...(ctx.notFound || []), ...(ctx.partialTerms || [])];
+              const text = list.join('\n');
+              return { text, recordsCount: list.length, linesCount: list.length, charCount: text.length };
+            } else {
+              records = [...(ctx.exact || []), ...(ctx.similar || [])];
+            }
+          } else {
+            if (scope === 'all') records = ctx.allRows || ctx.items || [];
+            else records = ctx.items || [];
+          }
+
+          if (!records || !records.length) {
+            return { text: '', recordsCount: 0, linesCount: 0, charCount: 0 };
+          }
+
+          // Single column list mode (e.g. IMEIs or ICCIDs)
+          if (format === 'single') {
+            const lines = [];
+            if (incHeaders) lines.push(targetCol.toUpperCase());
+            records.forEach(r => {
+              let val = targetCol === 'id' ? r.id : devValue(r, targetCol);
+              if (val != null && val !== '' && val !== '—') lines.push(String(val));
+            });
+            const text = lines.join('\n');
+            return { text, recordsCount: records.length, linesCount: lines.length, charCount: text.length };
+          }
+
+          // JSON Array mode
+          if (format === 'json') {
+            const cols = ctx.displayCols || computeDisplayCols(records, 'all');
+            const out = records.map(r => {
+              const rowObj = {};
+              if (incId) rowObj['id'] = r.id;
+              cols.forEach(c => { rowObj[c.label || c.key] = devValue(r, c.key); });
+              return rowObj;
+            });
+            const text = JSON.stringify(out, null, 2);
+            return { text, recordsCount: records.length, linesCount: text.split('\n').length, charCount: text.length };
+          }
+
+          // TSV (Table for Excel / Sheets) or CSV mode
+          const cols = ctx.displayCols || computeDisplayCols(records, 'all');
+          const delimiter = format === 'csv' ? ',' : '\t';
+          const escapeCell = val => {
+            let str = (val == null ? '' : String(val)).replace(/\r?\n/g, ' ').trim();
+            if (format === 'csv') {
+              if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                str = `"${str.replace(/"/g, '""')}"`;
+              }
+            }
+            return str;
+          };
+
+          const lines = [];
+          if (incHeaders) {
+            const hdr = [];
+            if (incId) hdr.push('ID');
+            cols.forEach(c => hdr.push(c.label || c.key));
+            lines.push(hdr.map(escapeCell).join(delimiter));
+          }
+
+          records.forEach(r => {
+            const row = [];
+            if (incId) row.push(r.id);
+            cols.forEach(c => row.push(devValue(r, c.key)));
+            lines.push(row.map(escapeCell).join(delimiter));
+          });
+
+          const text = lines.join('\n');
+          return { text, recordsCount: records.length, linesCount: lines.length, charCount: text.length };
+        }
+
+        function updateCopyModalPreview() {
+          if (!_copyModalCtx) return;
+          const res = buildCopyDataText(_copyModalCtx);
           const ta = $('copyDataPreviewText');
-          const text = ta ? ta.value : '';
-          if (!text) { toast('No data to copy.'); return; }
-          const ok = await copyToClipboard(text);
+          if (ta) ta.value = res.text;
+
+          const badge = $('copyDataStatsBadge');
+          if (badge) {
+            badge.textContent = `${res.recordsCount.toLocaleString()} records • ${res.linesCount.toLocaleString()} lines • ${res.charCount.toLocaleString()} chars`;
+          }
+
           const btn = $('btnCopyDataExecute');
           const lbl = $('copyDataBtnLabel');
           const ico = $('copyDataIcon');
-          if (ok) {
-            if (lbl) lbl.textContent = 'Copied to Clipboard!';
-            if (ico) ico.textContent = '✅';
-            if (btn) btn.style.background = 'var(--ok, #16a34a)';
-            toast(`✓ Data copied to clipboard! Ready to paste into Excel or Sheets.`, 'ok');
-            setTimeout(() => {
-              if (lbl) lbl.textContent = 'Copy to Clipboard';
-              if (ico) ico.textContent = '📋';
-              if (btn) btn.style.background = 'var(--primary, #1d68e1)';
-            }, 2500);
-          } else {
-            toast('Clipboard access blocked. Please click "Select All Text" and press Ctrl+C.');
+          if (btn && lbl && ico) {
+            lbl.textContent = 'Copy to Clipboard';
+            ico.textContent = '📋';
+            btn.style.background = 'var(--primary, #1d68e1)';
+            btn.disabled = !res.text;
           }
+        }
+
+        window.openFetchCopyDataModal = async function (ctx) {
+          _copyModalCtx = ctx;
+          const dlg = $('dlgFetchCopyData');
+          if (!dlg) return;
+
+          // Populate Scopes dropdown
+          const scopeSel = $('copyDataScope');
+          if (scopeSel) {
+            scopeSel.innerHTML = '';
+            if (ctx.mode === 'bulk') {
+              if (ctx.exact && ctx.exact.length) {
+                scopeSel.innerHTML += `<option value="exact" selected>🎯 Exact Matches (${ctx.exact.length.toLocaleString()} records)</option>`;
+              }
+              if (ctx.similar && ctx.similar.length) {
+                scopeSel.innerHTML += `<option value="similar">🔎 Partial Matches (${ctx.similar.length.toLocaleString()} records)</option>`;
+              }
+              if (ctx.exact && ctx.similar && (ctx.exact.length || ctx.similar.length)) {
+                scopeSel.innerHTML += `<option value="all">🌐 All Matches (${(ctx.exact.length + ctx.similar.length).toLocaleString()} records)</option>`;
+              }
+              if (ctx.notFound && ctx.notFound.length) {
+                scopeSel.innerHTML += `<option value="notFound">⚠️ Not Found Values (${ctx.notFound.length.toLocaleString()})</option>`;
+              }
+            } else {
+              // Normal mode
+              scopeSel.innerHTML += `<option value="page" selected>📄 Visible Page (${(ctx.items || []).length.toLocaleString()} records)</option>`;
+              scopeSel.innerHTML += `<option value="all">🌐 All Matching Records (${(ctx.total || (ctx.items || []).length).toLocaleString()} records)</option>`;
+            }
+          }
+
+          // Populate Target Column dropdown for Single Column List
+          const colSel = $('copyDataTargetCol');
+          if (colSel) {
+            colSel.innerHTML = '';
+            colSel.innerHTML += `<option value="imei" selected>IMEI</option>`;
+            colSel.innerHTML += `<option value="iccid">ICCID / CCID</option>`;
+            colSel.innerHTML += `<option value="device_sr_no">Device Serial No</option>`;
+            colSel.innerHTML += `<option value="msisdn1">MSISDN 1 (Phone)</option>`;
+            colSel.innerHTML += `<option value="msisdn2">MSISDN 2</option>`;
+            colSel.innerHTML += `<option value="customer_name">Customer Name</option>`;
+            colSel.innerHTML += `<option value="activation_plan">Activation Plan</option>`;
+            colSel.innerHTML += `<option value="sim_provider">SIM Provider</option>`;
+            colSel.innerHTML += `<option value="sim_type">SIM Type</option>`;
+            colSel.innerHTML += `<option value="act_date">Activation Date</option>`;
+            colSel.innerHTML += `<option value="expiry_date">Expiry Date</option>`;
+            colSel.innerHTML += `<option value="id">Database ID</option>`;
+            if (Array.isArray(ctx.displayCols)) {
+              ctx.displayCols.forEach(c => {
+                if (!['imei', 'iccid', 'device_sr_no', 'msisdn1', 'msisdn2', 'customer_name', 'activation_plan', 'sim_provider', 'sim_type', 'act_date', 'expiry_date', 'id'].includes(c.key)) {
+                  colSel.innerHTML += `<option value="${esc(c.key)}">${esc(c.label || c.key)}</option>`;
+                }
+              });
+            }
+          }
+
+          // Reset format & options
+          if ($('copyDataFormat')) $('copyDataFormat').value = 'tsv';
+          if ($('copyDataColWrap')) $('copyDataColWrap').style.display = 'none';
+          if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = 'flex';
+          if ($('copyDataIncludeHeaders')) $('copyDataIncludeHeaders').checked = true;
+          if ($('copyDataIncludeId')) $('copyDataIncludeId').checked = true;
+
+          // Setup event listeners
+          if (scopeSel) {
+            scopeSel.onchange = async () => {
+              const val = scopeSel.value;
+              if (val === 'notFound') {
+                if ($('copyDataColWrap')) $('copyDataColWrap').style.display = 'none';
+                if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = 'none';
+              } else {
+                const fmt = $('copyDataFormat') ? $('copyDataFormat').value : 'tsv';
+                if ($('copyDataColWrap')) $('copyDataColWrap').style.display = (fmt === 'single') ? 'block' : 'none';
+                if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = (fmt === 'json') ? 'none' : 'flex';
+              }
+
+              if (val === 'all' && ctx.mode === 'normal' && nfState.mode === 'server' && ctx.total > (ctx.items || []).length && !ctx.allRows) {
+                showBstplLoader(`Loading all ${ctx.total.toLocaleString()} records for copying…`, 40);
+                try {
+                  const qry = nfState.query || { raw: ($('fq') ? $('fq').value.trim() : ''), field: ($('fCol') ? $('fCol').value : 'all'), cust: ($('fCust') ? $('fCust').value : '') };
+                  const rows = [];
+                  const size = 5000, pages = Math.ceil(ctx.total / size);
+                  for (let p = 1; p <= pages; p++) {
+                    const res = await api('/api/devices?' + nfParams(qry, p, size));
+                    rows.push(...(res.items || []));
+                  }
+                  ctx.allRows = rows;
+                } catch (e) {
+                  console.warn('Failed to load all rows for copy:', e);
+                  toast('Could not fetch all records: ' + (e.message || e));
+                } finally {
+                  hideBstplLoader();
+                }
+              }
+              updateCopyModalPreview();
+            };
+          }
+
+          if ($('copyDataFormat')) {
+            $('copyDataFormat').onchange = () => {
+              const fmt = $('copyDataFormat').value;
+              if ($('copyDataColWrap')) $('copyDataColWrap').style.display = (fmt === 'single') ? 'block' : 'none';
+              if ($('copyDataTogglesWrap')) $('copyDataTogglesWrap').style.display = (fmt === 'json') ? 'none' : 'flex';
+              updateCopyModalPreview();
+            };
+          }
+
+          if (colSel) colSel.onchange = () => updateCopyModalPreview();
+          if ($('copyDataIncludeHeaders')) $('copyDataIncludeHeaders').onchange = () => updateCopyModalPreview();
+          if ($('copyDataIncludeId')) $('copyDataIncludeId').onchange = () => updateCopyModalPreview();
+
+          if ($('btnCopyDataSelectAll')) {
+            $('btnCopyDataSelectAll').onclick = () => {
+              const ta = $('copyDataPreviewText');
+              if (ta) {
+                ta.focus();
+                ta.select();
+                toast('Text selected. Press Ctrl+C to copy.');
+              }
+            };
+          }
+
+          if ($('btnCopyDataExecute')) {
+            $('btnCopyDataExecute').onclick = async () => {
+              const ta = $('copyDataPreviewText');
+              const text = ta ? ta.value : '';
+              if (!text) { toast('No data to copy.'); return; }
+              const ok = await copyToClipboard(text);
+              const btn = $('btnCopyDataExecute');
+              const lbl = $('copyDataBtnLabel');
+              const ico = $('copyDataIcon');
+              if (ok) {
+                if (lbl) lbl.textContent = 'Copied to Clipboard!';
+                if (ico) ico.textContent = '✅';
+                if (btn) btn.style.background = 'var(--ok, #16a34a)';
+                toast(`✓ Data copied to clipboard! Ready to paste into Excel or Sheets.`, 'ok');
+                setTimeout(() => {
+                  if (lbl) lbl.textContent = 'Copy to Clipboard';
+                  if (ico) ico.textContent = '📋';
+                  if (btn) btn.style.background = 'var(--primary, #1d68e1)';
+                }, 2500);
+              } else {
+                toast('Clipboard access blocked. Please click "Select All Text" and press Ctrl+C.');
+              }
+            };
+          }
+
+          updateCopyModalPreview();
+
+          if (typeof dlg.showModal === 'function') dlg.showModal();
+          else { dlg.setAttribute('open', ''); dlg.style.display = 'block'; }
         };
-      }
-
-      updateCopyModalPreview();
-
-      if (typeof dlg.showModal === 'function') dlg.showModal();
-      else { dlg.setAttribute('open', ''); dlg.style.display = 'block'; }
-    };
 
 
-    function renderNfCustomColsCheckboxes() {
-      const listEl = $('nfCustomColsList');
-      if (!listEl) return;
-      const custSel = $('fCust');
-      const cid = custSel ? custSel.value : '';
-      const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU)) ? CU.find(c => String(c.id) === String(cid)) : null;
-      const custName = selectedCust ? selectedCust.name : '';
+        function renderNfCustomColsCheckboxes() {
+          const listEl = $('nfCustomColsList');
+          if (!listEl) return;
+          const custSel = $('fCust');
+          const cid = custSel ? custSel.value : '';
+          const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU)) ? CU.find(c => String(c.id) === String(cid)) : null;
+          const custName = selectedCust ? selectedCust.name : '';
 
-      const stdCols = COLS.map(c => ({ key: c[0], label: c[1], isUnique: false }));
-      const uniqCols = (currentCustomerUniqueCols && currentCustomerUniqueCols.length > 0)
-        ? currentCustomerUniqueCols.map(c => ({ key: c.key, label: c.label || c.key, isUnique: true }))
-        : (cid && cid !== '__ALL__') ? [] : (typeof XC !== 'undefined' ? XC : []).map(c => ({ key: c, label: c, isUnique: true }));
+          const stdCols = COLS.map(c => ({ key: c[0], label: c[1], isUnique: false }));
+          const uniqCols = (currentCustomerUniqueCols && currentCustomerUniqueCols.length > 0)
+            ? currentCustomerUniqueCols.map(c => ({ key: c.key, label: c.label || c.key, isUnique: true }))
+            : (cid && cid !== '__ALL__') ? [] : (typeof XC !== 'undefined' ? XC : []).map(c => ({ key: c, label: c, isUnique: true }));
 
-      const activeSet = (Array.isArray(fetchCustomSelectedCols) && fetchCustomSelectedCols.length > 0)
-        ? new Set(fetchCustomSelectedCols)
-        : null;
+          const activeSet = (Array.isArray(fetchCustomSelectedCols) && fetchCustomSelectedCols.length > 0)
+            ? new Set(fetchCustomSelectedCols)
+            : null;
 
-      let html = '';
-      html += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:4px 0 8px;width:100%;letter-spacing:0.5px">Standard Inventory Columns</div>`;
-      html += stdCols.map(c => {
-        const isChecked = activeSet ? activeSet.has(c.key) : true;
-        return `
-          <label class="col-pill-chip ${isChecked ? 'active' : ''}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${isChecked ? 'var(--primary)' : 'var(--line)'};background:${isChecked ? 'var(--card-subtle)' : 'var(--card)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
-            <input type="checkbox" class="nf-col-chk" value="${c.key}" ${isChecked ? 'checked' : ''} style="width:14px;height:14px;margin:0;accent-color:var(--primary)" />
-            <span>${esc(c.label)}</span>
-          </label>
-        `;
-      }).join('');
+          let html = '';
+          html += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:4px 0 8px;width:100%;letter-spacing:0.5px">Standard Inventory Columns</div>`;
+          html += stdCols.map(c => {
+            const isChecked = activeSet ? activeSet.has(c.key) : true;
+            return `
+              <label class="col-pill-chip ${isChecked ? 'active' : ''}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${isChecked ? 'var(--primary)' : 'var(--line)'};background:${isChecked ? 'var(--card-subtle)' : 'var(--card)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
+                <input type="checkbox" class="nf-col-chk" value="${c.key}" ${isChecked ? 'checked' : ''} style="width:14px;height:14px;margin:0;accent-color:var(--primary)" />
+                <span>${esc(c.label)}</span>
+              </label>
+            `;
+          }).join('');
 
-      if (uniqCols.length > 0) {
-        const sectionTitle = custName ? `Unique Customer Columns (${custName})` : `Dynamic Extra Columns`;
-        html += `<div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;margin:12px 0 8px;width:100%;letter-spacing:0.5px;display:flex;align-items:center;gap:8px">
-            <span>✨ ${esc(sectionTitle)}</span>
-            <span class="badge" style="background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid rgba(56,189,248,0.3);font-size:10px;padding:1px 7px;border-radius:99px">${uniqCols.length} unique</span>
-          </div>`;
-        html += uniqCols.map(c => {
-          const isChecked = activeSet ? activeSet.has(c.key) : true;
-          return `
-            <label class="col-pill-chip ${isChecked ? 'active' : ''} unique-chip" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${isChecked ? '#0284c7' : 'var(--line)'};background:${isChecked ? 'rgba(2,132,199,0.08)' : 'var(--card)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text);transition:all .15s">
-              <input type="checkbox" class="nf-col-chk" value="${c.key}" ${isChecked ? 'checked' : ''} style="width:14px;height:14px;margin:0;accent-color:#0284c7" />
-              <span>${esc(c.label)}</span>
-              <span class="tag info" style="font-size:9.5px;padding:1px 5px;margin-left:2px">Unique</span>
-            </label>
-          `;
-        }).join('');
-      }
-      listEl.innerHTML = html;
+          if (uniqCols.length > 0) {
+            const sectionTitle = custName ? `Unique Customer Columns (${custName})` : `Dynamic Extra Columns`;
+            html += `<div style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;margin:12px 0 8px;width:100%;letter-spacing:0.5px;display:flex;align-items:center;gap:8px">
+              <span>✨ ${esc(sectionTitle)}</span>
+              <span class="badge" style="background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid rgba(56,189,248,0.3);font-size:10px;padding:1px 7px;border-radius:99px">${uniqCols.length} unique</span>
+            </div>`;
+            html += uniqCols.map(c => {
+              const isChecked = activeSet ? activeSet.has(c.key) : true;
+              return `
+                <label class="col-pill-chip ${isChecked ? 'active' : ''} unique-chip" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${isChecked ? '#0284c7' : 'var(--line)'};background:${isChecked ? 'rgba(2,132,199,0.08)' : 'var(--card)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text);transition:all .15s">
+                  <input type="checkbox" class="nf-col-chk" value="${c.key}" ${isChecked ? 'checked' : ''} style="width:14px;height:14px;margin:0;accent-color:#0284c7" />
+                  <span>${esc(c.label)}</span>
+                  <span class="tag info" style="font-size:9.5px;padding:1px 5px;margin-left:2px">Unique</span>
+                </label>
+              `;
+            }).join('');
+          }
+          listEl.innerHTML = html;
 
       document.querySelectorAll('.nf-col-chk').forEach(chk => {
         chk.onchange = e => {
@@ -6200,6 +6213,9 @@
       });
 
       if ($('btnNfChooseCols')) $('btnNfChooseCols').onclick = () => {
+        const radCustom = document.querySelector('input[name="nfViewOpt"][value="custom"]');
+        if (radCustom) { radCustom.checked = true; radCustom.dispatchEvent(new Event('change')); }
+        $('nfCustomColsWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         openFetchChooseColsModal();
       };
       if ($('btnNfDlCurPage')) {
@@ -6266,6 +6282,7 @@
         }
         const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
 
+        // User requirement: "they should only fetch on the customer full data download or view"
         // Ensure customer unique columns are fetched for customer full data download:
         const targetCid = (nfState.query && nfState.query.cust && nfState.query.cust !== '__ALL__')
           ? nfState.query.cust
@@ -6275,6 +6292,7 @@
           await fetchCustomerColumns(targetCid);
         }
 
+        // Full Data Download includes all standard columns + customer unique columns (unless user explicitly customized columns):
         const cols = computeDisplayCols(rows, viewOpt);
         if (!cols.length) { toast('Please choose at least one column.'); return; }
         const headers = (viewOpt === 'all') ? ['ID', ...cols.map(c => c.label)] : cols.map(c => c.label);
@@ -6734,6 +6752,7 @@
         const currentBfCols = getBulkFetchOutputCols();
         if (!currentBfCols.length) { toast('Please check at least one output column.'); return; }
 
+        // Ensure customer unique columns are fetched for the scoped customer on full data download
         const custId = $('bfCustFilter') ? $('bfCustFilter').value : '';
         const targetCid = custId || (exact.length > 0 && new Set(exact.map(d => d.customer_id).filter(Boolean)).size === 1 ? exact[0].customer_id : null);
         if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
