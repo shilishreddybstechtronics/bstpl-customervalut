@@ -3707,11 +3707,28 @@
       });
       if (!picked || !Array.isArray(picked) || !picked.length) return false;
       if (kind === 'normal') {
+        fetchCustomSelectedCols = picked;
         const r = document.querySelector('input[name="nfViewOpt"][value="custom"]');
-        if (r) { r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true })); }
-        document.querySelectorAll('.nf-col-chk').forEach(c => { c.checked = picked.includes(c.value); c.dispatchEvent(new Event('change', { bubbles: true })); });
+        if (r) {
+          r.checked = true;
+          document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(c => c.classList.remove('on'));
+          const lblCustom = $('lblOptCustom');
+          if (lblCustom) lblCustom.classList.add('on');
+          $('nfCustomColsWrap').style.display = 'block';
+        }
+        renderNfCustomColsCheckboxes();
+        renderNormalFetchTable(nfCurrentList);
       } else {
-        document.querySelectorAll('.bf-out-chk').forEach(c => { c.checked = picked.includes(c.value); c.dispatchEvent(new Event('change', { bubbles: true })); });
+        document.querySelectorAll('.bf-out-chk').forEach(c => {
+          c.checked = picked.includes(c.value);
+          const chip = c.closest('.col-pill-chip');
+          if (chip) {
+            chip.classList.toggle('active', c.checked);
+            chip.style.borderColor = c.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
+            chip.style.background = c.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
+          }
+        });
+        if (bfLastResult) renderBulkFetchOutcome(bfLastResult);
       }
       return true;
     }
@@ -3782,31 +3799,64 @@
       return val ? esc(val) : '<span style="color:var(--muted)">—</span>';
     };
 
-    function renderTable(list, act, extraCols = [], isSortable = true) {
+    function getBulkFetchOutputCols() {
+      const checked = Array.from(document.querySelectorAll('.bf-out-chk:checked')).map(c => c.value);
+      const labelsMap = {};
+      COLS.forEach(c => { labelsMap[c[0]] = c[1]; });
+      (typeof XC !== 'undefined' ? XC : []).forEach(x => { labelsMap[x] = x.replace(/_/g, ' '); });
+      if (Array.isArray(currentCustomerUniqueCols)) {
+        currentCustomerUniqueCols.forEach(u => { labelsMap[u.key] = u.label || u.key; });
+      }
+      if (checked.length > 0) {
+        return checked.map(k => ({
+          key: k,
+          label: labelsMap[k] || k,
+          isUnique: (Array.isArray(currentCustomerUniqueCols) && currentCustomerUniqueCols.some(u => u.key === k)) || (typeof XC !== 'undefined' && XC.includes(k))
+        }));
+      }
+      return [
+        { key: 'customer_name', label: 'Customer Name', isUnique: false },
+        { key: 'imei', label: 'IMEI', isUnique: false },
+        { key: 'iccid', label: 'ICCID / CCID Dispatched', isUnique: false },
+        { key: 'msisdn1', label: 'MSISDN1', isUnique: false },
+        { key: 'msisdn2', label: 'MSISDN2', isUnique: false },
+        { key: 'act_date', label: 'Act Date', isUnique: false },
+        { key: 'expiry_date', label: 'Expiry Date', isUnique: false }
+      ];
+    }
+
+    function renderTable(list, act, targetCols = null, isSortable = true) {
       if (!list.length) return '<div class="empty">No records found matching current criteria.</div>';
 
-      const uColsMap = new Map();
-      if (Array.isArray(currentCustomerUniqueCols) && currentCustomerUniqueCols.length > 0) {
-        currentCustomerUniqueCols.forEach(c => uColsMap.set(c.key, c.label || c.key));
+      let colsToRender = [];
+      if (Array.isArray(targetCols) && targetCols.length > 0) {
+        colsToRender = targetCols;
+      } else {
+        const uColsMap = new Map();
+        if (Array.isArray(currentCustomerUniqueCols) && currentCustomerUniqueCols.length > 0) {
+          currentCustomerUniqueCols.forEach(c => uColsMap.set(c.key, c.label || c.key));
+        }
+        (list || []).forEach(d => {
+          let ex = d && d.extra;
+          if (typeof ex === 'string') {
+            try { ex = JSON.parse(ex); } catch (_) { ex = null; }
+          }
+          if (ex && typeof ex === 'object') {
+            Object.keys(ex).forEach(k => {
+              if (k && !uColsMap.has(k)) uColsMap.set(k, k.replace(/_/g, ' ').toUpperCase());
+            });
+          }
+        });
+        const activeUCols = Array.from(uColsMap.entries()).map(([k, lbl]) => ({ key: k, label: lbl, isUnique: true }));
+        colsToRender = [
+          ...COLS.map(c => ({ key: c[0], label: c[1], isUnique: false })),
+          ...activeUCols
+        ];
       }
-      (list || []).forEach(d => {
-        let ex = d && d.extra;
-        if (typeof ex === 'string') {
-          try { ex = JSON.parse(ex); } catch (_) { ex = null; }
-        }
-        if (ex && typeof ex === 'object') {
-          Object.keys(ex).forEach(k => {
-            if (k && !uColsMap.has(k)) uColsMap.set(k, k.replace(/_/g, ' ').toUpperCase());
-          });
-        }
-      });
-      const activeUCols = Array.from(uColsMap.entries()).map(([k, lbl]) => ({ key: k, label: lbl }));
 
       return `<div class="tw"><table class="data-table" style="font-size:12px"><thead><tr>
         <th>#</th>
-        ${COLS.map(c => `<th>${esc(c[1])}</th>`).join('')}
-        ${activeUCols.map(c => `<th><span style="color:#0284c7">💎 ${esc(c.label)}</span></th>`).join('')}
-        ${(extraCols || []).map(c => `<th>${esc(c[1])}</th>`).join('')}
+        ${colsToRender.map(c => `<th>${c.isUnique ? `<span style="color:#0284c7">💎 ${esc(c.label)}</span>` : esc(c.label)}</th>`).join('')}
         ${act ? '<th>Actions</th>' : ''}
       </tr></thead><tbody>
       ${list.map(d => `<tr>
@@ -3816,12 +3866,15 @@
             ${renderSourceBadge(d)}
           </div>
         </td>
-        ${COLS.map(c => `<td>${cell(d, c[0])}</td>`).join('')}
-        ${activeUCols.map(c => {
-        const val = devValue(d, c.key);
-        return `<td>${val ? esc(val) : '<span style="color:var(--muted)">—</span>'}</td>`;
-      }).join('')}
-        ${(extraCols || []).map(c => `<td>${esc(d[c[0]] || '—')}</td>`).join('')}
+        ${colsToRender.map(c => {
+          if (c.key === 'customer_name') {
+            return `<td><b>${esc(d.customer_name || '—')}</b></td>`;
+          }
+          if (c.key === 'source' || c.key === 'data_source') return `<td>${renderSourceBadge(d)}</td>`;
+          if (c.key === 'sim_type') return `<td><span class="badge" style="background:${d.sim_type === 'E-SIM' ? '#38bdf8' : '#a855f7'};color:#fff">${esc(d.sim_type || '—')}</span></td>`;
+          const val = devValue(d, c.key);
+          return `<td>${val ? esc(val) : '<span style="color:var(--muted)">—</span>'}</td>`;
+        }).join('')}
         ${act ? `<td>${act(d)}</td>` : ''}
       </tr>`).join('')}
       </tbody></table></div>`;
@@ -4701,6 +4754,7 @@
             chip.style.background = 'var(--card-subtle)';
           }
         });
+        if (typeof bfLastResult !== 'undefined' && bfLastResult) renderBulkFetchOutcome(bfLastResult);
       }
       toast('📋 Preset activated: All dynamic fields and columns enabled');
     }
@@ -5166,17 +5220,9 @@
           document.querySelectorAll('#nfViewOptGroup .view-opt-card').forEach(c => c.classList.remove('on'));
           const lblCustom = $('lblOptCustom');
           if (lblCustom) lblCustom.classList.add('on');
+          if ($('nfCustomColsWrap')) $('nfCustomColsWrap').style.display = 'block';
 
-          document.querySelectorAll('.nf-col-chk').forEach(chk => {
-            chk.checked = activeKeys.has(chk.value);
-            const chip = chk.closest('.col-pill-chip');
-            if (chip) {
-              chip.classList.toggle('active', chk.checked);
-              chip.style.borderColor = chk.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
-              chip.style.background = chk.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
-            }
-          });
-
+          renderNfCustomColsCheckboxes();
           toast(`✓ Applied ${activeKeys.size} visible columns.`);
           if (typeof runNormalFetch === 'function') runNormalFetch(1);
         };
@@ -5504,14 +5550,21 @@
         ? currentCustomerUniqueCols.map(c => ({ key: c.key, label: c.label || c.key, isUnique: true }))
         : (cid && cid !== '__ALL__') ? [] : (typeof XC !== 'undefined' ? XC : []).map(c => ({ key: c, label: c, isUnique: true }));
 
+      const activeSet = (Array.isArray(fetchCustomSelectedCols) && fetchCustomSelectedCols.length > 0)
+        ? new Set(fetchCustomSelectedCols)
+        : null;
+
       let html = '';
       html += `<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin:4px 0 8px;width:100%;letter-spacing:0.5px">Standard Inventory Columns</div>`;
-      html += stdCols.map(c => `
-          <label class="col-pill-chip active" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid var(--primary);background:var(--card-subtle);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
-            <input type="checkbox" class="nf-col-chk" value="${c.key}" checked style="width:14px;height:14px;margin:0;accent-color:var(--primary)" />
+      html += stdCols.map(c => {
+        const isChecked = activeSet ? activeSet.has(c.key) : true;
+        return `
+          <label class="col-pill-chip ${isChecked ? 'active' : ''}" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${isChecked ? 'var(--primary)' : 'var(--line)'};background:${isChecked ? 'var(--card-subtle)' : 'var(--card)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s">
+            <input type="checkbox" class="nf-col-chk" value="${c.key}" ${isChecked ? 'checked' : ''} style="width:14px;height:14px;margin:0;accent-color:var(--primary)" />
             <span>${esc(c.label)}</span>
           </label>
-        `).join('');
+        `;
+      }).join('');
 
       if (uniqCols.length > 0) {
         const sectionTitle = custName ? `Unique Customer Columns (${custName})` : `Dynamic Extra Columns`;
@@ -5519,13 +5572,16 @@
             <span>✨ ${esc(sectionTitle)}</span>
             <span class="badge" style="background:rgba(56,189,248,0.15);color:var(--primary);border:1px solid rgba(56,189,248,0.3);font-size:10px;padding:1px 7px;border-radius:99px">${uniqCols.length} unique</span>
           </div>`;
-        html += uniqCols.map(c => `
-            <label class="col-pill-chip active unique-chip" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid #0284c7;background:rgba(2,132,199,0.08);border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text);transition:all .15s">
-              <input type="checkbox" class="nf-col-chk" value="${c.key}" checked style="width:14px;height:14px;margin:0;accent-color:#0284c7" />
+        html += uniqCols.map(c => {
+          const isChecked = activeSet ? activeSet.has(c.key) : true;
+          return `
+            <label class="col-pill-chip ${isChecked ? 'active' : ''} unique-chip" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid ${isChecked ? '#0284c7' : 'var(--line)'};background:${isChecked ? 'rgba(2,132,199,0.08)' : 'var(--card)'};border-radius:20px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text);transition:all .15s">
+              <input type="checkbox" class="nf-col-chk" value="${c.key}" ${isChecked ? 'checked' : ''} style="width:14px;height:14px;margin:0;accent-color:#0284c7" />
               <span>${esc(c.label)}</span>
               <span class="tag info" style="font-size:9.5px;padding:1px 5px;margin-left:2px">Unique</span>
             </label>
-          `).join('');
+          `;
+        }).join('');
       }
       listEl.innerHTML = html;
 
@@ -5537,6 +5593,7 @@
             chip.style.borderColor = e.target.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
             chip.style.background = e.target.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
           }
+          fetchCustomSelectedCols = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
           renderNormalFetchTable(nfCurrentList);
         };
       });
@@ -5558,6 +5615,7 @@
                 chip.style.background = c.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
               }
             });
+            fetchCustomSelectedCols = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
             renderNormalFetchTable(nfCurrentList);
           };
         } else {
@@ -5576,6 +5634,7 @@
               chip.style.background = chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)';
             }
           });
+          fetchCustomSelectedCols = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
           renderNormalFetchTable(nfCurrentList);
         };
       }
@@ -5591,6 +5650,7 @@
               chip.style.background = c.checked ? 'var(--card-subtle)' : 'var(--card)';
             }
           });
+          fetchCustomSelectedCols = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
           renderNormalFetchTable(nfCurrentList);
         };
       }
@@ -5606,6 +5666,7 @@
               chip.style.background = c.checked ? 'var(--card-subtle)' : 'var(--card)';
             }
           });
+          fetchCustomSelectedCols = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
           renderNormalFetchTable(nfCurrentList);
         };
       }
@@ -5620,6 +5681,7 @@
               chip.style.background = 'var(--card)';
             }
           });
+          fetchCustomSelectedCols = [];
           renderNormalFetchTable(nfCurrentList);
         };
       }
@@ -5879,24 +5941,32 @@
         isUnique: true
       }));
 
-      if (viewOpt === 'custom') {
-        const checked = new Set(Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value));
-        const all = [
-          { key: 'customer_name', label: 'Customer Name', isUnique: false },
-          ...COLS.filter(c => c[0] !== 'customer_name').map(c => ({ key: c[0], label: c[1], isUnique: false })),
-          ...extraColsList
-        ];
-        const filtered = all.filter(c => checked.has(c.key));
-        if (filtered.length) return filtered;
-      }
-
-      return [
+      const allColsCatalog = [
         { key: 'customer_name', label: 'Customer Name', isUnique: false },
         ...COLS.filter(c => c[0] !== 'customer_name').map(c => ({ key: c[0], label: c[1], isUnique: false })),
         ...extraColsList,
         { key: 'added_by', label: 'Added By', isUnique: false },
         { key: 'created_at', label: 'Added On', isUnique: false }
       ];
+
+      if (viewOpt === 'custom') {
+        const domChecked = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
+        let activeKeys;
+        if (domChecked.length > 0) {
+          activeKeys = new Set(domChecked);
+          fetchCustomSelectedCols = domChecked;
+        } else if (Array.isArray(fetchCustomSelectedCols) && fetchCustomSelectedCols.length > 0) {
+          activeKeys = new Set(fetchCustomSelectedCols);
+        } else {
+          activeKeys = new Set(allColsCatalog.map(c => c.key));
+        }
+
+        const filtered = allColsCatalog.filter(c => activeKeys.has(c.key));
+        if (filtered.length > 0) return filtered;
+        return [];
+      }
+
+      return allColsCatalog;
     }
 
     function devValue(dev, key) {
@@ -6106,9 +6176,7 @@
       });
 
       if ($('btnNfChooseCols')) $('btnNfChooseCols').onclick = () => {
-        const radCustom = document.querySelector('input[name="nfViewOpt"][value="custom"]');
-        if (radCustom) { radCustom.checked = true; radCustom.dispatchEvent(new Event('change')); }
-        $('nfCustomColsWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        openFetchChooseColsModal();
       };
       if ($('btnNfDlCurPage')) {
         $('btnNfDlCurPage').onclick = () => {
@@ -6116,51 +6184,38 @@
           const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
           const cols = computeDisplayCols(items, viewOpt);
           if (!cols.length) { toast('Please choose at least one column.'); return; }
-          const headers = ['ID', ...cols.map(c => c.label)];
-          const data = items.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))]);
+          const headers = (viewOpt === 'all') ? ['ID', ...cols.map(c => c.label)] : cols.map(c => c.label);
+          const data = (viewOpt === 'all')
+            ? items.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))])
+            : items.map(dev => cols.map(c => devValue(dev, c.key)));
           const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && currentCustomerCid)
             ? CU.find(c => String(c.id) === String(currentCustomerCid)) : null;
           const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
           exportExcel(`${custPrefix}_Page_${page}`, headers, data);
         };
-        if ($('btnNfDlCurPage')) {
-          $('btnNfDlCurPage').onclick = () => {
-            if (!items.length) { toast('No records on this page to download.'); return; }
-            const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
-            const cols = computeDisplayCols(items, viewOpt);
-            if (!cols.length) { toast('Please choose at least one column.'); return; }
-            const headers = ['ID', ...cols.map(c => c.label)];
-            const data = items.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))]);
-            const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && currentCustomerCid)
-              ? CU.find(c => String(c.id) === String(currentCustomerCid)) : null;
-            const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
-            exportExcel(`${custPrefix}_Page_${page}`, headers, data);
-          };
-        }
-        if ($('btnNfCopyNF')) {
-          $('btnNfCopyNF').onclick = async () => {
-            const list = nfState.notFound || [];
-            if (!list.length) { toast('No not-found values to copy.'); return; }
-            const ok = await copyToClipboard(list.join('\n'));
-            if (ok) toast(`✓ Copied ${list.length.toLocaleString()} not-found values to clipboard!`, 'ok');
-            else toast('Failed to copy to clipboard.');
-          };
-        }
-        if ($('btnNfCopyData')) {
-          $('btnNfCopyData').onclick = () => {
-            const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
-            const cols = computeDisplayCols(items, viewOpt);
-            openFetchCopyDataModal({
-              mode: 'normal',
-              items: items,
-              allRows: (nfState.mode === 'client' || (nfState.items && nfState.items.length >= total)) ? nfState.items : null,
-              total: total,
-              page: page,
-              displayCols: cols
-            });
-          };
-        }
-        if ($('btnNfDlExcel')) $('btnNfDlExcel').onclick = () => nfDownloadExcel();
+      }
+      if ($('btnNfCopyNF')) {
+        $('btnNfCopyNF').onclick = async () => {
+          const list = nfState.notFound || [];
+          if (!list.length) { toast('No not-found values to copy.'); return; }
+          const ok = await copyToClipboard(list.join('\n'));
+          if (ok) toast(`✓ Copied ${list.length.toLocaleString()} not-found values to clipboard!`, 'ok');
+          else toast('Failed to copy to clipboard.');
+        };
+      }
+      if ($('btnNfCopyData')) {
+        $('btnNfCopyData').onclick = () => {
+          const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
+          const cols = computeDisplayCols(items, viewOpt);
+          openFetchCopyDataModal({
+            mode: 'normal',
+            items: items,
+            allRows: (nfState.mode === 'client' || (nfState.items && nfState.items.length >= total)) ? nfState.items : null,
+            total: total,
+            page: page,
+            displayCols: cols
+          });
+        };
       }
       if ($('btnNfDlExcel')) $('btnNfDlExcel').onclick = () => nfDownloadExcel();
     }
@@ -6187,7 +6242,6 @@
         }
         const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
 
-        // User requirement: "they should only fetch on the customer full data download or view"
         // Ensure customer unique columns are fetched for customer full data download:
         const targetCid = (nfState.query && nfState.query.cust && nfState.query.cust !== '__ALL__')
           ? nfState.query.cust
@@ -6197,11 +6251,12 @@
           await fetchCustomerColumns(targetCid);
         }
 
-        // Full Data Download includes all standard columns + customer unique columns (unless user explicitly customized columns):
-        const cols = computeDisplayCols(rows, viewOpt === 'quick' ? 'all' : viewOpt);
+        const cols = computeDisplayCols(rows, viewOpt);
         if (!cols.length) { toast('Please choose at least one column.'); return; }
-        const headers = ['ID', ...cols.map(c => c.label)];
-        const data = rows.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))]);
+        const headers = (viewOpt === 'all') ? ['ID', ...cols.map(c => c.label)] : cols.map(c => c.label);
+        const data = (viewOpt === 'all')
+          ? rows.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))])
+          : rows.map(dev => cols.map(c => devValue(dev, c.key)));
 
         const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && targetCid)
           ? CU.find(c => String(c.id) === String(targetCid)) : null;
@@ -6295,6 +6350,7 @@
             chip.style.background = 'var(--card-subtle)';
           }
         });
+        if (bfLastResult) renderBulkFetchOutcome(bfLastResult);
       };
       $('bfColsClear').onclick = () => {
         document.querySelectorAll('.bf-out-chk').forEach(c => {
@@ -6306,6 +6362,7 @@
             chip.style.background = 'var(--card)';
           }
         });
+        if (bfLastResult) renderBulkFetchOutcome(bfLastResult);
       };
 
       $('btnRunBulkFetch').onclick = async () => { if (await askFetchCols('bulk')) executeBulkFetch(); };
@@ -6363,6 +6420,7 @@
             chip.style.borderColor = e.target.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
             chip.style.background = e.target.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
           }
+          if (bfLastResult) renderBulkFetchOutcome(bfLastResult);
         };
       });
     }
@@ -6532,6 +6590,7 @@
       const wrap = $('bulkFetchResultsWrap');
       if (!wrap) return;
       const { exact, similar, exactTerms, partialTerms, notFound, searched } = res;
+      const bfCols = getBulkFetchOutputCols();
       const CAP = 500;   // keep the page fast; the Excel download always has everything
       const staff = canDeleteValidInventory();
       const act = dev => `
@@ -6547,7 +6606,7 @@
       <div class="row" style="align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:0">
         <div>
           <h3 style="margin:0">${exactTerms.length.toLocaleString()} of ${searched.toLocaleString()} values found</h3>
-          <span class="sub" style="font-size:12.5px">${exact.length.toLocaleString()} record(s) returned${res.includeSimilar ? ` · ${partialTerms.length.toLocaleString()} value(s) matched only partially` : ''} · ${notFound.length.toLocaleString()} not found.</span>
+          <span class="sub" style="font-size:12.5px">${exact.length.toLocaleString()} record(s) returned · ${bfCols.length} columns displayed${res.includeSimilar ? ` · ${partialTerms.length.toLocaleString()} value(s) matched only partially` : ''} · ${notFound.length.toLocaleString()} not found.</span>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           ${exact.length ? `<button class="b p" id="btnBfDlExact" type="button" style="font-weight:700">🎯 Download Exact (${exact.length.toLocaleString()})</button>` : ''}
@@ -6578,7 +6637,7 @@
       <div class="card" style="padding:16px;border:1px solid var(--line);border-radius:12px;margin-bottom:16px">
         <h4>🎯 Exact Matches (${exact.length.toLocaleString()})</h4>
         ${capNote(exact.length)}
-        ${renderTable(exact.slice(0, CAP), act, [], false)}
+        ${renderTable(exact.slice(0, CAP), act, bfCols, false)}
       </div>` : ''}
 
     ${similar.length ? `
@@ -6586,7 +6645,7 @@
         <h4 style="color:var(--warn)">🔎 Similar / Partial Matches (${similar.length.toLocaleString()})</h4>
         <span class="sub" style="font-size:12px;display:block;margin-bottom:8px">These did NOT match exactly. They were found by partial search (first 300 misses per batch) and are not counted as found.</span>
         ${capNote(similar.length)}
-        ${renderTable(similar.slice(0, CAP), act, [], false)}
+        ${renderTable(similar.slice(0, CAP), act, bfCols, false)}
       </div>` : ''}
   `;
 
@@ -6595,30 +6654,28 @@
         box.style.display = box.style.display === 'none' ? 'block' : 'none';
       };
 
-        if ($('btnBfCopyNotFoundList')) {
-          $('btnBfCopyNotFoundList').onclick = async () => {
-            const list = [...notFound, ...partialTerms];
-            if (!list.length) { toast('No not-found values to copy.'); return; }
-            const ok = await copyToClipboard(list.join('\n'));
-            if (ok) toast(`✓ Copied ${list.length.toLocaleString()} unmatched values to clipboard!`, 'ok');
-            else toast('Failed to copy to clipboard.');
-          };
-        }
+      if ($('btnBfCopyNotFoundList')) {
+        $('btnBfCopyNotFoundList').onclick = async () => {
+          const list = [...notFound, ...partialTerms];
+          if (!list.length) { toast('No not-found values to copy.'); return; }
+          const ok = await copyToClipboard(list.join('\n'));
+          if (ok) toast(`✓ Copied ${list.length.toLocaleString()} unmatched values to clipboard!`, 'ok');
+          else toast('Failed to copy to clipboard.');
+        };
+      }
 
-        if ($('btnBfCopyData')) {
-          $('btnBfCopyData').onclick = () => {
-            const allMatches = [...exact, ...similar];
-            const cols = computeDisplayCols(allMatches.length ? allMatches : (exact.length ? exact : similar), 'all');
-            openFetchCopyDataModal({
-              mode: 'bulk',
-              exact: exact,
-              similar: similar,
-              notFound: notFound,
-              partialTerms: partialTerms,
-              displayCols: cols
-            });
-          };
-        }
+      if ($('btnBfCopyData')) {
+        $('btnBfCopyData').onclick = () => {
+          openFetchCopyDataModal({
+            mode: 'bulk',
+            exact: exact,
+            similar: similar,
+            notFound: notFound,
+            partialTerms: partialTerms,
+            displayCols: bfCols
+          });
+        };
+      }
 
       if ($('btnBfDlNotFound')) $('btnBfDlNotFound').onclick = () => {
         const now = new Date().toLocaleString();
@@ -6636,39 +6693,32 @@
         if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
           await fetchCustomerColumns(targetCid);
         }
-        const displayCols = computeDisplayCols(exact, 'all');
-        const headers = ['ID', ...displayCols.map(c => c.label)];
-        const rows = exact.map(d => [d.id, ...displayCols.map(c => devValue(d, c.key))]);
+        const currentBfCols = getBulkFetchOutputCols();
+        const headers = currentBfCols.map(c => c.label);
+        const rows = exact.map(d => currentBfCols.map(c => devValue(d, c.key)));
         exportExcel(fetchPrefix() + '_exact_matches', headers, rows);
       };
 
       if ($('btnBfDlSimilar')) $('btnBfDlSimilar').onclick = async () => {
-        const displayCols = computeDisplayCols(similar, 'all');
-        const headers = ['ID', ...displayCols.map(c => c.label)];
-        const rows = similar.map(d => [d.id, ...displayCols.map(c => devValue(d, c.key))]);
+        const currentBfCols = getBulkFetchOutputCols();
+        const headers = currentBfCols.map(c => c.label);
+        const rows = similar.map(d => currentBfCols.map(c => devValue(d, c.key)));
         exportExcel(fetchPrefix() + '_partial_matches', headers, rows);
       };
 
       if ($('btnBfDlExcel')) $('btnBfDlExcel').onclick = async () => {
-        const checkedCols = Array.from(document.querySelectorAll('.bf-out-chk:checked')).map(c => c.value);
-        if (!checkedCols.length) { toast('Please check at least one output column.'); return; }
+        const currentBfCols = getBulkFetchOutputCols();
+        if (!currentBfCols.length) { toast('Please check at least one output column.'); return; }
 
-        // Ensure customer unique columns are fetched for the scoped customer on full data download
         const custId = $('bfCustFilter') ? $('bfCustFilter').value : '';
         const targetCid = custId || (exact.length > 0 && new Set(exact.map(d => d.customer_id).filter(Boolean)).size === 1 ? exact[0].customer_id : null);
         if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
           await fetchCustomerColumns(targetCid);
         }
 
-        const labels = {};
-        COLS.forEach(c => { labels[c[0]] = c[1]; });
-        XC.forEach(x => { labels[x] = x; });
-        if (Array.isArray(currentCustomerUniqueCols)) {
-          currentCustomerUniqueCols.forEach(u => { labels[u.key] = u.label || u.key; });
-        }
         const includeNF = $('bfIncludeNotFoundChk').checked;
         const withStatus = includeNF || similar.length > 0;
-        const headers = checkedCols.map(c => labels[c] || c);
+        const headers = currentBfCols.map(c => c.label);
         if (withStatus) headers.push('Status', 'Searched Value');
 
         const cellVal = (dev, k) => devValue(dev, k);
@@ -6680,18 +6730,18 @@
         };
 
         const rows = exact.map(dev => {
-          const row = checkedCols.map(k => cellVal(dev, k));
+          const row = currentBfCols.map(c => cellVal(dev, c.key));
           if (withStatus) row.push('FOUND', searchedValueOf(dev));
           return row;
         });
         similar.forEach(dev => {
-          const row = checkedCols.map(k => cellVal(dev, k));
+          const row = currentBfCols.map(c => cellVal(dev, c.key));
           row.push('PARTIAL MATCH', '');
           rows.push(row);
         });
         if (includeNF) {
           const addMissing = (t, status) => {
-            const row = checkedCols.map(() => '');
+            const row = currentBfCols.map(() => '');
             row.push(status, t);
             rows.push(row);
           };
