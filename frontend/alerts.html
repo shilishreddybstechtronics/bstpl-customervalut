@@ -1970,6 +1970,75 @@
           <!-- 4-KPI Executive Metric Ribbon -->
           <div id="expKpiRibbon" class="exp-kpi-grid"></div>
 
+          <!-- Expiry Alerts Multi-Column Search Toolbar -->
+          <div class="card" id="expSearchCard"
+            style="margin-bottom:18px;padding:16px 20px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);box-shadow:0 3px 12px rgba(0,0,0,0.03)">
+            <div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:12px">
+              
+              <!-- Search Target Column Selector -->
+              <div style="min-width:220px;flex:0 1 auto">
+                <label for="expColSel" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">
+                  Search Column
+                </label>
+                <select id="expColSel"
+                  style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;font-weight:600;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text);cursor:pointer">
+                  <option value="all">🌐 All Columns (Search Any Column)</option>
+                  <optgroup label="Standard Device Columns">
+                    <option value="imei">IMEI</option>
+                    <option value="iccid">ICCID / CCID</option>
+                    <option value="device_sr_no">Device Serial Number</option>
+                    <option value="msisdn1">MSISDN 1</option>
+                    <option value="msisdn2">MSISDN 2</option>
+                    <option value="customer_name">Customer Name</option>
+                    <option value="model">Model</option>
+                    <option value="sim_provider">SIM Provider</option>
+                    <option value="activation_plan">Activation Plan</option>
+                    <option value="act_date">Activation Date</option>
+                    <option value="expiry_date">Expiry Date</option>
+                    <option value="dispatched_date">Dispatched Date</option>
+                    <option value="sim_type">SIM Type</option>
+                    <option value="firmware">Firmware</option>
+                    <option value="flash">Flash</option>
+                    <option value="added_by">Added By</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <!-- Customer Portfolio Filter -->
+              <div style="min-width:180px;flex:0 1 auto">
+                <label for="expCustSel" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">
+                  Customer Account
+                </label>
+                <select id="expCustSel"
+                  style="height:40px;border-radius:10px;padding:0 12px;font-size:13px;font-weight:600;width:100%;border:1.5px solid var(--line);background:var(--input-bg,var(--card));color:var(--text);cursor:pointer">
+                  <option value="">All Customers</option>
+                </select>
+              </div>
+
+              <!-- Search Term Input Field -->
+              <div style="flex:1;min-width:260px">
+                <label for="expSearchInput" style="font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px">
+                  Search Value
+                </label>
+                <div class="cv-search-container">
+                  <span class="cv-search-icon-left">🔎</span>
+                  <input id="expSearchInput" class="cv-search-input"
+                    placeholder="Search across all columns in database…" autocomplete="off" />
+                  <button type="button" class="cv-search-clear-btn" id="expSearchClearBtn" title="Clear search" style="display:none">✕</button>
+                </div>
+              </div>
+
+              <!-- Reset / Clear Button -->
+              <div>
+                <button type="button" class="b" id="expSearchResetBtn"
+                  style="height:40px;padding:0 16px;border-radius:10px;font-weight:700;font-size:13px">
+                  Reset
+                </button>
+              </div>
+
+            </div>
+          </div>
+
           <!-- Expiry Table Container -->
           <div id="expTable">
             <div class="empty">Loading alerts…</div>
@@ -2081,6 +2150,8 @@
     let expAllList = [];
     let expSummaryData = null;
     let expFilterQuery = '';
+    let expFilterCol = 'all';
+    let expFilterCid = '';
     let expCustomerReportList = [];
     let custRepSearchQuery = '';
     let expViewMode = (() => {
@@ -3230,32 +3301,266 @@ function switchExpiryView(mode) {
   }
 }
 
+const allColLabels = {
+  all: 'All Columns',
+  imei: 'IMEI',
+  iccid: 'ICCID / CCID',
+  ccid: 'ICCID / CCID',
+  device_sr_no: 'Device Serial Number',
+  msisdn1: 'MSISDN 1',
+  msisdn2: 'MSISDN 2',
+  customer_name: 'Customer Name',
+  model: 'Model',
+  sim_provider: 'SIM Provider',
+  activation_plan: 'Activation Plan',
+  act_date: 'Activation Date',
+  expiry_date: 'Expiry Date',
+  dispatched_date: 'Dispatched Date',
+  sim_type: 'SIM Type',
+  firmware: 'Firmware',
+  flash: 'Flash',
+  added_by: 'Added By'
+};
+
 function getFilteredExpiryList() {
   let list = expAllList || [];
-  const q = (expFilterQuery || '').trim().toLowerCase();
-  if (q) {
-    list = list.filter(d => {
-      const matchBasic = (
-        String(d.id || '').toLowerCase().includes(q) ||
-        String(d.customer_name || '').toLowerCase().includes(q) ||
-        String(d.imei || '').toLowerCase().includes(q) ||
-        String(d.iccid || '').toLowerCase().includes(q) ||
-        String(d.sim_no || '').toLowerCase().includes(q) ||
-        String(d.msisdn1 || '').toLowerCase().includes(q) ||
-        String(d.msisdn2 || '').toLowerCase().includes(q) ||
-        String(d.vehicle_reg_no || '').toLowerCase().includes(q) ||
-        String(d.model || '').toLowerCase().includes(q) ||
-        String(d.operator || '').toLowerCase().includes(q) ||
-        String(d.sim_status || '').toLowerCase().includes(q)
-      );
-      if (matchBasic) return true;
-      if (d.extra && typeof d.extra === 'object') {
-        return Object.values(d.extra).some(v => String(v || '').toLowerCase().includes(q));
-      }
-      return false;
-    });
+  
+  // 1. Customer account filter
+  if (expFilterCid) {
+    list = list.filter(d => String(d.customer_id) === String(expFilterCid));
   }
-  return list;
+
+  // 2. Search query filter
+  const q = (expFilterQuery || '').trim().toLowerCase();
+  if (!q) return list;
+
+  const col = (expFilterCol || 'all').trim();
+  const rawTerms = q.split(/[,;\n\r]+/).map(t => t.trim().toLowerCase()).filter(Boolean);
+  const terms = rawTerms.length ? rawTerms : [q];
+
+  return list.filter(d => {
+    const getVal = colKey => {
+      if (colKey === 'customer_name') {
+        return d.customer_name || (d.customer && d.customer.name) || '';
+      }
+      if (colKey === 'id') return String(d.id || '');
+      if (d[colKey] !== undefined && d[colKey] !== null) {
+        return String(d[colKey]);
+      }
+      if (d.extra && typeof d.extra === 'object' && d.extra[colKey] !== undefined && d.extra[colKey] !== null) {
+        return String(d.extra[colKey]);
+      }
+      return '';
+    };
+
+    const matchesTerm = term => {
+      if (col !== 'all') {
+        const val = getVal(col).toLowerCase();
+        if (col === 'iccid' || col === 'ccid') {
+          const cleanTerm = term.replace(/[^a-zA-Z0-9]/g, '');
+          const cleanVal = val.replace(/[^a-zA-Z0-9]/g, '');
+          if (cleanTerm && cleanVal.includes(cleanTerm)) return true;
+        }
+        return val.includes(term);
+      }
+
+      // Check across ALL columns in the database
+      const baseMatch = (
+        String(d.id || '').toLowerCase().includes(term) ||
+        String(d.customer_name || '').toLowerCase().includes(term) ||
+        String(d.imei || '').toLowerCase().includes(term) ||
+        String(d.iccid || '').toLowerCase().includes(term) ||
+        String(d.device_sr_no || '').toLowerCase().includes(term) ||
+        String(d.msisdn1 || '').toLowerCase().includes(term) ||
+        String(d.msisdn2 || '').toLowerCase().includes(term) ||
+        String(d.act_date || '').toLowerCase().includes(term) ||
+        String(d.expiry_date || '').toLowerCase().includes(term) ||
+        String(d.dispatched_date || '').toLowerCase().includes(term) ||
+        String(d.model || '').toLowerCase().includes(term) ||
+        String(d.sim_provider || '').toLowerCase().includes(term) ||
+        String(d.activation_plan || '').toLowerCase().includes(term) ||
+        String(d.firmware || '').toLowerCase().includes(term) ||
+        String(d.flash || '').toLowerCase().includes(term) ||
+        String(d.sim_type || '').toLowerCase().includes(term) ||
+        String(d.added_by || '').toLowerCase().includes(term) ||
+        String(d.vehicle_reg_no || '').toLowerCase().includes(term) ||
+        String(d.sim_no || '').toLowerCase().includes(term) ||
+        String(d.operator || '').toLowerCase().includes(term) ||
+        String(d.sim_status || '').toLowerCase().includes(term)
+      );
+      if (baseMatch) return true;
+
+      if (d.iccid) {
+        const cleanIccid = String(d.iccid).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+        const cleanTerm = term.replace(/[^a-zA-Z0-9]/g, '');
+        if (cleanTerm && cleanIccid.includes(cleanTerm)) return true;
+      }
+
+      if (d.extra && typeof d.extra === 'object') {
+        const extraMatch = Object.entries(d.extra).some(([k, v]) => {
+          return String(k || '').toLowerCase().includes(term) || String(v || '').toLowerCase().includes(term);
+        });
+        if (extraMatch) return true;
+      }
+
+      return false;
+    };
+
+    return terms.some(t => matchesTerm(t));
+  });
+}
+
+async function populateExpColDropdown() {
+  const sel = $('expColSel');
+  if (!sel) return;
+  const curVal = sel.value || expFilterCol || 'all';
+
+  if (!XC || !XC.length) {
+    try {
+      const colRes = await api('/api/columns/all').catch(() => null);
+      if (colRes && Array.isArray(colRes.columns)) {
+        XC = colRes.columns.filter(c => c.is_extra).map(c => c.key);
+      } else {
+        const extraRes = await api('/api/columns').catch(() => []);
+        if (Array.isArray(extraRes)) XC = extraRes;
+      }
+    } catch (_) {}
+  }
+
+  const foundExtras = new Set(XC || []);
+  (expAllList || []).slice(0, 500).forEach(d => {
+    if (d.extra && typeof d.extra === 'object') {
+      Object.keys(d.extra).forEach(k => foundExtras.add(k));
+    }
+  });
+
+  const customCols = Array.from(foundExtras).sort();
+  customCols.forEach(k => {
+    allColLabels[k] = k.replace(/_/g, ' ').toUpperCase();
+  });
+
+  let html = `<option value="all">🌐 All Columns (Search Any Column)</option>`;
+  html += `<optgroup label="Standard Device Columns">`;
+  const stdCols = [
+    { key: 'imei', label: 'IMEI' },
+    { key: 'iccid', label: 'ICCID / CCID' },
+    { key: 'device_sr_no', label: 'Device Serial Number' },
+    { key: 'msisdn1', label: 'MSISDN 1' },
+    { key: 'msisdn2', label: 'MSISDN 2' },
+    { key: 'customer_name', label: 'Customer Name' },
+    { key: 'model', label: 'Model' },
+    { key: 'sim_provider', label: 'SIM Provider' },
+    { key: 'activation_plan', label: 'Activation Plan' },
+    { key: 'act_date', label: 'Activation Date' },
+    { key: 'expiry_date', label: 'Expiry Date' },
+    { key: 'dispatched_date', label: 'Dispatched Date' },
+    { key: 'sim_type', label: 'SIM Type' },
+    { key: 'firmware', label: 'Firmware' },
+    { key: 'flash', label: 'Flash' },
+    { key: 'added_by', label: 'Added By' }
+  ];
+  stdCols.forEach(c => {
+    html += `<option value="${c.key}">${c.label}</option>`;
+  });
+  html += `</optgroup>`;
+
+  if (customCols.length > 0) {
+    html += `<optgroup label="Custom Database Columns (${customCols.length})">`;
+    customCols.forEach(k => {
+      html += `<option value="${esc(k)}">${esc(k.replace(/_/g, ' ').toUpperCase())}</option>`;
+    });
+    html += `</optgroup>`;
+  }
+
+  sel.innerHTML = html;
+  sel.value = curVal;
+}
+
+function populateExpCustDropdown() {
+  const sel = $('expCustSel');
+  if (!sel) return;
+  const curVal = sel.value || expFilterCid || '';
+  let html = `<option value="">All Customers</option>`;
+  (CU || []).forEach(c => {
+    html += `<option value="${c.id}">${esc(c.name)}</option>`;
+  });
+  sel.innerHTML = html;
+  sel.value = curVal;
+}
+
+let expSearchToolbarWired = false;
+function setupExpSearchToolbar() {
+  if (expSearchToolbarWired) return;
+  expSearchToolbarWired = true;
+
+  const colSel = $('expColSel');
+  if (colSel) {
+    colSel.onchange = e => {
+      expFilterCol = e.target.value;
+      const colText = e.target.options[e.target.selectedIndex]?.text || '';
+      const inp = $('expSearchInput');
+      if (inp) {
+        inp.placeholder = expFilterCol === 'all'
+          ? 'Search across all columns in database…'
+          : `Search in ${colText}…`;
+      }
+      expPage = 1;
+      renderExpiryTable();
+    };
+  }
+
+  const custSel = $('expCustSel');
+  if (custSel) {
+    custSel.onchange = e => {
+      expFilterCid = e.target.value;
+      expPage = 1;
+      renderExpiryTable();
+    };
+  }
+
+  const sInput = $('expSearchInput');
+  if (sInput) {
+    sInput.oninput = e => {
+      expFilterQuery = e.target.value;
+      if ($('expSearchClearBtn')) {
+        $('expSearchClearBtn').style.display = expFilterQuery ? 'block' : 'none';
+      }
+      expPage = 1;
+      renderExpiryTable();
+    };
+  }
+
+  const sClear = $('expSearchClearBtn');
+  if (sClear) {
+    sClear.onclick = () => {
+      expFilterQuery = '';
+      if ($('expSearchInput')) $('expSearchInput').value = '';
+      sClear.style.display = 'none';
+      expPage = 1;
+      renderExpiryTable();
+      $('expSearchInput')?.focus();
+    };
+  }
+
+  const sReset = $('expSearchResetBtn');
+  if (sReset) {
+    sReset.onclick = () => resetExpSearchFilters();
+  }
+}
+
+function resetExpSearchFilters() {
+  expFilterQuery = '';
+  expFilterCol = 'all';
+  expFilterCid = '';
+  if ($('expSearchInput')) {
+    $('expSearchInput').value = '';
+    $('expSearchInput').placeholder = 'Search across all columns in database…';
+  }
+  if ($('expColSel')) $('expColSel').value = 'all';
+  if ($('expCustSel')) $('expCustSel').value = '';
+  if ($('expSearchClearBtn')) $('expSearchClearBtn').style.display = 'none';
+  expPage = 1;
+  renderExpiryTable();
 }
 
 function renderExpKpiRibbon() {
@@ -3374,6 +3679,10 @@ function renderExpiryTable() {
   const topBar = total > 0 ? renderPaginationControls('expTop') : '';
   const bottomBar = total > expPageSize ? renderPaginationControls('expBottom') : '';
 
+  const hasFilter = Boolean(expFilterQuery || (expFilterCol && expFilterCol !== 'all') || expFilterCid);
+  const colLabel = expFilterCol === 'all' ? 'All Columns' : (allColLabels[expFilterCol] || expFilterCol);
+  const custName = expFilterCid ? ((CU || []).find(c => String(c.id) === String(expFilterCid))?.name || `Customer #${expFilterCid}`) : '';
+
   $('expTable').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:12px">
       <!-- Segmented pill control -->
@@ -3389,25 +3698,21 @@ function renderExpiryTable() {
         </button>
       </div>
 
-      <!-- Quick Search within Filtered Table -->
-      <div style="display:flex;align-items:center;gap:10px;flex:1;max-width:400px;min-width:240px">
-        <div class="cv-search-container" style="width:100%">
-          <span class="cv-search-icon-left">🔎</span>
-          <input id="expSearchInput" class="cv-search-input" value="${esc(expFilterQuery)}" placeholder="Search IMEI, SIM, Customer, Vehicle…" autocomplete="off" />
-          <button type="button" class="cv-search-clear-btn" id="expSearchClearBtn" title="Clear search" style="${expFilterQuery ? 'display:block' : 'display:none'}">✕</button>
+      ${hasFilter ? `
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(37,99,235,0.08);border:1.5px solid rgba(37,99,235,0.25);border-radius:8px;padding:6px 12px">
+          <span>Search: ${expFilterQuery ? `<b>"${esc(expFilterQuery)}"</b> in ` : ''}<b>${esc(colLabel)}</b>${custName ? ` · Customer: <b>${esc(custName)}</b>` : ''} (<b>${total.toLocaleString()}</b> matching)</span>
+          <a href="javascript:void(0)" id="expResetFilterLnk" style="color:var(--primary);font-weight:700;margin-left:4px;text-decoration:none">✕ Clear</a>
         </div>
-      </div>
+      ` : `
+        <div style="font-size:12.5px;color:var(--muted);font-weight:600">
+          Showing <b>${total.toLocaleString()}</b> ${tabWord} devices (soonest first)
+        </div>
+      `}
     </div>
 
     <div class="meta" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <span>${alertSummary(expAllList)} · <b>${total.toLocaleString()}</b> ${expFilterQuery ? 'matching' : ''} devices ${tabWord} (soonest first)</span>
-      ${expFilterQuery ? `
-        <div style="display:flex;align-items:center;gap:8px;font-size:12px;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.25);border-radius:8px;padding:4px 10px">
-          <span>Filtered for: <b>${esc(expFilterQuery)}</b></span>
-          <button type="button" class="b" id="expBackToCustBtn" style="height:24px;padding:0 8px;font-size:11px;font-weight:700">🏢 Back to Portfolios</button>
-          <a href="javascript:void(0)" id="expResetFilterLnk" style="color:var(--primary);font-weight:700">Clear</a>
-        </div>
-      ` : ''}
+      <span>${alertSummary(expAllList)} · <b>${total.toLocaleString()}</b> ${hasFilter ? 'matching' : ''} devices ${tabWord} (soonest first)</span>
+      <span style="font-size:12px;color:var(--muted)">Sorted chronologically by expiry date</span>
     </div>
 
     ${topBar}
@@ -3415,40 +3720,9 @@ function renderExpiryTable() {
     ${bottomBar}
   `;
 
-  // Wire search input events
-  const sInput = $('expSearchInput');
-  if (sInput) {
-    sInput.oninput = e => {
-      expFilterQuery = e.target.value;
-      expPage = 1;
-      renderExpiryTable();
-      const el = $('expSearchInput');
-      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
-    };
-  }
-  const sClear = $('expSearchClearBtn');
-  if (sClear) {
-    sClear.onclick = () => {
-      expFilterQuery = '';
-      expPage = 1;
-      renderExpiryTable();
-      $('expSearchInput')?.focus();
-    };
-  }
   const resetLnk = $('expResetFilterLnk');
   if (resetLnk) {
-    resetLnk.onclick = () => {
-      expFilterQuery = '';
-      expPage = 1;
-      renderExpiryTable();
-    };
-  }
-  const backBtn = $('expBackToCustBtn');
-  if (backBtn) {
-    backBtn.onclick = () => {
-      expFilterQuery = '';
-      switchExpiryView('customers');
-    };
+    resetLnk.onclick = () => resetExpSearchFilters();
   }
 }
 
@@ -3641,10 +3915,19 @@ function renderCustomerReport() {
     if (btn) {
       const custName = btn.dataset.filtercust;
       expFilterQuery = custName;
+      expFilterCol = 'customer_name';
+      expFilterCid = '';
+      if ($('expSearchInput')) {
+        $('expSearchInput').value = custName;
+        $('expSearchInput').placeholder = 'Search in Customer Name…';
+        if ($('expSearchClearBtn')) $('expSearchClearBtn').style.display = 'block';
+      }
+      if ($('expColSel')) $('expColSel').value = 'customer_name';
+      if ($('expCustSel')) $('expCustSel').value = '';
       expPage = 1;
       switchExpiryView('devices');
       renderExpiryTable();
-      $('expTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      $('expSearchCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 }
@@ -3674,6 +3957,10 @@ async function loadExpiryContainer() {
     expAllList = l;
     expSummaryData = sum;
     expCustomerReportList = rep;
+
+    await populateExpColDropdown();
+    populateExpCustDropdown();
+    setupExpSearchToolbar();
 
     renderExpKpiRibbon();
     renderExpiryTable();
@@ -3743,8 +4030,9 @@ async function loadExpiryContainer() {
     };
 
     $('dlAlerts').onclick = () => {
+      const filtered = getFilteredExpiryList();
       const headers = ['ID', ...COLS.map(c => c[1]), ...XC];
-      const rows = expAllList.map(dev => [dev.id, ...COLS.map(c => dev[c[0]] || ''), ...XC.map(c => (dev.extra || {})[c] || '')]);
+      const rows = filtered.map(dev => [dev.id, ...COLS.map(c => dev[c[0]] || ''), ...XC.map(c => (dev.extra || {})[c] || '')]);
       exportExcel(`Expiry_${expTab}_${expDays}d`, headers, rows);
     };
 

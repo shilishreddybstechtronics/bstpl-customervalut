@@ -2991,22 +2991,90 @@ def delete_device(device_id: int, db: Session = Depends(get_db),
 def expiry_alerts(days: int = Query(30, ge=0, le=365), customer_id: Optional[int] = None,
                   limit: int = Query(50000, ge=1, le=100000),
                   status: str = Query("all", description="all | expired | expiring"),
+                  q: str = Query("", description="Search term across any column or specific column"),
+                  column: str = Query("all", description="Target column to search in, or 'all'"),
                   db: Session = Depends(get_db)):
     """status=expired -> already expired; status=expiring -> expires today .. today+days; all -> both (old behaviour).
     Filtering on the server matters: with tens of thousands of expired SIMs the 5,000-row cap would otherwise hide
     every \"expiring soon\" SIM."""
+    days_val = int(days.default if hasattr(days, 'default') else days)
+    limit_val = int(limit.default if hasattr(limit, 'default') else limit)
     today = date.today()
-    q = db.query(Device).options(joinedload(Device.customer)).filter(ACTIVE, Device.expiry_date.isnot(None))
-    s = (status or "all").strip().lower()
+    q_query = db.query(Device).options(joinedload(Device.customer)).filter(ACTIVE, Device.expiry_date.isnot(None))
+    s = (str(status.default if hasattr(status, 'default') else status) or "all").strip().lower()
     if s == "expired":
-        q = q.filter(Device.expiry_date < today)
+        q_query = q_query.filter(Device.expiry_date < today)
     elif s in ("expiring", "expiring_soon"):
-        q = q.filter(Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=days))
+        q_query = q_query.filter(Device.expiry_date >= today, Device.expiry_date <= today + timedelta(days=days_val))
     else:
-        q = q.filter(Device.expiry_date <= today + timedelta(days=days))
+        q_query = q_query.filter(Device.expiry_date <= today + timedelta(days=days_val))
     if customer_id:
-        q = q.filter(Device.customer_id == customer_id)
-    items = q.order_by(Device.expiry_date).limit(limit).all()
+        q_query = q_query.filter(Device.customer_id == customer_id)
+
+    q_term = (str(q.default if hasattr(q, 'default') else q) or "").strip()
+    col_param = str(column.default if hasattr(column, 'default') else column) or "all"
+    if q_term:
+        raw_parts = [p.strip() for p in re.split(r"[,;\r\n]+", q_term) if p.strip()] or [q_term]
+        col_map = {
+            "imei": Device.imei,
+            "iccid": Device.iccid,
+            "ccid": Device.iccid,
+            "device_sr_no": Device.device_sr_no,
+            "msisdn1": Device.msisdn1,
+            "msisdn2": Device.msisdn2,
+            "customer_name": Customer.name,
+            "model": Device.model,
+            "sim_provider": Device.sim_provider,
+            "activation_plan": Device.activation_plan,
+            "firmware": Device.firmware,
+            "flash": Device.flash,
+            "sim_type": Device.sim_type,
+            "added_by": Device.added_by,
+        }
+        q_query = q_query.join(Customer)
+        col_lower = (col_param or "all").strip().lower()
+        term_filters = []
+        for part in raw_parts:
+            like = f"%{escape_like(part)}%"
+            clean_part = clean_iccid(part)
+            if col_lower in ("iccid", "ccid"):
+                iccid_likes = [Device.iccid.like(like)]
+                if clean_part:
+                    iccid_likes.append(Device.iccid.like(f"%{escape_like(clean_part)}%"))
+                term_filters.append(or_(*iccid_likes))
+            elif col_lower in col_map:
+                term_filters.append(col_map[col_lower].like(like))
+            elif col_lower != "all":
+                clean_col = column.strip()
+                term_filters.append(or_(
+                    func.json_unquote(func.json_extract(Device.extra, f'$."{clean_col}"')).like(like),
+                    cast(Device.extra, String).like(like)
+                ))
+            else:
+                # Any column within the database
+                term_filters.append(or_(
+                    Customer.name.like(like),
+                    Device.imei.like(like),
+                    Device.iccid.like(like),
+                    Device.device_sr_no.like(like),
+                    Device.msisdn1.like(like),
+                    Device.msisdn2.like(like),
+                    Device.model.like(like),
+                    Device.sim_provider.like(like),
+                    Device.activation_plan.like(like),
+                    cast(Device.act_date, String).like(like),
+                    cast(Device.expiry_date, String).like(like),
+                    cast(Device.dispatched_date, String).like(like),
+                    Device.firmware.like(like),
+                    Device.flash.like(like),
+                    Device.sim_type.like(like),
+                    Device.added_by.like(like),
+                    cast(Device.extra, String).like(like)
+                ))
+        if term_filters:
+            q_query = q_query.filter(or_(*term_filters))
+
+    items = q_query.order_by(Device.expiry_date).limit(limit_val).all()
     return [out(d) for d in items]
 
 
