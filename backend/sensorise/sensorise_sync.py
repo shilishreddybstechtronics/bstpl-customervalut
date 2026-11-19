@@ -197,11 +197,12 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
             with engine.connect() as conn:
                 for raw in missing_for_db:
                     clean_raw = _clean_iccid_term(raw)
+                    num_raw = _extract_numeric_iccid(clean_raw)
                     row = conn.execute(
-                        text("SELECT msisdn1, msisdn2, activation_date, expiry_date FROM sensorise_sims_basic WHERE iccid = :ic OR iccid = :ic_f LIMIT 1"),
-                        {"ic": clean_raw, "ic_f": clean_raw + "F"}
+                        text("SELECT msisdn1, msisdn2, activation_date, expiry_date FROM sensorise_sims_basic WHERE iccid = :ic OR iccid = :ic_f OR iccid = :num_ic LIMIT 1"),
+                        {"ic": clean_raw, "ic_f": clean_raw + "F", "num_ic": num_raw}
                     ).first()
-                    if row and (row[0] or row[2]):
+                    if row and (row[0] or row[1] or row[2] or row[3]):
                         ent = {
                             "primaryMSISDN": str(row[0] or "").strip(),
                             "fallbackMSISDN": str(row[1] or "").strip(),
@@ -219,34 +220,50 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
     return telematics_results
 
 
+def _clean_msisdn(val: Any) -> str:
+    """Cleans an MSISDN string, removing placeholders, trailing decimals (.0), and whitespace."""
+    if val is None:
+        return ""
+    s = str(val).strip()
+    if not s or s.lower() in ("none", "null", "nan", "nat", "-", "—", "n/a", "0", "false", "0000-00-00", "00-00-0000", "1970-01-01"):
+        return ""
+    if s.endswith(".0"):
+        s = s[:-2]
+    return s
+
+
 def _extract_active_sensorise_msisdns(ent: Optional[Dict[str, Any]]) -> Tuple[str, str]:
     """
-    Extracts only active MSISDNs from a Sensorise entity.
-    If the SIM card is Allocated/Provisioned with 0 active profiles, or if the profile
-    status is Permanent Disconnection, Inactive, Terminated, Deactivated, or Disconnected,
-    returns an empty string so non-existent portal MSISDNs are not displayed.
+    Extracts MSISDN1 and MSISDN2 from a Sensorise entity or cached record.
+    Checks primaryMSISDN and fallbackMSISDN as well as common field variations.
+    Preserves valid SIM phone numbers assigned in the Sensorise portal/LCM.
     """
-    if not ent:
-        return "", ""
-    card_state = str(ent.get("cardState") or ent.get("cardStatus") or "").strip().lower()
-    active_profiles = ent.get("activeProfiles")
-    try:
-        active_profiles_num = int(active_profiles) if active_profiles is not None else None
-    except Exception:
-        active_profiles_num = None
-
-    if card_state in ("allocated", "provisioned") and (active_profiles_num == 0 or active_profiles_num is None):
+    if not ent or not isinstance(ent, dict):
         return "", ""
 
-    p_status = str(ent.get("primaryStatus") or "").strip().lower()
-    f_status = str(ent.get("fallbackStatus") or "").strip().lower()
-    inactive_statuses = {"permanent disconnection", "terminated", "inactive", "deactivated", "disconnected", "not available", "none", "null"}
+    # Primary MSISDN (MSISDN 1)
+    m1 = (
+        _clean_msisdn(ent.get("primaryMSISDN"))
+        or _clean_msisdn(ent.get("primary_msisdn"))
+        or _clean_msisdn(ent.get("primaryMsisdn"))
+        or _clean_msisdn(ent.get("msisdn1"))
+        or _clean_msisdn(ent.get("msisdn"))
+        or _clean_msisdn(ent.get("mobileNo"))
+        or _clean_msisdn(ent.get("mobileNumber"))
+        or _clean_msisdn(ent.get("primaryMobileNo"))
+    )
 
-    m1 = "" if p_status in inactive_statuses else _clean_str(ent.get("primaryMSISDN") or ent.get("msisdn1"))
-    m2 = "" if f_status in inactive_statuses else _clean_str(ent.get("fallbackMSISDN") or ent.get("msisdn2"))
-
-    if active_profiles_num == 0:
-        m1, m2 = "", ""
+    # Fallback MSISDN (MSISDN 2)
+    m2 = (
+        _clean_msisdn(ent.get("fallbackMSISDN"))
+        or _clean_msisdn(ent.get("fallback_msisdn"))
+        or _clean_msisdn(ent.get("fallbackMsisdn"))
+        or _clean_msisdn(ent.get("secondaryMSISDN"))
+        or _clean_msisdn(ent.get("secondary_msisdn"))
+        or _clean_msisdn(ent.get("secondaryMsisdn"))
+        or _clean_msisdn(ent.get("msisdn2"))
+        or _clean_msisdn(ent.get("secondaryMobileNo"))
+    )
 
     return m1, m2
 
@@ -401,15 +418,13 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
             if has_server_telematics or ent:
                 dev.source = "sensorise"
                 dev.data_source = "sensorise"
-                # STRICT USER RULE: Give details ONLY if they exist in portal; if not, leave blank spaces!
-                final_m1 = web_m1 if web_m1 else None
-                final_m2 = web_m2 if web_m2 else None
-                final_ad = web_ad if web_ad else None
-                final_ed = web_ed if web_ed else None
+                final_m1 = web_m1 or dev_m1 or None
+                final_m2 = web_m2 or dev_m2 or None
+                final_ad = web_ad or dev_ad or None
+                final_ed = web_ed or dev_ed or None
             else:
                 dev.source = "website_database"
                 dev.data_source = "website_database"
-                # Pure website database: use database stored values; if missing in database, leave blank!
                 final_m1 = dev_m1 if dev_m1 else None
                 final_m2 = dev_m2 if dev_m2 else None
                 final_ad = dev_ad if dev_ad else None
@@ -586,16 +601,14 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
             if has_server_telematics or ent:
                 r["source"] = "sensorise"
                 r["data_source"] = "sensorise"
-                # STRICT USER RULE: Give details ONLY if they exist in portal; if not, leave blank!
-                final_m1 = web_m1 if web_m1 else ""
-                final_m2 = web_m2 if web_m2 else ""
-                final_ad_str = ad_str if ad_str else ""
-                final_ed_str = ed_str if ed_str else ""
-                final_ed_date = ed_date
+                final_m1 = web_m1 or dict_m1 or ""
+                final_m2 = web_m2 or dict_m2 or ""
+                final_ad_str = ad_str or dict_ad or ""
+                final_ed_str = ed_str or dict_ed or ""
+                final_ed_date = ed_date or _parse_sensorise_date(final_ed_str)
             else:
                 r["source"] = "website_database"
                 r["data_source"] = "website_database"
-                # Pure website database: use database stored values; if missing in database, leave blank!
                 final_m1 = dict_m1 if dict_m1 else ""
                 final_m2 = dict_m2 if dict_m2 else ""
                 final_ad_str = dict_ad if dict_ad else ""
@@ -630,7 +643,7 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                 m2_to_save = final_m2 if final_m2 else None
                 try:
                     dev_id = r.get("id")
-                    if dev_id:
+                    if dev_id and (isinstance(dev_id, int) or (isinstance(dev_id, str) and dev_id.isdigit())):
                         db.execute(text("""
                             UPDATE sim_devices
                             SET msisdn1 = :m1,

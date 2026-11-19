@@ -21,13 +21,14 @@ from sqlalchemy.orm import Session, joinedload
 import customer_tables
 import models, schemas
 try:
-    from sensorise_sync import sync_devices_with_sensorise, sync_device_dicts_with_sensorise
+    from sensorise_sync import sync_devices_with_sensorise, sync_device_dicts_with_sensorise, _parse_sensorise_date
 except ImportError:
     try:
-        from backend.sensorise_sync import sync_devices_with_sensorise, sync_device_dicts_with_sensorise
+        from backend.sensorise_sync import sync_devices_with_sensorise, sync_device_dicts_with_sensorise, _parse_sensorise_date
     except ImportError:
         sync_devices_with_sensorise = lambda db, devs: devs
         sync_device_dicts_with_sensorise = lambda db, recs: recs
+        _parse_sensorise_date = lambda s: None
 
 from activity import log_activity
 from auth import get_current_user, require_admin, require_staff, require_permission, get_user_permissions
@@ -2137,21 +2138,19 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
 
     unmatched_terms = [t for t in terms if t not in matched_term_set]
     extra_exact_records = []
-    if field in ("iccid", "ccid", "all") and unmatched_terms:
+    if unmatched_terms:
         for ut in list(unmatched_terms):
             clean_ut = clean_iccid(ut)
-            if not clean_ut or len(clean_ut) < 6:
-                continue
             try:
                 b_row = db.execute(text("""
                     SELECT device_sr_no, imei, iccid, msisdn1, msisdn2, activation_date, expiry_date
                     FROM sensorise_sims_basic
-                    WHERE iccid = :t OR iccid = :t_f OR iccid = :t_strip
+                    WHERE iccid = :t OR iccid = :t_f OR iccid = :t_strip OR imei = :t OR device_sr_no = :t
                     LIMIT 1
                 """), {
                     "t": ut,
-                    "t_f": clean_ut + "F",
-                    "t_strip": clean_ut.rstrip("F")
+                    "t_f": (clean_ut + "F") if clean_ut else ut,
+                    "t_strip": clean_ut.rstrip("F") if clean_ut else ut
                 }).first()
                 if b_row:
                     matched_term_set.add(ut)
@@ -2164,6 +2163,10 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
                         if b_m2.lower() == p: b_m2 = ""
                         if b_ad.lower() == p: b_ad = ""
                         if b_ed.lower() == p: b_ed = ""
+
+                    ed_parsed = _parse_sensorise_date(b_ed) if b_ed else None
+                    dl_val = (ed_parsed - date.today()).days if ed_parsed else ""
+                    st_val = compute_expiry_status(ed_parsed, 30) if ed_parsed else ""
 
                     extra_exact_records.append({
                         "id": f"sensorise_{b_row[2]}",
@@ -2186,8 +2189,8 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
                         "flash": "",
                         "sim_type": "E-SIM",
                         "extra": {},
-                        "days_left": "",
-                        "expiry_status": "",
+                        "days_left": dl_val,
+                        "expiry_status": st_val,
                         "is_exact": True,
                         "has_duplicates": False,
                         "duplicate_fields": []
@@ -2337,17 +2340,19 @@ def fetch_sync(data: schemas.FetchSyncIn, db: Session = Depends(get_db),
             ed_val = matched_dev.expiry_date.isoformat() if matched_dev.expiry_date else ""
 
             # Check database table sensorise_sims_basic if sim_devices is missing any
-            if (not m1_val or not m2_val or not ad_val or not ed_val) and matched_dev.iccid:
+            if (not m1_val or not m2_val or not ad_val or not ed_val) and (matched_dev.iccid or matched_dev.imei):
                 try:
                     b_row = db.execute(text("""
                         SELECT msisdn1, msisdn2, activation_date, expiry_date
                         FROM sensorise_sims_basic
-                        WHERE iccid = :t OR iccid = :t_f OR iccid = :t_strip
+                        WHERE (iccid IS NOT NULL AND (iccid = :t OR iccid = :t_f OR iccid = :t_strip))
+                           OR (imei IS NOT NULL AND imei = :im)
                         LIMIT 1
                     """), {
-                        "t": matched_dev.iccid,
-                        "t_f": matched_dev.iccid + "F",
-                        "t_strip": matched_dev.iccid.rstrip("F")
+                        "t": matched_dev.iccid or "",
+                        "t_f": (matched_dev.iccid + "F") if matched_dev.iccid else "",
+                        "t_strip": matched_dev.iccid.rstrip("F") if matched_dev.iccid else "",
+                        "im": matched_dev.imei or ""
                     }).first()
                     if b_row:
                         if not m1_val and b_row[0]: m1_val = str(b_row[0]).strip()
@@ -2379,7 +2384,7 @@ def fetch_sync(data: schemas.FetchSyncIn, db: Session = Depends(get_db),
                 basic_row = db.execute(text("""
                     SELECT device_sr_no, imei, iccid, msisdn1, msisdn2, activation_date, expiry_date
                     FROM sensorise_sims_basic
-                    WHERE iccid = :t OR iccid = :t_f OR iccid = :t_strip OR imei = :t
+                    WHERE iccid = :t OR iccid = :t_f OR iccid = :t_strip OR imei = :t OR device_sr_no = :t
                     LIMIT 1
                 """), {
                     "t": term,
