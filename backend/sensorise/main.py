@@ -196,8 +196,23 @@ def get_latest_diagnostic_log():
 
 @app.get("/api/sensorise/status", tags=["Authentication"])
 @app.get("/api/sensorise/config", tags=["Authentication"])
-def get_sensorise_status():
-    conn_info = sensorise_client.test_connection()
+def get_sensorise_status(probe: bool = False):
+    if probe:
+        conn_info = sensorise_client.test_connection()
+    else:
+        is_valid = sensorise_client.is_token_valid()
+        has_creds = bool(sensorise_client.shared_key or sensorise_client.auth_token)
+        conn_info = {
+            "connected": is_valid,
+            "server_url": sensorise_client.base_url,
+            "mode": "live",
+            "has_credentials": has_creds,
+            "status_code": 200 if is_valid else (401 if has_creds else 0),
+            "message": "Connected and authorized on Sensorise SenseLCM server (LCM_001)." if is_valid else (
+                "Sensorise API token expired or quota exhausted. Please generate a fresh token." if has_creds else
+                "Sensorise credentials not configured."
+            )
+        }
     db_stats = db.get_sensorise_summary_stats()
     return {
         "server_status": conn_info,

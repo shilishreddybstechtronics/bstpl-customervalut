@@ -2219,6 +2219,146 @@
       <section class="container-box active" id="box-home"
         style="display:block;padding:0;background:transparent;border:none;box-shadow:none">
 
+        <!-- WHAT IS HAPPENING BELOW: Sensorise Live Telematics & Fetch Quota Dashboard Card -->
+        <div class="card" id="homeSensoriseFetchCard"
+          style="margin-bottom:24px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,0.03);position:relative;overflow:hidden">
+          
+          <!-- Top decorative gradient line -->
+          <div style="position:absolute;top:0;left:0;right:0;height:3.5px;background:linear-gradient(90deg, #3b82f6 0%, #06b6d4 50%, #10b981 100%)"></div>
+
+          <!-- Header / Status Bar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:14px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:46px;height:46px;border-radius:12px;background:rgba(59, 130, 246, 0.12);color:#3b82f6;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">
+                <span>📡</span>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <h3 style="margin:0;font-size:18px;font-weight:800;color:var(--text)">Sensorise Fetch &amp; Live Quota Status</h3>
+                  <span id="homeSensoriseLiveBadge" class="badge" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.25);font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:99px">
+                    🟢 Active
+                  </span>
+                  <span style="font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--card-subtle);border:1px solid var(--line);color:var(--primary);letter-spacing:0.5px">
+                    SenseLCM PRODUCTION
+                  </span>
+                </div>
+                <span style="font-size:12.5px;color:var(--muted);margin-top:3px;display:block">
+                  Live SIM telematics quota, remaining fetch calls allowed, and real-time API token expiration timer.
+                </span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <button class="b" id="btnHomeSensoriseRefresh" type="button" title="Refresh live status from Sensorise server"
+                style="height:32px;font-size:12px;font-weight:700;padding:0 12px;border-radius:8px;display:inline-flex;align-items:center;gap:6px">
+                <span id="homeSensoriseRefreshSpinner" style="display:none">⏳</span>
+                <span>🔄 Check Status</span>
+              </button>
+              <button class="b" id="btnHomeSensoriseGenToken" type="button" title="Generate fresh Sensorise token with 100 queries"
+                style="height:32px;font-size:12px;font-weight:700;padding:0 12px;border-radius:8px;background:var(--card-subtle);border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px">
+                <span id="homeSensoriseGenSpinner" style="display:none">⏳</span>
+                <span>🔑 Refresh Token</span>
+              </button>
+              <a href="fetch-data.html" class="b p" style="height:32px;font-size:12px;font-weight:700;padding:0 14px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;text-decoration:none">
+                <span>⚡ Open Fetch Data</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 4 Pillars Grid -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:14px">
+            
+            <!-- Pillar 1: Remaining Fetches / Quota -->
+            <div style="padding:16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;justify-content:space-between">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Remaining Fetches</span>
+                  <span style="font-size:18px">📊</span>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span id="homeSensoriseRemainingNum" style="font-size:28px;font-weight:900;color:var(--text);line-height:1.1">100</span>
+                  <span id="homeSensoriseTotalCap" style="font-size:13px;font-weight:700;color:var(--muted)">/ 100 calls</span>
+                </div>
+              </div>
+              <div style="margin-top:10px">
+                <div style="height:6px;width:100%;background:rgba(0,0,0,0.06);border-radius:99px;overflow:hidden">
+                  <div id="homeSensoriseQuotaBar" style="height:100%;width:100%;background:#10b981;border-radius:99px;transition:width .4s ease"></div>
+                </div>
+                <span id="homeSensoriseQuotaSub" style="font-size:11.5px;color:var(--muted);margin-top:6px;display:block;font-weight:600">
+                  100 telematics fetches available
+                </span>
+              </div>
+            </div>
+
+            <!-- Pillar 2: Time to Expire / Countdown -->
+            <div style="padding:16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;justify-content:space-between">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Time to Expire</span>
+                  <span style="font-size:18px">⏳</span>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span id="homeSensoriseCountdown" style="font-size:24px;font-weight:900;color:#10b981;line-height:1.1">--</span>
+                </div>
+              </div>
+              <div style="margin-top:10px">
+                <span id="homeSensoriseExpiryExact" style="font-size:11.5px;font-family:monospace;color:var(--text);font-weight:700;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                  Expiry: Loading…
+                </span>
+                <span id="homeSensoriseTokenStateText" style="font-size:11.5px;color:var(--muted);margin-top:4px;display:block;font-weight:600">
+                  Auto-renews or use Refresh Token
+                </span>
+              </div>
+            </div>
+
+            <!-- Pillar 3: Server Connection & Account -->
+            <div style="padding:16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;justify-content:space-between">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Server Gateway</span>
+                  <span style="font-size:18px">🌐</span>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span id="homeSensoriseServerName" style="font-size:20px;font-weight:800;color:var(--text);line-height:1.2">SenseLCM Prod</span>
+                </div>
+              </div>
+              <div style="margin-top:10px">
+                <span style="font-size:11.5px;font-family:monospace;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="Account Relation: SENSE1019">
+                  Account: SENSE1019
+                </span>
+                <span style="font-size:11.5px;color:var(--muted);margin-top:4px;display:block;font-weight:600">
+                  Endpoint: checkSIMBulk/v2
+                </span>
+              </div>
+            </div>
+
+            <!-- Pillar 4: Telematics Local Cache -->
+            <div style="padding:16px;background:var(--card-subtle);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;justify-content:space-between">
+              <div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-size:11.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Telematics Cache</span>
+                  <span style="font-size:18px">💾</span>
+                </div>
+                <div style="display:flex;align-items:baseline;gap:6px">
+                  <span id="homeSensoriseSimCount" style="font-size:28px;font-weight:900;color:var(--text);line-height:1.1">197</span>
+                  <span style="font-size:13px;font-weight:700;color:var(--muted)">SIMs</span>
+                </div>
+              </div>
+              <div style="margin-top:10px">
+                <span style="font-size:11.5px;color:var(--ok);font-weight:700;display:inline-flex;align-items:center;gap:4px">
+                  <span>⚡ Instant Offline Mirror</span>
+                </span>
+                <span style="font-size:11.5px;color:var(--muted);margin-top:4px;display:block;font-weight:600">
+                  Fallback telematics cache active
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
         <!-- WHAT IS HAPPENING BELOW: Customer Details & Inventory Records Directory -->
         <!-- Customer Details & Inventory Records Container -->
         <div class="card" id="homeLiveUpdateCard"
@@ -3961,6 +4101,159 @@
       }
     }
 
+    // 4b. Sensorise Live Telematics & Quota Dashboard Synchronization
+    let _homeSensoriseTimer = null;
+    let _homeSensoriseExpiryStr = null;
+
+    function renderHomeSensoriseCountdown() {
+      if (!_homeSensoriseExpiryStr) return;
+      let expTime = Date.parse(_homeSensoriseExpiryStr.replace(' ', 'T'));
+      if (isNaN(expTime)) expTime = Date.parse(_homeSensoriseExpiryStr);
+      if (isNaN(expTime)) {
+        if ($('homeSensoriseCountdown')) $('homeSensoriseCountdown').textContent = _homeSensoriseExpiryStr;
+        return;
+      }
+
+      const diff = expTime - Date.now();
+      const elCount = $('homeSensoriseCountdown');
+      const elBadge = $('homeSensoriseLiveBadge');
+      const elExact = $('homeSensoriseExpiryExact');
+      const elState = $('homeSensoriseTokenStateText');
+
+      if (diff <= 0) {
+        if (elCount) {
+          elCount.textContent = '⚠️ Expired';
+          elCount.style.color = 'var(--danger, #ef4444)';
+        }
+        if (elBadge) {
+          elBadge.className = 'badge danger';
+          elBadge.style.background = 'rgba(239, 68, 68, 0.12)';
+          elBadge.style.color = '#ef4444';
+          elBadge.style.border = '1px solid rgba(239, 68, 68, 0.25)';
+          elBadge.textContent = '🔴 Token Expired';
+        }
+        if (elState) {
+          elState.textContent = 'Click "Refresh Token" to generate a fresh token';
+          elState.style.color = 'var(--danger, #ef4444)';
+        }
+      } else {
+        const totalSecs = Math.floor(diff / 1000);
+        const hours = Math.floor(totalSecs / 3600);
+        const mins = Math.floor((totalSecs % 3600) / 60);
+        const secs = totalSecs % 60;
+
+        let countText = '';
+        if (hours > 0) countText = `${hours}h ${mins}m ${secs}s`;
+        else if (mins > 0) countText = `${mins}m ${secs}s`;
+        else countText = `${secs}s`;
+
+        if (elCount) {
+          elCount.textContent = countText;
+          elCount.style.color = hours >= 2 ? 'var(--ok, #10b981)' : 'var(--warn, #f59e0b)';
+        }
+        if (elBadge) {
+          elBadge.className = 'badge ok';
+          elBadge.style.background = 'rgba(16, 185, 129, 0.12)';
+          elBadge.style.color = '#10b981';
+          elBadge.style.border = '1px solid rgba(16, 185, 129, 0.25)';
+          elBadge.textContent = '🟢 Active';
+        }
+        if (elState) {
+          elState.textContent = 'Auto-renews or use Refresh Token';
+          elState.style.color = 'var(--muted)';
+        }
+      }
+      if (elExact) {
+        elExact.textContent = `Expiry: ${_homeSensoriseExpiryStr}`;
+      }
+    }
+
+    async function updateHomeSensoriseCard(probe = false, showToast = false) {
+      const sp = $('homeSensoriseRefreshSpinner');
+      const btn = $('btnHomeSensoriseRefresh');
+      try {
+        if (sp) sp.style.display = 'inline';
+        if (btn) btn.disabled = true;
+
+        const res = await api('/api/sensorise/status?probe=' + (probe ? 'true' : 'false'));
+        const tokenLife = res?.token_lifecycle || {};
+        const dbStats = res?.database_stats || {};
+        const remaining = tokenLife.transactions_remaining != null ? tokenLife.transactions_remaining : 100;
+        const expiry = tokenLife.expiry || '';
+
+        // Remaining Quota
+        if ($('homeSensoriseRemainingNum')) {
+          $('homeSensoriseRemainingNum').textContent = remaining;
+          $('homeSensoriseRemainingNum').style.color = remaining > 25 ? 'var(--text)' : (remaining > 5 ? 'var(--warn, #f59e0b)' : 'var(--danger, #ef4444)');
+        }
+        if ($('homeSensoriseQuotaBar')) {
+          const pct = Math.min(100, Math.max(0, (remaining / 100) * 100));
+          $('homeSensoriseQuotaBar').style.width = pct + '%';
+          $('homeSensoriseQuotaBar').style.background = remaining > 25 ? '#10b981' : (remaining > 10 ? '#f59e0b' : '#ef4444');
+        }
+        if ($('homeSensoriseQuotaSub')) {
+          $('homeSensoriseQuotaSub').textContent = remaining > 0
+            ? `${remaining} telematics fetches available on active token`
+            : `⚠️ Quota exhausted (0 remaining) - please generate fresh token`;
+        }
+
+        // SIM Count
+        if ($('homeSensoriseSimCount')) {
+          const c = dbStats.total_sims || 197;
+          $('homeSensoriseSimCount').textContent = Number(c).toLocaleString('en-US');
+        }
+
+        // Expiry & Countdown
+        _homeSensoriseExpiryStr = expiry;
+        renderHomeSensoriseCountdown();
+
+        if (_homeSensoriseTimer) clearInterval(_homeSensoriseTimer);
+        _homeSensoriseTimer = setInterval(renderHomeSensoriseCountdown, 1000);
+
+        if (showToast) {
+          toast('✅ Sensorise fetch quota & status refreshed successfully!', 'ok');
+        }
+      } catch (err) {
+        console.warn('updateHomeSensoriseCard error:', err);
+        if (showToast) {
+          toast('⚠️ Notice: ' + (err.message || 'Could not reach Sensorise API'), 'warn');
+        }
+      } finally {
+        if (sp) sp.style.display = 'none';
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function wireHomeSensoriseButtons() {
+      const btnRef = $('btnHomeSensoriseRefresh');
+      if (btnRef) {
+        btnRef.onclick = () => updateHomeSensoriseCard(true, true);
+      }
+      const btnGen = $('btnHomeSensoriseGenToken');
+      if (btnGen) {
+        btnGen.onclick = async () => {
+          const sp = $('homeSensoriseGenSpinner');
+          try {
+            if (sp) sp.style.display = 'inline';
+            btnGen.disabled = true;
+            toast('Contacting SenseLCM server to generate fresh token…');
+            const res = await api('/api/sensorise/generate-token', { method: 'POST' });
+            if (res && (res.status_code === 200 || res.apiResponseCode === 'LCM_001' || res.apiToken)) {
+              toast('✅ Fresh Sensorise token generated successfully (100 fetches replenished)!', 'ok');
+              await updateHomeSensoriseCard(false, false);
+            } else {
+              throw new Error(res?.apiResponseMsg || res?.detail || 'Failed to generate token');
+            }
+          } catch (err) {
+            toast('❌ Token generation error: ' + err.message, 'danger');
+          } finally {
+            if (sp) sp.style.display = 'none';
+            btnGen.disabled = false;
+          }
+        };
+      }
+    }
+
     // --- Customer Portfolios & Records of Each Customer Engine ---
     function switchHomeSubView(targetView) {
       const vCust = $('homeSubViewCust'), vDev = $('homeSubViewDevices');
@@ -4895,10 +5188,12 @@
 
     // 15. Unified Home Overview Orchestrator
     async function loadHomeContainer() {
+      wireHomeSensoriseButtons();
       await Promise.all([
         updateHomeUserGreeting().catch(e => console.log('Greeting notice:', e)),
         updateHomeExpiryBanner().catch(e => console.log('Expiry banner notice:', e)),
         updateHomeStatsRibbon().catch(e => console.log('Stats ribbon notice:', e)),
+        updateHomeSensoriseCard().catch(e => console.log('Sensorise card notice:', e)),
         populateLiveCustomerDropdown().catch(e => console.log('Customer dropdown notice:', e)),
         Promise.resolve(),
         loadHealthContainer().catch(e => console.log('Health notice:', e)),

@@ -155,10 +155,6 @@ class SensoriseClient:
 
     def get_token_expiry(self) -> str:
         """Always reads the current token expiry directly from .env to guarantee exact match."""
-        exp = os.environ.get("SENSORISE_TOKEN_EXPIRY")
-        if exp and exp.strip():
-            self.token_expiry = exp.strip()
-            return self.token_expiry
         sensorise_dir = os.path.dirname(os.path.abspath(__file__))
         backend_dir = os.path.abspath(os.path.join(sensorise_dir, ".."))
         project_root = os.path.abspath(os.path.join(backend_dir, ".."))
@@ -176,9 +172,20 @@ class SensoriseClient:
                                 if val:
                                     self.token_expiry = val
                                     os.environ["SENSORISE_TOKEN_EXPIRY"] = val
-                                    return val
+                            if line.strip().startswith("SENSORISE_AUTH_TOKEN="):
+                                tok_val = line.strip().split("=", 1)[1].strip()
+                                if tok_val:
+                                    self.auth_token = tok_val
+                                    self.api_key = tok_val
+                                    os.environ["SENSORISE_AUTH_TOKEN"] = tok_val
+                        if self.token_expiry:
+                            return self.token_expiry
                 except Exception:
                     pass
+        exp = os.environ.get("SENSORISE_TOKEN_EXPIRY")
+        if exp and exp.strip():
+            self.token_expiry = exp.strip()
+            return self.token_expiry
         return self.token_expiry or ""
 
     def is_token_valid(self) -> bool:
@@ -242,8 +249,12 @@ class SensoriseClient:
 
         updated = False
         sensorise_dir = os.path.dirname(os.path.abspath(__file__))
+        backend_dir = os.path.abspath(os.path.join(sensorise_dir, ".."))
+        project_root = os.path.abspath(os.path.join(backend_dir, ".."))
         target_files = [
             os.path.join(sensorise_dir, ".env"),
+            os.path.join(backend_dir, ".env"),
+            os.path.join(project_root, ".env")
         ]
 
         for env_path in target_files:
@@ -342,8 +353,12 @@ class SensoriseClient:
             return True
 
         sensorise_dir = os.path.dirname(os.path.abspath(__file__))
+        backend_dir = os.path.abspath(os.path.join(sensorise_dir, ".."))
+        project_root = os.path.abspath(os.path.join(backend_dir, ".."))
         target_files = [
             os.path.join(sensorise_dir, ".env"),
+            os.path.join(backend_dir, ".env"),
+            os.path.join(project_root, ".env")
         ]
 
         any_updated = False
