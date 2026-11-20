@@ -119,6 +119,7 @@ class SensoriseClient:
         self.account_id = account_id if account_id is not None else (self.relation_id or SENSORISE_ACCOUNT_ID)
         self.raw_telematics_cache: Dict[str, Dict[str, Any]] = {}
         self.discovered_server_columns: List[str] = []
+        self._daily_quota_until: Optional[datetime.datetime] = None
 
         # Check TiDB Cloud token store on startup for active token
         try:
@@ -997,6 +998,17 @@ class SensoriseClient:
         }
 
     def check_sim_bulk_v2(self, iccids: List[str], api_token: Optional[str] = None) -> Dict[str, Any]:
+        if getattr(self, "_daily_quota_until", None) and datetime.datetime.now() < self._daily_quota_until:
+            return {
+                "status_code": 200,
+                "success": False,
+                "apiResponseCode": "LCM_818",
+                "apiResponseMsg": "Maximum 100 API calls is allowed per day",
+                "simDetailEnitycount": 0,
+                "simDetailEntity": [],
+                "raw_response": {"apiResponseCode": "LCM_818", "apiResponseMsg": "Maximum 100 API calls is allowed per day"}
+            }
+
         clean_iccids = [str(i).strip() for i in iccids if str(i).strip()]
         if not clean_iccids:
             clean_iccids = ["89916431144820149439"]
@@ -1028,6 +1040,10 @@ class SensoriseClient:
 
         api_code = res.get("apiResponseCode") if isinstance(res, dict) else ""
         api_msg = res.get("apiResponseMsg") if isinstance(res, dict) else ""
+        if str(api_code).strip() == "LCM_818" or "Maximum 100 API calls" in str(api_msg):
+            self._daily_quota_until = datetime.datetime.now() + datetime.timedelta(minutes=30)
+            logger.info("Sensorise 100 calls/day daily quota active (LCM_818). Caching quota state for 30 minutes.")
+
         if self.is_token_exhausted_or_expired(api_code, api_msg, status_code) and not api_token:
             logger.info(f"checkSIMBulk/v2 received {api_code or status_code} ('{api_msg}'). Auto-generating fresh token and retrying...")
             self.token_transactions_remaining = 0
@@ -1107,6 +1123,10 @@ class SensoriseClient:
 
         api_code = res.get("apiResponseCode") if isinstance(res, dict) else ""
         api_msg = res.get("apiResponseMsg") if isinstance(res, dict) else ""
+        if str(api_code).strip() == "LCM_818" or "Maximum 100 API calls" in str(api_msg):
+            self._daily_quota_until = datetime.datetime.now() + datetime.timedelta(minutes=30)
+            logger.info("Sensorise 100 calls/day daily quota active (LCM_818). Caching quota state for 30 minutes.")
+
         if self.is_token_exhausted_or_expired(api_code, api_msg, status_code) and not api_token:
             logger.info(f"checkSIMBulk/v1 received {api_code or status_code} ('{api_msg}'). Auto-generating fresh token and retrying...")
             self.token_transactions_remaining = 0

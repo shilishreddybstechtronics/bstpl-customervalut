@@ -4926,7 +4926,7 @@
             if ($('lblShowAllCust')) $('lblShowAllCust').classList.remove('active');
             if ($('fMatch')) $('fMatch').value = 'auto';
             nfState = { ...nfState, page: 1, query: null, hasRun: false };
-            runNormalFetch(1);
+            runNormalFetch(1, { silent: true });
           };
 
           // Wire up Customer dropdown change
@@ -5857,8 +5857,8 @@
       const rawSearch = ($('fq') ? $('fq').value : '').trim();
       const hasSearchTerms = rawSearch.length > 0;
 
-      // If All Customers option is NOT selected, NO specific customer chosen, and NO search term entered: HIDE ALL DATA!
-      if (!isAllSelected && !hasSpecificCust && !hasSearchTerms) {
+      // If on initial page boot (silent), keep data safely hidden until user searches, selects customer, or clicks Fetch Data
+      if (opts.silent && !isAllSelected && !hasSpecificCust && !hasSearchTerms) {
         nfState = { ...nfState, items: [], total: 0, page: 1, query: qry, hasRun: false };
         nfCurrentList = [];
         wrap.innerHTML = '';
@@ -6407,7 +6407,14 @@
         if (bfLastResult) renderBulkFetchOutcome(bfLastResult);
       };
 
-      $('btnRunBulkFetch').onclick = async () => { if (await askFetchCols('bulk')) executeBulkFetch(); };
+      $('btnRunBulkFetch').onclick = async () => {
+        const checked = Array.from(document.querySelectorAll('.bf-out-chk:checked')).map(c => c.value);
+        if (!checked.length) {
+          toast('Please check at least one output column in Step 3.');
+          return;
+        }
+        executeBulkFetch();
+      };
     }
 
     function populateBfCustomerFilter() {

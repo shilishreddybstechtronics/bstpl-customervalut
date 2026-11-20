@@ -3,8 +3,11 @@ import re
 import math
 import time
 import uuid
+import logging
 from datetime import date, datetime, timedelta
 from pathlib import Path
+
+logger = logging.getLogger("routes_data")
 from typing import Optional, Literal
 from pydantic import BaseModel, field_validator
 
@@ -388,22 +391,46 @@ def get_dynamic_unique_columns(db: Session) -> list[str]:
 # ==============================================================================
 @router.get("/stats")
 def stats(db: Session = Depends(get_db), user: models.User = Depends(get_current_user)):
-    count = lambda *f: db.query(func.count(Device.id)).filter(*f).scalar()
-    total_customers = db.query(func.count(Customer.id)).filter(Customer.deleted_at.is_(None)).scalar() or 0
-    deleted_customers = db.query(func.count(Customer.id)).filter(Customer.deleted_at.isnot(None)).scalar() or 0
-    customer_errors = db.query(func.count(func.distinct(models.ErroredRecord.customer_name))).filter(
-        models.ErroredRecord.customer_name.isnot(None),
-        models.ErroredRecord.customer_name != ""
-    ).scalar() or 0
-    total_devices = count(ACTIVE) or 0
-    added_by_you = (count(ACTIVE, Device.added_by == user.id) or 0) if (user and hasattr(user, "id")) else 0
-    unique_cols_list = get_dynamic_unique_columns(db)
-    unique_columns = len(unique_cols_list)
-    deleted_devices = count(Device.deleted_at.isnot(None)) or 0
+    def safe_count(*filters):
+        try:
+            return db.query(func.count(Device.id)).filter(*filters).scalar() or 0
+        except Exception as e:
+            logger.warning(f"Stats Device count query warning: {e}")
+            return 0
+
+    def safe_cust_count(*filters):
+        try:
+            return db.query(func.count(Customer.id)).filter(*filters).scalar() or 0
+        except Exception as e:
+            logger.warning(f"Stats Customer count query warning: {e}")
+            return 0
+
+    total_customers = safe_cust_count(Customer.deleted_at.is_(None))
+    deleted_customers = safe_cust_count(Customer.deleted_at.isnot(None))
+    try:
+        customer_errors = db.query(func.count(func.distinct(models.ErroredRecord.customer_name))).filter(
+            models.ErroredRecord.customer_name.isnot(None),
+            models.ErroredRecord.customer_name != ""
+        ).scalar() or 0
+    except Exception:
+        customer_errors = 0
+
+    total_devices = safe_count(ACTIVE)
+    added_by_you = (safe_count(ACTIVE, Device.added_by == user.id)) if (user and hasattr(user, "id")) else 0
+    try:
+        unique_cols_list = get_dynamic_unique_columns(db)
+        unique_columns = len(unique_cols_list)
+    except Exception:
+        unique_columns = 0
+
+    deleted_devices = safe_count(Device.deleted_at.isnot(None))
     # expired SIMs are counted separately below, so "expiring in 30 days" starts today
-    expiring_30_days = count(ACTIVE, Device.expiry_date >= date.today(), Device.expiry_date <= date.today() + timedelta(days=30)) or 0
-    expired = count(ACTIVE, Device.expiry_date < date.today()) or 0
-    errored_records = db.query(func.count(models.ErroredRecord.id)).scalar() or 0
+    expiring_30_days = safe_count(ACTIVE, Device.expiry_date >= date.today(), Device.expiry_date <= date.today() + timedelta(days=30))
+    expired = safe_count(ACTIVE, Device.expiry_date < date.today())
+    try:
+        errored_records = db.query(func.count(models.ErroredRecord.id)).scalar() or 0
+    except Exception:
+        errored_records = 0
     return {
         "customers": total_customers,
         "total_customers": total_customers,

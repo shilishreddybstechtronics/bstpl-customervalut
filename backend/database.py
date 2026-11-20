@@ -110,9 +110,9 @@ def _create_robust_engine():
 
     # TiDB Cloud requires a secure SSL connection using system root certificates
     connect_args = {
-        "connect_timeout": 5,
-        "read_timeout": int(os.getenv("DB_READ_TIMEOUT", "30")),
-        "write_timeout": int(os.getenv("DB_WRITE_TIMEOUT", "30")),
+        "connect_timeout": 15,
+        "read_timeout": int(os.getenv("DB_READ_TIMEOUT", "60")),
+        "write_timeout": int(os.getenv("DB_WRITE_TIMEOUT", "60")),
     }
     if os.getenv("DB_SSL", "true").lower() == "true" or ("tidbcloud.com" in (locals().get("DB_HOST") or "")):
         connect_args["ssl"] = {"ca": certifi.where()}
@@ -121,10 +121,10 @@ def _create_robust_engine():
     eng = create_engine(
         DATABASE_URL,
         pool_pre_ping=True,
-        pool_recycle=240,
-        pool_size=5,
-        max_overflow=5,
-        pool_timeout=10,
+        pool_recycle=180,
+        pool_size=10,
+        max_overflow=10,
+        pool_timeout=15,
         connect_args=connect_args
     )
     try:
