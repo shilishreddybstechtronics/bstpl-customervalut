@@ -324,29 +324,24 @@ if (!window.openCartModal) {
       // 2. Smooth 3D Page Transitions between pages
       const link = e.target.closest('a[href]');
 
-      // Dynamic bidirectional navigation for BSTPL Brand Symbol (Home / Inventory <-> Settings)
+      // Direct navigation for BSTPL Brand Symbol -> Home Overview page (home.html)
       const currentPath = (window.location.pathname.split('/').pop() || 'home.html').toLowerCase();
       if (brandLogo) {
-        let dest = 'settings.html';
-        if (currentPath === 'settings.html') {
-          dest = sessionStorage.getItem('last_home_inv_page') || 'home.html';
-        } else {
-          sessionStorage.setItem('last_home_inv_page', currentPath || 'home.html');
-          dest = 'settings.html';
-        }
+        const dest = 'home.html';
         if (link) {
           link.setAttribute('href', dest);
+        }
+        if (currentPath === 'home.html') {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
         } else {
-          // Brand symbol was clicked as non-anchor container
-          const targetPath = (dest.split('?')[0].split('#')[0].split('/').pop() || '').toLowerCase();
-          if (targetPath !== currentPath) {
-            e.preventDefault();
-            document.body.classList.add('cv-page-3d-exit');
-            setTimeout(function () {
-              window.location.href = dest;
-            }, 160);
-            return;
-          }
+          e.preventDefault();
+          document.body.classList.add('cv-page-3d-exit');
+          setTimeout(function () {
+            window.location.href = dest;
+          }, 160);
+          return;
         }
       }
 
