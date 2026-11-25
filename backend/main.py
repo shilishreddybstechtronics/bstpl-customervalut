@@ -198,19 +198,45 @@ else:
 
 # ==============================================================================
 # WHAT IS HAPPENING BELOW:
-# HTTP Cache Prevention Middleware:
+# HTTP Cache Prevention Pure ASGI Middleware:
 # Intercepts all outgoing responses and attaches `no-cache, no-store, must-revalidate`
-# headers. This prevents browsers from caching dynamic API data or returning stale 304
-# responses, ensuring live inventory and user metrics are always up-to-date.
+# headers directly at the ASGI protocol layer without Starlette's BaseHTTPMiddleware.
+# Benefits:
+# 1. Zero overhead: no background tasks or AnyIO memory streams.
+# 2. Never crashes or logs 'Exception in ASGI application' on KeyboardInterrupt,
+#    SIGINT, client disconnect, or Uvicorn live server reloads.
+# 3. Ensures browsers never return stale 304 responses, keeping all inventory
+#    and telemetry metrics 100% live.
 # ==============================================================================
-@app.middleware("http")
-async def disable_cache_middleware(request: Request, call_next):
-    response = await call_next(request)
-    # Never return 304 Not Modified; force browser to always receive 200 with fresh content
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
+class DisableCacheMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                raw_headers = list(message.get("headers", []))
+                headers = [
+                    (k, v) for k, v in raw_headers
+                    if k.lower() not in (b"cache-control", b"pragma", b"expires")
+                ]
+                headers.extend([
+                    (b"cache-control", b"no-cache, no-store, must-revalidate, max-age=0"),
+                    (b"pragma", b"no-cache"),
+                    (b"expires", b"0"),
+                ])
+                message["headers"] = headers
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_wrapper)
+        except (asyncio.CancelledError, KeyboardInterrupt):
+            pass
+
+app.add_middleware(DisableCacheMiddleware)
 
 
 # ==============================================================================
