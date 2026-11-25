@@ -766,6 +766,12 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
     web_act = clean_field_val(format_to_dmy(telematics.get("activation_date") or telematics.get("commercialActivationDate")) if telematics else "")
     web_exp = clean_field_val(format_to_dmy(telematics.get("expiry_date") or telematics.get("commercialExpiryDate")) if telematics else "")
 
+    db_m1 = clean_field_val(db_rec.get("msisdn1")) if db_rec else ""
+    db_m2 = clean_field_val(db_rec.get("msisdn2")) if db_rec else ""
+    db_act = clean_field_val(db_rec.get("activation_date")) if db_rec else ""
+    db_exp = clean_field_val(db_rec.get("expiry_date")) if db_rec else ""
+
+    diff = {}
     if telematics:
         card_state = str(telematics.get("cardState") or telematics.get("cardStatus") or "").strip().lower()
         active_profiles = telematics.get("activeProfiles")
@@ -785,21 +791,55 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
             if p_status in inactive_statuses: web_m1 = ""
             if f_status in inactive_statuses: web_m2 = ""
 
-        # Strictly show details only if they exist in portal; if not, leave blank!
-        final_m1 = web_m1 if web_m1 else ""
-        final_m2 = web_m2 if web_m2 else ""
-        final_act = web_act if web_act else ""
-        final_exp = web_exp if web_exp else ""
-    else:
-        db_m1 = clean_field_val(db_rec.get("msisdn1")) if db_rec else ""
-        db_m2 = clean_field_val(db_rec.get("msisdn2")) if db_rec else ""
-        db_act = clean_field_val(db_rec.get("activation_date")) if db_rec else ""
-        db_exp = clean_field_val(db_rec.get("expiry_date")) if db_rec else ""
+        # Rule 1: If empty replace them. Rule 2: If same no need to replace. Rule 3: If different show difference and upload
+        # MSISDN 1
+        final_m1 = db_m1
+        if web_m1:
+            if not db_m1:
+                final_m1 = web_m1
+            elif db_m1 == web_m1:
+                final_m1 = db_m1
+            else:
+                diff["msisdn1"] = {"field": "MSISDN 1", "old": db_m1, "new": web_m1}
+                final_m1 = web_m1
 
-        final_m1 = db_m1 if db_m1 else ""
-        final_m2 = db_m2 if db_m2 else ""
-        final_act = db_act if db_act else ""
-        final_exp = db_exp if db_exp else ""
+        # MSISDN 2
+        final_m2 = db_m2
+        if web_m2:
+            if not db_m2:
+                final_m2 = web_m2
+            elif db_m2 == web_m2:
+                final_m2 = db_m2
+            else:
+                diff["msisdn2"] = {"field": "MSISDN 2", "old": db_m2, "new": web_m2}
+                final_m2 = web_m2
+
+        # Activation Date
+        final_act = db_act
+        if web_act:
+            if not db_act:
+                final_act = web_act
+            elif db_act == web_act:
+                final_act = db_act
+            else:
+                diff["act_date"] = {"field": "Activation Date", "old": db_act, "new": web_act}
+                final_act = web_act
+
+        # Expiry Date
+        final_exp = db_exp
+        if web_exp:
+            if not db_exp:
+                final_exp = web_exp
+            elif db_exp == web_exp:
+                final_exp = db_exp
+            else:
+                diff["expiry_date"] = {"field": "Expiry Date", "old": db_exp, "new": web_exp}
+                final_exp = web_exp
+    else:
+        final_m1 = db_m1
+        final_m2 = db_m2
+        final_act = db_act
+        final_exp = db_exp
 
     try:
         conn = get_connection()
@@ -869,10 +909,16 @@ def search_and_update_sim_by_iccid(iccid: str, mapping: Optional[Dict[str, str]]
             "sim_type": clean_field_val(db_rec.get("sim_type")) if db_rec else "",
             "headers": updated_table.get("headers", []),
             "rows": updated_table.get("rows", []),
+            "sensorise_diff": diff,
+            "differences_detected": bool(diff),
             "token_regenerated": bool(regen_res.get("success")),
             "apiToken": regen_res.get("apiToken") or sensorise_client.auth_token,
             "tokenExpiry": regen_res.get("tokenExpiry") or sensorise_client.get_token_expiry(),
-            "message": f"Successfully matched ICCID '{iccid_clean}' — telematics merged with database and displayed."
+            "message": (
+                f"Successfully matched ICCID '{iccid_clean}' from Sensorise server: {len(diff)} difference(s) detected and updated in database."
+                if diff else
+                f"Successfully matched ICCID '{iccid_clean}' — telematics synchronized and updated in database."
+            )
         }
     except Exception as e:
         logger.error(f"Error searching and updating ICCID {iccid_clean}: {e}")

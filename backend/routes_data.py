@@ -205,6 +205,7 @@ def out(d: Device) -> dict:
         if disp_d.lower() == p: disp_d = ""
 
     src = getattr(d, "source", None) or getattr(d, "data_source", None) or "website_database"
+    diff_data = getattr(d, "sensorise_diff", None) or (extra_data.get("_sensorise_diff") if isinstance(extra_data, dict) else {}) or {}
 
     return {
         "id": d.id, "customer_id": d.customer_id,
@@ -216,6 +217,7 @@ def out(d: Device) -> dict:
         "model": d.model or "", "sim_provider": d.sim_provider or "", "activation_plan": d.activation_plan or "",
         "firmware": d.firmware or "", "flash": d.flash or "", "sim_type": stype,
         "extra": extra_data,
+        "sensorise_diff": diff_data,
         "days_left": (d.expiry_date - date.today()).days if d.expiry_date else "",
         "expiry_status": compute_expiry_status(d.expiry_date, 30) if d.expiry_date else "",
         "added_by": d.added_by, "created_at": d.created_at, "deleted_at": d.deleted_at,

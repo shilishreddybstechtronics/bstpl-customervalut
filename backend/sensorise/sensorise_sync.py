@@ -433,19 +433,68 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
             if has_server_telematics or ent:
                 dev.source = "sensorise"
                 dev.data_source = "sensorise"
-                final_m1 = web_m1 or dev_m1 or None
-                final_m2 = web_m2 or dev_m2 or None
-                final_ad = web_ad or dev_ad or None
-                final_ed = web_ed or dev_ed or None
             else:
                 dev.source = "website_database"
                 dev.data_source = "website_database"
-                final_m1 = dev_m1 if dev_m1 else None
-                final_m2 = dev_m2 if dev_m2 else None
-                final_ad = dev_ad if dev_ad else None
-                final_ed = dev_ed if dev_ed else None
 
+            diff = {}
             changed = False
+
+            # Rule: If empty replace them; if same no need to replace; if different show difference and upload
+            # 1. MSISDN 1
+            final_m1 = dev_m1 or None
+            if web_m1:
+                if not dev_m1:
+                    final_m1 = web_m1
+                    changed = True
+                elif dev_m1 == web_m1:
+                    final_m1 = dev_m1
+                else:
+                    diff["msisdn1"] = {"field": "MSISDN 1", "old": dev_m1, "new": web_m1}
+                    final_m1 = web_m1
+                    changed = True
+
+            # 2. MSISDN 2
+            final_m2 = dev_m2 or None
+            if web_m2:
+                if not dev_m2:
+                    final_m2 = web_m2
+                    changed = True
+                elif dev_m2 == web_m2:
+                    final_m2 = dev_m2
+                else:
+                    diff["msisdn2"] = {"field": "MSISDN 2", "old": dev_m2, "new": web_m2}
+                    final_m2 = web_m2
+                    changed = True
+
+            # 3. Activation Date
+            final_ad = dev_ad or None
+            if web_ad:
+                dev_ad_parsed = _parse_sensorise_date(dev_ad)
+                if not dev_ad_parsed:
+                    final_ad = web_ad
+                    changed = True
+                elif dev_ad_parsed == web_ad:
+                    final_ad = dev_ad_parsed
+                else:
+                    diff["act_date"] = {"field": "Activation Date", "old": str(dev_ad_parsed), "new": str(web_ad)}
+                    final_ad = web_ad
+                    changed = True
+
+            # 4. Expiry Date
+            final_ed = dev_ed or None
+            if web_ed:
+                dev_ed_parsed = _parse_sensorise_date(dev_ed)
+                if not dev_ed_parsed:
+                    final_ed = web_ed
+                    changed = True
+                elif dev_ed_parsed == web_ed:
+                    final_ed = dev_ed_parsed
+                else:
+                    diff["expiry_date"] = {"field": "Expiry Date", "old": str(dev_ed_parsed), "new": str(web_ed)}
+                    final_ed = web_ed
+                    changed = True
+
             if final_m1 != getattr(dev, "msisdn1", None):
                 dev.msisdn1 = final_m1
                 changed = True
@@ -459,6 +508,27 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
                 dev.expiry_date = final_ed
                 changed = True
 
+            dev.sensorise_diff = diff
+            serialized_extra = None
+            if diff:
+                import json
+                cur_extra = getattr(dev, "extra", None) or {}
+                if isinstance(cur_extra, str):
+                    try:
+                        cur_extra = json.loads(cur_extra)
+                    except Exception:
+                        cur_extra = {}
+                elif not isinstance(cur_extra, dict):
+                    cur_extra = {}
+                cur_extra["_sensorise_diff"] = diff
+                cur_extra["_sensorise_diff_at"] = datetime.now().isoformat()
+                dev.extra = cur_extra
+                try:
+                    serialized_extra = json.dumps(cur_extra)
+                except Exception:
+                    serialized_extra = None
+                changed = True
+
             if changed:
                 updated_count += 1
                 sim_updates.append({
@@ -466,6 +536,7 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
                     "m2": dev.msisdn2,
                     "ad": dev.act_date,
                     "ed": dev.expiry_date,
+                    "ex": serialized_extra,
                     "id": dev.id
                 })
                 if customer_tables and getattr(dev, "customer_id", None):
@@ -483,7 +554,8 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
         try:
             db.execute(text("""
                 UPDATE sim_devices
-                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed,
+                    extra = COALESCE(:ex, extra)
                 WHERE id = :id
             """), sim_updates)
         except Exception as sql_err:
@@ -622,21 +694,72 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
             if has_server_telematics or ent:
                 r["source"] = "sensorise"
                 r["data_source"] = "sensorise"
-                final_m1 = web_m1 or dict_m1 or ""
-                final_m2 = web_m2 or dict_m2 or ""
-                final_ad_str = ad_str or dict_ad or ""
-                final_ed_str = ed_str or dict_ed or ""
-                final_ed_date = ed_date or _parse_sensorise_date(final_ed_str)
             else:
                 r["source"] = "website_database"
                 r["data_source"] = "website_database"
-                final_m1 = dict_m1 if dict_m1 else ""
-                final_m2 = dict_m2 if dict_m2 else ""
-                final_ad_str = dict_ad if dict_ad else ""
-                final_ed_str = dict_ed if dict_ed else ""
-                final_ed_date = _parse_sensorise_date(final_ed_str)
 
+            diff = {}
             changed = False
+
+            # Rule: If empty replace them; if same no need to replace; if different show difference and upload
+            # 1. MSISDN 1
+            final_m1 = dict_m1
+            if web_m1:
+                if not dict_m1:
+                    final_m1 = web_m1
+                    changed = True
+                elif dict_m1 == web_m1:
+                    final_m1 = dict_m1
+                else:
+                    diff["msisdn1"] = {"field": "MSISDN 1", "old": dict_m1, "new": web_m1}
+                    final_m1 = web_m1
+                    changed = True
+
+            # 2. MSISDN 2
+            final_m2 = dict_m2
+            if web_m2:
+                if not dict_m2:
+                    final_m2 = web_m2
+                    changed = True
+                elif dict_m2 == web_m2:
+                    final_m2 = dict_m2
+                else:
+                    diff["msisdn2"] = {"field": "MSISDN 2", "old": dict_m2, "new": web_m2}
+                    final_m2 = web_m2
+                    changed = True
+
+            # 3. Activation Date
+            final_ad_str = dict_ad
+            if ad_str:
+                dict_ad_parsed = _parse_sensorise_date(dict_ad)
+                if not dict_ad_parsed:
+                    final_ad_str = ad_str
+                    changed = True
+                elif dict_ad_parsed == ad_date:
+                    final_ad_str = dict_ad_parsed.isoformat()
+                else:
+                    diff["act_date"] = {"field": "Activation Date", "old": str(dict_ad_parsed), "new": ad_str}
+                    final_ad_str = ad_str
+                    changed = True
+
+            # 4. Expiry Date
+            final_ed_str = dict_ed
+            final_ed_date = _parse_sensorise_date(dict_ed)
+            if ed_str:
+                dict_ed_parsed = _parse_sensorise_date(dict_ed)
+                if not dict_ed_parsed:
+                    final_ed_str = ed_str
+                    final_ed_date = ed_date
+                    changed = True
+                elif dict_ed_parsed == ed_date:
+                    final_ed_str = dict_ed_parsed.isoformat()
+                    final_ed_date = dict_ed_parsed
+                else:
+                    diff["expiry_date"] = {"field": "Expiry Date", "old": str(dict_ed_parsed), "new": ed_str}
+                    final_ed_str = ed_str
+                    final_ed_date = ed_date
+                    changed = True
+
             if r.get("msisdn1") != final_m1:
                 r["msisdn1"] = final_m1
                 changed = True
@@ -648,6 +771,27 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                 changed = True
             if r.get("expiry_date") != final_ed_str:
                 r["expiry_date"] = final_ed_str
+                changed = True
+
+            r["sensorise_diff"] = diff
+            serialized_extra = None
+            if diff:
+                import json
+                r_extra = r.get("extra") or {}
+                if isinstance(r_extra, str):
+                    try:
+                        r_extra = json.loads(r_extra)
+                    except Exception:
+                        r_extra = {}
+                elif not isinstance(r_extra, dict):
+                    r_extra = {}
+                r_extra["_sensorise_diff"] = diff
+                r_extra["_sensorise_diff_at"] = datetime.now().isoformat()
+                r["extra"] = r_extra
+                try:
+                    serialized_extra = json.dumps(r_extra)
+                except Exception:
+                    serialized_extra = None
                 changed = True
 
             if final_ed_date:
@@ -668,12 +812,14 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                     sim_updates_by_id.append({
                         "m1": m1_to_save, "m2": m2_to_save,
                         "ad": ad_obj_to_save, "ed": ed_obj_to_save,
+                        "ex": serialized_extra,
                         "id": int(dev_id)
                     })
                 elif imei:
                     sim_updates_by_imei.append({
                         "m1": m1_to_save, "m2": m2_to_save,
                         "ad": ad_obj_to_save, "ed": ed_obj_to_save,
+                        "ex": serialized_extra,
                         "im": imei
                     })
 
@@ -691,7 +837,8 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
         try:
             db.execute(text("""
                 UPDATE sim_devices
-                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed,
+                    extra = COALESCE(:ex, extra)
                 WHERE id = :id
             """), sim_updates_by_id)
         except Exception as sql_err:
@@ -701,7 +848,8 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
         try:
             db.execute(text("""
                 UPDATE sim_devices
-                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed,
+                    extra = COALESCE(:ex, extra)
                 WHERE imei = :im
             """), sim_updates_by_imei)
         except Exception as sql_err:

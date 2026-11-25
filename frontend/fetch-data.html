@@ -3786,14 +3786,37 @@
       return `<span class="tag ok">${d.days_left}d left</span>`;
     };
 
+    function getSensoriseFieldDiff(dev, key) {
+      if (!dev) return null;
+      let diffs = dev.sensorise_diff;
+      if (!diffs && dev.extra) {
+        let ex = dev.extra;
+        if (typeof ex === 'string') { try { ex = JSON.parse(ex); } catch (_) { ex = null; } }
+        if (ex && typeof ex === 'object') diffs = ex._sensorise_diff;
+      }
+      if (!diffs || typeof diffs !== 'object') return null;
+      if (diffs[key]) return diffs[key];
+      if (key === 'activation_date' && diffs.act_date) return diffs.act_date;
+      if (key === 'act_date' && diffs.activation_date) return diffs.activation_date;
+      return null;
+    }
+
+    function renderDiffPill(diff) {
+      if (!diff || !diff.old) return '';
+      return `<span class="badge" style="background:rgba(245,158,11,0.12);color:#d97706;border:1px solid rgba(245,158,11,0.3);font-size:9.5px;padding:1px 5px;border-radius:6px;margin-left:4px;white-space:nowrap;font-weight:700;display:inline-flex;align-items:center;gap:2px" title="Sensorise Server difference: Previous database value was '${esc(diff.old)}', updated to '${esc(diff.new)}'"><span style="font-size:8.5px">⚡</span> was ${esc(diff.old)}</span>`;
+    }
+
     const renderSourceBadge = d => {
       if (!d) return '';
       const src = String((d.source || d.data_source) || '').toLowerCase().trim();
       const idStr = String(d.id || '');
+      const diffs = d.sensorise_diff || (d.extra && typeof d.extra === 'object' ? d.extra._sensorise_diff : null);
+      const diffCount = diffs && typeof diffs === 'object' ? Object.keys(diffs).length : 0;
+      const diffBadge = diffCount > 0 ? `<span class="badge" style="background:rgba(245,158,11,0.15);color:#d97706;border:1px solid rgba(245,158,11,0.35);font-size:9.5px;padding:1px 6px;border-radius:10px;white-space:nowrap;font-weight:800;display:inline-flex;align-items:center;gap:3px;margin-left:4px" title="⚡ ${diffCount} telematics difference(s) detected and synced from Sensorise server"><span style="font-size:8.5px">⚡</span> ${diffCount} Diff${diffCount > 1 ? 's' : ''} Synced</span>` : '';
       if (src.includes('sensorise') || src.includes('server') || idStr.startsWith('sensorise_')) {
-        return `<span class="badge" style="background:#e0e7ff;color:#4338ca;border:1px solid #c7d2fe;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" title="Sensorise"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4f46e5"></span>📡 Sensorise</span>`;
+        return `<span class="badge" style="background:#e0e7ff;color:#4338ca;border:1px solid #c7d2fe;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" title="Sensorise"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4f46e5"></span>📡 Sensorise</span>${diffBadge}`;
       }
-      return `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" title="Website Database"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#d97706"></span>💾 Website Database</span>`;
+      return `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" title="Website Database"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#d97706"></span>💾 Website Database</span>${diffBadge}`;
     };
 
     const cell = (d, k) => {
@@ -3802,10 +3825,14 @@
         return renderSourceBadge(d);
       }
       if (['msisdn1', 'msisdn2', 'act_date', 'activation_date'].includes(k)) {
-        return (val && val !== '—' && val !== 'None' && val !== 'null') ? esc(val) : '';
+        const diff = getSensoriseFieldDiff(d, k);
+        const diffHtml = renderDiffPill(diff);
+        return (val && val !== '—' && val !== 'None' && val !== 'null') ? `<span>${esc(val)}</span>${diffHtml}` : '';
       }
       if (k === 'expiry_date') {
-        return (val && val !== '—' && val !== 'None' && val !== 'null') ? `${esc(val)} ${expTag(d)}` : '';
+        const diff = getSensoriseFieldDiff(d, 'expiry_date');
+        const diffHtml = renderDiffPill(diff);
+        return (val && val !== '—' && val !== 'None' && val !== 'null') ? `${esc(val)} ${expTag(d)}${diffHtml}` : '';
       }
       if (k === 'customer_name') {
         return val ? `<b style="color:var(--text)">${esc(val)}</b>` : '<span style="color:var(--muted)">—</span>';
@@ -3899,7 +3926,9 @@
           if (c.key === 'source' || c.key === 'data_source') return `<td>${renderSourceBadge(d)}</td>`;
           if (c.key === 'sim_type') return `<td><span class="badge" style="background:${d.sim_type === 'E-SIM' ? '#38bdf8' : '#a855f7'};color:#fff">${esc(d.sim_type || '—')}</span></td>`;
           const val = devValue(d, c.key);
-          return `<td>${val ? esc(val) : '<span style="color:var(--muted)">—</span>'}</td>`;
+          const diff = getSensoriseFieldDiff(d, c.key);
+          const diffHtml = renderDiffPill(diff);
+          return `<td>${val ? `<span>${esc(val)}</span>${diffHtml}` : '<span style="color:var(--muted)">—</span>'}</td>`;
         }).join('')}
         ${act ? `<td>${act(d)}</td>` : ''}
       </tr>`).join('')}
@@ -4045,7 +4074,22 @@
 
         function buildDeviceFormFields(dev = {}) {
           const extra = dev.extra || {};
+          let diffBanner = '';
+          const diffs = dev.sensorise_diff || (extra && typeof extra === 'object' ? extra._sensorise_diff : null);
+          if (diffs && typeof diffs === 'object' && Object.keys(diffs).length > 0) {
+            const items = Object.entries(diffs).map(([k, d]) => {
+              const lbl = d.field || k.toUpperCase();
+              return `<li style="margin:2px 0"><b>${esc(lbl)}:</b> <span style="text-decoration:line-through;color:var(--muted)">${esc(d.old || '(empty)')}</span> ➔ <b style="color:var(--ok)">${esc(d.new || '(empty)')}</b></li>`;
+            }).join('');
+            diffBanner = `
+              <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px">
+                <div style="font-weight:800;color:#d97706;display:flex;align-items:center;gap:6px">⚡ Sensorise Server Telematics Differences Synced to Database:</div>
+                <ul style="margin:6px 0 0 18px;padding:0">${items}</ul>
+              </div>
+            `;
+          }
           return `
+        ${diffBanner}
         <div class="form-grid">
           <div><label>Customer Name *</label><input data-devf="customer_name" value="${esc(dev.customer_name || '')}" placeholder="Customer name" required /></div>
           <div><label>Device SR No</label><input data-devf="device_sr_no" value="${esc(dev.device_sr_no || '')}" /></div>
@@ -6174,7 +6218,9 @@
         if (c.key === 'sim_type') return `<td><span class="badge" style="background:${dev.sim_type === 'E-SIM' ? '#38bdf8' : '#a855f7'};color:#fff">${esc(dev.sim_type || '—')}</span></td>`;
         if (['msisdn1', 'msisdn2', 'act_date', 'activation_date'].includes(c.key)) {
           const v = devValue(dev, c.key);
-          return `<td>${(v && v !== '—' && v !== 'None' && v !== 'null') ? esc(v) : ''}</td>`;
+          const diff = getSensoriseFieldDiff(dev, c.key);
+          const diffHtml = renderDiffPill(diff);
+          return `<td>${(v && v !== '—' && v !== 'None' && v !== 'null') ? `<span>${esc(v)}</span>${diffHtml}` : ''}</td>`;
         }
         const v = devValue(dev, c.key);
         return `<td>${v === '' ? '—' : esc(v)}</td>`;
