@@ -5625,9 +5625,16 @@
         chk.onchange = e => {
           const chip = e.target.closest('.col-pill-chip');
           if (chip) {
-            chip.classList.toggle('active', e.target.checked);
-            chip.style.borderColor = e.target.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
-            chip.style.background = e.target.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
+            const isUniq = chip.classList.contains('unique-chip');
+            if (e.target.checked) {
+              chip.classList.add('active');
+              chip.style.borderColor = isUniq ? '#0284c7' : 'var(--primary)';
+              chip.style.background = isUniq ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)';
+            } else {
+              chip.classList.remove('active');
+              chip.style.borderColor = 'var(--line)';
+              chip.style.background = 'var(--card)';
+            }
           }
           fetchCustomSelectedCols = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
           renderNormalFetchTable(nfCurrentList);
@@ -5646,9 +5653,16 @@
               c.checked = uKeys.has(c.value);
               const chip = c.closest('.col-pill-chip');
               if (chip) {
-                chip.classList.toggle('active', c.checked);
-                chip.style.borderColor = c.checked ? (chip.classList.contains('unique-chip') ? '#0284c7' : 'var(--primary)') : 'var(--line)';
-                chip.style.background = c.checked ? (chip.classList.contains('unique-chip') ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)') : 'var(--card)';
+                const isUniq = chip.classList.contains('unique-chip');
+                if (c.checked) {
+                  chip.classList.add('active');
+                  chip.style.borderColor = isUniq ? '#0284c7' : 'var(--primary)';
+                  chip.style.background = isUniq ? 'rgba(2,132,199,0.08)' : 'var(--card-subtle)';
+                } else {
+                  chip.classList.remove('active');
+                  chip.style.borderColor = 'var(--line)';
+                  chip.style.background = 'var(--card)';
+                }
               }
             });
             fetchCustomSelectedCols = Array.from(document.querySelectorAll('.nf-col-chk:checked')).map(c => c.value);
@@ -6024,25 +6038,25 @@
         return v;
       }
       if (key in dev && dev[key] != null && dev[key] !== '') return dev[key];
+
+      const lowKey = String(key).toLowerCase().trim();
+      const cleanTarget = lowKey.replace(/^x_/, '').replace(/[^a-z0-9]/g, '');
+
       let extra = dev.extra;
       if (typeof extra === 'string') {
         try { extra = JSON.parse(extra); } catch (_) { extra = null; }
       }
       if (extra && typeof extra === 'object') {
         if (extra[key] !== undefined && extra[key] !== null) return extra[key];
-        const lowKey = String(key).toLowerCase().trim();
         for (const [k, v] of Object.entries(extra)) {
           if (String(k).toLowerCase().trim() === lowKey && v != null) return v;
         }
-        const cleanTarget = lowKey.replace(/^x_/, '').replace(/[^a-z0-9]/g, '');
-        for (const [k, v] of Object.entries(extra)) {
-          const cleanK = String(k).toLowerCase().trim().replace(/^x_/, '').replace(/[^a-z0-9]/g, '');
-          if (cleanK === cleanTarget && v != null) return v;
+        for (const [k2, v2] of Object.entries(extra)) {
+          const cleanK = String(k2).toLowerCase().trim().replace(/^x_/, '').replace(/[^a-z0-9]/g, '');
+          if (cleanK === cleanTarget && v2 != null) return v2;
         }
       }
       // Direct attribute check on dev (case-insensitive and slug-matched)
-      const lowKey = String(key).toLowerCase().trim();
-      const cleanTarget = lowKey.replace(/^x_/, '').replace(/[^a-z0-9]/g, '');
       for (const [k, v] of Object.entries(dev)) {
         if (typeof v !== 'object' && typeof v !== 'function' && v != null && v !== '') {
           const lowK = String(k).toLowerCase().trim();
@@ -6221,16 +6235,16 @@
         $('btnNfDlCurPage').onclick = () => {
           if (!items.length) { toast('No records on this page to download.'); return; }
           const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
-          const cols = computeDisplayCols(items, viewOpt);
-          if (!cols.length) { toast('Please choose at least one column.'); return; }
-          const headers = (viewOpt === 'all') ? ['ID', ...cols.map(c => c.label)] : cols.map(c => c.label);
-          const data = (viewOpt === 'all')
-            ? items.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))])
-            : items.map(dev => cols.map(c => devValue(dev, c.key)));
+          const pageCols = computeDisplayCols(items, viewOpt);
+          if (!pageCols.length) { toast('Please choose at least one column.'); return; }
+          const pageHeaders = (viewOpt === 'all') ? ['ID', ...pageCols.map(c => c.label)] : pageCols.map(c => c.label);
+          const pageData = (viewOpt === 'all')
+            ? items.map(dev => [dev.id, ...pageCols.map(c => devValue(dev, c.key))])
+            : items.map(dev => pageCols.map(c => devValue(dev, c.key)));
           const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && currentCustomerCid)
             ? CU.find(c => String(c.id) === String(currentCustomerCid)) : null;
           const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
-          exportExcel(`${custPrefix}_Page_${page}`, headers, data);
+          exportExcel(`${custPrefix}_Page_${page}`, pageHeaders, pageData);
         };
       }
       if ($('btnNfCopyNF')) {
@@ -6245,14 +6259,14 @@
       if ($('btnNfCopyData')) {
         $('btnNfCopyData').onclick = () => {
           const viewOpt = document.querySelector('input[name="nfViewOpt"]:checked')?.value || 'all';
-          const cols = computeDisplayCols(items, viewOpt);
+          const copyCols = computeDisplayCols(items, viewOpt);
           openFetchCopyDataModal({
             mode: 'normal',
             items: items,
             allRows: (nfState.mode === 'client' || (nfState.items && nfState.items.length >= total)) ? nfState.items : null,
             total: total,
             page: page,
-            displayCols: cols
+            displayCols: copyCols
           });
         };
       }
@@ -6292,17 +6306,17 @@
         }
 
         // Full Data Download includes all standard columns + customer unique columns (unless user explicitly customized columns):
-        const cols = computeDisplayCols(rows, viewOpt);
-        if (!cols.length) { toast('Please choose at least one column.'); return; }
-        const headers = (viewOpt === 'all') ? ['ID', ...cols.map(c => c.label)] : cols.map(c => c.label);
-        const data = (viewOpt === 'all')
-          ? rows.map(dev => [dev.id, ...cols.map(c => devValue(dev, c.key))])
-          : rows.map(dev => cols.map(c => devValue(dev, c.key)));
+        const exportCols = computeDisplayCols(rows, viewOpt);
+        if (!exportCols.length) { toast('Please choose at least one column.'); return; }
+        const exportHeaders = (viewOpt === 'all') ? ['ID', ...exportCols.map(c => c.label)] : exportCols.map(c => c.label);
+        const exportData = (viewOpt === 'all')
+          ? rows.map(dev => [dev.id, ...exportCols.map(c => devValue(dev, c.key))])
+          : rows.map(dev => exportCols.map(c => devValue(dev, c.key)));
 
         const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && targetCid)
           ? CU.find(c => String(c.id) === String(targetCid)) : null;
         const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
-        exportExcel(`${custPrefix}_Full_Data_Export`, headers, data);
+        exportExcel(`${custPrefix}_Full_Data_Export`, exportHeaders, exportData);
         if (nfState.mode === 'server' && rows.length !== nfState.total) toast(`Note: exported ${rows.length.toLocaleString()} of ${nfState.total.toLocaleString()} records (data changed while exporting).`);
       } catch (err) {
         fail(err);
@@ -6741,22 +6755,22 @@
         if (targetCid && (!currentCustomerUniqueCols || !currentCustomerUniqueCols.length || currentCustomerCid !== String(targetCid))) {
           await fetchCustomerColumns(targetCid);
         }
-        const currentBfCols = getBulkFetchOutputCols();
-        const headers = currentBfCols.map(c => c.label);
-        const rows = exact.map(d => currentBfCols.map(c => devValue(d, c.key)));
-        exportExcel(fetchPrefix() + '_exact_matches', headers, rows);
+        const exactBfCols = getBulkFetchOutputCols();
+        const exactHeaders = exactBfCols.map(c => c.label);
+        const exactRows = exact.map(d => exactBfCols.map(c => devValue(d, c.key)));
+        exportExcel(fetchPrefix() + '_exact_matches', exactHeaders, exactRows);
       };
 
       if ($('btnBfDlSimilar')) $('btnBfDlSimilar').onclick = async () => {
-        const currentBfCols = getBulkFetchOutputCols();
-        const headers = currentBfCols.map(c => c.label);
-        const rows = similar.map(d => currentBfCols.map(c => devValue(d, c.key)));
-        exportExcel(fetchPrefix() + '_partial_matches', headers, rows);
+        const similarBfCols = getBulkFetchOutputCols();
+        const similarHeaders = similarBfCols.map(c => c.label);
+        const similarRows = similar.map(d => similarBfCols.map(c => devValue(d, c.key)));
+        exportExcel(fetchPrefix() + '_partial_matches', similarHeaders, similarRows);
       };
 
       if ($('btnBfDlExcel')) $('btnBfDlExcel').onclick = async () => {
-        const currentBfCols = getBulkFetchOutputCols();
-        if (!currentBfCols.length) { toast('Please check at least one output column.'); return; }
+        const bulkExportCols = getBulkFetchOutputCols();
+        if (!bulkExportCols.length) { toast('Please check at least one output column.'); return; }
 
         // Ensure customer unique columns are fetched for the scoped customer on full data download
         const custId = $('bfCustFilter') ? $('bfCustFilter').value : '';
@@ -6767,8 +6781,8 @@
 
         const includeNF = $('bfIncludeNotFoundChk').checked;
         const withStatus = includeNF || similar.length > 0;
-        const headers = currentBfCols.map(c => c.label);
-        if (withStatus) headers.push('Status', 'Searched Value');
+        const bulkExportHeaders = bulkExportCols.map(c => c.label);
+        if (withStatus) bulkExportHeaders.push('Status', 'Searched Value');
 
         const cellVal = (dev, k) => devValue(dev, k);
         const termSet = new Set(bfReadValues);
@@ -6778,21 +6792,21 @@
           return '';
         };
 
-        const rows = exact.map(dev => {
-          const row = currentBfCols.map(c => cellVal(dev, c.key));
-          if (withStatus) row.push('FOUND', searchedValueOf(dev));
-          return row;
+        const bulkExportRows = exact.map(dev => {
+          const exactRowItem = bulkExportCols.map(c => cellVal(dev, c.key));
+          if (withStatus) exactRowItem.push('FOUND', searchedValueOf(dev));
+          return exactRowItem;
         });
         similar.forEach(dev => {
-          const row = currentBfCols.map(c => cellVal(dev, c.key));
-          row.push('PARTIAL MATCH', '');
-          rows.push(row);
+          const similarRowItem = bulkExportCols.map(c => cellVal(dev, c.key));
+          similarRowItem.push('PARTIAL MATCH', '');
+          bulkExportRows.push(similarRowItem);
         });
         if (includeNF) {
           const addMissing = (t, status) => {
-            const row = currentBfCols.map(() => '');
-            row.push(status, t);
-            rows.push(row);
+            const missingRowItem = bulkExportCols.map(() => '');
+            missingRowItem.push(status, t);
+            bulkExportRows.push(missingRowItem);
           };
           notFound.forEach(t => addMissing(t, 'NOT FOUND'));
           partialTerms.forEach(t => addMissing(t, 'NO EXACT MATCH'));
@@ -6800,7 +6814,7 @@
         const selectedCust = (typeof CU !== 'undefined' && Array.isArray(CU) && targetCid)
           ? CU.find(c => String(c.id) === String(targetCid)) : null;
         const custPrefix = selectedCust ? selectedCust.name.replace(/[^a-zA-Z0-9_-]/g, '_') : fetchPrefix();
-        exportExcel(custPrefix + '_Bulk_Full_Data_Export', headers, rows);
+        exportExcel(custPrefix + '_Bulk_Full_Data_Export', bulkExportHeaders, bulkExportRows);
       };
     }
 

@@ -188,34 +188,47 @@ def fetch_sensorise_telematics_for_iccids(raw_iccids: List[str]) -> Dict[str, Di
             telematics_results[raw_clean] = ent
             telematics_results[num_iccid] = ent
 
-    # Check database sensorise_sims_basic for any remaining ICCIDs
+    # Batch check database sensorise_sims_basic for any remaining ICCIDs
     missing_for_db = [r for r in raw_iccids if _clean_iccid_term(r) not in telematics_results and _extract_numeric_iccid(r) not in telematics_results]
     if missing_for_db:
         try:
             from sqlalchemy import text
             from database import engine
-            with engine.connect() as conn:
-                for raw in missing_for_db:
-                    clean_raw = _clean_iccid_term(raw)
-                    num_raw = _extract_numeric_iccid(clean_raw)
-                    row = conn.execute(
-                        text("SELECT msisdn1, msisdn2, activation_date, expiry_date FROM sensorise_sims_basic WHERE iccid = :ic OR iccid = :ic_f OR iccid = :num_ic LIMIT 1"),
-                        {"ic": clean_raw, "ic_f": clean_raw + "F", "num_ic": num_raw}
-                    ).first()
-                    if row and (row[0] or row[1] or row[2] or row[3]):
-                        ent = {
-                            "primaryMSISDN": str(row[0] or "").strip(),
-                            "fallbackMSISDN": str(row[1] or "").strip(),
-                            "commercialActivationDate": str(row[2] or "").strip(),
-                            "commercialExpiryDate": str(row[3] or "").strip(),
-                            "_from_sensorise_server": False
-                        }
-                        telematics_results[clean_raw] = ent
-                        num_ic = _extract_numeric_iccid(clean_raw)
-                        if num_ic:
-                            telematics_results[num_ic] = ent
-        except Exception:
-            pass
+            terms_set = set()
+            for raw in missing_for_db:
+                clean_raw = _clean_iccid_term(raw)
+                num_raw = _extract_numeric_iccid(clean_raw)
+                if clean_raw:
+                    terms_set.add(clean_raw)
+                    terms_set.add(clean_raw + "F")
+                if num_raw:
+                    terms_set.add(num_raw)
+            terms_list = list(terms_set)
+            if terms_list:
+                with engine.connect() as conn:
+                    chunk_sz = 300
+                    for c_idx in range(0, len(terms_list), chunk_sz):
+                        chunk = terms_list[c_idx:c_idx + chunk_sz]
+                        params = {f"ic_{k}": val for k, val in enumerate(chunk)}
+                        in_clause = ",".join(f":ic_{k}" for k in range(len(chunk)))
+                        sql = text(f"SELECT iccid, msisdn1, msisdn2, activation_date, expiry_date FROM sensorise_sims_basic WHERE iccid IN ({in_clause})")
+                        rows = conn.execute(sql, params).fetchall()
+                        for row in rows:
+                            if row and (row[1] or row[2] or row[3] or row[4]):
+                                ent = {
+                                    "primaryMSISDN": str(row[1] or "").strip(),
+                                    "fallbackMSISDN": str(row[2] or "").strip(),
+                                    "commercialActivationDate": str(row[3] or "").strip(),
+                                    "commercialExpiryDate": str(row[4] or "").strip(),
+                                    "_from_sensorise_server": False
+                                }
+                                db_ic = str(row[0] or "").strip()
+                                telematics_results[db_ic] = ent
+                                num_ic = _extract_numeric_iccid(db_ic)
+                                if num_ic:
+                                    telematics_results[num_ic] = ent
+        except Exception as batch_err:
+            logger.debug(f"sensorise_sims_basic batch query notice: {batch_err}")
 
     return telematics_results
 
@@ -376,6 +389,8 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
     # 3. Replace values on models and update database
     updated_count = 0
     updated_device_ids = set()
+    sim_updates = []
+    cust_updates: Dict[str, List[Dict[str, Any]]] = {}
 
     for iccid_key, dev_list in iccid_to_devices.items():
         ent = telematics_map.get(iccid_key)
@@ -446,40 +461,43 @@ def sync_devices_with_sensorise(db: Session, devices: List[Any]) -> List[Any]:
 
             if changed:
                 updated_count += 1
-                # Execute direct SQL update on sim_devices
-                try:
-                    db.execute(text("""
-                        UPDATE sim_devices
-                        SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
-                        WHERE id = :id
-                    """), {
-                        "m1": dev.msisdn1,
-                        "m2": dev.msisdn2,
-                        "ad": dev.act_date,
-                        "ed": dev.expiry_date,
-                        "id": dev.id
-                    })
-                except Exception as sql_err:
-                    logger.debug(f"Direct SQL update notice for device {dev.id}: {sql_err}")
-
-                # Mirror update to customer-specific table if present
+                sim_updates.append({
+                    "m1": dev.msisdn1,
+                    "m2": dev.msisdn2,
+                    "ad": dev.act_date,
+                    "ed": dev.expiry_date,
+                    "id": dev.id
+                })
                 if customer_tables and getattr(dev, "customer_id", None):
-                    try:
-                        t_name = customer_tables.find_table(db, dev.customer_id)
-                        if t_name:
-                            db.execute(text(f"""
-                                UPDATE `{t_name}`
-                                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
-                                WHERE imei = :im
-                            """), {
-                                "m1": dev.msisdn1,
-                                "m2": dev.msisdn2,
-                                "ad": dev.act_date,
-                                "ed": dev.expiry_date,
-                                "im": dev.imei
-                            })
-                    except Exception as cust_err:
-                        logger.debug(f"Customer table mirror notice for device {dev.imei}: {cust_err}")
+                    t_name = customer_tables.find_table(db, dev.customer_id)
+                    if t_name:
+                        cust_updates.setdefault(t_name, []).append({
+                            "m1": dev.msisdn1,
+                            "m2": dev.msisdn2,
+                            "ad": dev.act_date,
+                            "ed": dev.expiry_date,
+                            "im": dev.imei
+                        })
+
+    if sim_updates:
+        try:
+            db.execute(text("""
+                UPDATE sim_devices
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                WHERE id = :id
+            """), sim_updates)
+        except Exception as sql_err:
+            logger.debug(f"Direct SQL batch update notice: {sql_err}")
+
+    for t_name, rows_to_update in cust_updates.items():
+        try:
+            db.execute(text(f"""
+                UPDATE `{t_name}`
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                WHERE imei = :im
+            """), rows_to_update)
+        except Exception as cust_err:
+            logger.debug(f"Customer table mirror batch notice for {t_name}: {cust_err}")
 
     # Commit all replaced values into the database
     if updated_count > 0:
@@ -553,6 +571,9 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
 
     updated_count = 0
     updated_imeis = set()
+    sim_updates_by_id = []
+    sim_updates_by_imei = []
+    cust_updates: Dict[str, List[Dict[str, Any]]] = {}
 
     for iccid_key, r_list in iccid_to_records.items():
         ent = telematics_map.get(iccid_key)
@@ -641,63 +662,60 @@ def sync_device_dicts_with_sensorise(db: Session, records: List[Dict[str, Any]])
                 ed_obj_to_save = final_ed_date
                 m1_to_save = final_m1 if final_m1 else None
                 m2_to_save = final_m2 if final_m2 else None
-                try:
-                    dev_id = r.get("id")
-                    if dev_id and (isinstance(dev_id, int) or (isinstance(dev_id, str) and dev_id.isdigit())):
-                        db.execute(text("""
-                            UPDATE sim_devices
-                            SET msisdn1 = :m1,
-                                msisdn2 = :m2,
-                                act_date = :ad,
-                                expiry_date = :ed
-                            WHERE id = :id
-                        """), {
-                            "m1": m1_to_save,
-                            "m2": m2_to_save,
-                            "ad": ad_obj_to_save,
-                            "ed": ed_obj_to_save,
-                            "id": dev_id
-                        })
-                    elif imei:
-                        db.execute(text("""
-                            UPDATE sim_devices
-                            SET msisdn1 = :m1,
-                                msisdn2 = :m2,
-                                act_date = :ad,
-                                expiry_date = :ed
-                            WHERE imei = :im
-                        """), {
-                            "m1": m1_to_save,
-                            "m2": m2_to_save,
-                            "ad": ad_obj_to_save,
-                            "ed": ed_obj_to_save,
-                            "im": imei
-                        })
-                except Exception as db_err:
-                    logger.debug(f"Direct SQL update notice for dict device {imei}: {db_err}")
 
-                # Update customer dynamic table if customer_id present
+                dev_id = r.get("id")
+                if dev_id and (isinstance(dev_id, int) or (isinstance(dev_id, str) and str(dev_id).isdigit())):
+                    sim_updates_by_id.append({
+                        "m1": m1_to_save, "m2": m2_to_save,
+                        "ad": ad_obj_to_save, "ed": ed_obj_to_save,
+                        "id": int(dev_id)
+                    })
+                elif imei:
+                    sim_updates_by_imei.append({
+                        "m1": m1_to_save, "m2": m2_to_save,
+                        "ad": ad_obj_to_save, "ed": ed_obj_to_save,
+                        "im": imei
+                    })
+
                 cid = r.get("customer_id")
                 if customer_tables and cid and imei:
-                    try:
-                        t_name = customer_tables.find_table(db, cid)
-                        if t_name:
-                            db.execute(text(f"""
-                                UPDATE `{t_name}`
-                                SET msisdn1 = :m1,
-                                    msisdn2 = :m2,
-                                    act_date = :ad,
-                                    expiry_date = :ed
-                                WHERE imei = :im
-                            """), {
-                                "m1": m1_to_save,
-                                "m2": m2_to_save,
-                                "ad": ad_obj_to_save,
-                                "ed": ed_obj_to_save,
-                                "im": imei
-                            })
-                    except Exception as cust_err:
-                        logger.debug(f"Customer table mirror notice for dict device {imei}: {cust_err}")
+                    t_name = customer_tables.find_table(db, cid)
+                    if t_name:
+                        cust_updates.setdefault(t_name, []).append({
+                            "m1": m1_to_save, "m2": m2_to_save,
+                            "ad": ad_obj_to_save, "ed": ed_obj_to_save,
+                            "im": imei
+                        })
+
+    if sim_updates_by_id:
+        try:
+            db.execute(text("""
+                UPDATE sim_devices
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                WHERE id = :id
+            """), sim_updates_by_id)
+        except Exception as sql_err:
+            logger.debug(f"Direct SQL batch update by id notice: {sql_err}")
+
+    if sim_updates_by_imei:
+        try:
+            db.execute(text("""
+                UPDATE sim_devices
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                WHERE imei = :im
+            """), sim_updates_by_imei)
+        except Exception as sql_err:
+            logger.debug(f"Direct SQL batch update by imei notice: {sql_err}")
+
+    for t_name, rows_to_update in cust_updates.items():
+        try:
+            db.execute(text(f"""
+                UPDATE `{t_name}`
+                SET msisdn1 = :m1, msisdn2 = :m2, act_date = :ad, expiry_date = :ed
+                WHERE imei = :im
+            """), rows_to_update)
+        except Exception as cust_err:
+            logger.debug(f"Customer table mirror batch notice for {t_name}: {cust_err}")
 
     if updated_count > 0:
         try:

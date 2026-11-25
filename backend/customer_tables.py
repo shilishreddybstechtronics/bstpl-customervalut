@@ -12,6 +12,7 @@ How it works
 Back-fill existing data (run once from the backend folder):   python customer_tables.py
 """
 import re
+import time
 from datetime import date
 
 from sqlalchemy import inspect, text
@@ -50,10 +51,24 @@ def extra_col(key: str) -> str:
 
 
 _VERIFIED_TABLES = set()
+_ALL_TABLES_CACHE = {"ts": 0, "tables": []}
+
+
+def get_cached_tables(conn):
+    now = time.time()
+    if now - _ALL_TABLES_CACHE["ts"] < 60 and _ALL_TABLES_CACHE["tables"]:
+        return _ALL_TABLES_CACHE["tables"]
+    try:
+        tables = inspect(conn).get_table_names()
+        _ALL_TABLES_CACHE["ts"] = now
+        _ALL_TABLES_CACHE["tables"] = tables
+        return tables
+    except Exception:
+        return _ALL_TABLES_CACHE["tables"] or []
 
 
 def find_table(conn, cid: int, name: str = ""):
-    all_tables = inspect(conn).get_table_names()
+    all_tables = get_cached_tables(conn)
     if name:
         target = table_name(cid, name)
         if target in all_tables:
@@ -78,6 +93,10 @@ def find_table(conn, cid: int, name: str = ""):
 def ensure_table(conn, cid: int, name: str, extra_keys=()) -> str:
     """Creates the customer's table if missing. If the table already exists with existing data
     and updated values, preserves it and never creates the same table again."""
+    target = table_name(cid, name)
+    if target in _VERIFIED_TABLES and not extra_keys:
+        return target
+
     t = find_table(conn, cid, name)
     if t:
         # Table already exists with its updated values: do NOT create it again!

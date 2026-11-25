@@ -2083,7 +2083,7 @@ def bulk_fetch(data: schemas.BulkFetchIn, db: Session = Depends(get_db)):
         ))
 
     exact_items = []
-    chunk_size = 2000
+    chunk_size = 500
     for i in range(0, len(terms), chunk_size):
         sub_terms = terms[i:i + chunk_size]
         q = base_query
